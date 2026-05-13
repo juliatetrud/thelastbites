@@ -176,7 +176,33 @@ const ctx    = canvas.getContext('2d');
 const pip = {
   x: ROOM_W / 2,   // game-world x; starts at room center
   y: FLOOR_Y,      // game-world y (feet position)
-  facingRight: true,
+
+  body: {
+    facing:    'right', // 'left' | 'right'
+    animState: 'idle',  // reserved: 'idle' | 'walk' (walk cycles come later)
+  },
+
+  /* Eye-state. Each property is a scalar the render layer reads each frame.
+     Future code overrides these for story beats (widen, side-glance, etc.)
+     without re-architecting the rig. */
+  eyes: {
+    openness:   1.0,      // 0 = fully closed, 1 = fully open
+    scaleX:     1.0,      // reserved: widen / squint
+    scaleY:     1.0,      // reserved: widen / squint
+    offsetX:    0,        // reserved: side-glance nudge
+    offsetY:    0,        // reserved: brow-raise nudge
+    blinkTimer: 3.2,      // seconds until next blink fires
+    blinkPhase: 'open',   // 'open' | 'closing' | 'closed' | 'opening'
+    blinkT:     0,        // elapsed seconds within current blink phase
+  },
+
+  /* Mouth-state. Ships as neutral; future beats swap 'shape'. */
+  mouth: {
+    shape:    'neutral', // reserved: 'smile', 'gasp', etc.
+    openness: 0.4,       // reserved: open amount
+    offsetX:  0,         // reserved: horizontal nudge
+    offsetY:  0,         // reserved: vertical nudge
+  },
 };
 
 /* ================================================================
@@ -239,15 +265,71 @@ function update(dt) {
 
   if (left  && !right) {
     pip.x -= PIP_SPEED * dt;
-    pip.facingRight = false;
+    pip.body.facing = 'left';
   }
   if (right && !left) {
     pip.x += PIP_SPEED * dt;
-    pip.facingRight = true;
+    pip.body.facing = 'right';
   }
+  // When stationary, facing retains its last value — no update needed.
 
   // Clamp Pip to room bounds
   pip.x = Math.max(PIP_HALF_W, Math.min(ROOM_W - PIP_HALF_W, pip.x));
+
+  updateBlink(dt);
+}
+
+/* ----------------------------------------------------------------
+   BLINK ANIMATION
+   Drives pip.eyes through open → closing → closed → opening → open.
+   Timings: 80ms close, 60ms hold, 80ms open.
+   Next blink scheduled randomly 3–6 seconds after each complete blink.
+   ---------------------------------------------------------------- */
+
+const BLINK_CLOSE_T = 0.08;
+const BLINK_HOLD_T  = 0.06;
+const BLINK_OPEN_T  = 0.08;
+
+function updateBlink(dt) {
+  const e = pip.eyes;
+  switch (e.blinkPhase) {
+    case 'open':
+      e.blinkTimer -= dt;
+      if (e.blinkTimer <= 0) {
+        e.blinkPhase = 'closing';
+        e.blinkT     = 0;
+      }
+      break;
+
+    case 'closing':
+      e.blinkT   += dt;
+      e.openness  = Math.max(0, 1.0 - e.blinkT / BLINK_CLOSE_T);
+      if (e.blinkT >= BLINK_CLOSE_T) {
+        e.blinkPhase = 'closed';
+        e.blinkT     = 0;
+        e.openness   = 0;
+      }
+      break;
+
+    case 'closed':
+      e.blinkT += dt;
+      if (e.blinkT >= BLINK_HOLD_T) {
+        e.blinkPhase = 'opening';
+        e.blinkT     = 0;
+      }
+      break;
+
+    case 'opening':
+      e.blinkT   += dt;
+      e.openness  = Math.min(1.0, e.blinkT / BLINK_OPEN_T);
+      if (e.blinkT >= BLINK_OPEN_T) {
+        e.blinkPhase  = 'open';
+        e.blinkT      = 0;
+        e.openness    = 1.0;
+        e.blinkTimer  = 3 + Math.random() * 3; // 3–6 seconds
+      }
+      break;
+  }
 }
 
 /* ================================================================
@@ -271,7 +353,7 @@ function render(now) {
   ctx.clearRect(0, 0, W, H);
 
   drawRoom(camX, now);
-  drawPip(pip.x - camX, pip.y, pip.facingRight, now);
+  drawPip(pip.x - camX, pip.y, now);
 }
 
 /* ----------------------------------------------------------------
@@ -341,89 +423,140 @@ function drawRoom(camX, now) {
 }
 
 /* ----------------------------------------------------------------
-   PIP SPRITE
-   Procedural placeholder: classic ghost shape (~16×24px at 480×270
-   internal resolution). Cool white-blue, slightly translucent, with
-   two dark eye dots and a chef's apron hint. Gentle sine-wave bob.
+   PIP SPRITE RIG
+   Three-layer procedural placeholder. Layers drawn back-to-front:
+   body → eyes → mouth. Each layer is driven by its own sub-state on
+   `pip` and can be replaced with image draws independently when art
+   is commissioned.
 
-   The wavy bottom has three downward bumps — the classic ghost shape.
-   See 03-art-and-aesthetic.md §Pip Sprite Specification.
+   All layer functions use LOCAL coordinates: (0, 0) = sprite center
+   at foot level. The outer drawPip() sets up the canvas transform
+   (translate to anchor, flip if facing left) before calling the
+   three layer functions, then restores.
+
+   See 05-tech-architecture.md §Sprite Rig and
+       03-art-and-aesthetic.md §Sprite-rig layering + §Sprite direction
    ---------------------------------------------------------------- */
 
-function drawPip(screenX, groundY, facingRight, now) {
+function drawPip(screenX, groundY, now) {
   /* Idle bob: ±2px vertical sine wave at ~600ms period */
-  const bob  = Math.sin(now / 600) * 2;
+  const bob = Math.sin(now / 600) * 2;
   const cx   = Math.round(screenX);
   const foot = Math.round(groundY + bob);
 
-  /* Sprite coordinates */
-  const topY    = foot - PIP_H;                /* top of sprite     */
-  const headCY  = topY + 7;                   /* head arc centre   */
-  const bodyBot = foot - 6;                   /* straight body ends */
-
   ctx.save();
 
-  /* --- Ghost body glow --- */
+  /* ---- Set up local coordinate system ----
+     Translate so that (0,0) is the sprite's horizontal center at foot
+     level. If facing left, mirror horizontally around that anchor.
+     All three layer functions draw in this local space — no manual
+     left/right coordinate adjustments needed inside them. */
+  ctx.translate(cx, foot);
+  if (pip.body.facing === 'left') ctx.scale(-1, 1);
+
+  drawPipBody();
+  drawPipEyes();
+  drawPipMouth();
+
+  ctx.restore();
+}
+
+/* ---- Layer 1: Body ----
+   Ghost silhouette, apron, and underglow. Local coords: (0,0) = center/foot.
+   The wavy bottom has three downward bumps (classic ghost shape).
+   See 03-art-and-aesthetic.md §Pip Sprite Specification. */
+
+function drawPipBody() {
+  const topY    = -PIP_H;       /* −24: top of sprite                   */
+  const headCY  = topY + 7;    /* −17: centre of head arc               */
+  const bodyBot = -6;           /* straight body ends 6px above foot     */
+
+  /* Ghost body glow */
   ctx.shadowColor = 'rgba(240, 248, 255, 0.85)';
   ctx.shadowBlur  = 7;
   ctx.globalAlpha = 0.85;
 
-  /* --- Ghost body fill --- */
+  /* Ghost body fill */
   ctx.fillStyle = '#dce8ff';
   ctx.beginPath();
 
-  /* Head: semicircle from left (cx−7, headCY) up and over to right (cx+7, headCY) */
-  ctx.arc(cx, headCY, 7, Math.PI, 0);
+  /* Head: semicircle from left arc-start (−7, headCY) up and over to (7, headCY) */
+  ctx.arc(0, headCY, 7, Math.PI, 0);
 
-  /* Right wall straight down to where bumps begin */
-  ctx.lineTo(cx + 7, bodyBot);
+  /* Right wall down to where bumps begin */
+  ctx.lineTo(7, bodyBot);
 
-  /* Three downward bumps (right → left) — classic ghost silhouette.
-     Each bump spans ~4.67px of the 14px body width. */
-  ctx.quadraticCurveTo(cx + 4.67,  foot,   cx + 2.33, bodyBot);
-  ctx.quadraticCurveTo(cx + 0,     foot,   cx - 2.33, bodyBot);
-  ctx.quadraticCurveTo(cx - 4.67,  foot,   cx - 7,    bodyBot);
+  /* Three downward bumps (right → left). Each bump spans ~4.67px. */
+  ctx.quadraticCurveTo( 4.67, 0,  2.33, bodyBot);
+  ctx.quadraticCurveTo( 0,    0, -2.33, bodyBot);
+  ctx.quadraticCurveTo(-4.67, 0, -7,    bodyBot);
 
-  /* Close path draws the left wall back to the arc start */
   ctx.closePath();
   ctx.fill();
 
-  /* All further drawing: no glow shadow */
   ctx.shadowBlur = 0;
 
-  /* --- Apron (a faint horizontal band across the mid-body).
-     Pip always wears the oversized chef's apron Babcia gave him. --- */
+  /* Apron — faint horizontal band. Pip always wears the oversized
+     chef's apron Babcia gave him. */
   ctx.globalAlpha = 0.28;
-  ctx.fillStyle   = '#d4c89a';  /* beige/sand */
-  ctx.fillRect(cx - 5, topY + 14, 10, 5);
+  ctx.fillStyle   = '#d4c89a';
+  ctx.fillRect(-5, topY + 14, 10, 5);
   ctx.fillStyle = '#b8a87a';
-  ctx.fillRect(cx - 1, topY + 13, 2, 2);
+  ctx.fillRect(-1, topY + 13,  2, 2);
 
-  /* --- Eyes --- */
-  ctx.globalAlpha = 0.92;
-  ctx.fillStyle   = '#1a1428';
-  ctx.fillRect(cx - 3, headCY - 1, 2, 3);   /* left eye  */
-  ctx.fillRect(cx + 2,  headCY - 1, 2, 3);   /* right eye */
-
-  /* Subtle blush (faint pink-ish pixels on lower cheeks) */
-  ctx.globalAlpha = 0.18;
-  ctx.fillStyle   = '#e8a0a0';
-  ctx.fillRect(cx - 5, headCY + 2, 3, 2);
-  ctx.fillRect(cx + 3,  headCY + 2, 3, 2);
-
-  /* Cool underglow beneath Pip — a soft ellipse of light on the floor.
-     beginPath() is required so the ellipse is its own path, not appended
-     to the ghost-body path from above. */
+  /* Cool underglow beneath Pip */
   ctx.globalAlpha = 0.12;
-  const glowGrad = ctx.createRadialGradient(cx, foot + 1, 0, cx, foot + 1, 10);
+  const glowGrad = ctx.createRadialGradient(0, 1, 0, 0, 1, 10);
   glowGrad.addColorStop(0, '#c0d8ff');
   glowGrad.addColorStop(1, 'rgba(180, 210, 255, 0)');
   ctx.fillStyle = glowGrad;
   ctx.beginPath();
-  ctx.ellipse(cx, foot + 1, 10, 3, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 1, 10, 3, 0, 0, Math.PI * 2);
   ctx.fill();
+}
 
-  ctx.restore();
+/* ---- Layer 2: Eyes ----
+   Two dark eye-dots driven by pip.eyes state. Blinks animate
+   openness 1→0→1 via updateBlink(). The flip applied by drawPip()
+   means left/right eye positions stay the same in local coords in
+   both facing directions — no manual swap needed. */
+
+function drawPipEyes() {
+  const headCY = -PIP_H + 7;    /* −17 */
+  const e      = pip.eyes;
+
+  /* Eye height driven by openness; minimum 1px so they're never invisible */
+  const eyeH = Math.max(1, Math.round(3 * e.openness));
+
+  const offX = Math.round(e.offsetX);
+  const offY = Math.round(e.offsetY);
+
+  ctx.globalAlpha = 0.92;
+  ctx.fillStyle   = '#1a1428';
+  ctx.fillRect(-3 + offX, headCY - 1 + offY, 2, eyeH);   /* left eye  */
+  ctx.fillRect( 2 + offX, headCY - 1 + offY, 2, eyeH);   /* right eye */
+
+  /* Subtle blush */
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle   = '#e8a0a0';
+  ctx.fillRect(-5, headCY + 2, 3, 2);
+  ctx.fillRect( 3, headCY + 2, 3, 2);
+}
+
+/* ---- Layer 3: Mouth ----
+   Ships as a single neutral pixel. 'shape' and 'openness' in
+   pip.mouth are reserved for future emotional expressions (small
+   smile, gasp) driven by story beats. The rig is in place; future
+   sprints add those shapes without re-architecting. */
+
+function drawPipMouth() {
+  const headCY = -PIP_H + 7;    /* −17 */
+  const m      = pip.mouth;
+
+  ctx.globalAlpha = 0.65;
+  ctx.fillStyle   = '#1a1428';
+  /* Neutral: single pixel centered just below mid-face */
+  ctx.fillRect(Math.round(m.offsetX), headCY + 5 + Math.round(m.offsetY), 1, 1);
 }
 
 /* ================================================================

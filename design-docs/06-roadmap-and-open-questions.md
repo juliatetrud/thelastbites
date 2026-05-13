@@ -36,7 +36,7 @@ What we know we want to build, and what we still need to decide.
 ### Stage 1: Foundational Architecture (Sprint 01)
 Goal: Rebuild the prototype's bones to match the locked architecture before extending Chapter 1.
 
-- [ ] Bump internal resolution from 320×180 to 480×270
+- [x] Bump internal resolution from 320×180 to 480×270
 - [ ] Replace single-press inspection with narration-then-choices model (Flavor D)
 - [ ] Implement persistent strength indicator (chewing-boy stomach meter, corner of screen)
 - [ ] Implement journal stub with two stats per entry (recipe / memory)

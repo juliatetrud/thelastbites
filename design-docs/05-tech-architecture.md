@@ -9,7 +9,7 @@ How the prototype is built and how to extend it.
 - **Single HTML file** containing CSS, JS, and HTML
 - **Vanilla JavaScript.** No frameworks, no build step, no dependencies (other than two Google Fonts).
 - **HTML5 Canvas** for rendering.
-- **Internal resolution: 320×180 pixels,** scaled up to fit the viewport with `image-rendering: pixelated` for crisp pixel art.
+- **Internal resolution: 480×270 pixels,** scaled up to fit the viewport with `image-rendering: pixelated` for crisp pixel art. *(Bumped from 320×180 in Sprint 01 — see `06-roadmap-and-open-questions.md` §Decisions Log 2026-05-07.)*
 - **No external libraries** at the moment. If we need them later (e.g., a sound library), they should be CDN-loaded so the project stays single-file.
 
 This stack was chosen because:
@@ -22,7 +22,7 @@ This stack was chosen because:
 
 ## File Structure (current)
 
-The whole game is in one file: `cabin646.html` (the prototype).
+The whole game is in one file: `game/index.html`. The prototype (`prototype/three-doors-demo.html`) is reference only — do not edit it.
 
 When the project grows, the recommended structure is:
 

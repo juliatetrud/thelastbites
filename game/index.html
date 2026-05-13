@@ -451,7 +451,7 @@ const cabinObjects = [
     node: {
       id: 'door-inspect',
       lines: [
-        { speaker: null, text: 'The door to the hallway. From the other side, you can hear someone crying.', italic: false },
+        { speaker: null, text: 'From the other side of this door, Pip can hear a man talking. It sounds like bad news.', italic: false },
       ],
       choices: [
         {
@@ -467,11 +467,11 @@ const cabinObjects = [
         },
         {
           id: 'press-ear',
-          text: 'Press your ear to the door.',
+          text: 'Press his ear to the door.',
           onSelect() {
             showDialogue({
               id: 'door-ear',
-              lines: [{ speaker: null, text: 'Through the door, a woman crying. Pip knows the sound of that voice.', italic: false }],
+              lines: [{ speaker: null, text: 'Through the door, a man says, \u201cThere was nothing we could do. He\u2019s gone.\u201d', italic: false }],
               choices: null, onEnd: null,
             });
           },
@@ -482,7 +482,7 @@ const cabinObjects = [
           onSelect() {
             showDialogue({
               id: 'door-wait',
-              lines: [{ speaker: null, text: 'Pip waits. The crying continues.', italic: false }],
+              lines: [{ speaker: null, text: 'Pip listens. A sob breaks through the air.', italic: false }],
               choices: null, onEnd: null,
             });
           },
@@ -500,8 +500,9 @@ const cabinObjects = [
     node: {
       id: 'porthole-inspect',
       lines: [
-        { speaker: null,  text: 'Through the porthole, dark water and the lights of a far shore. Norway, the brochure had said. The first stop.', italic: false },
-        { speaker: 'PIP', text: 'I never even got to see it.', italic: false },
+        { speaker: null,  text: 'Through the porthole, dark water sparkles and dances in the lights of a far shore. Norway, the brochure had said. The first stop.', italic: false },
+        { speaker: 'PIP', text: '\u201cI never even got to see it.\u201d', italic: false },
+        { speaker: null,  text: 'Next port, I\u2019m determined to visit.', italic: true },
       ],
       choices: null,
       onEnd: null,
@@ -516,7 +517,7 @@ const cabinObjects = [
     node: {
       id: 'bed-inspect',
       lines: [
-        { speaker: null, text: "The bed is rumpled. Someone slept here recently. There's a small shape under the covers but you don't want to look closer.", italic: false },
+        { speaker: null, text: 'Pip peeks inside. The bed is rumpled. Someone slept here recently. There\u2019s a small shape under the covers, but Pip doesn\u2019t look any closer.', italic: false },
       ],
       choices: null,
       onEnd: null,
@@ -541,8 +542,8 @@ const hallwayObjects = [
     node: {
       id: 'hallway-bulletin-inspect',
       lines: [
-        { speaker: null, text: 'A bulletin board near the stairwell. The ship\u2019s itinerary is pinned up like a guest of honor.', italic: false },
-        { speaker: null, text: 'Mnemosyne (Nem-OSS-uh-nee) Welcomes You Aboard. Today\u2019s Port: Bergen.', italic: false },
+        { speaker: null, text: 'A bulletin board sits near the stairwell to let the passengers know the ship\u2019s itinerary.', italic: false },
+        { speaker: null, text: 'It says, \u201cThe Mnemosyne (Nem-OSS-uh-nee) welcomes you aboard. Today\u2019s port: Bergen.\u201d', italic: false },
       ],
       choices: null, onEnd: null,
     },
@@ -574,8 +575,9 @@ const hallwayObjects = [
     node: {
       id: 'hallway-sconce-inspect',
       lines: [
-        { speaker: null, text: 'A brass wall sconce, flickering. Not quite in time with itself.', italic: false },
-        { speaker: null, text: 'When you step close, it falters. When you step back, it steadies. It almost feels like it\u2019s reacting to you.', italic: true },
+        { speaker: null, text: 'An oil lamp flickers, not quite in time with itself.', italic: false },
+        { speaker: null, text: 'When Pip steps close, it falters. When he steps back, it steadies. It almost feels like it\u2019s reacting to him.', italic: false },
+        { speaker: null, text: 'How could that be? Pip wonders.', italic: true },
       ],
       choices: null, onEnd: null,
     },
@@ -594,7 +596,7 @@ const hallwayObjects = [
         return {
           id: 'gp-door-return',
           lines: [
-            { speaker: null, text: 'Babcia and Dziadek are still inside. You can go in, but they cannot hear you.', italic: true },
+            { speaker: null, text: 'Babcia and Dziadek are still inside. Pip can go in, but they cannot hear him.', italic: false },
           ],
           choices: [
             {
@@ -617,8 +619,8 @@ const hallwayObjects = [
       return {
         id: 'gp-door-first',
         lines: [
-          { speaker: null, text: 'From inside, the sound of someone crying. Soft. Familiar.', italic: true },
-          { speaker: null, text: 'You reach for the handle.', italic: true },
+          { speaker: null, text: 'From inside, someone is crying softly. The sound is familiar.', italic: false },
+          { speaker: null, text: 'Pip reaches for the handle.', italic: false },
         ],
         choices: [
           {
@@ -627,7 +629,10 @@ const hallwayObjects = [
             onSelect() {
               showDialogue({
                 id: 'gp-door-phase',
-                lines: [{ speaker: null, text: 'Your hand goes through. You step closer. You step through the door.', italic: true }],
+                lines: [
+                  { speaker: null, text: 'Pip\u2019s hand goes through. He steps closer. He steps through the door.', italic: false },
+                  { speaker: null, text: '\u2026oh.', italic: true },
+                ],
                 choices: null,
                 onEnd() {
                   // Fade to black, swap to grandparents room, start cinematic
@@ -670,9 +675,9 @@ const grandparentsObjects = [
     node: {
       id: 'gp-babcia-inspect',
       lines: [
-        { speaker: null, text: 'Babcia is on the bed. Her hands are folded in her apron. She is making the smallest sound.', italic: false },
-        { speaker: null, text: 'You can stand right next to her. She will not look up.', italic: false },
-        { speaker: 'PIP', text: 'Babciu, jestem tutaj.', italic: false },
+        { speaker: null, text: 'Babcia is on the bed. Her hands are folded around her red face. She is making the smallest sounds.', italic: false },
+        { speaker: null, text: 'Pip stands right next to her. But she does not look up.', italic: false },
+        { speaker: 'PIP', text: '\u201cBabciu, jestem tutaj.\u201d', italic: false },
       ],
       choices: null, onEnd: null,
     },
@@ -686,9 +691,9 @@ const grandparentsObjects = [
     node: {
       id: 'gp-dziadek-inspect',
       lines: [
-        { speaker: null, text: "Dziadek\u2019s back is to you. He hasn\u2019t turned. His shoulders are very still.", italic: false },
-        { speaker: null, text: 'On the windowsill, the small radio he listens to in the evenings. Off, now.', italic: false },
-        { speaker: null, text: 'You wait, in case he turns. He does not turn.', italic: true },
+        { speaker: null, text: 'Dziadek\u2019s back is to Pip. He has not turned. His shoulders are very still.', italic: false },
+        { speaker: null, text: 'On the windowsill sits the small radio he listens to in the evenings. It is off, now.', italic: false },
+        { speaker: null, text: 'Pip waits, in case he turns. He does not turn.', italic: false },
       ],
       choices: null, onEnd: null,
     },
@@ -702,8 +707,8 @@ const grandparentsObjects = [
     node: {
       id: 'gp-photo-inspect',
       lines: [
-        { speaker: null, text: 'Your sixth birthday. The pierogi was nearly as big as your face. You remember it tasted like butter and onions and being allowed to use the big knife.', italic: true },
-        { speaker: null, text: 'You remember Babcia laughing. You don\u2019t remember if you said thank you.', italic: true },
+        { speaker: null, text: 'Pip\u2019s sixth birthday photograph shows him holding a pierogi nearly as big as his face. He remembers it tasted like butter and onions and being allowed to use the big knife.', italic: false },
+        { speaker: null, text: 'Pip remembers Babcia laughing. He does not remember if he said thank you.', italic: false },
       ],
       choices: null, onEnd: null,
     },
@@ -717,8 +722,8 @@ const grandparentsObjects = [
     node: {
       id: 'gp-suitcase-inspect',
       lines: [
-        { speaker: null, text: 'The suitcase is open. Nothing is folded. A shirt of yours is on top \u2014 the one with the boat on it.', italic: false },
-        { speaker: null, text: 'They didn\u2019t have time to unpack. They didn\u2019t think they would need to.', italic: true },
+        { speaker: null, text: 'The suitcase is open. Nothing is folded. A shirt of his is on top \u2014 the one with the boat on it.', italic: false },
+        { speaker: null, text: 'They didn\u2019t have time to unpack. They didn\u2019t think they would need to.', italic: false },
       ],
       choices: null, onEnd: null,
     },
@@ -2092,15 +2097,18 @@ function updatePassenger(dt) {
 
 const CINEMATIC_SCRIPTS = {
   grandparents: [
-    { speaker: null,  text: 'Babcia is on the bed. She is making a sound that Pip has never heard her make.', italic: false },
-    { speaker: null,  text: 'Dziadek stands at the window. His shoulders are shaking. He says nothing.', italic: false },
-    { speaker: null,  text: 'On the nightstand, a photograph. Pip on his sixth birthday, holding a pierogi as big as his face.', italic: false },
-    { speaker: 'PIP', text: 'Babcia\u2026', italic: false },
-    { speaker: null,  text: 'She does not look up.', italic: false },
-    { speaker: 'PIP', text: 'I\u2019m here. I\u2019m right here.', italic: false },
-    { speaker: null,  text: 'She does not look up.', italic: false },
+    { speaker: null,  text: 'Babcia is on the bed with her head in her hands. She is making a sound Pip has never heard her make. She is sobbing.', italic: false },
+    { speaker: 'PIP', text: '\u201cBabcia, what\u2019s wrong?\u201d', italic: false },
+    { speaker: null,  text: 'Dziadek stands at the window. His shoulders are shaking. He says nothing. Tears stream down his face.', italic: false },
+    { speaker: null,  text: 'On the nightstand sits a photograph. It shows Pip on his sixth birthday, holding a pierogi as big as his face.', italic: false },
+    { speaker: 'PIP', text: '\u201cBabcia? \u2026 Dziadek?\u201d', italic: false },
+    { speaker: null,  text: 'They do not look up.', italic: false },
+    { speaker: 'PIP', text: '\u201cHello! I\u2019m here. I\u2019m right here. What\u2019s wrong?\u201d', italic: false },
+    { speaker: null,  text: 'Pip\u2019s stomach turns.', italic: false },
+    { speaker: null,  text: 'They continue to cry.', italic: false },
     { speaker: null,  text: 'Dziadek turns. For a moment, just a moment, he looks toward the doorway. He frowns. He shakes his head and turns back to the window.', italic: false },
-    { speaker: 'PIP', text: '\u2026you almost saw me.', italic: false },
+    { speaker: 'PIP', text: '\u201cDziadek\u2026\u201d', italic: false },
+    { speaker: null,  text: 'Pip tries. But Dziadek does not hear him.', italic: false },
   ],
 };
 

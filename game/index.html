@@ -1555,16 +1555,97 @@ function drawPorthole(x, y, radius, opts) {
    'now' is required when flicker=true. */
 function drawSconce(x, y, opts) {
   const { flicker = false, intensity = 0.7, now = 0 } = opts || {};
-  const brightness = flicker
+
+  // Bracket brightness — sputtering lamps dim the whole fixture
+  const bracketB = flicker
     ? 0.55 + Math.sin(now * 0.0061) * 0.18 + Math.sin(now * 0.0113) * 0.11
     : intensity;
 
-  ctx.globalAlpha = brightness;
-  ctx.fillStyle   = '#a08664';
-  ctx.fillRect(x - 4, y,     8, 16);   // bracket: 8×16
-  ctx.fillRect(x - 7, y - 6, 14,  6);  // cap: 14×6
+  // Flame flicker — all lamps have a gentle sine-wave on size/opacity;
+  // flicker:true adds a faster, jerkier second wave to simulate sputtering.
+  const gentleFlame = 0.82 + Math.sin(now * 0.0047) * 0.12 + Math.sin(now * 0.0031) * 0.06;
+  const flameScale = flicker
+    ? gentleFlame + Math.sin(now * 0.0193) * 0.22 + Math.sin(now * 0.0271) * 0.14
+    : gentleFlame;
+  const flameAlpha = Math.max(0.5, Math.min(1.0, flameScale));
 
-  ctx.globalAlpha = brightness * 0.13;
+  // ── Brass bracket (8×16 vertical arm + 14×6 wall cap) ──
+  ctx.globalAlpha = bracketB;
+  ctx.fillStyle   = '#a08664';
+  ctx.fillRect(x - 4, y,     8, 16);   // arm
+  ctx.fillRect(x - 7, y - 6, 14,  6);  // cap
+
+  // Small downturn hook at bracket tip — the lamp cradle
+  ctx.fillStyle = '#8a7050';
+  ctx.fillRect(x + 2, y + 14, 4, 4);   // hook stub right side
+  ctx.fillRect(x - 6, y + 16, 8, 2);   // cradle bar
+
+  // ── Glass globe (oil-lamp belly, ~10px tall × 8px wide) ──
+  // Globe sits just above the bracket tip, centered at x
+  const gx = x, gy = y + 9;  // globe centre
+  const gW = 8, gH = 10;     // belly half-extents
+
+  // Glass body — shoulder shape: filled ellipse for belly
+  ctx.globalAlpha = bracketB * 0.55;
+  ctx.fillStyle   = 'rgba(200,180,120,0.4)';
+  ctx.beginPath();
+  ctx.ellipse(gx, gy, gW / 2, gH / 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Narrow neck at top
+  ctx.fillStyle = 'rgba(180,160,100,0.55)';
+  ctx.fillRect(gx - 2, gy - gH / 2 - 3, 4, 4);
+
+  // Highlight arc — light glinting off glass
+  ctx.globalAlpha = bracketB * 0.35;
+  ctx.strokeStyle = 'rgba(255,240,180,0.7)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.arc(gx - 1, gy - 2, gW / 2 - 1, Math.PI * 1.05, Math.PI * 1.65);
+  ctx.stroke();
+
+  // ── Teardrop flame inside globe ──
+  const fcy = gy - 1;   // flame base y
+  const fH  = Math.round(5 * flameScale);   // flame height varies with flicker
+  const fW  = 2;
+
+  ctx.globalAlpha = flameAlpha * bracketB;
+  // Outer flame body — orange
+  ctx.fillStyle = 'rgba(255,160,40,0.9)';
+  ctx.beginPath();
+  ctx.moveTo(gx,       fcy - fH);          // tip
+  ctx.bezierCurveTo(
+    gx + fW,  fcy - fH * 0.4,
+    gx + fW,  fcy,
+    gx,       fcy + 1
+  );
+  ctx.bezierCurveTo(
+    gx - fW,  fcy,
+    gx - fW,  fcy - fH * 0.4,
+    gx,       fcy - fH
+  );
+  ctx.fill();
+
+  // Inner flame core — bright yellow
+  ctx.globalAlpha = flameAlpha * bracketB * 0.8;
+  ctx.fillStyle = 'rgba(255,230,120,1)';
+  const cH = Math.max(1, Math.round(fH * 0.5));
+  ctx.beginPath();
+  ctx.moveTo(gx,         fcy - fH + 1);
+  ctx.bezierCurveTo(
+    gx + 1,  fcy - fH * 0.35,
+    gx + 1,  fcy - 1,
+    gx,      fcy
+  );
+  ctx.bezierCurveTo(
+    gx - 1,  fcy - 1,
+    gx - 1,  fcy - fH * 0.35,
+    gx,      fcy - fH + 1
+  );
+  ctx.fill();
+
+  // ── Warm light pool on wall ──
+  ctx.globalAlpha = bracketB * 0.13;
   const lightGrad = ctx.createRadialGradient(x, y + 8, 0, x, y + 8, 30);
   lightGrad.addColorStop(0, 'rgba(255,218,120,1)');
   lightGrad.addColorStop(1, 'rgba(255,180,80,0)');

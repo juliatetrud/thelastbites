@@ -1419,83 +1419,323 @@ function render(now) {
   }
 }
 
+/* ================================================================
+   VISUAL PRIMITIVES
+   Reusable canvas-drawing functions composed by per-room draw
+   functions. Each is self-contained: sets its own fill/stroke and
+   restores only state it explicitly saved. No room-specific globals.
+   Ordering: structure (panel, baseboard, floor) → apertures
+   (porthole, sconce) → openings (brass fitting, door).
+   ================================================================ */
+
+/* drawShipPanel — one riveted metal wall panel.
+   Strokes the panel outline; places 2×2 rivet dots at all four
+   corners (4px inset) when rivets:true (default).
+   x, y = top-left of the panel (screen coords).
+   options: { rivets=true, strokeColor, rivetColor } */
+function drawShipPanel(x, y, w, h, opts) {
+  const {
+    rivets      = true,
+    strokeColor = 'rgba(60,80,140,0.22)',
+    rivetColor  = 'rgba(70,90,145,0.35)',
+  } = opts || {};
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(x, y, w, h);
+  if (rivets) {
+    const m = 4;
+    ctx.fillStyle = rivetColor;
+    ctx.fillRect(x + m,         y + m,         2, 2);
+    ctx.fillRect(x + w - m - 2, y + m,         2, 2);
+    ctx.fillRect(x + m,         y + h - m - 2, 2, 2);
+    ctx.fillRect(x + w - m - 2, y + h - m - 2, 2, 2);
+  }
+}
+
+/* drawBaseboard — dark strip just above the floor line.
+   Intentionally darker than the lifted wall: contrast anchor.
+   x, y = top-left of the band (y ≈ FLOOR_Y − h).
+   options: { h=12, fillColor, strokeColor } */
+function drawBaseboard(x, y, w, opts) {
+  const {
+    h           = 12,
+    fillColor   = 'rgba(22,35,62,0.68)',
+    strokeColor = 'rgba(70,55,95,0.38)',
+  } = opts || {};
+  ctx.fillStyle   = fillColor;
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth   = 1;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.stroke();
+}
+
+/* drawFloorPlanks — vertical plank-seam lines in the floor band.
+   Scrolls at full camera speed (foreground parallax).
+   options: { y=FLOOR_Y, h=20, spacing=48, lineColor } */
+function drawFloorPlanks(camX, opts) {
+  const {
+    y         = FLOOR_Y,
+    h         = 20,
+    spacing   = 48,
+    lineColor = 'rgba(0,0,0,0.18)',
+  } = opts || {};
+  const offset = camX % spacing;
+  ctx.strokeStyle = lineColor;
+  ctx.lineWidth   = 1;
+  for (let px = -offset; px < W + spacing; px += spacing) {
+    ctx.beginPath();
+    ctx.moveTo(Math.round(px), y);
+    ctx.lineTo(Math.round(px), y + h);
+    ctx.stroke();
+  }
+}
+
+/* drawPorthole — circular ship window.
+   Brass ring, dark glass interior, optional pane-divider cross,
+   optional distant-shore lighting (moonlight mode).
+   x, y = centre (screen coords). radius = outer brass ring.
+   options: { moonlight=false, divider=true } */
+function drawPorthole(x, y, radius, opts) {
+  const { moonlight = false, divider = true } = opts || {};
+  const r  = radius;
+  const ri = r - 3;   // inner glass edge (inside brass)
+
+  // Outer bevel
+  ctx.strokeStyle = 'rgba(50,35,15,0.6)';
+  ctx.lineWidth   = 2;
+  ctx.beginPath(); ctx.arc(x, y, r + 2, 0, Math.PI * 2); ctx.stroke();
+
+  // Brass ring
+  ctx.strokeStyle = '#8a6c3c';
+  ctx.lineWidth   = 3;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+
+  // Dark glass
+  ctx.fillStyle = '#0a1428';
+  ctx.beginPath(); ctx.arc(x, y, ri, 0, Math.PI * 2); ctx.fill();
+
+  if (moonlight) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x, y, ri, 0, Math.PI * 2); ctx.clip();
+    // Water shimmer
+    const waterGrad = ctx.createRadialGradient(x, y + ri * 0.25, 0, x, y, ri);
+    waterGrad.addColorStop(0, 'rgba(40,70,110,0.28)');
+    waterGrad.addColorStop(1, 'rgba(10,20,40,0)');
+    ctx.fillStyle = waterGrad;
+    ctx.fill();
+    // Warm shore pinprick lights
+    ctx.fillStyle = 'rgba(255,215,150,0.6)';
+    for (const [dx, dy] of [[-ri*.28,-ri*.10],[-ri*.08,-ri*.17],[ri*.14,-ri*.07],[ri*.33,-ri*.13]]) {
+      ctx.beginPath(); ctx.arc(x + dx, y + dy, 0.8, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  if (divider) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(x, y, ri, 0, Math.PI * 2); ctx.clip();
+    ctx.strokeStyle = 'rgba(80,105,155,0.35)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - ri, y); ctx.lineTo(x + ri, y);
+    ctx.moveTo(x, y - ri); ctx.lineTo(x, y + ri);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Brass ring highlight (top-left arc)
+  ctx.strokeStyle = 'rgba(185,155,85,0.45)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath(); ctx.arc(x, y, r - 1, Math.PI, Math.PI * 1.75); ctx.stroke();
+}
+
+/* drawSconce — brass wall sconce with warm light pool.
+   Refactored from the hallway's inline sconce loop.
+   options: { flicker=false, intensity=0.7, now=0 }
+   'now' is required when flicker=true. */
+function drawSconce(x, y, opts) {
+  const { flicker = false, intensity = 0.7, now = 0 } = opts || {};
+  const brightness = flicker
+    ? 0.55 + Math.sin(now * 0.0061) * 0.18 + Math.sin(now * 0.0113) * 0.11
+    : intensity;
+
+  ctx.globalAlpha = brightness;
+  ctx.fillStyle   = '#a08664';
+  ctx.fillRect(x - 2, y,     4, 10);
+  ctx.fillRect(x - 3, y - 3, 6,  3);
+
+  ctx.globalAlpha = brightness * 0.13;
+  const lightGrad = ctx.createRadialGradient(x, y + 5, 0, x, y + 5, 22);
+  lightGrad.addColorStop(0, 'rgba(255,218,120,1)');
+  lightGrad.addColorStop(1, 'rgba(255,180,80,0)');
+  ctx.fillStyle = lightGrad;
+  ctx.fillRect(x - 22, y - 16, 44, 36);
+
+  ctx.globalAlpha = 1;
+}
+
+/* drawBrassFitting(x, y, type, w) — small brass door detail.
+   'plaque'    — room-number plate, centered at x,y.
+   'handle'    — lever + escutcheon at pull-side edge (x = edge).
+   'kickplate' — strip at door bottom (x = left edge, w = door width). */
+function drawBrassFitting(x, y, type, w) {
+  ctx.fillStyle = '#a08650';
+  if (type === 'plaque') {
+    ctx.fillRect(x - 5, y - 2, 10, 4);
+    ctx.strokeStyle = 'rgba(80,60,20,0.5)';
+    ctx.lineWidth   = 0.5;
+    ctx.strokeRect(x - 5, y - 2, 10, 4);
+  } else if (type === 'handle') {
+    ctx.fillRect(x - 1, y - 2, 2, 5);
+    ctx.beginPath(); ctx.arc(x, y - 3, 1.5, 0, Math.PI * 2); ctx.fill();
+  } else if (type === 'kickplate') {
+    const kw = w || 20;
+    ctx.fillRect(x, y, kw, 3);
+    ctx.strokeStyle = 'rgba(80,60,20,0.4)';
+    ctx.lineWidth   = 0.5;
+    ctx.strokeRect(x, y, kw, 3);
+  }
+}
+
+/* drawDoor(sx, doorTop, options) — ship corridor door with optional
+   warm under-glow and brass fittings. Composes drawBrassFitting.
+   Visuals only — sparkle overlay handles interactivity separately.
+   sx = horizontal centre (screen x). doorTop = top y.
+   options: { w=24, h=64, warm=false } */
+function drawDoor(sx, doorTop, opts) {
+  const { w = 24, h = 64, warm = false } = opts || {};
+  const dl = sx - Math.floor(w / 2);   // door left edge
+
+  if (warm) {
+    const gpGlow = ctx.createLinearGradient(sx, doorTop, sx, FLOOR_Y + 10);
+    gpGlow.addColorStop(0,   'rgba(255,180,80,0)');
+    gpGlow.addColorStop(0.6, 'rgba(255,170,70,0.16)');
+    gpGlow.addColorStop(1,   'rgba(255,140,40,0)');
+    ctx.fillStyle = gpGlow;
+    ctx.fillRect(dl - 10, doorTop, w + 20, FLOOR_Y - doorTop + 15);
+    ctx.fillStyle = '#2c1e0c';
+  } else {
+    ctx.fillStyle = '#0e1428';
+  }
+  ctx.fillRect(dl, doorTop, w, h);
+
+  ctx.strokeStyle = warm ? 'rgba(160,130,70,0.45)' : 'rgba(50,65,110,0.5)';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(dl, doorTop, w, h);
+
+  // Inset panel lines (upper and lower recessed panels)
+  const pi = 3;
+  const ph = Math.floor(h * 0.38);
+  ctx.strokeStyle = warm ? 'rgba(120,90,40,0.25)' : 'rgba(40,55,95,0.25)';
+  ctx.strokeRect(dl + pi, doorTop + pi,          w - pi * 2, ph);
+  ctx.strokeRect(dl + pi, doorTop + ph + pi * 2, w - pi * 2, h - ph - pi * 3);
+
+  // Brass fittings
+  drawBrassFitting(dl + Math.floor(w / 2), doorTop + Math.floor(h * 0.22), 'plaque');
+  drawBrassFitting(dl + w - 4,             doorTop + Math.floor(h * 0.55), 'handle');
+  drawBrassFitting(dl,                     doorTop + h - 4,                'kickplate', w);
+}
+
 /* ----------------------------------------------------------------
    ROOM / BACKGROUND
-   Placeholder environment: deep moonlit blue gradient using the
-   locked --region-base / --region-deep tokens. A faint floor line
-   near the bottom. No specific Chapter 1 art (that comes later).
+   Rooms use the shared primitive library above for structure
+   (panels, baseboard, floor planks, doors, portholes, sconces),
+   then add room-specific elements inline. Per-room palette tokens
+   are what make each room distinct; the structure is shared.
    ---------------------------------------------------------------- */
 
 function drawCabin(camX, now) {
-  /* UI zone base fill — covers the entire canvas.
-     The area below FLOOR_Y is reserved for the dialogue box and
-     controls strip; no room art should appear there. This very dark
-     cool fill acts as the ambient "floor decking shadow" beneath
-     the room, quiet enough not to draw the eye. */
+  // UI zone base fill
   ctx.fillStyle = '#080e20';
   ctx.fillRect(0, 0, W, H);
 
-  /* Wall / sky gradient — covers only the room area (0 to FLOOR_Y).
-     Does not bleed into the UI zone below. */
+  // Wall gradient — lifted cool blue; dim but legibly lit
   const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
-  wallGrad.addColorStop(0,   '#0e1a3a');  /* --region-deep  */
-  wallGrad.addColorStop(0.5, '#1c2858');  /* --region-base  */
-  wallGrad.addColorStop(1,   '#0e1a3a');  /* --region-deep  */
+  wallGrad.addColorStop(0,   '#1e2e54');   // lifted from #0e1a3a
+  wallGrad.addColorStop(0.5, '#2e3e72');   // lifted from #1c2858
+  wallGrad.addColorStop(1,   '#1e2e54');
   ctx.fillStyle = wallGrad;
   ctx.fillRect(0, 0, W, FLOOR_Y);
 
-  /* Subtle radial darkening near room edges (ambient depth).
-     Gradient centred within the room band; clipped to room rect. */
+  // Ambient edge darkening
   const edgeGrad = ctx.createRadialGradient(
     W / 2, FLOOR_Y * 0.45, FLOOR_Y * 0.2,
     W / 2, FLOOR_Y * 0.45, H * 0.9
   );
-  edgeGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-  edgeGrad.addColorStop(1, 'rgba(12, 6, 24, 0.55)');
+  edgeGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  edgeGrad.addColorStop(1, 'rgba(12,6,24,0.55)');
   ctx.fillStyle = edgeGrad;
   ctx.fillRect(0, 0, W, FLOOR_Y);
 
-  /* Narrow floor-surface gradient — just the 20px band at the floor line,
-     blending into the dark UI-zone base below it. */
-  const floorSurfH = 20;
-  const floorGrad  = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + floorSurfH);
-  floorGrad.addColorStop(0, '#1a2848');   /* --region-floor */
-  floorGrad.addColorStop(1, '#080e20');   /* blends into UI zone */
-  ctx.fillStyle = floorGrad;
-  ctx.fillRect(0, FLOOR_Y, W, floorSurfH);
-
-  /* Floor line — faint separator at the room/UI boundary */
-  ctx.strokeStyle = 'rgba(90, 72, 120, 0.45)';
-  ctx.lineWidth   = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, FLOOR_Y);
-  ctx.lineTo(W, FLOOR_Y);
-  ctx.stroke();
-
-  /* Baseboard / wainscoting suggestion — sits just above the floor */
   const baseboardH = 12;
-  const baseboardY = FLOOR_Y - baseboardH;
-  ctx.fillStyle = 'rgba(26, 40, 72, 0.6)';
-  ctx.fillRect(0, baseboardY, W, baseboardH);
-  ctx.strokeStyle = 'rgba(90, 72, 120, 0.3)';
-  ctx.lineWidth   = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, baseboardY);
-  ctx.lineTo(W, baseboardY);
-  ctx.stroke();
+  const baseboardY = FLOOR_Y - baseboardH;   // 168
+  const panelTop   = 20;
+  const panelH     = baseboardY - panelTop;  // 148
 
-  /* Parallax wall panels: shift at half camera speed for depth.
-     Vertical lines from near the ceiling down to the baseboard top. */
+  // Riveted wall panels at half camera speed
   const panelSpacing = 120;
   const panelOffset  = (camX * 0.5) % panelSpacing;
-  ctx.strokeStyle = 'rgba(60, 80, 140, 0.18)';
-  ctx.lineWidth   = 1;
   for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
-    ctx.beginPath();
-    ctx.moveTo(px, 20);
-    ctx.lineTo(px, baseboardY);
-    ctx.stroke();
+    drawShipPanel(Math.round(px), panelTop, panelSpacing, panelH, {
+      strokeColor: 'rgba(55,75,130,0.22)',
+      rivetColor:  'rgba(65,85,140,0.38)',
+    });
   }
+
+  // Porthole — game-world x=380 (the cabin's only window)
+  const phSX = Math.round(380 - camX);
+  if (phSX > -24 && phSX < W + 24) {
+    drawPorthole(phSX, 58, 18, { moonlight: true, divider: true });
+  }
+
+  // Bed — game-world x=720 (bunk against right wall)
+  const bedGX = 720, bedGW = 80, bedGH = 16, bedGY = FLOOR_Y - bedGH;
+  const bedSX = Math.round(bedGX - camX);
+  if (bedSX < W + bedGW && bedSX + bedGW > 0) {
+    // Headboard
+    ctx.fillStyle = '#2a2448';
+    ctx.fillRect(bedSX + bedGW - 8, bedGY - 12, 8, bedGH + 12);
+    ctx.strokeStyle = 'rgba(60,70,140,0.42)';
+    ctx.lineWidth   = 1;
+    ctx.strokeRect(bedSX + bedGW - 8, bedGY - 12, 8, bedGH + 12);
+    // Bed frame
+    ctx.fillStyle = '#1e2040';
+    ctx.fillRect(bedSX, bedGY, bedGW, bedGH);
+    ctx.strokeStyle = 'rgba(60,70,140,0.36)';
+    ctx.strokeRect(bedSX, bedGY, bedGW, bedGH);
+    // Bedding (rumpled, noticeably lighter than frame)
+    ctx.fillStyle = '#363c66';
+    ctx.fillRect(bedSX + 2, bedGY + 2, bedGW - 12, 8);
+    ctx.fillStyle = '#404470';
+    ctx.fillRect(bedSX + 6, bedGY + 2, 22, 6);
+  }
+
+  // Door — game-world x=120 (hallway door; Pip phases through at the GP door)
+  const doorGX = 120;
+  const doorSX = Math.round(doorGX - camX);
+  const dw = 26, dh = 72, doorTop = baseboardY - dh;
+  if (doorSX > -(dw + 6) && doorSX < W + (dw + 6)) {
+    drawDoor(doorSX, doorTop, { w: dw, h: dh, warm: false });
+  }
+
+  // Floor surface
+  const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + 20);
+  floorGrad.addColorStop(0, '#283858');   // lifted from #1a2848
+  floorGrad.addColorStop(1, '#080e20');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, FLOOR_Y, W, 20);
+
+  drawFloorPlanks(camX, { lineColor: 'rgba(18,30,58,0.24)' });
+
+  // Floor line
+  ctx.strokeStyle = 'rgba(90,72,120,0.45)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath(); ctx.moveTo(0, FLOOR_Y); ctx.lineTo(W, FLOOR_Y); ctx.stroke();
+
+  drawBaseboard(0, baseboardY, W, {
+    fillColor:   'rgba(20,32,58,0.68)',
+    strokeColor: 'rgba(70,55,95,0.38)',
+  });
 }
 
 /* ----------------------------------------------------------------
@@ -1865,33 +2105,35 @@ function drawCinematicScene(name, now) {
    ---------------------------------------------------------------- */
 
 function drawGrandparentsCinematic(now) {
-  // === Base: very dark warm fill ===
-  ctx.fillStyle = '#100c04';
+  // Base fill — lifted
+  ctx.fillStyle = '#201408';   // lifted from #100c04
   ctx.fillRect(0, 0, W, H);
 
+  // Wall gradient — slightly warmer and lighter than the room (cinematic
+  // is an emotionally-saturated version of the same space)
   const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
-  wallGrad.addColorStop(0,   '#221608');
-  wallGrad.addColorStop(0.7, '#1a1208');
-  wallGrad.addColorStop(1,   '#141008');
+  wallGrad.addColorStop(0,   '#3a2818');   // lifted from #221608
+  wallGrad.addColorStop(0.7, '#2e2010');   // lifted from #1a1208
+  wallGrad.addColorStop(1,   '#241808');   // lifted from #141008
   ctx.fillStyle = wallGrad;
   ctx.fillRect(0, 0, W, FLOOR_Y);
 
-  // Lamp warm glow pool — anchors right side (matches lampX=464)
-  const lampGlow = ctx.createRadialGradient(464, 88, 0, 464, 88, 145);
-  lampGlow.addColorStop(0,   'rgba(255,210,100,0.26)');
-  lampGlow.addColorStop(0.5, 'rgba(255,170,60,0.10)');
+  // Lamp warm glow pool — expanded radius (145 → 180); lampX=464
+  const lampGlow = ctx.createRadialGradient(464, 88, 0, 464, 88, 180);
+  lampGlow.addColorStop(0,   'rgba(255,210,100,0.30)');
+  lampGlow.addColorStop(0.5, 'rgba(255,170,60,0.12)');
   lampGlow.addColorStop(1,   'rgba(255,140,40,0)');
   ctx.fillStyle = lampGlow;
   ctx.fillRect(0, 0, W, FLOOR_Y);
 
-  // Floor band
+  // Floor band — lifted
   const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + 20);
-  floorGrad.addColorStop(0, '#241a0c');
-  floorGrad.addColorStop(1, '#100c04');
+  floorGrad.addColorStop(0, '#382a18');   // lifted from #241a0c
+  floorGrad.addColorStop(1, '#201408');
   ctx.fillStyle = floorGrad;
   ctx.fillRect(0, FLOOR_Y, W, 20);
 
-  ctx.strokeStyle = 'rgba(80,60,30,0.5)';
+  ctx.strokeStyle = 'rgba(90,65,28,0.55)';
   ctx.lineWidth   = 1;
   ctx.beginPath(); ctx.moveTo(0, FLOOR_Y); ctx.lineTo(W, FLOOR_Y); ctx.stroke();
 
@@ -1904,12 +2146,16 @@ function drawGrandparentsCinematic(now) {
   ctx.lineWidth   = 1;
   ctx.beginPath(); ctx.moveTo(winX + winW / 2, winY); ctx.lineTo(winX + winW / 2, winY + winH); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(winX, winY + winH * 0.5); ctx.lineTo(winX + winW, winY + winH * 0.5); ctx.stroke();
-  // Frame
-  ctx.strokeStyle = '#2a2010';
+  // Frame — drawShipPanel border (rivets:false) then thick wood frame on top
+  drawShipPanel(winX - 4, winY - 4, winW + 8, winH + 8, {
+    rivets:      false,
+    strokeColor: 'rgba(85,62,24,0.5)',
+  });
+  ctx.strokeStyle = '#3a2a12';   // warm wood frame, lifted from #2a2010
   ctx.lineWidth   = 3;
   ctx.strokeRect(winX - 2, winY - 2, winW + 4, winH + 4);
   ctx.lineWidth   = 1;
-  // Subtle moonlight
+  // Moonlight
   const moonGlow = ctx.createRadialGradient(winX + winW / 2, winY + winH * 0.38, 2, winX + winW / 2, winY + winH * 0.38, 45);
   moonGlow.addColorStop(0, 'rgba(180,210,240,0.14)');
   moonGlow.addColorStop(1, 'rgba(100,150,200,0)');
@@ -1921,13 +2167,13 @@ function drawGrandparentsCinematic(now) {
 
   // === Element 2: Open suitcase (mid-frame, floor level) ===
   const scX = 185, scW = 68, scH = 16, scY = FLOOR_Y - scH;
-  ctx.fillStyle = '#2a2010';
+  ctx.fillStyle = '#3e3018';   // lifted from #2a2010
   ctx.fillRect(scX, scY, scW, scH);
-  ctx.strokeStyle = 'rgba(100,80,40,0.6)';
+  ctx.strokeStyle = 'rgba(130,100,48,0.65)';
   ctx.lineWidth   = 1;
   ctx.strokeRect(scX, scY, scW, scH);
   // Open lid
-  ctx.fillStyle = '#241808';
+  ctx.fillStyle = '#382818';   // lifted from #241808
   ctx.beginPath();
   ctx.moveTo(scX,        scY);
   ctx.lineTo(scX + scW,  scY);
@@ -1935,45 +2181,43 @@ function drawGrandparentsCinematic(now) {
   ctx.lineTo(scX + 5,    scY - 17);
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle = 'rgba(100,80,40,0.45)';
+  ctx.strokeStyle = 'rgba(130,100,48,0.5)';
   ctx.stroke();
-  // Boat shirt inside
-  ctx.fillStyle = 'rgba(80,100,145,0.35)';
+  // Boat shirt
+  ctx.fillStyle = 'rgba(85,110,155,0.42)';
   ctx.fillRect(scX + 4, scY + 3, scW - 8, 5);
   // Clasp
-  ctx.fillStyle = '#6a5030';
+  ctx.fillStyle = '#7a6038';
   ctx.fillRect(scX + scW / 2 - 2, scY - 1, 4, 2);
 
   // === Element 3: Bed (right third) ===
   // Bed spans 284–428; headboard at 418–428. Nightstand sits right of headboard.
   const bedX = 284, bedW = 144, bedH = 24, bedY = FLOOR_Y - bedH;
-  // Headboard (right edge of bed)
-  ctx.fillStyle = '#2a2010';
+  // Headboard
+  ctx.fillStyle = '#3a2e1a';   // lifted from #2a2010
   ctx.fillRect(bedX + bedW - 10, bedY - 18, 10, bedH + 18);
-  ctx.strokeStyle = 'rgba(100,75,35,0.55)';
+  ctx.strokeStyle = 'rgba(130,95,40,0.6)';
   ctx.lineWidth   = 1;
   ctx.strokeRect(bedX + bedW - 10, bedY - 18, 10, bedH + 18);
   // Bed frame
-  ctx.fillStyle = '#1e1610';
+  ctx.fillStyle = '#2e2416';   // lifted from #1e1610
   ctx.fillRect(bedX, bedY, bedW, bedH);
-  ctx.strokeStyle = 'rgba(100,75,35,0.4)';
+  ctx.strokeStyle = 'rgba(130,95,40,0.45)';
   ctx.strokeRect(bedX, bedY, bedW, bedH);
-  // Rumpled bedding — noticeably lighter than frame so it reads as fabric
-  ctx.fillStyle = '#3e2e18';
+  // Rumpled bedding — lifted significantly so fabric reads clearly
+  ctx.fillStyle = '#5a4428';   // lifted from #3e2e18
   ctx.fillRect(bedX + 2,  bedY + 2, bedW - 14, 9);
-  ctx.fillStyle = '#4a3418';
+  ctx.fillStyle = '#685030';   // lifted from #4a3418
   ctx.fillRect(bedX + 6,  bedY + 2, 24, 7);
   ctx.fillRect(bedX + 48, bedY + 3, 18, 6);
-  ctx.fillStyle = '#382616';
+  ctx.fillStyle = '#4e3822';   // lifted from #382616
   ctx.fillRect(bedX + 78, bedY + 2, 30, 8);
 
   // === Element 4: Bedside lamp (far right) ===
   const lampX = 464, lampShadeY = 78;
   const pulse = 0.85 + Math.sin(now / 2800) * 0.08;
-  // Lamp base (stem)
-  ctx.fillStyle = '#4a3820';
+  ctx.fillStyle = '#5a4828';   // lifted stem
   ctx.fillRect(lampX - 1, lampShadeY + 18, 3, FLOOR_Y - lampShadeY - 18);
-  // Shade
   ctx.fillStyle = '#c87828';
   ctx.beginPath();
   ctx.moveTo(lampX - 10, lampShadeY + 18);
@@ -1982,9 +2226,8 @@ function drawGrandparentsCinematic(now) {
   ctx.lineTo(lampX - 6,  lampShadeY);
   ctx.closePath();
   ctx.fill();
-  // Inner glow
   ctx.globalAlpha = pulse;
-  ctx.fillStyle   = 'rgba(255,220,120,0.55)';
+  ctx.fillStyle   = 'rgba(255,220,120,0.58)';
   ctx.beginPath();
   ctx.moveTo(lampX - 8, lampShadeY + 16);
   ctx.lineTo(lampX + 9, lampShadeY + 16);
@@ -1993,41 +2236,36 @@ function drawGrandparentsCinematic(now) {
   ctx.closePath();
   ctx.fill();
   ctx.globalAlpha = 1;
-  // Halo
-  const lampHalo = ctx.createRadialGradient(lampX, lampShadeY + 10, 0, lampX, lampShadeY + 10, 72);
-  lampHalo.addColorStop(0, `rgba(255,210,90,${0.22 * pulse})`);
+  // Halo — expanded to match enlarged global glow
+  const lampHalo = ctx.createRadialGradient(lampX, lampShadeY + 10, 0, lampX, lampShadeY + 10, 88);
+  lampHalo.addColorStop(0, `rgba(255,210,90,${0.26 * pulse})`);
   lampHalo.addColorStop(1, 'rgba(255,170,50,0)');
   ctx.fillStyle = lampHalo;
-  ctx.fillRect(lampX - 72, lampShadeY - 30, 144, 110);
+  ctx.fillRect(lampX - 88, lampShadeY - 40, 176, 140);
 
   // === Element 5: Nightstand + photograph (right of headboard) ===
-  // nsX is the left edge; sits between headboard (428) and lamp (464).
   const nsX = 432, nsW = 18, nsH = 18, nsY = FLOOR_Y - nsH;
-  ctx.fillStyle = '#1e1408';
+  ctx.fillStyle = '#2e2414';   // lifted from #1e1408
   ctx.fillRect(nsX, nsY, nsW, nsH);
-  ctx.strokeStyle = 'rgba(100,75,35,0.5)';
+  ctx.strokeStyle = 'rgba(130,95,40,0.55)';
   ctx.lineWidth   = 1;
   ctx.strokeRect(nsX, nsY, nsW, nsH);
   // Photo frame
-  ctx.fillStyle = '#3a2c14';
+  ctx.fillStyle = '#4a3a1e';
   ctx.fillRect(nsX + 2, nsY - 11, 14, 11);
-  ctx.strokeStyle = 'rgba(130,105,60,0.75)';
+  ctx.strokeStyle = 'rgba(155,120,68,0.8)';
   ctx.strokeRect(nsX + 2, nsY - 11, 14, 11);
-  // Photo fill + tiny Pip silhouette
-  ctx.fillStyle = '#c8a060';
+  ctx.fillStyle = '#d4a868';
   ctx.fillRect(nsX + 4, nsY - 9, 10, 8);
   ctx.fillStyle = '#1a1408';
-  ctx.beginPath();
-  ctx.arc(nsX + 9, nsY - 6, 2, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.beginPath(); ctx.arc(nsX + 9, nsY - 6, 2, 0, Math.PI * 2); ctx.fill();
   ctx.fillRect(nsX + 7, nsY - 3, 4, 3);
 
   // === Babcia seated on bed (sob-bob) ===
-  // cx ~= 40% from bed left, well clear of headboard and nightstand.
   const babciaSob = Math.sin(now / 1500) * 1;
   drawCinBabcia(Math.round(bedX + bedW * 0.38), bedY + Math.round(babciaSob));
 
-  // === Optional: dust motes near lamp ===
+  // === Dust motes near lamp ===
   drawDustMotes(now);
 }
 
@@ -2121,15 +2359,15 @@ function drawDustMotes(now) {
    ================================================================ */
 
 function drawHallway(camX, now) {
-  // Base fill — full canvas (covers UI zone below FLOOR_Y too)
+  // Base fill
   ctx.fillStyle = '#080e20';
   ctx.fillRect(0, 0, W, H);
 
-  // Wall gradient — room zone only (0 to FLOOR_Y)
+  // Wall gradient — lifted cool blue; ship corridor at night
   const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
-  wallGrad.addColorStop(0,   '#0c1832');
-  wallGrad.addColorStop(0.5, '#18244e');
-  wallGrad.addColorStop(1,   '#0e1a3a');
+  wallGrad.addColorStop(0,   '#1a2848');   // lifted from #0c1832
+  wallGrad.addColorStop(0.5, '#263460');   // lifted from #18244e
+  wallGrad.addColorStop(1,   '#1c2a50');   // lifted from #0e1a3a
   ctx.fillStyle = wallGrad;
   ctx.fillRect(0, 0, W, FLOOR_Y);
 
@@ -2144,86 +2382,49 @@ function drawHallway(camX, now) {
   ctx.fillRect(0, 0, W, FLOOR_Y);
 
   const baseboardH = 12;
-  const baseboardY = FLOOR_Y - baseboardH;
+  const baseboardY = FLOOR_Y - baseboardH;   // 168
   const doorH      = 64;
   const doorW      = 24;
-  const doorTop    = baseboardY - doorH;
+  const doorTop    = baseboardY - doorH;     // 104
+  const panelTop   = 20;
+  const panelH     = baseboardY - panelTop;  // 148
 
-  // ---- Door silhouettes ----
-  // Six doors total: five plain + grandparents' door (distinct warm glow)
-  const doorPositions = [80, 280, 480, 700, 920, 1180];
-
-  for (const gx of doorPositions) {
-    const sx = Math.round(gx - camX);
-    if (sx > W + doorW || sx < -doorW) continue;
-
-    const isGP = (gx === 1180);
-    const dl   = sx - Math.floor(doorW / 2);   // door left edge
-
-    if (isGP) {
-      // Warm under-glow: suggests the lit room behind the grandparents' door
-      const gpGlow = ctx.createLinearGradient(sx, doorTop, sx, FLOOR_Y + 10);
-      gpGlow.addColorStop(0,   'rgba(255,180,80,0)');
-      gpGlow.addColorStop(0.6, 'rgba(255,170,70,0.16)');
-      gpGlow.addColorStop(1,   'rgba(255,140,40,0)');
-      ctx.fillStyle = gpGlow;
-      ctx.fillRect(dl - 10, doorTop, doorW + 20, FLOOR_Y - doorTop + 15);
-
-      ctx.fillStyle = '#1c1408';   // warmer dark
-    } else {
-      ctx.fillStyle = '#080910';   // cool dark door silhouette
-    }
-
-    // Door slab
-    ctx.fillRect(dl, doorTop, doorW, doorH);
-
-    // Door frame
-    ctx.strokeStyle = isGP ? 'rgba(160,130,70,0.4)' : 'rgba(35,45,85,0.45)';
-    ctx.lineWidth   = 1;
-    ctx.strokeRect(dl, doorTop, doorW, doorH);
-
-    // Door handle (small rectangle on the pull side)
-    ctx.fillStyle = isGP ? '#a08664' : '#2a3060';
-    ctx.fillRect(dl + doorW - 4, doorTop + Math.floor(doorH * 0.55), 2, 3);
+  // Riveted wall panels at half camera speed
+  const panelSpacing = 120;
+  const panelOffset  = (camX * 0.5) % panelSpacing;
+  for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
+    drawShipPanel(Math.round(px), panelTop, panelSpacing, panelH, {
+      strokeColor: 'rgba(50,70,120,0.22)',
+      rivetColor:  'rgba(60,80,130,0.38)',
+    });
   }
 
-  // ---- Brass sconces between doors ----
-  // Sconce at x=820 flickers — first hint of Pip's electricity ability (Beat 8)
-  const sconcePositions = [180, 390, 610, 820, 1060];
-  const sconceY = doorTop + 4;   // sits in the wall just above door tops
+  // Portholes — three, full camera speed, between doors
+  // Positioned at game-world x = 350, 650, 1000
+  const portholeY = 54, portholeR = 17;
+  for (const gx of [350, 650, 1000]) {
+    const sx = Math.round(gx - camX);
+    if (sx < -(portholeR + 5) || sx > W + portholeR + 5) continue;
+    drawPorthole(sx, portholeY, portholeR, { moonlight: true, divider: true });
+  }
 
-  for (const gx of sconcePositions) {
+  // Sconces — refactored to drawSconce
+  // x=820 flickers — first hint of Pip's electricity ability (Beat 8)
+  const sconceY = doorTop + 4;   // 108
+  for (const gx of [180, 390, 610, 820, 1060]) {
     const sx = Math.round(gx - camX);
     if (sx > W + 12 || sx < -12) continue;
-
-    const isFlicker = (gx === 820);
-    let brightness;
-    if (isFlicker) {
-      // Multi-frequency flicker — "not quite in time with itself"
-      brightness = 0.55 + Math.sin(now * 0.0061) * 0.18 + Math.sin(now * 0.0113) * 0.11;
-    } else {
-      brightness = 0.7;
-    }
-
-    // Sconce bracket (4×10px vertical + 6×3px cap)
-    ctx.globalAlpha = brightness;
-    ctx.fillStyle   = '#a08664';
-    ctx.fillRect(sx - 2, sconceY,     4, 10);
-    ctx.fillRect(sx - 3, sconceY - 3, 6,  3);
-
-    // Warm light pool
-    ctx.globalAlpha = brightness * 0.13;
-    const lightGrad = ctx.createRadialGradient(sx, sconceY + 5, 0, sx, sconceY + 5, 22);
-    lightGrad.addColorStop(0, 'rgba(255,218,120,1)');
-    lightGrad.addColorStop(1, 'rgba(255,180,80,0)');
-    ctx.fillStyle = lightGrad;
-    ctx.fillRect(sx - 22, sconceY - 16, 44, 36);
-
-    ctx.globalAlpha = 1;
+    drawSconce(sx, sconceY, { flicker: gx === 820, intensity: 0.7, now });
   }
 
-  // ---- Far-right dark zone (last 120 game-world px: x 1320–1440) ----
-  // Gradient from corridor color to near-black. Pip is clamped before entering.
+  // Doors — six total; grandparents' door (1180) has warm glow
+  for (const gx of [80, 280, 480, 700, 920, 1180]) {
+    const sx = Math.round(gx - camX);
+    if (sx > W + doorW || sx < -doorW) continue;
+    drawDoor(sx, doorTop, { w: doorW, h: doorH, warm: gx === 1180 });
+  }
+
+  // Far-right dark zone (game-world x 1320–1440)
   const darkStartSx = Math.round(1320 - camX);
   if (darkStartSx < W) {
     const drawLeft  = Math.max(0, darkStartSx);
@@ -2237,48 +2438,30 @@ function drawHallway(camX, now) {
     }
   }
 
-  // ---- Floor surface with faint red carpet tint ----
+  // Floor surface with carpet tint — lifted base
   const floorSurfH = 20;
   const floorGrad  = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + floorSurfH);
-  floorGrad.addColorStop(0,    '#1a2848');
-  floorGrad.addColorStop(0.35, '#261828');   // whisper of red-purple
+  floorGrad.addColorStop(0,    '#283858');   // lifted from #1a2848
+  floorGrad.addColorStop(0.35, '#2e2030');   // warm-purple carpet tint
   floorGrad.addColorStop(1,    '#080e20');
   ctx.fillStyle = floorGrad;
   ctx.fillRect(0, FLOOR_Y, W, floorSurfH);
 
-  // Carpet runner — thin band just below floor line
+  // Carpet runner
   ctx.fillStyle = 'rgba(90,18,28,0.28)';
   ctx.fillRect(0, FLOOR_Y - 3, W, 5);
+
+  drawFloorPlanks(camX, { lineColor: 'rgba(18,30,58,0.20)' });
 
   // Floor line
   ctx.strokeStyle = 'rgba(90,72,120,0.45)';
   ctx.lineWidth   = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, FLOOR_Y);
-  ctx.lineTo(W, FLOOR_Y);
-  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, FLOOR_Y); ctx.lineTo(W, FLOOR_Y); ctx.stroke();
 
-  // Baseboard
-  ctx.fillStyle = 'rgba(26,40,72,0.6)';
-  ctx.fillRect(0, baseboardY, W, baseboardH);
-  ctx.strokeStyle = 'rgba(90,72,120,0.3)';
-  ctx.lineWidth   = 1;
-  ctx.beginPath();
-  ctx.moveTo(0, baseboardY);
-  ctx.lineTo(W, baseboardY);
-  ctx.stroke();
-
-  // Parallax wall panel lines (half camera speed for depth)
-  const panelSpacing = 120;
-  const panelOffset  = (camX * 0.5) % panelSpacing;
-  ctx.strokeStyle = 'rgba(60,80,140,0.15)';
-  ctx.lineWidth   = 1;
-  for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
-    ctx.beginPath();
-    ctx.moveTo(px, 20);
-    ctx.lineTo(px, baseboardY);
-    ctx.stroke();
-  }
+  drawBaseboard(0, baseboardY, W, {
+    fillColor:   'rgba(20,32,58,0.68)',
+    strokeColor: 'rgba(70,55,95,0.38)',
+  });
 }
 
 /* ================================================================
@@ -2342,23 +2525,23 @@ function drawPassengerBody() {
    ================================================================ */
 
 function drawGrandparents(camX, now) {
-  // Base fill (UI zone below FLOOR_Y)
+  // Base fill (UI zone)
   ctx.fillStyle = '#0e0a04';
   ctx.fillRect(0, 0, W, H);
 
-  // Wall gradient — slightly warmer than cabin (a room that was lived in)
+  // Wall gradient — warm brown, lifted for legibility (a room lived in)
   const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
-  wallGrad.addColorStop(0,   '#1e1408');
-  wallGrad.addColorStop(0.5, '#241808');
-  wallGrad.addColorStop(1,   '#1a1208');
+  wallGrad.addColorStop(0,   '#322414');   // lifted from #1e1408
+  wallGrad.addColorStop(0.5, '#3c2c18');   // lifted from #241808
+  wallGrad.addColorStop(1,   '#2c2010');   // lifted from #1a1208
   ctx.fillStyle = wallGrad;
   ctx.fillRect(0, 0, W, FLOOR_Y);
 
-  // Bedside lamp warm glow (right area, game-world ~x=590)
+  // Bedside lamp warm glow (game-world ~x=590)
   const lampGX = 590;
   const lampSX = lampGX - camX;
-  const lampGlow = ctx.createRadialGradient(lampSX, 100, 0, lampSX, 100, 105);
-  lampGlow.addColorStop(0, 'rgba(255,200,80,0.18)');
+  const lampGlow = ctx.createRadialGradient(lampSX, 100, 0, lampSX, 100, 115);
+  lampGlow.addColorStop(0, 'rgba(255,200,80,0.22)');
   lampGlow.addColorStop(1, 'rgba(255,160,40,0)');
   ctx.fillStyle = lampGlow;
   ctx.fillRect(0, 0, W, FLOOR_Y);
@@ -2374,9 +2557,21 @@ function drawGrandparents(camX, now) {
   ctx.fillRect(0, 0, W, FLOOR_Y);
 
   const baseboardH = 12;
-  const baseboardY = FLOOR_Y - baseboardH;
+  const baseboardY = FLOOR_Y - baseboardH;   // 168
+  const panelTop   = 20;
+  const panelH     = baseboardY - panelTop;  // 148
 
-  // --- Window (left, game-world x=80–145) ---
+  // Riveted wall panels at half camera speed
+  const panelSpacing = 120;
+  const panelOffset  = (camX * 0.5) % panelSpacing;
+  for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
+    drawShipPanel(Math.round(px), panelTop, panelSpacing, panelH, {
+      strokeColor: 'rgba(80,58,22,0.20)',
+      rivetColor:  'rgba(90,65,25,0.38)',
+    });
+  }
+
+  // --- Window (left, game-world x=80–138) ---
   const winGX = 80, winGW = 58, winRH = 90, winRY = 24;
   const winSX = Math.round(winGX - camX);
   if (winSX < W + winGW && winSX + winGW > 0) {
@@ -2386,42 +2581,47 @@ function drawGrandparents(camX, now) {
     ctx.lineWidth   = 1;
     ctx.beginPath(); ctx.moveTo(winSX + winGW / 2, winRY); ctx.lineTo(winSX + winGW / 2, winRY + winRH); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(winSX, winRY + winRH * 0.5); ctx.lineTo(winSX + winGW, winRY + winRH * 0.5); ctx.stroke();
-    ctx.strokeStyle = '#241808';
+    ctx.strokeStyle = '#3a2c14';   // lifted from #241808 — visible warm frame
     ctx.lineWidth   = 2;
     ctx.strokeRect(winSX - 2, winRY - 2, winGW + 4, winRH + 4);
     ctx.lineWidth   = 1;
   }
 
-  // --- Bed (right, game-world x=440–600) ---
+  // --- Bed (right, game-world x=440–598) ---
+  // Contrast hierarchy: frame > bedding > headboard, all readable against wall
   const bedGX = 440, bedGW = 158, bedH = 22, bedY = FLOOR_Y - bedH;
   const bedSX = Math.round(bedGX - camX);
   if (bedSX < W + bedGW && bedSX + bedGW > 0) {
     // Headboard
-    ctx.fillStyle = '#1e1408';
+    ctx.fillStyle = '#3a2e1a';   // lifted from #1e1408
     ctx.fillRect(bedSX + bedGW - 10, bedY - 14, 10, bedH + 14);
-    ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+    ctx.strokeStyle = 'rgba(120,90,40,0.5)';
     ctx.lineWidth   = 1;
     ctx.strokeRect(bedSX + bedGW - 10, bedY - 14, 10, bedH + 14);
-    // Bed frame + bedding
-    ctx.fillStyle = '#1a1208';
+    // Bed frame
+    ctx.fillStyle = '#302618';   // lifted from #1a1208
     ctx.fillRect(bedSX, bedY, bedGW, bedH);
-    ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+    ctx.strokeStyle = 'rgba(120,90,40,0.45)';
     ctx.strokeRect(bedSX, bedY, bedGW, bedH);
-    ctx.fillStyle = '#281e0e';
-    ctx.fillRect(bedSX + 2, bedY + 2, bedGW - 14, 7);
+    // Bedding — noticeably lighter than frame
+    ctx.fillStyle = '#5a4428';
+    ctx.fillRect(bedSX + 2, bedY + 2, bedGW - 14, 8);
+    ctx.fillStyle = '#685030';
+    ctx.fillRect(bedSX + 6, bedY + 2, 28, 6);
+    ctx.fillRect(bedSX + 50, bedY + 3, 20, 5);
   }
 
   // --- Bedside lamp (game-world x≈590) ---
   if (lampSX > -20 && lampSX < W + 20) {
     const ls = Math.round(lampSX);
-    ctx.fillStyle = '#4a3820';
+    ctx.fillStyle = '#5a4828';   // lifted stem
     ctx.fillRect(ls - 1, 110, 3, FLOOR_Y - 110);
-    ctx.fillStyle = '#b86820';
+    ctx.fillStyle = '#c87828';
     ctx.beginPath();
     ctx.moveTo(ls - 8, 126); ctx.lineTo(ls + 9, 126);
     ctx.lineTo(ls + 6, 110); ctx.lineTo(ls - 5, 110);
     ctx.closePath(); ctx.fill();
-    ctx.fillStyle = 'rgba(255,200,80,0.45)';
+    ctx.fillStyle = 'rgba(255,200,80,0.50)';
     ctx.beginPath();
     ctx.moveTo(ls - 6, 124); ctx.lineTo(ls + 7, 124);
     ctx.lineTo(ls + 5, 112); ctx.lineTo(ls - 4, 112);
@@ -2431,16 +2631,16 @@ function drawGrandparents(camX, now) {
   // --- Nightstand + photograph (game-world x=620) ---
   const nsSX = Math.round(620 - camX);
   if (nsSX > -20 && nsSX < W + 20) {
-    ctx.fillStyle = '#1a1208';
+    ctx.fillStyle = '#2e2414';   // lifted from #1a1208
     ctx.fillRect(nsSX - 10, FLOOR_Y - 18, 20, 18);
-    ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+    ctx.strokeStyle = 'rgba(120,90,40,0.5)';
     ctx.lineWidth   = 1;
     ctx.strokeRect(nsSX - 10, FLOOR_Y - 18, 20, 18);
-    ctx.fillStyle = '#3a2c14';
+    ctx.fillStyle = '#4a3a1e';
     ctx.fillRect(nsSX - 7, FLOOR_Y - 28, 14, 10);
-    ctx.strokeStyle = 'rgba(120,100,60,0.6)';
+    ctx.strokeStyle = 'rgba(150,120,65,0.65)';
     ctx.strokeRect(nsSX - 7, FLOOR_Y - 28, 14, 10);
-    ctx.fillStyle = '#c8a060';
+    ctx.fillStyle = '#d4a868';
     ctx.fillRect(nsSX - 5, FLOOR_Y - 26, 10, 7);
   }
 
@@ -2448,55 +2648,46 @@ function drawGrandparents(camX, now) {
   const scSX = Math.round(380 - camX);
   if (scSX > -40 && scSX < W + 40) {
     const scW2 = 54, scH2 = 13, scY2 = FLOOR_Y - scH2;
-    ctx.fillStyle = '#2a2010';
+    ctx.fillStyle = '#3e3018';   // lifted from #2a2010
     ctx.fillRect(scSX - scW2 / 2, scY2, scW2, scH2);
-    ctx.strokeStyle = 'rgba(100,80,40,0.5)';
+    ctx.strokeStyle = 'rgba(130,100,48,0.55)';
     ctx.lineWidth   = 1;
     ctx.strokeRect(scSX - scW2 / 2, scY2, scW2, scH2);
     // Open lid
-    ctx.fillStyle = '#241808';
+    ctx.fillStyle = '#382814';   // lifted from #241808
     ctx.beginPath();
     ctx.moveTo(scSX - scW2 / 2, scY2);
     ctx.lineTo(scSX + scW2 / 2, scY2);
     ctx.lineTo(scSX + scW2 / 2 - 4, scY2 - 14);
     ctx.lineTo(scSX - scW2 / 2 + 4, scY2 - 14);
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(100,80,40,0.4)';
+    ctx.strokeStyle = 'rgba(130,100,48,0.45)';
     ctx.stroke();
-    // Shirt
-    ctx.fillStyle = 'rgba(70,90,130,0.28)';
+    // Shirt — more visible after lift
+    ctx.fillStyle = 'rgba(80,110,165,0.38)';
     ctx.fillRect(scSX - scW2 / 2 + 3, scY2 + 2, scW2 - 6, 4);
   }
 
   // Floor surface
   const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + 20);
-  floorGrad.addColorStop(0, '#241a0c');
+  floorGrad.addColorStop(0, '#382a18');   // lifted from #241a0c
   floorGrad.addColorStop(1, '#0e0a04');
   ctx.fillStyle = floorGrad;
   ctx.fillRect(0, FLOOR_Y, W, 20);
 
+  drawFloorPlanks(camX, { lineColor: 'rgba(18,10,2,0.22)' });
+
   // Floor line
-  ctx.strokeStyle = 'rgba(80,60,30,0.5)';
+  ctx.strokeStyle = 'rgba(90,65,28,0.55)';
   ctx.lineWidth   = 1;
   ctx.beginPath(); ctx.moveTo(0, FLOOR_Y); ctx.lineTo(W, FLOOR_Y); ctx.stroke();
 
-  // Baseboard
-  ctx.fillStyle = 'rgba(30,20,8,0.6)';
-  ctx.fillRect(0, baseboardY, W, baseboardH);
-  ctx.strokeStyle = 'rgba(80,60,30,0.3)';
-  ctx.lineWidth   = 1;
-  ctx.beginPath(); ctx.moveTo(0, baseboardY); ctx.lineTo(W, baseboardY); ctx.stroke();
+  drawBaseboard(0, baseboardY, W, {
+    fillColor:   'rgba(22,14,4,0.72)',
+    strokeColor: 'rgba(65,46,16,0.4)',
+  });
 
-  // Parallax wall panels (half camera speed)
-  const panelSpacing = 120;
-  const panelOffset  = (camX * 0.5) % panelSpacing;
-  ctx.strokeStyle = 'rgba(80,60,20,0.12)';
-  ctx.lineWidth   = 1;
-  for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
-    ctx.beginPath(); ctx.moveTo(px, 18); ctx.lineTo(px, baseboardY); ctx.stroke();
-  }
-
-  // --- NPCs drawn beneath Pip (Pip renders over them) ---
+  // --- NPCs drawn beneath Pip ---
   const dzSX = Math.round(160 - camX);
   if (dzSX > -20 && dzSX < W + 20) {
     drawDziadek(dzSX, FLOOR_Y, now);

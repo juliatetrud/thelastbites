@@ -119,6 +119,36 @@ Standard `requestAnimationFrame` loop. Each frame:
 - When Pip is within 18 pixels of an object's x position, a sparkle is drawn and inspection is enabled
 - Pressing up triggers either dialogue or a cinematic based on the object's properties
 
+### Sprite Rig (Pip and all characters)
+Character sprites are rendered as a **stack of independent layers**, drawn back to front in the same `requestAnimationFrame` pass. Each layer is its own draw call (procedurally drawn for placeholders, switched to image draws when art is commissioned).
+
+Pip's rig has three layers:
+- **Body** — silhouette, hair, apron, glow. Driven by movement state (idle bob, walk frame, float pose).
+- **Eyes** — two eye-dots. Driven by an eye-state object: `{ openness, scaleX, scaleY, offsetX, offsetY }`. Enables blinks, widening, side-glances, and held-stare moments.
+- **Mouth** — small mouth-shape. Driven by a mouth-state object: `{ shape, openness, offsetX, offsetY }`. Enables small smiles, gasps, neutral, etc. Used sparingly — most of the time the mouth is a single neutral pixel.
+
+Each layer maintains its own animation timeline. Blinks happen on a randomized 3–6 second cadence by default; specific story beats override (the mirror cinematic should freeze the blink, taste-memory should hold the eyes wide, etc.).
+
+**Direction (facing).** Sprites face the direction of movement. Flip is performed at draw time:
+
+```javascript
+ctx.save();
+if (pip.facing === 'left') {
+  ctx.translate(pip.x + spriteWidth, pip.y);
+  ctx.scale(-1, 1);
+} else {
+  ctx.translate(pip.x, pip.y);
+}
+drawPipBody();
+drawPipEyes();
+drawPipMouth();
+ctx.restore();
+```
+
+No separate left/right sprite art needed. This rule applies to every character whose silhouette has no asymmetric tells.
+
+**Why this matters.** Most of the game's emotional bandwidth from sprites lives in the eyes and the mouth — Pip widening his eyes at the mirror, his small smile when tasting Henrik's gravlaks, his eyes filling with the held-still grief on the dock. Treating those layers as independent rigs gives every future cinematic and gameplay beat the room to do that work without a new sprite commission. Same pattern extends to NPCs (Henrik's weary patience in the eyes, Marta's grief in the mouth).
+
 ---
 
 ## How to Add a New Room

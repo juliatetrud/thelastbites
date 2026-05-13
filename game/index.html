@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Last Bites</title>
+
+<!--
+  THE LAST BITES
+  Sprint 01 — Foundation Scaffold
+
+  Internal canvas resolution: 480×270 (16:9)
+  Single-file vanilla JS. No frameworks. No build step.
+  See design-docs/ for full design documentation.
+-->
+
+<style>
+  /* ============================================================
+     GOOGLE FONTS — loaded by CDN per 05-tech-architecture.md
+     Special Elite  : chrome, labels, prompts
+     Cormorant Garamond : narration (italic) and speech (regular)
+     ============================================================ */
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+
+  /* ============================================================
+     LOCKED COLOR TOKENS — from 03b-ui-spec.md §Color Tokens
+     Universal tokens: never change per chapter.
+     Regional tokens: swap per chapter (Estonia defaults here).
+     ============================================================ */
+  :root {
+    /* Universal text */
+    --text-narration:    #fff4d8;
+    --text-speaker:      #f0c898;
+    --text-prompt:       #c8a878;
+    --text-faint:        #8a7858;
+
+    /* Universal panels */
+    --panel-bg:          rgba(8, 6, 12, 0.92);
+    --panel-bg-deeper:   rgba(20, 16, 32, 0.92);
+    --panel-border:      #3a4068;
+    --panel-border-soft: rgba(140, 160, 200, 0.22);
+
+    /* Warm pools (home, food, safety) */
+    --warm-pool-amber:   #ffc868;
+    --warm-pool-deep:    #c87830;
+    --warm-pool-glow:    #ffe088;
+
+    /* Spirits */
+    --spirit-pip:        #f0f8ff;
+
+    /* Regional — deep moonlit blue (Chapter 1 / ship interior)
+       See 03-art-and-aesthetic.md for full regional palette */
+    --region-base:       #1c2858;
+    --region-deep:       #0e1a3a;
+    --region-shadow:     #5a4878;
+    --region-floor:      #1a2848;
+  }
+
+  /* ============================================================
+     BASE LAYOUT
+     ============================================================ */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: 'Cormorant Garamond', serif;
+    user-select: none;
+  }
+
+  /* Full-viewport centering wrapper */
+  #game-wrap {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+  }
+
+  /* 16:9 letterboxed game container.
+     Matches the three-doors-demo.html pattern from prototype/. */
+  #game {
+    width:  min(100vw, calc(100vh * 16 / 9));
+    height: min(100vh, calc(100vw * 9  / 16));
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* The canvas: internal resolution set via width/height attrs (480×270).
+     CSS stretches it to fill #game. image-rendering keeps pixels crisp. */
+  #canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges; /* Firefox */
+  }
+
+  /* ============================================================
+     VIGNETTE + FILM GRAIN
+     Both are CSS-only overlays on top of the canvas.
+     Pattern from 03-art-and-aesthetic.md §Aesthetic Rules and
+     matching the three-doors-demo.html implementation.
+     ============================================================ */
+  #grain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    /* Vignette: transparent center → dark edges */
+    background-image: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.85) 100%);
+    mix-blend-mode: multiply;
+    z-index: 50;
+  }
+  #grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    /* SVG fractal noise grain */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.78 0 0 0 0 0.6 0 0 0 0.18 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    opacity: 0.45;
+    mix-blend-mode: overlay;
+    animation: grain-shift 0.4s steps(2) infinite;
+  }
+  @keyframes grain-shift {
+    0%, 100% { transform: translate(0, 0); }
+    50%       { transform: translate(-3px, 2px); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Font pre-loading: invisible spans force both fonts to be requested
+     from Google Fonts even before any canvas text is drawn. -->
+<span style="position:absolute;opacity:0;pointer-events:none;font-family:'Special Elite',serif;font-size:1px;" aria-hidden="true">&nbsp;</span>
+<span style="position:absolute;opacity:0;pointer-events:none;font-family:'Cormorant Garamond',serif;font-size:1px;" aria-hidden="true">&nbsp;</span>
+
+<div id="game-wrap">
+  <div id="game">
+    <!-- The game canvas: 480×270 internal resolution, scaled by CSS -->
+    <canvas id="canvas" width="480" height="270"></canvas>
+
+    <!-- Grain + vignette overlay sits above the canvas -->
+    <div id="grain"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ================================================================
+   CONSTANTS
+   ================================================================ */
+
+const W = 480;           // internal canvas width  (pixels)
+const H = 270;           // internal canvas height (pixels)
+const ROOM_W = 960;      // room width in game-world coordinates (2× canvas)
+const FLOOR_Y = 232;     // y of the floor surface (feet land here)
+const PIP_HALF_W = 8;    // half of Pip's sprite width (16px total)
+const PIP_H = 24;        // Pip's sprite height
+const PIP_SPEED = 90;    // movement speed, pixels per second (game coords)
+
+/* ================================================================
+   CANVAS SETUP
+   ================================================================ */
+
+const canvas = document.getElementById('canvas');
+const ctx    = canvas.getContext('2d');
+
+/* ================================================================
+   GAME STATE
+   ================================================================ */
+
+const pip = {
+  x: ROOM_W / 2,   // game-world x; starts at room center
+  y: FLOOR_Y,      // game-world y (feet position)
+  facingRight: true,
+};
+
+/* ================================================================
+   INPUT
+   Held keys tracked via keydown/keyup. Arrow keys and WASD for
+   movement. Space/Up/Esc recorded but not yet acted on (later
+   sprints wire these up).
+   ================================================================ */
+
+const keysHeld = Object.create(null);
+
+document.addEventListener('keydown', (e) => {
+  keysHeld[e.code] = true;
+  // Prevent arrow keys from scrolling the page
+  if (
+    e.code === 'ArrowLeft'  ||
+    e.code === 'ArrowRight' ||
+    e.code === 'ArrowUp'    ||
+    e.code === 'ArrowDown'  ||
+    e.code === 'Space'
+  ) {
+    e.preventDefault();
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  keysHeld[e.code] = false;
+});
+
+function movingLeft()  { return keysHeld['ArrowLeft']  || keysHeld['KeyA']; }
+function movingRight() { return keysHeld['ArrowRight'] || keysHeld['KeyD']; }
+
+/* ================================================================
+   GAME LOOP
+   Standard requestAnimationFrame loop with delta-time movement so
+   speed is framerate-independent.
+   ================================================================ */
+
+let lastTimestamp = null;
+
+function loop(timestamp) {
+  requestAnimationFrame(loop);
+
+  // Delta time in seconds; cap at 100ms to avoid large jumps
+  if (lastTimestamp === null) lastTimestamp = timestamp;
+  const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
+  lastTimestamp = timestamp;
+
+  update(dt);
+  render(timestamp);
+}
+
+/* ================================================================
+   UPDATE
+   ================================================================ */
+
+function update(dt) {
+  const left  = movingLeft();
+  const right = movingRight();
+
+  if (left  && !right) {
+    pip.x -= PIP_SPEED * dt;
+    pip.facingRight = false;
+  }
+  if (right && !left) {
+    pip.x += PIP_SPEED * dt;
+    pip.facingRight = true;
+  }
+
+  // Clamp Pip to room bounds
+  pip.x = Math.max(PIP_HALF_W, Math.min(ROOM_W - PIP_HALF_W, pip.x));
+}
+
+/* ================================================================
+   CAMERA
+   Follows Pip; clamped so the camera never shows beyond the room.
+   Starts scrolling once Pip passes the horizontal midpoint of the
+   canvas (W/2 = 240px from the left edge).
+   ================================================================ */
+
+function getCameraX() {
+  return Math.max(0, Math.min(pip.x - W / 2, ROOM_W - W));
+}
+
+/* ================================================================
+   RENDER
+   ================================================================ */
+
+function render(now) {
+  const camX = getCameraX();
+
+  ctx.clearRect(0, 0, W, H);
+
+  drawRoom(camX, now);
+  drawPip(pip.x - camX, pip.y, pip.facingRight, now);
+}
+
+/* ----------------------------------------------------------------
+   ROOM / BACKGROUND
+   Placeholder environment: deep moonlit blue gradient using the
+   locked --region-base / --region-deep tokens. A faint floor line
+   near the bottom. No specific Chapter 1 art (that comes later).
+   ---------------------------------------------------------------- */
+
+function drawRoom(camX, now) {
+  /* Sky / wall gradient — vertical, top to bottom */
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, H);
+  wallGrad.addColorStop(0,   '#0e1a3a');  /* --region-deep  */
+  wallGrad.addColorStop(0.5, '#1c2858');  /* --region-base  */
+  wallGrad.addColorStop(1,   '#0e1a3a');  /* --region-deep  */
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  /* Subtle radial darkening near room edges (ambient depth) */
+  const edgeGrad = ctx.createRadialGradient(W / 2, H * 0.45, H * 0.2, W / 2, H * 0.45, H * 0.9);
+  edgeGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+  edgeGrad.addColorStop(1, 'rgba(12, 6, 24, 0.55)');
+  ctx.fillStyle = edgeGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  /* Floor — a slightly lighter band below the floor line */
+  const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
+  floorGrad.addColorStop(0, '#1a2848');   /* --region-floor */
+  floorGrad.addColorStop(1, '#0e1a3a');   /* --region-deep  */
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+
+  /* Floor line — faint separator between wall and floor */
+  ctx.strokeStyle = 'rgba(90, 72, 120, 0.45)';  /* --region-shadow tint */
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, FLOOR_Y);
+  ctx.lineTo(W, FLOOR_Y);
+  ctx.stroke();
+
+  /* Very faint repeating baseboards / wainscoting suggestion,
+     scrolling with the camera so the room feels wider than the canvas. */
+  const baseboardH = 12;
+  const baseboardY = FLOOR_Y - baseboardH;
+  ctx.fillStyle = 'rgba(26, 40, 72, 0.6)';
+  ctx.fillRect(0, baseboardY, W, baseboardH);
+  ctx.strokeStyle = 'rgba(90, 72, 120, 0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, baseboardY);
+  ctx.lineTo(W, baseboardY);
+  ctx.stroke();
+
+  /* Subtle parallax: distant wall markings shift at half camera speed,
+     giving depth cues without any sprite art. These are just faint
+     vertical lines suggesting a panelled corridor. */
+  const panelSpacing = 120;  /* game-world spacing of wall panels */
+  const panelOffset  = (camX * 0.5) % panelSpacing;
+  ctx.strokeStyle = 'rgba(60, 80, 140, 0.18)';
+  ctx.lineWidth = 1;
+  for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
+    ctx.beginPath();
+    ctx.moveTo(px, 20);
+    ctx.lineTo(px, FLOOR_Y - baseboardH);
+    ctx.stroke();
+  }
+}
+
+/* ----------------------------------------------------------------
+   PIP SPRITE
+   Procedural placeholder: classic ghost shape (~16×24px at 480×270
+   internal resolution). Cool white-blue, slightly translucent, with
+   two dark eye dots and a chef's apron hint. Gentle sine-wave bob.
+
+   The wavy bottom has three downward bumps — the classic ghost shape.
+   See 03-art-and-aesthetic.md §Pip Sprite Specification.
+   ---------------------------------------------------------------- */
+
+function drawPip(screenX, groundY, facingRight, now) {
+  /* Idle bob: ±2px vertical sine wave at ~600ms period */
+  const bob  = Math.sin(now / 600) * 2;
+  const cx   = Math.round(screenX);
+  const foot = Math.round(groundY + bob);
+
+  /* Sprite coordinates */
+  const topY    = foot - PIP_H;                /* top of sprite     */
+  const headCY  = topY + 7;                   /* head arc centre   */
+  const bodyBot = foot - 6;                   /* straight body ends */
+
+  ctx.save();
+
+  /* --- Ghost body glow --- */
+  ctx.shadowColor = 'rgba(240, 248, 255, 0.85)';
+  ctx.shadowBlur  = 7;
+  ctx.globalAlpha = 0.85;
+
+  /* --- Ghost body fill --- */
+  ctx.fillStyle = '#dce8ff';
+  ctx.beginPath();
+
+  /* Head: semicircle from left (cx−7, headCY) up and over to right (cx+7, headCY) */
+  ctx.arc(cx, headCY, 7, Math.PI, 0);
+
+  /* Right wall straight down to where bumps begin */
+  ctx.lineTo(cx + 7, bodyBot);
+
+  /* Three downward bumps (right → left) — classic ghost silhouette.
+     Each bump spans ~4.67px of the 14px body width. */
+  ctx.quadraticCurveTo(cx + 4.67,  foot,   cx + 2.33, bodyBot);
+  ctx.quadraticCurveTo(cx + 0,     foot,   cx - 2.33, bodyBot);
+  ctx.quadraticCurveTo(cx - 4.67,  foot,   cx - 7,    bodyBot);
+
+  /* Close path draws the left wall back to the arc start */
+  ctx.closePath();
+  ctx.fill();
+
+  /* All further drawing: no glow shadow */
+  ctx.shadowBlur = 0;
+
+  /* --- Apron (a faint horizontal band across the mid-body).
+     Pip always wears the oversized chef's apron Babcia gave him. --- */
+  ctx.globalAlpha = 0.28;
+  ctx.fillStyle   = '#d4c89a';  /* beige/sand */
+  ctx.fillRect(cx - 5, topY + 14, 10, 5);
+  ctx.fillStyle = '#b8a87a';
+  ctx.fillRect(cx - 1, topY + 13, 2, 2);
+
+  /* --- Eyes --- */
+  ctx.globalAlpha = 0.92;
+  ctx.fillStyle   = '#1a1428';
+  ctx.fillRect(cx - 3, headCY - 1, 2, 3);   /* left eye  */
+  ctx.fillRect(cx + 2,  headCY - 1, 2, 3);   /* right eye */
+
+  /* Subtle blush (faint pink-ish pixels on lower cheeks) */
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle   = '#e8a0a0';
+  ctx.fillRect(cx - 5, headCY + 2, 3, 2);
+  ctx.fillRect(cx + 3,  headCY + 2, 3, 2);
+
+  /* Cool underglow beneath Pip — a soft ellipse of light on the floor.
+     beginPath() is required so the ellipse is its own path, not appended
+     to the ghost-body path from above. */
+  ctx.globalAlpha = 0.12;
+  const glowGrad = ctx.createRadialGradient(cx, foot + 1, 0, cx, foot + 1, 10);
+  glowGrad.addColorStop(0, '#c0d8ff');
+  glowGrad.addColorStop(1, 'rgba(180, 210, 255, 0)');
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx, foot + 1, 10, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/* ================================================================
+   KICK OFF
+   ================================================================ */
+
+requestAnimationFrame(loop);
+
+</script>
+</body>
+</html>

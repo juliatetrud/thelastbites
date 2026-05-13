@@ -1,0 +1,370 @@
+# Chapter 1: Cabin 646
+
+The opening chapter. Establishes Pip, the world, the mechanics, the emotional stakes.
+
+**Estimated playtime:** 15-20 minutes
+**Cinematics needed:** 9 (see art doc — note the doubled first-taste scene)
+**Rooms needed:** 5 (Cabin 646, Hallway, Grandparents' Cabin, Radio Room or Stairwell, Kitchen)
+**Recipe unlocked:** Norwegian lefse and gravlaks (with Norwegian pickles) — **Erik's favorite meal**, served by Henrik because the player doesn't know yet that Henrik had a son
+
+---
+
+## Chapter Arc Summary
+
+Pip wakes in his cabin not knowing he's dead. Through the mirror, the truth lands. He explores the ship's hallway — passing two living people who can't see him, establishing the rule he expects to apply universally. He sees his grieving grandparents, discovers his ghostly abilities, makes his way to the kitchen, and is unexpectedly *seen* by Henrik the chef. Henrik becomes his mentor, gives him his first taste-memory experiences (a doubled cinematic — gravlaks then lefse), and sets up the journey ahead. The chapter closes at the dock as Pip's grandparents disembark with his body.
+
+---
+
+## Beat-by-Beat
+
+### Beat 1: TITLE & WAKEUP (cinematic + transition)
+**Mode:** Cinematic 1 (WAKEUP)
+
+The title screen fades. Black. The hum of engines. The slow rock of the sea.
+
+Narration appears as text:
+> *The hum of engines vibrates with the slow rock of the sea.*
+> *Pip opens his eyes with a yawn, still aboard the Mnemosyne.*
+> *(If you don't speak ancient Greek, Mnemosyne is pronounced Nem-OSS-uh-nee. Yes, it's a mouthful.)*
+
+Two slits of pale light open in the darkness — Pip's eyes. The cinematic dissolves into the room.
+
+**Note on the parenthetical:** This is the game's tone signature. The narrator is on the player's side, food-aware, gently self-aware. Future narration aims at this register.
+
+---
+
+### Beat 2: WAKING IN THE CABIN (gameplay introduction)
+**Mode:** Room — Cabin 646
+
+Pip materializes (fades in) standing at the foot of his bed. The lamp sways. Dust motes drift through warm light.
+
+**Player gains control.** First text appears:
+> PIP: *I had the strangest dream…*
+> *[ ← → to walk. ↑ near things to look closer. ]*
+
+A hint appears at the top of the screen: *"Try the mirror first."*
+
+The cabin contains four inspectable objects:
+- **Bed** (where Pip's body still lies, but he can't see it from this angle yet — it's covered)
+- **Nightstand** (Grandpa's reading glasses, half-finished glass of water)
+- **Porthole** (showing distant Norwegian coast)
+- **Mirror** (the trigger object)
+- **Cabin door** (the exit, locked until story progresses)
+
+Players can inspect any of these in any order, but the hint guides them to the mirror.
+
+**Inspect text — Bed:**
+> *The bed is rumpled. Someone slept here recently. There's a small shape under the covers but you don't want to look closer.*
+> PIP: *…why don't I want to look?*
+
+**Inspect text — Nightstand:**
+> *A glass of water, half-finished. A pair of reading glasses — Dziadek's.*
+> PIP: *He must have sat with me. All night, maybe.*
+
+**Inspect text — Porthole:**
+> *Through the porthole, dark water and the lights of a far shore. Norway, the brochure had said. The first stop.*
+> PIP: *I never even got to see it.*
+
+---
+
+### Beat 3: THE MIRROR (inciting incident)
+**Mode:** Cinematic 2 (MIRROR)
+
+Pip approaches the mirror. The screen transitions to the close-up cinematic. The melting face.
+
+Dialogue:
+> PIP: *My face… why does it look like that?*
+> PIP: *…it's melting. Like wax left near the stove.*
+> *The boy in the mirror does not blink when Pip blinks.*
+> PIP: *Oh.*
+> PIP: *Oh, no.*
+
+The cinematic ends. We return to the cabin. Pip is now visibly slightly more transparent, drifting more obviously, less anchored. His glow is fainter — he's afraid.
+
+A new hint: *"Find Babcia."*
+
+Now the cabin door becomes the trigger.
+
+---
+
+### Beat 4: THE DOOR (first ability - walk through walls)
+**Mode:** Cinematic + Room
+
+Pip approaches the door. From the other side, faint sound: someone crying.
+
+He tries the handle. The screen transitions to Cinematic — the hand-through-doorknob shot.
+
+Dialogue:
+> *The door to the hallway. From the other side, you can hear someone crying.*
+> PIP: *…Babcia?*
+> *Pip reaches for the handle. His hand passes through it.*
+> PIP: *Wait — what?*
+> *Maybe… he could pass through too?*
+
+After cinematic, control returns. The door is still "locked" mechanically, but **the player must figure out to walk INTO the door.** A subtle hint: when Pip is touching the door, a small ghost-shimmer effect appears.
+
+Pressing into the door long enough triggers a cool ability-discovery animation — Pip phasing through. **First ability earned.**
+
+The chapter journal updates: *"I can pass through wood. Not metal — that still feels solid."*
+
+Pip steps into the hallway.
+
+---
+
+### Beat 5: THE HALLWAY (exploration + the rule about being unseen)
+**Mode:** Room — Hallway
+
+A long ship corridor. Side-scrolls. Pixel art of a Hurtigruten-style narrow hallway, doors lining one side, brass fixtures, deep red carpet, a flickering wall sconce.
+
+The hallway has multiple inspectables:
+- **A bulletin board** with the ship's day-by-day itinerary, headed: *"WELCOME ABOARD THE MNEMOSYNE"* (Norway, Iceland, Scotland, Ireland… planting seeds for future chapters). Inspecting it triggers a small narrator beat that re-reinforces the pronunciation joke for any player who skipped the opening narration. *"Mnemosyne (Nem-OSS-uh-nee) Welcomes You Aboard. Today's Port: Bergen."*
+- **A luggage cart** halfway down: *"Someone packed in a hurry. There's a stuffed bear sticking out — it looks like one Babcia gave me."*
+- **A flickering sconce** that responds to Pip — first hint of his electricity ability
+- **The grandparents' cabin door** (the next story trigger)
+- **The far end of the hallway** — leads to the rest of the ship, but is currently dark
+
+**THE TWO STRANGERS.** Establishing the rule that Henrik will later break. Two scripted moments in the hallway:
+
+1. **The Passenger.** A wealthy older traveler in evening clothes walks down the corridor. As they approach, Pip drifts to the side instinctively. The passenger walks through the spot Pip was just in, never blinks, never slows. Pip watches them go.
+   > PIP: *…they didn't see me.*
+
+2. **The Janitor (J. Henriksen).** Encountered later — see Beat 8. Pip pages him on the radio, the janitor walks down the corridor, moves the cart, and walks away. Pip is right next to him. The janitor doesn't see him.
+   > PIP: *No one can see me.*
+   > PIP: *(can they?)*
+
+The rule is now planted, and the player carries it forward. When Henrik sees Pip in the kitchen, the player understands viscerally why this is unusual. The seed for Chapter 4's reveal — *"how can he see me?"* — is now active.
+
+The crying gets louder near the grandparents' cabin door.
+
+---
+
+### Beat 6: GRANDPARENTS' CABIN (the gut punch)
+**Mode:** Cinematic 3 (GRANDPARENTS)
+
+Pip phases through the door. The screen transitions to the cinematic — the wide shot of Babcia weeping on the bed, Dziadek at the window, the open suitcase, the small photograph of Pip on the nightstand.
+
+Dialogue:
+> *Babcia is on the bed. She is making a sound that Pip has never heard her make.*
+> *Dziadek stands at the window. His shoulders are shaking. He says nothing.*
+> *On the nightstand, a photograph. Pip on his sixth birthday, holding a pierogi as big as his face.*
+> PIP: *Babcia…*
+> *She does not look up.*
+> PIP: *I'm here. I'm right here.*
+> *She does not look up.*
+> *Dziadek turns. For a moment, just a moment, he looks toward the doorway. He frowns. He shakes his head and turns back to the window.*
+> PIP: *…you almost saw me.*
+
+The cinematic holds for a beat longer than feels comfortable. Then fades.
+
+Back in the room view (the grandparents' cabin in 2D), Pip can inspect:
+- **The photograph** — adds a memory to his journal
+- **The suitcase** — Babcia's pierogi recipe card is sticking out (foreshadowing the final chapter)
+- **A radio on the desk** (the next ability hook)
+
+**A subtle character note:** Dziadek's "almost-see" here is *different* from the strangers' total blindness in the hallway. He is grieving and family. The player should *not* register this as "his grandparents can see him" — that's wrong, they can't, not really. They are the *grieving family who almost feels something*. Henrik in the kitchen will be a categorically different beat: not almost. *Yes. I see you. Sit down.*
+
+---
+
+### Beat 7: THE RADIO (second ability - speak through speakers)
+**Mode:** Room
+
+Pip inspects the radio. As he gets close, it crackles on its own. He puts his hand near it. His voice comes out of the speaker — small, tinny, but real.
+
+> PIP: *Hello?*
+> *His own voice answers from the radio.*
+> PIP: *Oh. Oh, this is good.*
+
+**Second ability earned.** Journal updates.
+
+He can use the radio to speak to anyone listening on the ship's intercom system. This becomes useful in the next puzzle.
+
+He leaves the cabin (phasing back through the door) and returns to the hallway. The far end is no longer dark — a path forward has opened.
+
+---
+
+### Beat 8: THE DARK CORRIDOR (puzzle - the broken light + the janitor)
+**Mode:** Room — Lower Hallway / Stairwell
+
+Pip continues down the corridor. It's pitch black. He can barely see. To proceed safely, he needs to fix the lights.
+
+This is a **broken thing puzzle**. The wiring is exposed where a sconce has fallen. Pip needs to use his nascent electricity ability to spark it back to life.
+
+To trigger the ability, he must inspect the wiring. A small interaction follows — maybe a "press space rapidly" mini-moment, or just a held-button charge — and the lights buzz back on.
+
+**Third ability earned: flicker electricity.**
+
+The corridor reveals itself: a service stairwell going down, a janitor's cart in the way blocking the door. The cart is too heavy for Pip to move (he's a ghost — he passes through it but can't push it).
+
+**Puzzle solution:** Use the radio (back in the grandparents' cabin) to page "J. Henriksen to the front desk." But how does Pip know that name?
+
+The cart has a name tag: "Property of J. Henriksen, Maintenance."
+
+Pip backtracks to the radio, makes the page, returns to the corridor. **The janitor arrives.** Pip is standing right beside the corridor where the janitor walks in. The janitor pauses, mutters to himself in Norwegian, looks *right past Pip*, grabs the cart, and pushes it away. Pip watches him go.
+
+> PIP: *No one can see me.*
+> PIP: *(can they?)*
+
+Cart pushed aside. Stairs accessible. **The rule is now firmly established.**
+
+This is the chapter's first **integrated multi-step puzzle.** Use clue (name tag) → use ability (radio) → outcome (path opens) → bonus story beat (the rule reinforced).
+
+---
+
+### Beat 9: THE KITCHEN (the meeting)
+**Mode:** Cinematic 4 (KITCHEN)
+
+Pip drifts down the stairwell into the kitchen. Vast, dim, copper pots hanging. He sees a plate left out by the chef who's gone to the walk-in freezer — **lefse with cured gravlaks and a few small Norwegian pickles on the side.**
+
+The taste pulls him.
+
+Cinematic: Pip floats above the counter, the lefse-and-gravlaks roll hovering in mid-air, a bite missing. Henrik in the doorway, frozen. His mouth open. We don't hear the scream yet — silence — and then a beat — and then it cuts.
+
+Dialogue (over the cinematic):
+> *Pip cannot remember the last time he ate. Maybe he never has, now. Maybe this is the first time.*
+> *He takes a bite.*
+> *The food hovers in the air.*
+> *Behind him, a sound. A pan dropped. A man's voice.*
+> HENRIK: *AAAAAAAAA—*
+
+---
+
+### Beat 10: HENRIK SITS DOWN (the mentor reveal)
+**Mode:** Cinematic 5 (HENRIK SITS DOWN)
+
+The scream cuts off. Henrik freezes mid-yell. Stares. Slowly crosses himself. Whispers in Norwegian.
+
+Then — sits down on a stool. Heavy.
+
+> HENRIK: *…Så. Du er gutten fra hytte 646.*
+> HENRIK: *So. You are the boy from cabin 646.*
+> PIP: *…you can see me?*
+> HENRIK: *Yes. Don't ask why. Not today.*
+> *Henrik looks at the food, still hovering.*
+> HENRIK: *Your grandmother. She told me, last night, in the dining room. She said you would have loved this. That you collected meals like other boys collect stamps.*
+> HENRIK: *Lefse. Gravlaks. The pickles too — don't skip the pickles.*
+> HENRIK: *Eat. Tell me if it's as good as she promised.*
+> *He slides the plate toward Pip.*
+
+**Player-facing note:** The player does not know yet that lefse and gravlaks is *Erik's* favorite meal. Henrik does not say this. He says only that Babcia recommended it. The truth lands in Chapter 4. *Pip having been fed Erik's favorite meal in their first meeting* is the secret weight of this scene, set up to pay off three chapters later.
+
+**Pip is going to wonder how Henrik can see him.** Pip says this aloud — the seed for the Chapter 4 reveal:
+
+> PIP: *…how can you see me, when no one else can?*
+> *Henrik does not answer immediately. He looks at the food. He looks at Pip.*
+> HENRIK: *Some questions wait. Eat first.*
+
+---
+
+### Beat 11: THE FIRST TASTE — DOUBLED (the central mechanic reveal)
+**Mode:** Cinematic 6a, then 6b
+
+This beat is **doubled** — Pip tastes two things, sees two memories. The player will not know until Chapter 4 that the second memory is load-bearing.
+
+**Cinematic 6a — Gravlaks taste.** Pip takes a bite of the gravlaks. The kitchen shimmers. He sees, briefly, a memory that isn't his.
+
+A young Norwegian boy in a cottage kitchen, watching an old man's hands cure salmon. Sun through a window. The smell of dill. The boy is Henrik, decades ago. The man is his grandfather.
+
+> *And Pip understands, for the first time, that food carries the story of the person who made it.*
+
+**Cinematic 6b — Lefse taste.** Pip takes a bite of the lefse. The kitchen shimmers a second time. A different memory now.
+
+Pip sees an older Henrik — recognizably grown — teaching a young boy to make the same lefse, the same gravlaks. Different kitchen. The child's face is partially seen — turned away, in profile, in half-shadow. *(See art doc, Cinematic 6b, for treatment.)* Pip does not know who the child is. The child laughs at something off-screen.
+
+> *That every meal is a love letter from someone, to someone.*
+> *That if he can taste enough of them — really taste — he might learn the world.*
+
+The visions fade. Pip is back in the kitchen.
+
+> PIP: *I saw… I saw your grandfather. And then I saw — someone teaching a boy. Was that you?*
+> HENRIK: *…yes.*
+> PIP: *Who was the boy?*
+> *A pause. Henrik looks at the empty plate.*
+> HENRIK: *Someone I loved.*
+> *Pip waits. Henrik does not say more.*
+> PIP: *…how does it work, Henrik? When I taste?*
+> HENRIK: *Because you needed to. The dead see what they need to see.*
+> PIP: *Will it always do that?*
+> HENRIK: *I think, perhaps, yes. I think that is what you are now.*
+
+**Central mechanic established.** The journal gains a new tab: "Recipes." The first entry — Norwegian lefse and gravlaks (with Norwegian pickles) — is added with a sketch.
+
+**On the website:** This unlocks the lefse and gravlaks recipe pages. A pop-up notification: *"You've earned a recipe! Check Pip's Journal."*
+
+---
+
+### Beat 12: THE DOCK (the parting)
+**Mode:** Cinematic 7 (THE DOCK)
+
+Henrik leads Pip to the deck. The ship has reached its first port. Below, on the dock, his grandparents are walking away with a small wooden box.
+
+Dialogue:
+> HENRIK: *They are taking your body home. To Brooklyn.*
+> PIP: *Greenpoint.*
+> HENRIK: *Yes. Greenpoint.*
+> *Pip raises a translucent hand.*
+> *Babcia stops. Looks up. Toward the ship.*
+> *For a moment, the smallest moment, her eyes meet the railing.*
+> *Then she turns. And keeps walking.*
+> PIP: *…goodbye, Babcia.*
+> PIP: *I'll come back.*
+> PIP: *I promise.*
+
+---
+
+### Beat 13: HENRIK'S OFFER (the mission)
+**Mode:** Cinematic 8 (HENRIK'S OFFER)
+
+Sunset. Pip and Henrik on the deck. Henrik holds out a leatherbound recipe journal. Empty pages.
+
+> HENRIK: *The Mnemosyne is docked here for the day. Tomorrow, we sail for the next port. And the one after that. And the one after.*
+> HENRIK: *I have been on this ship for thirty years. I have eaten food in every port we visit.*
+> HENRIK: *I think — if you let me — I would like to show you what I have learned.*
+> HENRIK: *Will you come?*
+> *[ Player presses space ]*
+> PIP: *Yes.*
+> *Henrik hands Pip the journal.*
+> HENRIK: *Then let us begin. Tomorrow we are in Bergen. There is something I want you to taste there.*
+> HENRIK: *Get some rest, Pip.*
+> PIP: *Do ghosts rest?*
+> HENRIK: *…I don't know. Find out and tell me.*
+
+*Henrik reaches into his apron pocket and produces a small candle. Plain, white, slightly used.*
+
+> HENRIK: *And — here. Take this. The ship's quieter than it looks at night, but the corridors get dark. If you can't sleep, the dark is easier with a little light.*
+
+*Pip takes the candle. Pockets it. (Load-bearing prop for later chapters. Matches arrive separately, end of Ch3.)*
+
+Fade to black.
+
+> *END OF CHAPTER ONE.*
+> *Recipe unlocked: Norwegian Lefse with Gravlaks and Pickles*
+> *Next port: Bergen, Norway.*
+
+---
+
+## Implementation Order (for Claude Code)
+
+If building Chapter 1 in stages:
+
+1. **Already done:** Cabin 646 room with mirror cinematic and door cinematic (the existing prototype)
+2. **Update opening narration** to the locked Mnemosyne version
+3. **Next:** Hallway room with corridor exploration, the bulletin board (with ship name reinforcement), the passenger encounter, and grandparents' door
+4. **Next:** Grandparents' cabin cinematic and room (with photo and suitcase)
+5. **Next:** Radio room interaction and second ability
+6. **Next:** Dark corridor + janitor puzzle (electricity ability + the "no one can see me" beat)
+7. **Next:** Kitchen room and Henrik cinematic sequence (now with **doubled** first-taste — 6a and 6b)
+8. **Last:** Dock cinematic and Henrik's offer
+
+Each stage is independently testable. The dialogue and cinematic system from the prototype handles all of it.
+
+---
+
+## Polish Pass (later)
+
+Once the chapter is functionally playable end-to-end:
+
+- Sound design (footsteps, engine hum, sconce flicker, kitchen sounds)
+- Music (sparse piano motif, picks up at the dock cinematic)
+- Animation polish (Pip's surprised pose, his sad pose, his glowing-warmer when he tastes)
+- Replace placeholder cinematics with commissioned art (now 9 pieces — Cinematic 6 split into 6a and 6b)
+- Mobile tap controls

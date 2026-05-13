@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Last Bites — The Three Doors (Ch2 Demo, v3 · Moonlit Blue)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ============================================================
+     LOCKED PALETTE — moonlit blue base, warm amber pools
+     See 03-art-and-aesthetic.md for full token reference
+     ============================================================ */
+  :root {
+    /* Universal text */
+    --text-narration:    #fff4d8;
+    --text-speaker:      #f0c898;
+    --text-prompt:       #c8a878;
+    --text-faint:        #8a7858;
+
+    /* Universal panels */
+    --panel-bg:          rgba(8, 6, 12, 0.92);
+    --panel-bg-deeper:   rgba(20, 16, 32, 0.92);
+    --panel-border:      #3a4068;
+    --panel-border-soft: rgba(140, 160, 200, 0.22);
+
+    /* Warm pools (universal — these are what *home* looks like) */
+    --warm-pool-amber:   #ffc868;
+    --warm-pool-deep:    #c87830;
+    --warm-pool-glow:    #ffe088;
+
+    /* Spirits */
+    --spirit-pip:        #f0f8ff;
+    --spirit-haldjas:    #ffe088;
+    --spirit-iris:       #88b8b0;
+    --spirit-bad-ghost:  #7a1418;
+
+    /* Estonia regional (Ch2 locked) */
+    --region-base:       #1c2858;
+    --region-deep:       #0e1a3a;
+    --region-shadow:     #5a4878;
+    --region-floor:      #1a2848;
+    --region-wood-light: #5a3820;
+    --region-wood-dark:  #2a1808;
+    --region-glow:       #ffc868;
+    --region-accent:     #ff5050;
+  }
+
+  html, body {
+    height: 100%;
+    background: #000;
+    color: var(--text-narration);
+    font-family: 'Cormorant Garamond', serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  #game-wrap {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+  }
+
+  #game {
+    width: min(100vw, calc(100vh * 16/9));
+    height: min(100vh, calc(100vw * 9/16));
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 80% 90%, var(--region-shadow) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 55%, var(--region-base) 0%, var(--region-deep) 80%, #000 100%);
+    box-shadow: 0 0 80px rgba(0,0,0,1), inset 0 0 120px rgba(0,0,0,0.7);
+    transition: filter 1.5s;
+  }
+
+  #game.spell {
+    filter: brightness(0.88) saturate(0.92);
+  }
+
+  /* Cottage architectural suggestions — visible warm wood beams */
+  #cottage-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.6;
+    transition: opacity 1.5s;
+  }
+  #game.spell #cottage-bg { opacity: 0.3; }
+
+  .beam {
+    position: absolute;
+    background: linear-gradient(180deg, transparent 0%, rgba(90, 56, 32, 0.7) 50%, transparent 100%);
+  }
+  .beam.horizontal {
+    height: 8px;
+    background: linear-gradient(90deg, transparent 0%, rgba(90, 56, 32, 0.6) 50%, transparent 100%);
+  }
+
+  /* Sparkles */
+  #sparkle-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+  }
+
+  .sparkle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: var(--spirit-haldjas);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(255, 224, 136, 1);
+    opacity: 0;
+    animation: sparkle-drift 4s ease-in-out infinite;
+  }
+
+  @keyframes sparkle-drift {
+    0%, 100% { opacity: 0; transform: translateY(0) scale(0.6); }
+    40% { opacity: 0.95; transform: translateY(-12px) scale(1.1); }
+    60% { opacity: 0.95; transform: translateY(-18px) scale(1); }
+  }
+
+  /* Vignette + grain */
+  #grain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.85) 100%);
+    mix-blend-mode: multiply;
+    z-index: 50;
+  }
+  #grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.78 0 0 0 0 0.6 0 0 0 0.18 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    opacity: 0.45;
+    mix-blend-mode: overlay;
+    animation: grain 0.4s steps(2) infinite;
+  }
+  @keyframes grain {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-3px, 2px); }
+  }
+
+  /* Setting label */
+  #setting {
+    position: absolute;
+    top: 4%;
+    left: 5%;
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(9px, 1.1vw, 12px);
+    letter-spacing: 0.25em;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    z-index: 12;
+    opacity: 0.85;
+  }
+
+  /* Inventory */
+  #inventory {
+    position: absolute;
+    top: 4%;
+    right: 5%;
+    z-index: 12;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-end;
+    opacity: 0;
+    transition: opacity 0.6s;
+  }
+  #inventory.visible { opacity: 1; }
+
+  .inv-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border-soft);
+    padding: 6px 12px;
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(9px, 1.1vw, 12px);
+    letter-spacing: 0.12em;
+    color: var(--text-speaker);
+    text-transform: uppercase;
+  }
+
+  .meatball {
+    width: 14px;
+    height: 14px;
+    background: radial-gradient(circle at 35% 30%, #c47830 0%, #6a3818 70%, #2a1006 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(200, 120, 48, 0.6), inset -2px -2px 3px rgba(0,0,0,0.5);
+  }
+  .meatball.altar {
+    box-shadow: 0 0 12px rgba(255, 200, 100, 0.7), inset -2px -2px 3px rgba(0,0,0,0.5);
+  }
+
+  /* === DOORS VIEW === */
+
+  #doors-view {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    transition: opacity 0.8s;
+  }
+  #doors-view.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #doors {
+    position: absolute;
+    top: 22%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 88%;
+    max-width: 920px;
+    height: 50%;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 3%;
+  }
+
+  .door-frame {
+    flex: 1;
+    position: relative;
+    cursor: pointer;
+    transform: scaleY(0);
+    transform-origin: bottom;
+    opacity: 0;
+    transition: transform 0.5s ease-out, opacity 0.5s, filter 0.6s;
+  }
+  .door-frame.materialized {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  .door-frame:hover:not(.seen):not(.disabled) .door-glow {
+    opacity: 1;
+  }
+  .door-frame.disabled { pointer-events: none; }
+
+  .door-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    perspective: 800px;
+  }
+
+  .door-panel {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(60, 42, 24, 0.95) 0%, rgba(30, 20, 12, 0.95) 100%),
+      repeating-linear-gradient(
+        180deg,
+        var(--region-wood-light) 0px,
+        #4a3018 3px,
+        var(--region-wood-light) 6px,
+        var(--region-wood-dark) 9px
+      );
+    background-blend-mode: multiply;
+    border: 2px solid #6a4828;
+    box-shadow:
+      inset 0 0 30px rgba(0,0,0,0.7),
+      inset 0 0 6px rgba(180, 130, 70, 0.5);
+    transform-origin: left center;
+    transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 3;
+  }
+
+  .door-frame.open .door-panel {
+    transform: perspective(800px) rotateY(-75deg);
+  }
+
+  .door-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 100%, rgba(255, 200, 104, 0.45) 0%, transparent 60%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+    z-index: 4;
+  }
+
+  .door-frame.seen .door-panel {
+    filter: brightness(0.65) saturate(0.8);
+  }
+
+  .seen-mark {
+    position: absolute;
+    top: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--warm-pool-glow) 0%, var(--warm-pool-amber) 60%, transparent 100%);
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.6s;
+    pointer-events: none;
+    box-shadow: 0 0 12px rgba(255, 224, 136, 0.7);
+  }
+  .door-frame.seen .seen-mark { opacity: 1; }
+
+  .hinge {
+    position: absolute;
+    left: -1px;
+    width: 14%;
+    height: 4px;
+    background: rgba(20, 14, 7, 0.95);
+    border-top: 1px solid rgba(120, 85, 50, 0.7);
+    z-index: 4;
+  }
+  .hinge.top { top: 18%; }
+  .hinge.bottom { bottom: 18%; }
+
+  /* Door interior — warm hearth backdrop where the figure stands */
+  .door-interior {
+    position: absolute;
+    inset: 4px;
+    background:
+      radial-gradient(ellipse at 50% 65%, var(--region-glow) 0%, var(--warm-pool-deep) 45%, var(--region-wood-dark) 75%, #0a0604 95%);
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .door-figure {
+    position: absolute;
+    bottom: 12%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.6s;
+  }
+  .door-frame.open .door-figure { opacity: 1; }
+
+  .door-label {
+    position: absolute;
+    bottom: -7%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(8px, 1.0vw, 11px);
+    letter-spacing: 0.25em;
+    color: var(--text-prompt);
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.5s;
+    z-index: 5;
+  }
+  .door-frame.materialized .door-label { opacity: 0.85; }
+
+  .door-prompt {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(9px, 1.1vw, 12px);
+    letter-spacing: 0.2em;
+    color: rgba(255, 244, 216, 0.85);
+    text-transform: uppercase;
+    text-align: center;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+    text-shadow: 0 0 10px rgba(0,0,0,0.95);
+  }
+  .door-frame:hover:not(.seen):not(.disabled) .door-prompt {
+    opacity: 1;
+  }
+
+  /* === FIGURES (CSS pixel-art, brighter for moonlit-blue base) === */
+
+  .figure-girl {
+    width: 56px; height: 80px;
+    position: relative;
+  }
+  .figure-girl .head {
+    position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 28px; height: 28px;
+    background: #ffe4b8;
+    border-radius: 4px;
+    box-shadow: 0 0 8px rgba(255, 220, 180, 0.35);
+  }
+  .figure-girl .cheek-l, .figure-girl .cheek-r {
+    position: absolute; top: 14px;
+    width: 6px; height: 4px;
+    background: rgba(240, 140, 120, 0.7);
+    border-radius: 50%;
+  }
+  .figure-girl .cheek-l { left: 4px; }
+  .figure-girl .cheek-r { right: 4px; }
+  .figure-girl .eye-l, .figure-girl .eye-r {
+    position: absolute; top: 9px;
+    width: 4px; height: 5px;
+    background: #1a0e04;
+  }
+  .figure-girl .eye-l { left: 7px; }
+  .figure-girl .eye-r { right: 7px; }
+  .figure-girl .mouth {
+    position: absolute; bottom: 6px; left: 50%;
+    transform: translateX(-50%);
+    width: 10px; height: 3px;
+    background: #c04848;
+    border-radius: 2px 2px 4px 4px;
+  }
+  .figure-girl .pinafore {
+    position: absolute; top: 28px; left: 50%;
+    transform: translateX(-50%);
+    width: 44px; height: 38px;
+    background: linear-gradient(180deg, #fff4dc 0%, #f0e0bc 100%);
+    border-radius: 4px 4px 0 0;
+    box-shadow: 0 0 6px rgba(255, 240, 210, 0.3);
+  }
+  .figure-girl .legs {
+    position: absolute; bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 32px; height: 14px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .figure-girl .leg { width: 12px; height: 100%; background: #ffe4b8; }
+
+  .figure-old-woman {
+    width: 60px; height: 84px;
+    position: relative;
+  }
+  .figure-old-woman .shawl-head {
+    position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 38px; height: 36px;
+    background: linear-gradient(180deg, #7a5838 0%, #3a2818 100%);
+    border-radius: 50% 50% 30% 30%;
+  }
+  .figure-old-woman .face {
+    position: absolute; top: 14px; left: 50%;
+    transform: translateX(-50%);
+    width: 22px; height: 18px;
+    background: #f0d0a8;
+    border-radius: 4px;
+  }
+  .figure-old-woman .eye-l, .figure-old-woman .eye-r {
+    position: absolute; top: 4px;
+    width: 3px; height: 3px;
+    background: #2a1408;
+  }
+  .figure-old-woman .eye-l { left: 4px; }
+  .figure-old-woman .eye-r { right: 4px; }
+  .figure-old-woman .body {
+    position: absolute; top: 32px; left: 50%;
+    transform: translateX(-50%);
+    width: 50px; height: 44px;
+    background: linear-gradient(180deg, #7a5838 0%, #3a2818 100%);
+    border-radius: 6px 6px 0 0;
+  }
+  .figure-old-woman .feet {
+    position: absolute; bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 36px; height: 8px;
+    background: #3a2818;
+  }
+
+  .figure-man {
+    width: 52px; height: 90px;
+    position: relative;
+  }
+  .figure-man .head {
+    position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 26px; height: 28px;
+    background: #f4d4a4;
+    border-radius: 4px;
+    box-shadow: 0 0 6px rgba(244, 212, 164, 0.3);
+  }
+  .figure-man .eye-l, .figure-man .eye-r {
+    position: absolute; top: 10px;
+    width: 3px; height: 4px;
+    background: #1a0e04;
+  }
+  .figure-man .eye-l { left: 6px; }
+  .figure-man .eye-r { right: 6px; }
+  .figure-man .smile {
+    position: absolute; bottom: 5px; left: 50%;
+    transform: translateX(-50%);
+    width: 12px; height: 3px;
+    background: transparent;
+    border-bottom: 2px solid #2a1408;
+    border-radius: 0 0 8px 8px;
+  }
+  .figure-man .jacket {
+    position: absolute; top: 28px; left: 50%;
+    transform: translateX(-50%);
+    width: 44px; height: 50px;
+    background: linear-gradient(180deg, #4a5a78 0%, #1c2848 100%);
+    border-radius: 4px 4px 0 0;
+    box-shadow: inset 1px 0 0 rgba(180, 140, 80, 0.6),
+                inset -1px 0 0 rgba(180, 140, 80, 0.6);
+  }
+  .figure-man .collar {
+    position: absolute; top: 28px; left: 50%;
+    transform: translateX(-50%);
+    width: 8px; height: 10px;
+    background: #fff4dc;
+  }
+  .figure-man .legs {
+    position: absolute; bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 30px; height: 12px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .figure-man .leg { width: 12px; height: 100%; background: #1c2848; }
+
+  /* Cat reveal */
+  .figure-old-woman.cat-bright .shawl-head {
+    width: 30px; height: 22px; top: 28px;
+    background: linear-gradient(180deg, #6a4020 0%, #3a1c10 100%);
+    border-radius: 30% 30% 50% 50%;
+  }
+  .figure-old-woman.cat-bright .face {
+    top: 36px; width: 18px; height: 14px;
+    background: #f0d0a8;
+    border-radius: 50% 50% 40% 40%;
+  }
+  .figure-old-woman.cat-bright .eye-l,
+  .figure-old-woman.cat-bright .eye-r {
+    background: #ffd060;
+    width: 4px; height: 5px;
+    box-shadow: 0 0 8px rgba(255, 200, 80, 1);
+    top: 3px;
+  }
+  .figure-old-woman.cat-bright .body {
+    top: 50px; width: 36px; height: 26px;
+    background: linear-gradient(180deg, #6a4020 0%, #3a1c10 100%);
+    border-radius: 50% 50% 6px 6px;
+  }
+  .figure-old-woman.cat-bright .feet { opacity: 0; }
+  .figure-old-woman.cat-bright::before {
+    content: ""; position: absolute;
+    top: 22px; left: 50%;
+    transform: translateX(-22px);
+    width: 8px; height: 8px;
+    background: #3a1c10;
+    clip-path: polygon(0 100%, 50% 0%, 100% 100%);
+  }
+  .figure-old-woman.cat-bright::after {
+    content: ""; position: absolute;
+    top: 22px; left: 50%;
+    transform: translateX(14px);
+    width: 8px; height: 8px;
+    background: #3a1c10;
+    clip-path: polygon(0 100%, 50% 0%, 100% 100%);
+  }
+
+  /* Devil states */
+  .figure-girl.devil .head { background: #2a0a0a; }
+  .figure-girl.devil .cheek-l, .figure-girl.devil .cheek-r { opacity: 0; }
+  .figure-girl.devil .eye-l, .figure-girl.devil .eye-r {
+    background: var(--spirit-bad-ghost);
+    box-shadow: 0 0 8px rgba(122, 20, 24, 1);
+    height: 6px;
+  }
+  .figure-girl.devil .mouth {
+    width: 16px; height: 5px; background: #1a0608;
+    border-radius: 0;
+  }
+  .figure-girl.devil .pinafore {
+    background: linear-gradient(180deg, #4a1818 0%, #200808 100%);
+    box-shadow: none;
+  }
+  .figure-girl.devil .leg { background: #2a0a0a; }
+  .figure-girl.devil::before {
+    content: ""; position: absolute;
+    top: -8px; left: 50%; transform: translateX(-50%);
+    width: 22px; height: 10px;
+    background: #1a0608;
+    clip-path: polygon(0 100%, 25% 0%, 50% 100%, 75% 0%, 100% 100%);
+  }
+
+  .figure-man.devil .head {
+    background: #d4b486;
+    filter: grayscale(0.3);
+    box-shadow: none;
+  }
+  .figure-man.devil .eye-l, .figure-man.devil .eye-r {
+    background: #1a0a0a; height: 5px; width: 4px;
+  }
+  .figure-man.devil .smile {
+    width: 18px; height: 4px; border-bottom: none;
+    background: repeating-linear-gradient(90deg, #f0e8d0 0px, #f0e8d0 2px, #2a1808 2px, #2a1808 3px);
+  }
+  .figure-man.devil .jacket {
+    background: linear-gradient(180deg, #1a1418 0%, #0a0608 100%);
+    box-shadow: none;
+  }
+  .figure-man.devil .collar { background: #807060; }
+  .figure-man.devil .leg { background: #0a0608; }
+
+  /* Pip — translucent ghost-boy in foreground */
+  #pip {
+    position: absolute;
+    bottom: 8%;
+    left: 8%;
+    width: 36px;
+    height: 64px;
+    z-index: 8;
+    opacity: 0.78;
+    filter: drop-shadow(0 0 12px rgba(240, 248, 255, 0.7));
+  }
+  #pip .head {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 22px; height: 22px;
+    background: var(--spirit-pip);
+    border-radius: 50% 50% 40% 40%;
+    box-shadow: 0 0 10px rgba(240, 248, 255, 0.8);
+  }
+  #pip .body {
+    position: absolute;
+    top: 18px; left: 50%;
+    transform: translateX(-50%);
+    width: 30px; height: 44px;
+    background: linear-gradient(180deg, var(--spirit-pip) 0%, #c8d8ff 70%, transparent 100%);
+    border-radius: 40% 40% 30% 30%;
+    box-shadow: 0 0 14px rgba(240, 248, 255, 0.6);
+  }
+  #pip .eye-l, #pip .eye-r {
+    position: absolute;
+    top: 8px;
+    width: 3px; height: 4px;
+    background: #1a1428;
+  }
+  #pip .eye-l { left: 6px; }
+  #pip .eye-r { right: 6px; }
+
+  /* Opening narration */
+  #opening-narration {
+    position: absolute;
+    top: 14%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    max-width: 720px;
+    text-align: center;
+    z-index: 11;
+    font-style: italic;
+    font-size: clamp(15px, 2.3vw, 22px);
+    color: var(--text-narration);
+    opacity: 0;
+    transition: opacity 1s;
+    pointer-events: none;
+    text-shadow: 0 0 22px rgba(0,0,0,0.95);
+  }
+  #opening-narration.visible { opacity: 0.98; }
+
+  /* Offer panel */
+  #offer-panel {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 76%;
+    max-width: 700px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    padding: 16px 24px;
+    z-index: 11;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+    backdrop-filter: blur(2px);
+  }
+  #offer-panel.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #offer-panel::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid var(--panel-border-soft);
+    pointer-events: none;
+  }
+  #offer-panel .offer-speaker {
+    font-family: 'Special Elite', monospace;
+    font-size: 0.65em;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-speaker);
+    margin-bottom: 8px;
+    opacity: 0.95;
+  }
+  #offer-panel .offer-text {
+    font-style: italic;
+    font-size: clamp(13px, 1.95vw, 19px);
+    color: var(--text-narration);
+    line-height: 1.5;
+  }
+  #offer-panel .offer-cta {
+    margin-top: 12px;
+    text-align: right;
+    font-family: 'Special Elite', monospace;
+    font-size: 0.55em;
+    letter-spacing: 0.2em;
+    color: var(--warm-pool-amber);
+    text-transform: uppercase;
+    cursor: pointer;
+    animation: blink 1.4s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  /* === SUMMARY SCREEN === */
+
+  #summary-view {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    background: radial-gradient(ellipse at center, rgba(20, 14, 32, 0.96) 0%, rgba(0,0,0,0.98) 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4% 6%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s;
+  }
+  #summary-view.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  #summary-view .summary-question {
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(18px, 2.6vw, 26px);
+    letter-spacing: 0.18em;
+    color: var(--text-narration);
+    text-transform: uppercase;
+    margin-bottom: 4%;
+    text-align: center;
+    text-shadow: 0 0 22px rgba(255, 244, 216, 0.4);
+  }
+
+  #summary-options {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 90%;
+    max-width: 760px;
+  }
+
+  .summary-option {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: var(--panel-bg-deeper);
+    border: 1px solid var(--panel-border);
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .summary-option:hover {
+    background: rgba(40, 32, 56, 0.95);
+    border-color: var(--warm-pool-amber);
+    transform: translateX(4px);
+  }
+  .summary-option::before {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border: 1px solid var(--panel-border-soft);
+    pointer-events: none;
+  }
+
+  .summary-portrait {
+    flex-shrink: 0;
+    width: 70px;
+    height: 80px;
+    background: radial-gradient(ellipse at 50% 70%, var(--region-glow) 0%, var(--warm-pool-deep) 50%, var(--region-wood-dark) 95%);
+    border: 1px solid var(--panel-border);
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .summary-portrait > div {
+    transform: scale(0.7);
+    transform-origin: bottom center;
+  }
+
+  .summary-text {
+    flex: 1;
+  }
+  .summary-text .summary-speaker {
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(10px, 1.3vw, 13px);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-speaker);
+    margin-bottom: 6px;
+  }
+  .summary-text .summary-offer {
+    font-style: italic;
+    font-size: clamp(12px, 1.7vw, 17px);
+    color: var(--text-narration);
+    line-height: 1.45;
+  }
+
+  /* Reveal narration */
+  #reveal-narration {
+    position: absolute;
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 76%;
+    max-width: 700px;
+    text-align: center;
+    z-index: 25;
+    font-style: italic;
+    font-size: clamp(14px, 2.1vw, 20px);
+    color: var(--text-speaker);
+    opacity: 0;
+    transition: opacity 0.8s;
+    pointer-events: none;
+    text-shadow: 0 0 18px rgba(0,0,0,0.95);
+    padding: 0 20px;
+  }
+  #reveal-narration.visible { opacity: 1; }
+
+  /* Resolution overlay */
+  #resolution {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8% 10%;
+    text-align: center;
+    background: radial-gradient(ellipse at center, rgba(28, 40, 88, 0.92) 0%, rgba(0,0,0,0.98) 100%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.5s;
+  }
+  #resolution.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #resolution .haldjas-line {
+    font-style: italic;
+    font-size: clamp(18px, 3vw, 28px);
+    color: var(--spirit-haldjas);
+    margin-bottom: 30px;
+    line-height: 1.4;
+    text-shadow: 0 0 30px rgba(255, 224, 136, 0.6);
+  }
+  #resolution .res-narration {
+    font-style: italic;
+    font-size: clamp(14px, 2.1vw, 20px);
+    color: var(--text-narration);
+    margin-bottom: 40px;
+    line-height: 1.5;
+    max-width: 600px;
+  }
+  #resolution .restart {
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(10px, 1.2vw, 13px);
+    letter-spacing: 0.25em;
+    color: var(--text-prompt);
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid var(--panel-border);
+    padding: 12px 28px;
+    background: rgba(0,0,0,0.5);
+    transition: all 0.3s;
+  }
+  #resolution .restart:hover {
+    color: var(--text-narration);
+    border-color: var(--warm-pool-amber);
+  }
+
+  /* Designer notes */
+  #notes {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.93);
+    color: #c8b8c8;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    padding: 12px 24px;
+    border-top: 1px solid rgba(140, 160, 200, 0.25);
+    z-index: 100;
+    line-height: 1.5;
+    max-height: 32vh;
+    overflow-y: auto;
+    transform: translateY(calc(100% - 32px));
+    transition: transform 0.4s;
+  }
+  #notes:hover, #notes.expanded { transform: translateY(0); }
+  #notes .toggle {
+    font-family: 'Special Elite', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--text-speaker);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  #notes p { margin-bottom: 8px; }
+  #notes em { color: var(--warm-pool-amber); }
+  #notes strong { color: var(--text-narration); }
+</style>
+</head>
+<body>
+<div id="game-wrap">
+  <div id="game">
+    <div id="setting">Inside Leida's Cottage · The Spell Begins</div>
+
+    <div id="cottage-bg">
+      <div class="beam horizontal" style="top: 8%; left: 0; right: 0;"></div>
+      <div class="beam" style="left: 12%; top: 8%; bottom: 0; width: 4px;"></div>
+      <div class="beam" style="right: 12%; top: 8%; bottom: 0; width: 4px;"></div>
+      <div class="beam horizontal" style="bottom: 12%; left: 12%; right: 12%;"></div>
+    </div>
+
+    <div id="sparkle-layer"></div>
+
+    <div id="inventory">
+      <div class="inv-item">
+        <div class="meatball"></div>
+        <span>Your meatball</span>
+      </div>
+      <div class="inv-item">
+        <div class="meatball altar"></div>
+        <span>Haldjas's altar offering</span>
+      </div>
+    </div>
+
+    <!-- Pip in foreground — translucent ghost-boy -->
+    <div id="pip">
+      <div class="head"></div>
+      <div class="eye-l"></div>
+      <div class="eye-r"></div>
+      <div class="body"></div>
+    </div>
+
+    <!-- DOORS VIEW -->
+    <div id="doors-view">
+      <div id="opening-narration"></div>
+
+      <div id="doors">
+        <div class="door-frame" data-door="1">
+          <div class="door-container">
+            <div class="door-interior">
+              <div class="door-figure">
+                <div class="figure-girl">
+                  <div class="head"></div>
+                  <div class="cheek-l"></div>
+                  <div class="cheek-r"></div>
+                  <div class="eye-l"></div>
+                  <div class="eye-r"></div>
+                  <div class="mouth"></div>
+                  <div class="pinafore"></div>
+                  <div class="legs">
+                    <div class="leg"></div>
+                    <div class="leg"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="door-panel">
+              <div class="hinge top"></div>
+              <div class="hinge bottom"></div>
+              <div class="door-prompt">Click to open</div>
+            </div>
+            <div class="door-glow"></div>
+            <div class="seen-mark"></div>
+          </div>
+          <div class="door-label">Door 1</div>
+        </div>
+
+        <div class="door-frame" data-door="2">
+          <div class="door-container">
+            <div class="door-interior">
+              <div class="door-figure">
+                <div class="figure-old-woman">
+                  <div class="shawl-head"></div>
+                  <div class="face">
+                    <div class="eye-l"></div>
+                    <div class="eye-r"></div>
+                  </div>
+                  <div class="body"></div>
+                  <div class="feet"></div>
+                </div>
+              </div>
+            </div>
+            <div class="door-panel">
+              <div class="hinge top"></div>
+              <div class="hinge bottom"></div>
+              <div class="door-prompt">Click to open</div>
+            </div>
+            <div class="door-glow"></div>
+            <div class="seen-mark"></div>
+          </div>
+          <div class="door-label">Door 2</div>
+        </div>
+
+        <div class="door-frame" data-door="3">
+          <div class="door-container">
+            <div class="door-interior">
+              <div class="door-figure">
+                <div class="figure-man">
+                  <div class="head"></div>
+                  <div class="eye-l"></div>
+                  <div class="eye-r"></div>
+                  <div class="smile"></div>
+                  <div class="collar"></div>
+                  <div class="jacket"></div>
+                  <div class="legs">
+                    <div class="leg"></div>
+                    <div class="leg"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="door-panel">
+              <div class="hinge top"></div>
+              <div class="hinge bottom"></div>
+              <div class="door-prompt">Click to open</div>
+            </div>
+            <div class="door-glow"></div>
+            <div class="seen-mark"></div>
+          </div>
+          <div class="door-label">Door 3</div>
+        </div>
+      </div>
+
+      <div id="offer-panel">
+        <div class="offer-speaker" id="offer-speaker"></div>
+        <div class="offer-text" id="offer-text"></div>
+        <div class="offer-cta" id="offer-cta">Click to close door ▾</div>
+      </div>
+    </div>
+
+    <!-- SUMMARY VIEW -->
+    <div id="summary-view">
+      <div class="summary-question">Which door do you choose?</div>
+      <div id="summary-options"></div>
+    </div>
+
+    <div id="reveal-narration"></div>
+
+    <div id="resolution">
+      <div class="haldjas-line">"You saw her. The spell is done. Go."</div>
+      <div class="res-narration">
+        The doors dissolve. The cottage returns. Pätu sits on the floor, your meatball delicately in her paws, and looks at you.
+      </div>
+      <div class="restart" onclick="restart()">Replay</div>
+    </div>
+
+    <div id="grain"></div>
+  </div>
+</div>
+
+<div id="notes">
+  <div class="toggle" onclick="document.getElementById('notes').classList.toggle('expanded')">▲ Designer Notes — hover or click</div>
+  <p><strong>v3 — moonlit-blue palette locked.</strong> The cottage stands in cool moonlit blue. Warmth — the lit doors, the sparkles, the figures inside — is rare and meaningful. Pip floats translucent at the foreground; he's <em>cool against the cool</em> but his white-blue is brighter than the room. Per <code>03-art-and-aesthetic.md</code>'s Universal &amp; Regional Palette section.</p>
+  <p>Mechanics unchanged from v2: click each door to open it, read the offer, close it, advance to summary, choose. Wrong choice → devil reveal → reset to doors. Right choice (door 2) → cat reveal → Haldjas resolution.</p>
+  <p><strong>What I want you to feel:</strong> the warmth of the doors should now <em>mean</em> something. Each door is a small warm pool in a cold room. The right door — the old woman — is the warmth that asks for nothing. <em>Give without getting.</em></p>
+</div>
+
+<script>
+'use strict';
+
+const DOOR_DATA = {
+  '1': {
+    speaker: 'A sweet little girl',
+    offer: '"Give me your meatball, ghost-boy. And I\'ll give you your life back."',
+    correct: false,
+    revealNarration: 'Wrongness arrives late, the way wrongness always does.',
+    figureClass: 'figure-girl',
+    figureHTML: '<div class="head"></div><div class="cheek-l"></div><div class="cheek-r"></div><div class="eye-l"></div><div class="eye-r"></div><div class="mouth"></div><div class="pinafore"></div><div class="legs"><div class="leg"></div><div class="leg"></div></div>'
+  },
+  '2': {
+    speaker: 'A starving old woman',
+    offer: '"I am hungry. Have you anything to spare?"',
+    correct: true,
+    revealNarration: 'She has been here all along. You fed her anyway.',
+    figureClass: 'figure-old-woman',
+    figureHTML: '<div class="shawl-head"></div><div class="face"><div class="eye-l"></div><div class="eye-r"></div></div><div class="body"></div><div class="feet"></div>'
+  },
+  '3': {
+    speaker: 'A healthy, well-dressed man',
+    offer: '"I\'ll take the meatball on the counter — the one for the spirit. She doesn\'t really need it. In return: I\'ll take you home. Just for tonight. They\'re sitting at the table right now."',
+    correct: false,
+    revealNarration: 'He told the truth about the table. He lied about the price.',
+    figureClass: 'figure-man',
+    figureHTML: '<div class="head"></div><div class="eye-l"></div><div class="eye-r"></div><div class="smile"></div><div class="collar"></div><div class="jacket"></div><div class="legs"><div class="leg"></div><div class="leg"></div></div>'
+  }
+};
+
+let phase = 'boot';
+let doorsSeen = new Set();
+let currentlyOpenDoor = null;
+
+const $ = (id) => document.getElementById(id);
+
+function spawnSparkles(count) {
+  const layer = $('sparkle-layer');
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    const edge = Math.floor(Math.random() * 4);
+    let x, y;
+    if (edge === 0) { x = Math.random() * 20; y = Math.random() * 100; }
+    else if (edge === 1) { x = 80 + Math.random() * 20; y = Math.random() * 100; }
+    else if (edge === 2) { x = Math.random() * 100; y = Math.random() * 15; }
+    else { x = Math.random() * 100; y = 85 + Math.random() * 15; }
+    s.style.left = x + '%';
+    s.style.top = y + '%';
+    s.style.animationDelay = (Math.random() * 4) + 's';
+    s.style.animationDuration = (3 + Math.random() * 3) + 's';
+    layer.appendChild(s);
+  }
+}
+
+function clearSparkles() {
+  $('sparkle-layer').innerHTML = '';
+}
+
+function bootSpell() {
+  phase = 'opening';
+  $('game').classList.add('spell');
+  spawnSparkles(20);
+  $('inventory').classList.add('visible');
+
+  setTimeout(() => {
+    $('opening-narration').textContent = 'Three doors. Each one has someone behind it. Each one wants what you have.';
+    $('opening-narration').classList.add('visible');
+  }, 600);
+
+  const doors = document.querySelectorAll('.door-frame');
+  doors.forEach((d, i) => {
+    setTimeout(() => {
+      d.classList.add('materialized');
+    }, 1200 + i * 450);
+  });
+
+  setTimeout(() => {
+    $('opening-narration').classList.remove('visible');
+    phase = 'inspecting';
+  }, 4400);
+}
+
+function onDoorClick(doorNum) {
+  if (phase !== 'inspecting') return;
+  if (doorsSeen.has(doorNum)) return;
+  if (currentlyOpenDoor) return;
+
+  phase = 'reading';
+  currentlyOpenDoor = doorNum;
+
+  const doorEl = document.querySelector(`.door-frame[data-door="${doorNum}"]`);
+  doorEl.classList.add('open');
+
+  setTimeout(() => {
+    const d = DOOR_DATA[doorNum];
+    $('offer-speaker').textContent = d.speaker;
+    $('offer-text').textContent = d.offer;
+    $('offer-panel').classList.add('visible');
+  }, 700);
+}
+
+function onOfferAcknowledge() {
+  if (phase !== 'reading') return;
+  if (!currentlyOpenDoor) return;
+
+  const doorNum = currentlyOpenDoor;
+  const doorEl = document.querySelector(`.door-frame[data-door="${doorNum}"]`);
+
+  $('offer-panel').classList.remove('visible');
+
+  setTimeout(() => {
+    doorEl.classList.remove('open');
+    doorEl.classList.add('seen');
+    doorsSeen.add(doorNum);
+    currentlyOpenDoor = null;
+
+    if (doorsSeen.size === 3) {
+      setTimeout(() => goToSummary(), 1200);
+    } else {
+      phase = 'inspecting';
+    }
+  }, 400);
+}
+
+function goToSummary() {
+  phase = 'summary';
+  const container = $('summary-options');
+  container.innerHTML = '';
+
+  ['1', '2', '3'].forEach((doorNum) => {
+    const d = DOOR_DATA[doorNum];
+    const option = document.createElement('div');
+    option.className = 'summary-option';
+    option.dataset.door = doorNum;
+    option.innerHTML = `
+      <div class="summary-portrait">
+        <div class="${d.figureClass}">${d.figureHTML}</div>
+      </div>
+      <div class="summary-text">
+        <div class="summary-speaker">Door ${doorNum} — ${d.speaker}</div>
+        <div class="summary-offer">${d.offer}</div>
+      </div>
+    `;
+    option.addEventListener('click', () => onSummaryChoice(doorNum));
+    container.appendChild(option);
+  });
+
+  $('doors-view').classList.add('hidden');
+  setTimeout(() => {
+    $('summary-view').classList.add('visible');
+  }, 400);
+}
+
+function onSummaryChoice(doorNum) {
+  if (phase !== 'summary') return;
+
+  phase = 'revealing';
+  const d = DOOR_DATA[doorNum];
+  const optionEl = document.querySelector(`.summary-option[data-door="${doorNum}"]`);
+
+  document.querySelectorAll('.summary-option').forEach((el) => {
+    el.style.pointerEvents = 'none';
+    if (el !== optionEl) el.style.opacity = '0.4';
+  });
+
+  if (d.correct) {
+    revealRight(doorNum, optionEl, d);
+  } else {
+    revealWrong(doorNum, optionEl, d);
+  }
+}
+
+function revealWrong(doorNum, optionEl, d) {
+  const figureEl = optionEl.querySelector('.summary-portrait > div');
+  figureEl.classList.add('devil');
+
+  setTimeout(() => {
+    $('reveal-narration').textContent = d.revealNarration;
+    $('reveal-narration').classList.add('visible');
+  }, 1200);
+
+  setTimeout(() => {
+    $('reveal-narration').classList.remove('visible');
+  }, 4500);
+
+  setTimeout(() => {
+    resetToDoors();
+  }, 5300);
+}
+
+function revealRight(doorNum, optionEl, d) {
+  const figureEl = optionEl.querySelector('.summary-portrait > div');
+
+  setTimeout(() => {
+    const pipMeatball = document.querySelector('.inv-item:first-child');
+    pipMeatball.style.transition = 'opacity 1.2s';
+    pipMeatball.style.opacity = '0.25';
+  }, 600);
+
+  setTimeout(() => {
+    figureEl.classList.add('cat-bright');
+  }, 1200);
+
+  setTimeout(() => {
+    $('reveal-narration').textContent = d.revealNarration;
+    $('reveal-narration').classList.add('visible');
+  }, 2400);
+
+  setTimeout(() => {
+    $('reveal-narration').classList.remove('visible');
+  }, 5500);
+
+  setTimeout(() => {
+    showResolution();
+  }, 6200);
+}
+
+function resetToDoors() {
+  $('summary-view').classList.remove('visible');
+
+  setTimeout(() => {
+    document.querySelectorAll('.summary-option').forEach((el) => {
+      el.style.pointerEvents = '';
+      el.style.opacity = '';
+      const fig = el.querySelector('.summary-portrait > div');
+      fig.classList.remove('devil');
+    });
+  }, 800);
+
+  doorsSeen = new Set();
+  document.querySelectorAll('.door-frame').forEach((d) => {
+    d.classList.remove('seen', 'open');
+  });
+
+  setTimeout(() => {
+    $('doors-view').classList.remove('hidden');
+    phase = 'inspecting';
+  }, 800);
+}
+
+function showResolution() {
+  phase = 'resolved';
+  clearSparkles();
+  spawnSparkles(45);
+  $('summary-view').classList.remove('visible');
+  $('resolution').classList.add('visible');
+}
+
+function restart() {
+  phase = 'boot';
+  doorsSeen = new Set();
+  currentlyOpenDoor = null;
+
+  document.querySelectorAll('.door-frame').forEach((d) => {
+    d.classList.remove('materialized', 'seen', 'open');
+  });
+  document.querySelectorAll('.figure-girl').forEach((f) => f.classList.remove('devil'));
+  document.querySelectorAll('.figure-man').forEach((f) => f.classList.remove('devil'));
+  document.querySelectorAll('.figure-old-woman').forEach((f) => f.classList.remove('cat-bright'));
+
+  const pipMeatball = document.querySelector('.inv-item:first-child');
+  if (pipMeatball) pipMeatball.style.opacity = '';
+
+  $('resolution').classList.remove('visible');
+  $('summary-view').classList.remove('visible');
+  $('doors-view').classList.remove('hidden');
+  $('reveal-narration').classList.remove('visible');
+  $('opening-narration').classList.remove('visible');
+  $('inventory').classList.remove('visible');
+  $('game').classList.remove('spell');
+
+  clearSparkles();
+
+  setTimeout(() => bootSpell(), 600);
+}
+
+document.querySelectorAll('.door-frame').forEach((doorEl) => {
+  const doorNum = doorEl.dataset.door;
+  doorEl.addEventListener('click', () => onDoorClick(doorNum));
+});
+
+$('offer-panel').addEventListener('click', onOfferAcknowledge);
+
+setTimeout(() => bootSpell(), 800);
+</script>
+</body>
+</html>

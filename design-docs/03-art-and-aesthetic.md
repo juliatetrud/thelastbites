@@ -95,6 +95,85 @@ Pixel rendering uses `image-rendering: pixelated`. No anti-aliasing. No sub-pixe
 
 ---
 
+## Scale Anchor
+
+The **door** is the canonical scale reference for the entire game. Every other object — Pip, NPCs, Pätu, furniture, fixtures, props — is defined in proportion to door height, not to each other and not to Pip.
+
+This is a structural choice. Pip can change (different ghost states, taste-memory shimmer, future redesigns). Adults vary across chapters. Furniture is room-specific. The door is the one element that exists in nearly every space, has known real-world proportions, and is built by humans for human bodies. Anchoring scale to it gives us a constitution every visual element answers to.
+
+### The canonical door
+
+A standard ship-corridor door at 480×270 internal canvas is:
+
+- **Height:** 110 pixels (floor to top of frame)
+- **Width:** 32 pixels
+
+This is a "1 door-height" unit. Everything else is expressed as a fraction or multiple of it.
+
+### Scale ratios (locked)
+
+| Element                     | Height (door-fraction) | Pixels @ 480×270 |
+|-----------------------------|------------------------|------------------|
+| Door (canonical)            | 1.00                   | 110              |
+| Adult NPC (Babcia, Dziadek, the passenger, Henrik, Iris, Helga the cat's human, etc.) | 0.55–0.65 | 60–72 |
+| Child / Pip-aged human (memory-Pip in cinematic) | 0.40–0.45 | 44–50 |
+| Pip (ghost form, gameplay sprite) | 0.30–0.35           | 32–38             |
+| Pätu (gray tabby cat)       | 0.20–0.25              | 22–28            |
+| Echo-creatures (spiders, mice, cockroaches) | 0.06–0.14   | 7–16             |
+| Helga (recurring cat NPC)   | 0.28–0.34              | 32–38            |
+| Furniture: bed              | 0.85–1.00 wide × 0.18–0.22 tall (frame) | 95–110 × 20–24 |
+| Furniture: nightstand       | 0.16–0.20 wide × 0.16–0.20 tall | 18–22 × 18–22 |
+| Furniture: chair            | 0.30–0.35 tall         | 33–38            |
+| Wall fixtures (sconces, oil lamps, portholes) | mounted at door-top height (~y=58 from top of room) | — |
+| Porthole diameter           | 0.30–0.34              | 33–38            |
+| Suitcase                    | 0.45–0.55 wide × 0.12–0.16 tall | 50–60 × 13–18 |
+
+### Why these ratios
+
+A real ship-corridor door is roughly **2 meters (6'6") tall**. Treating the door as 1.0:
+
+- **An adult human is ~1.7 meters → 0.85 door-heights.** In the game we render adults at 0.55–0.65 because the camera framing flattens vertical perspective slightly and we want adults to feel imposingly tall against Pip without dominating the frame. Babcia, Dziadek, the passenger, Henrik, Iris — all in this band.
+- **A six-year-old human is ~1.15 meters → 0.57 door-heights.** Memory-Pip in cinematic gets ~0.40–0.45 because we want him to feel small even at six.
+- **A ghost-child Pip is smaller still.** Ghost-Pip is *more compact than living-Pip* — he's lost the body, not just changed form. 0.30–0.35 puts him at "knee-high to an adult," which is the correct emotional register: a child-shaped being looking up at a world that no longer registers him.
+- **Pätu is a real cat scale.** Real cats are ~0.25 meters tall at the shoulder; on the door scale that's ~0.12. We render at 0.20–0.25 because she's a slightly-larger-than-life storybook cat, and because Pip needs to feel a kinship of small things with her.
+
+### What this means in practice
+
+When adding a new visual element to any scene, the question is **"what door-fraction is this?"** — not "what looks right next to Pip?" Designers can stand a candidate door (110px tall) next to the new asset and read its proportional height directly.
+
+When Pip's sprite changes — and he might, across the eight chapters, as his ghostly form gets more or less defined — the *world* doesn't have to change with him. The doors stay 110px. Pätu stays 22-28px. Adults stay 60-72px. Only Pip's number on this chart updates.
+
+### Existing assets to reconcile
+
+As of Sprint 06, the following will need adjustment to honor this scale:
+
+- **Cabin door (x=120):** currently 26×72. Bump to 32×110.
+- **Hallway doors (×6):** currently 24×64. Bump to 32×110.
+- **Babcia, Dziadek (Sprint 04):** currently ~22-30px tall. Bump to ~60-65px.
+- **Passenger (Sprint 03):** currently ~22-26px tall. Bump to ~60-66px.
+- **Cinematic Babcia and Dziadek:** currently ~28-42px. Bump cinematic figures proportionally — cinematic register is allowed to draw larger because of the closer framing, so adult cinematic figures can reach 0.75–0.90 door-heights (~85-100px). Cinematic Pip (when shown) stays the same as gameplay (he's the same ghost, just more pixels) — roughly 0.30–0.40 cinematic-door-heights.
+- **Pip himself:** currently 16×24. Could bump slightly toward 18×34 (still in the 0.30–0.35 range against the new 110px door). Not required, but worth considering when NPCs scale up. The point is that Pip's scale is now derived from the door, not the other way around.
+
+### What does NOT change
+
+- **Canvas resolution stays 480×270.** This is locked.
+- **Pip's *visual style* doesn't change** — same bald ghost, same three waves, same eye-dots and blush. Just possibly slightly more pixels of him.
+- **Cinematic close-ups stay 40-60% frame height.** Different framing, different rule. The scale-anchor table is for *gameplay-register* objects in the same shot.
+- **The story bible's character descriptions don't change.** Pip is still a ghost-child. Adults are still adults. Only their pixel counts shift to match the locked ratios.
+
+### A note on chapters 2–8
+
+This scale system applies forward. When new NPCs are introduced (Iris, Henrik, the Haldjas, the passengers and chefs of later ports), they slot into the table by their narrative role:
+
+- All adult humans → 0.55–0.65 door-heights
+- Children → 0.40–0.45 door-heights
+- Cats and small companions → 0.20–0.30 door-heights
+- Monsters / echo-creatures → variable per design, but always defined as a door-fraction first
+
+Future chapters will not redraw doors. The door is the constant. When a chapter doc specifies a new NPC's size, it states the ratio, and the implementation computes the pixels.
+
+---
+
 ## Reference Inventory
 
 Show these to any artist hired for the project.

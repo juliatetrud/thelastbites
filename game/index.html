@@ -293,10 +293,20 @@
 const W = 480;           // internal canvas width  (pixels)
 const H = 270;           // internal canvas height (pixels)
 const ROOM_W = 960;      // room width in game-world coordinates (2× canvas)
-const FLOOR_Y = 232;     // y of the floor surface (feet land here)
+const FLOOR_Y = 180;     // y of the floor surface (feet land here).
+                         // Bottom ~30% of the canvas (y=180–270) is the UI zone —
+                         // reserved for the dialogue box and controls strip.
+                         // Every room must keep game-world content above this line.
+                         // Established Sprint 02.5; see 06-roadmap-and-open-questions.md Decisions Log.
 const PIP_HALF_W = 8;    // half of Pip's sprite width (16px total)
 const PIP_H = 24;        // Pip's sprite height
 const PIP_SPEED = 90;    // movement speed, pixels per second (game coords)
+
+/* Float capability — see pip.float state and update() for usage */
+const FLOAT_MAX_ALT    = 36;   // max pixels above floor (≈1.5× sprite height)
+const FLOAT_RISE_ACCEL = 220;  // px/s² upward acceleration while Space held
+const FLOAT_GRAVITY    = 180;  // px/s² downward acceleration when Space released
+const FLOAT_MAX_RISE_V = 80;   // px/s upward speed cap
 
 /* ================================================================
    CANVAS SETUP
@@ -339,6 +349,18 @@ const pip = {
     offsetX:  0,         // reserved: horizontal nudge
     offsetY:  0,         // reserved: vertical nudge
   },
+
+  /* Float state.
+     unlocked: false in production; set true at Chapter 1 Beat 8 (story sprint)
+               or by ?dev=1 URL flag (playtesting).
+     altitude: pixels above FLOOR_Y (0 = standing on floor).
+     vy:       vertical velocity in px/s (positive = rising, negative = falling).
+     When unlocked===false, altitude stays 0 and vy stays 0 at all times. */
+  float: {
+    unlocked: false,
+    altitude: 0,
+    vy:       0,
+  },
 };
 
 /* ================================================================
@@ -356,7 +378,7 @@ const cabinObjects = [
   {
     id: 'door',
     x: 120,
-    sparkleY: 148,
+    sparkleY: 128,
     node: {
       id: 'door-inspect',
       lines: [
@@ -421,7 +443,7 @@ const cabinObjects = [
   {
     id: 'bed',
     x: 720,
-    sparkleY: 155,
+    sparkleY: 165,
     node: {
       id: 'bed-inspect',
       lines: [
@@ -458,6 +480,23 @@ const dialogue = {
   selectedChoice: 0,       // index of highlighted choice
   closing:        false,   // true during the 0.3s fade-out
 };
+
+/* ================================================================
+   DEV FLAG
+   ?dev=1 in the URL unlocks abilities that are story-gated in
+   production. Float is the first; future abilities (electricity,
+   phase-through, memory-gifting) follow the same pattern.
+   Engine capability + dev flag arrive together; story unlock
+   arrives in the relevant chapter sprint.
+   ================================================================ */
+
+const URL_PARAMS = new URLSearchParams(window.location.search);
+const DEV_MODE   = URL_PARAMS.get('dev') === '1';
+
+if (DEV_MODE) {
+  pip.float.unlocked = true;
+  console.log('[dev mode] float unlocked');
+}
 
 /* ================================================================
    INPUT
@@ -560,7 +599,7 @@ function update(dt) {
   }
 
   // Movement gated while dialogue is active.
-  // Blink continues regardless — Pip is still alive on screen.
+  // Blink and float gravity continue regardless — Pip is still alive on screen.
   if (!dialogue.active) {
     const left  = movingLeft();
     const right = movingRight();
@@ -579,7 +618,41 @@ function update(dt) {
     pip.x = Math.max(PIP_HALF_W, Math.min(ROOM_W - PIP_HALF_W, pip.x));
   }
 
+  updateFloat(dt);
   updateBlink(dt);
+}
+
+/* ----------------------------------------------------------------
+   FLOAT UPDATE
+   Reads keysHeld['Space'] directly (continuous held input).
+   Rising only when: float.unlocked AND no dialogue AND Space held.
+   Gravity still applies mid-air when dialogue opens, so Pip
+   descends naturally rather than hanging frozen.
+   When unlocked===false, altitude is always 0 — no-op every frame.
+   ---------------------------------------------------------------- */
+
+function updateFloat(dt) {
+  const f      = pip.float;
+  const rising = f.unlocked && !dialogue.active && !!keysHeld['Space'];
+
+  if (f.altitude <= 0 && !rising) return; // on the floor, not rising — nothing to do
+
+  if (rising) {
+    f.vy = Math.min(FLOAT_MAX_RISE_V, f.vy + FLOAT_RISE_ACCEL * dt);
+  } else {
+    // Gravity pulls down whether dialogue is active or space is released
+    f.vy = Math.max(-(FLOAT_MAX_RISE_V * 1.5), f.vy - FLOAT_GRAVITY * dt);
+  }
+
+  f.altitude += f.vy * dt;
+
+  if (f.altitude >= FLOAT_MAX_ALT) {
+    f.altitude = FLOAT_MAX_ALT;
+    f.vy       = 0;
+  } else if (f.altitude <= 0) {
+    f.altitude = 0;
+    f.vy       = 0;
+  }
 }
 
 /* ----------------------------------------------------------------
@@ -641,12 +714,19 @@ function updateBlink(dt) {
 
 const STRIP_STRINGS = {
   'room':                 '← →  MOVE     ↑  LOOK     ESC  JOURNAL',
+  'room-floatable':       '← →  MOVE     ↑  LOOK     SPACE  FLOAT     ESC  JOURNAL',
   'atmospheric-dialogue': 'SPACE  CONTINUE',
   'interactive-dialogue': '↑↓  CHOOSE     SPACE  SELECT',
 };
 
 function setControlsStrip(context) {
   document.getElementById('controls-strip').textContent = STRIP_STRINGS[context] || '';
+}
+
+/* Pick 'room' or 'room-floatable' based on pip.float.unlocked.
+   Call this anywhere room-mode strip should be shown (kick-off, closeDialogue). */
+function setRoomStrip() {
+  setControlsStrip(pip.float.unlocked ? 'room-floatable' : 'room');
 }
 
 /* ================================================================
@@ -707,7 +787,7 @@ function closeDialogue() {
     choicesEl.classList.remove('visible');
     choicesEl.style.display = 'none';
 
-    setControlsStrip('room');
+    setRoomStrip();
   }, 300);
 }
 
@@ -880,7 +960,7 @@ function render(now) {
 
   drawRoom(camX, now);
   drawSparkles(camX, now);
-  drawPip(pip.x - camX, pip.y, now);
+  drawPip(pip.x - camX, pip.y - pip.float.altitude, now);
 }
 
 /* ----------------------------------------------------------------
@@ -891,60 +971,73 @@ function render(now) {
    ---------------------------------------------------------------- */
 
 function drawRoom(camX, now) {
-  /* Sky / wall gradient — vertical, top to bottom */
-  const wallGrad = ctx.createLinearGradient(0, 0, 0, H);
+  /* UI zone base fill — covers the entire canvas.
+     The area below FLOOR_Y is reserved for the dialogue box and
+     controls strip; no room art should appear there. This very dark
+     cool fill acts as the ambient "floor decking shadow" beneath
+     the room, quiet enough not to draw the eye. */
+  ctx.fillStyle = '#080e20';
+  ctx.fillRect(0, 0, W, H);
+
+  /* Wall / sky gradient — covers only the room area (0 to FLOOR_Y).
+     Does not bleed into the UI zone below. */
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
   wallGrad.addColorStop(0,   '#0e1a3a');  /* --region-deep  */
   wallGrad.addColorStop(0.5, '#1c2858');  /* --region-base  */
   wallGrad.addColorStop(1,   '#0e1a3a');  /* --region-deep  */
   ctx.fillStyle = wallGrad;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(0, 0, W, FLOOR_Y);
 
-  /* Subtle radial darkening near room edges (ambient depth) */
-  const edgeGrad = ctx.createRadialGradient(W / 2, H * 0.45, H * 0.2, W / 2, H * 0.45, H * 0.9);
+  /* Subtle radial darkening near room edges (ambient depth).
+     Gradient centred within the room band; clipped to room rect. */
+  const edgeGrad = ctx.createRadialGradient(
+    W / 2, FLOOR_Y * 0.45, FLOOR_Y * 0.2,
+    W / 2, FLOOR_Y * 0.45, H * 0.9
+  );
   edgeGrad.addColorStop(0, 'rgba(0, 0, 0, 0)');
   edgeGrad.addColorStop(1, 'rgba(12, 6, 24, 0.55)');
   ctx.fillStyle = edgeGrad;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(0, 0, W, FLOOR_Y);
 
-  /* Floor — a slightly lighter band below the floor line */
-  const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
+  /* Narrow floor-surface gradient — just the 20px band at the floor line,
+     blending into the dark UI-zone base below it. */
+  const floorSurfH = 20;
+  const floorGrad  = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + floorSurfH);
   floorGrad.addColorStop(0, '#1a2848');   /* --region-floor */
-  floorGrad.addColorStop(1, '#0e1a3a');   /* --region-deep  */
+  floorGrad.addColorStop(1, '#080e20');   /* blends into UI zone */
   ctx.fillStyle = floorGrad;
-  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillRect(0, FLOOR_Y, W, floorSurfH);
 
-  /* Floor line — faint separator between wall and floor */
-  ctx.strokeStyle = 'rgba(90, 72, 120, 0.45)';  /* --region-shadow tint */
-  ctx.lineWidth = 1;
+  /* Floor line — faint separator at the room/UI boundary */
+  ctx.strokeStyle = 'rgba(90, 72, 120, 0.45)';
+  ctx.lineWidth   = 1;
   ctx.beginPath();
   ctx.moveTo(0, FLOOR_Y);
   ctx.lineTo(W, FLOOR_Y);
   ctx.stroke();
 
-  /* Very faint repeating baseboards / wainscoting suggestion,
-     scrolling with the camera so the room feels wider than the canvas. */
+  /* Baseboard / wainscoting suggestion — sits just above the floor */
   const baseboardH = 12;
   const baseboardY = FLOOR_Y - baseboardH;
   ctx.fillStyle = 'rgba(26, 40, 72, 0.6)';
   ctx.fillRect(0, baseboardY, W, baseboardH);
   ctx.strokeStyle = 'rgba(90, 72, 120, 0.3)';
-  ctx.lineWidth = 1;
+  ctx.lineWidth   = 1;
   ctx.beginPath();
   ctx.moveTo(0, baseboardY);
   ctx.lineTo(W, baseboardY);
   ctx.stroke();
 
-  /* Subtle parallax: distant wall markings shift at half camera speed,
-     giving depth cues without any sprite art. These are just faint
-     vertical lines suggesting a panelled corridor. */
-  const panelSpacing = 120;  /* game-world spacing of wall panels */
+  /* Parallax wall panels: shift at half camera speed for depth.
+     Vertical lines from near the ceiling down to the baseboard top. */
+  const panelSpacing = 120;
   const panelOffset  = (camX * 0.5) % panelSpacing;
   ctx.strokeStyle = 'rgba(60, 80, 140, 0.18)';
-  ctx.lineWidth = 1;
+  ctx.lineWidth   = 1;
   for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
     ctx.beginPath();
     ctx.moveTo(px, 20);
-    ctx.lineTo(px, FLOOR_Y - baseboardH);
+    ctx.lineTo(px, baseboardY);
     ctx.stroke();
   }
 }
@@ -1121,7 +1214,7 @@ function drawPipMouth() {
    KICK OFF
    ================================================================ */
 
-setControlsStrip('room');
+setRoomStrip();
 requestAnimationFrame(loop);
 
 </script>

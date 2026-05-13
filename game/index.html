@@ -2383,9 +2383,9 @@ function drawHallway(camX, now) {
 
   const baseboardH = 12;
   const baseboardY = FLOOR_Y - baseboardH;   // 168
-  const doorH      = 64;
-  const doorW      = 24;
-  const doorTop    = baseboardY - doorH;     // 104
+  const doorH      = 110;
+  const doorW      = 32;
+  const doorTop    = baseboardY - doorH;     // 58
   const panelTop   = 20;
   const panelH     = baseboardY - panelTop;  // 148
 
@@ -2408,7 +2408,7 @@ function drawHallway(camX, now) {
   //   gap 4 (700→920) x=810  sconce (flickering — Beat 8 foreshadowing)
   //   gap 5 (920→1180) x=1050 porthole
   const fixtureY  = 85;
-  const portholeR = 17;   // bottom edge 85+17=102 clears doorTop 104
+  const portholeR = 17;   // bottom edge 85+17=102; doorTop is now 58
   const PORTHOLES = [180, 600, 1050];
   const SCONCES   = [390, 810];   // 810 flickers
 

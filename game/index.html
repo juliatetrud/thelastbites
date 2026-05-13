@@ -746,6 +746,7 @@ const dialogue = {
   showingChoices: false,   // true once choice list is visible
   selectedChoice: 0,       // index of highlighted choice
   closing:        false,   // true during the 0.3s fade-out
+  _closeTimer:    null,    // pending closeDialogue timeout ID (for cancellation)
 };
 
 /* ================================================================
@@ -1084,6 +1085,13 @@ function setRoomStrip() {
 
 /* ---- Open a dialogue node ---- */
 function showDialogue(node) {
+  // Cancel any pending closeDialogue timeout so stale timers can't kill
+  // a new dialogue that starts before the 300ms fade completes.
+  if (dialogue._closeTimer !== null) {
+    clearTimeout(dialogue._closeTimer);
+    dialogue._closeTimer = null;
+  }
+
   dialogue.active         = true;
   dialogue.node           = node;
   dialogue.lineIndex      = 0;
@@ -1122,7 +1130,8 @@ function closeDialogue() {
 
   document.getElementById('dialogue-box').classList.remove('active');
 
-  setTimeout(() => {
+  dialogue._closeTimer = setTimeout(() => {
+    dialogue._closeTimer = null;
     dialogue.active   = false;
     dialogue.closing  = false;
     dialogue.node     = null;
@@ -1775,8 +1784,8 @@ function drawGrandparentsCinematic(now) {
   ctx.fillStyle = wallGrad;
   ctx.fillRect(0, 0, W, FLOOR_Y);
 
-  // Lamp warm glow pool — anchors right side
-  const lampGlow = ctx.createRadialGradient(452, 88, 0, 452, 88, 145);
+  // Lamp warm glow pool — anchors right side (matches lampX=464)
+  const lampGlow = ctx.createRadialGradient(464, 88, 0, 464, 88, 145);
   lampGlow.addColorStop(0,   'rgba(255,210,100,0.26)');
   lampGlow.addColorStop(0.5, 'rgba(255,170,60,0.10)');
   lampGlow.addColorStop(1,   'rgba(255,140,40,0)');
@@ -1844,29 +1853,30 @@ function drawGrandparentsCinematic(now) {
   ctx.fillRect(scX + scW / 2 - 2, scY - 1, 4, 2);
 
   // === Element 3: Bed (right third) ===
-  const bedX = 292, bedW = 148, bedH = 24, bedY = FLOOR_Y - bedH;
-  // Headboard
-  ctx.fillStyle = '#201408';
-  ctx.fillRect(bedX + bedW - 10, bedY - 16, 10, bedH + 16);
-  ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+  // Bed spans 284–428; headboard at 418–428. Nightstand sits right of headboard.
+  const bedX = 284, bedW = 144, bedH = 24, bedY = FLOOR_Y - bedH;
+  // Headboard (right edge of bed)
+  ctx.fillStyle = '#2a2010';
+  ctx.fillRect(bedX + bedW - 10, bedY - 18, 10, bedH + 18);
+  ctx.strokeStyle = 'rgba(100,75,35,0.55)';
   ctx.lineWidth   = 1;
-  ctx.strokeRect(bedX + bedW - 10, bedY - 16, 10, bedH + 16);
+  ctx.strokeRect(bedX + bedW - 10, bedY - 18, 10, bedH + 18);
   // Bed frame
-  ctx.fillStyle = '#1a1208';
+  ctx.fillStyle = '#1e1610';
   ctx.fillRect(bedX, bedY, bedW, bedH);
-  ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+  ctx.strokeStyle = 'rgba(100,75,35,0.4)';
   ctx.strokeRect(bedX, bedY, bedW, bedH);
-  // Rumpled bedding
-  ctx.fillStyle = '#2a1e10';
-  ctx.fillRect(bedX + 2,  bedY + 2, bedW - 14, 8);
-  ctx.fillStyle = '#321e0e';
-  ctx.fillRect(bedX + 8,  bedY + 2, 22, 6);
-  ctx.fillRect(bedX + 50, bedY + 3, 16, 5);
-  ctx.fillStyle = '#281a0a';
-  ctx.fillRect(bedX + 80, bedY + 2, 28, 7);
+  // Rumpled bedding — noticeably lighter than frame so it reads as fabric
+  ctx.fillStyle = '#3e2e18';
+  ctx.fillRect(bedX + 2,  bedY + 2, bedW - 14, 9);
+  ctx.fillStyle = '#4a3418';
+  ctx.fillRect(bedX + 6,  bedY + 2, 24, 7);
+  ctx.fillRect(bedX + 48, bedY + 3, 18, 6);
+  ctx.fillStyle = '#382616';
+  ctx.fillRect(bedX + 78, bedY + 2, 30, 8);
 
   // === Element 4: Bedside lamp (far right) ===
-  const lampX = 452, lampShadeY = 78;
+  const lampX = 464, lampShadeY = 78;
   const pulse = 0.85 + Math.sin(now / 2800) * 0.08;
   // Lamp base (stem)
   ctx.fillStyle = '#4a3820';
@@ -1891,37 +1901,39 @@ function drawGrandparentsCinematic(now) {
   ctx.closePath();
   ctx.fill();
   ctx.globalAlpha = 1;
-  // Halo around shade
-  const lampHalo = ctx.createRadialGradient(lampX, lampShadeY + 10, 0, lampX, lampShadeY + 10, 75);
-  lampHalo.addColorStop(0, `rgba(255,210,90,${0.20 * pulse})`);
+  // Halo
+  const lampHalo = ctx.createRadialGradient(lampX, lampShadeY + 10, 0, lampX, lampShadeY + 10, 72);
+  lampHalo.addColorStop(0, `rgba(255,210,90,${0.22 * pulse})`);
   lampHalo.addColorStop(1, 'rgba(255,170,50,0)');
   ctx.fillStyle = lampHalo;
-  ctx.fillRect(lampX - 75, lampShadeY - 30, 150, 110);
+  ctx.fillRect(lampX - 72, lampShadeY - 30, 144, 110);
 
-  // === Element 5: Nightstand + photograph ===
-  const nsX = 378, nsW = 20, nsH = 18, nsY = FLOOR_Y - nsH;
+  // === Element 5: Nightstand + photograph (right of headboard) ===
+  // nsX is the left edge; sits between headboard (428) and lamp (464).
+  const nsX = 432, nsW = 18, nsH = 18, nsY = FLOOR_Y - nsH;
   ctx.fillStyle = '#1e1408';
   ctx.fillRect(nsX, nsY, nsW, nsH);
-  ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+  ctx.strokeStyle = 'rgba(100,75,35,0.5)';
   ctx.lineWidth   = 1;
   ctx.strokeRect(nsX, nsY, nsW, nsH);
   // Photo frame
   ctx.fillStyle = '#3a2c14';
-  ctx.fillRect(nsX + 3, nsY - 10, 14, 10);
-  ctx.strokeStyle = 'rgba(120,100,60,0.7)';
-  ctx.strokeRect(nsX + 3, nsY - 10, 14, 10);
-  // Photo fill + child silhouette (Pip at 6)
+  ctx.fillRect(nsX + 2, nsY - 11, 14, 11);
+  ctx.strokeStyle = 'rgba(130,105,60,0.75)';
+  ctx.strokeRect(nsX + 2, nsY - 11, 14, 11);
+  // Photo fill + tiny Pip silhouette
   ctx.fillStyle = '#c8a060';
-  ctx.fillRect(nsX + 5, nsY - 8, 10, 7);
+  ctx.fillRect(nsX + 4, nsY - 9, 10, 8);
   ctx.fillStyle = '#1a1408';
   ctx.beginPath();
-  ctx.arc(nsX + 10, nsY - 6, 2, 0, Math.PI * 2);
+  ctx.arc(nsX + 9, nsY - 6, 2, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillRect(nsX + 8, nsY - 3, 4, 3);
+  ctx.fillRect(nsX + 7, nsY - 3, 4, 3);
 
   // === Babcia seated on bed (sob-bob) ===
+  // cx ~= 40% from bed left, well clear of headboard and nightstand.
   const babciaSob = Math.sin(now / 1500) * 1;
-  drawCinBabcia(Math.round(bedX + bedW * 0.42), bedY + Math.round(babciaSob));
+  drawCinBabcia(Math.round(bedX + bedW * 0.38), bedY + Math.round(babciaSob));
 
   // === Optional: dust motes near lamp ===
   drawDustMotes(now);

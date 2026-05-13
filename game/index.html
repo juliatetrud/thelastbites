@@ -2401,7 +2401,7 @@ function drawHallway(camX, now) {
 
   // Portholes — three, full camera speed, between doors
   // Positioned at game-world x = 350, 650, 1000
-  const portholeY = 54, portholeR = 17;
+  const portholeY = 85, portholeR = 17;   // bottom edge (85+17=102) clears doorTop (104)
   for (const gx of [350, 650, 1000]) {
     const sx = Math.round(gx - camX);
     if (sx < -(portholeR + 5) || sx > W + portholeR + 5) continue;
@@ -2410,7 +2410,7 @@ function drawHallway(camX, now) {
 
   // Sconces — refactored to drawSconce
   // x=820 flickers — first hint of Pip's electricity ability (Beat 8)
-  const sconceY = doorTop + 4;   // 108
+  const sconceY = 60;   // high on wall, above portholes
   for (const gx of [180, 390, 610, 820, 1060]) {
     const sx = Math.round(gx - camX);
     if (sx > W + 12 || sx < -12) continue;

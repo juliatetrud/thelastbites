@@ -533,17 +533,144 @@ const hallwayObjects = [
     },
   },
 
-  /* ---- Grandparents' door ---- atmospheric placeholder, 2 lines.
-     Future sprint replaces "Not yet" with the cinematic trigger. */
+  /* ---- Grandparents' door ----
+     Before cinematic: 2 setup lines + "Try the handle." choice.
+     After cinematic played: "still inside" line + Go in / Not now choices.
+     The getter returns the appropriate node based on runtime state. */
   {
     id: 'hallway-grandparents-door',
     x: 1180,
     sparkleY: 110,
+    get node() {
+      if (cinematic.played.has('grandparents')) {
+        return {
+          id: 'gp-door-return',
+          lines: [
+            { speaker: null, text: 'Babcia and Dziadek are still inside. You can go in, but they cannot hear you.', italic: true },
+          ],
+          choices: [
+            {
+              id: 'go-in',
+              text: 'Go in.',
+              onSelect() {
+                closeDialogue();
+                setTimeout(() => startTransition('grandparents', 'fromLeft'), 310);
+              },
+            },
+            {
+              id: 'not-now',
+              text: 'Not now.',
+              onSelect() { closeDialogue(); },
+            },
+          ],
+          onEnd: null,
+        };
+      }
+      return {
+        id: 'gp-door-first',
+        lines: [
+          { speaker: null, text: 'From inside, the sound of someone crying. Soft. Familiar.', italic: true },
+          { speaker: null, text: 'You reach for the handle.', italic: true },
+        ],
+        choices: [
+          {
+            id: 'try-handle',
+            text: 'Try the handle.',
+            onSelect() {
+              showDialogue({
+                id: 'gp-door-phase',
+                lines: [{ speaker: null, text: 'Your hand goes through. You step closer. You step through the door.', italic: true }],
+                choices: null,
+                onEnd() {
+                  // Fade to black, swap to grandparents room, start cinematic
+                  transition.active = true;
+                  const overlay = document.getElementById('room-transition');
+                  overlay.style.opacity = '1';
+                  setTimeout(() => {
+                    currentRoom = 'grandparents';
+                    pip.x = rooms.grandparents.pipEntryX.fromLeft;
+                    pip.body.facing = 'right';
+                    pip.float.altitude = 0;
+                    pip.float.vy       = 0;
+                    showCinematic('grandparents', () => setRoomStrip());
+                    transition.active = false;
+                    setTimeout(() => { overlay.style.opacity = '0'; }, 200);
+                  }, 200);
+                },
+              });
+            },
+          },
+        ],
+        onEnd: null,
+      };
+    },
+  },
+];
+
+/* ================================================================
+   GRANDPARENTS ROOM OBJECTS
+   Four atmospheric inspectables. Same proximity-sparkle pattern as
+   cabin/hallway. Text verbatim from sprint-04-grandparents-cabin.md.
+   ================================================================ */
+
+const grandparentsObjects = [
+  /* ---- Babcia ---- atmospheric, 3 lines */
+  {
+    id: 'gp-babcia',
+    x: 560,
+    sparkleY: 125,
     node: {
-      id: 'hallway-grandparents-door-inspect',
+      id: 'gp-babcia-inspect',
       lines: [
-        { speaker: null, text: 'From inside, the sound of someone crying. Soft. Familiar.', italic: true },
-        { speaker: null, text: 'You reach for the handle. Your hand passes through it. You step back. You can\u2019t bring yourself to go in. Not yet.', italic: true },
+        { speaker: null, text: 'Babcia is on the bed. Her hands are folded in her apron. She is making the smallest sound.', italic: true },
+        { speaker: null, text: 'You can stand right next to her. She will not look up.', italic: true },
+        { speaker: 'PIP', text: 'Babciu, jestem tutaj.', italic: false },
+      ],
+      choices: null, onEnd: null,
+    },
+  },
+
+  /* ---- Dziadek ---- atmospheric, 3 lines */
+  {
+    id: 'gp-dziadek',
+    x: 160,
+    sparkleY: 90,
+    node: {
+      id: 'gp-dziadek-inspect',
+      lines: [
+        { speaker: null, text: "Dziadek\u2019s back is to you. He hasn\u2019t turned. His shoulders are very still.", italic: true },
+        { speaker: null, text: 'On the windowsill, the small radio he listens to in the evenings. Off, now.', italic: true },
+        { speaker: null, text: 'You wait, in case he turns. He does not turn.', italic: true },
+      ],
+      choices: null, onEnd: null,
+    },
+  },
+
+  /* ---- Photograph ---- atmospheric, 2 lines */
+  {
+    id: 'gp-photo',
+    x: 620,
+    sparkleY: 143,
+    node: {
+      id: 'gp-photo-inspect',
+      lines: [
+        { speaker: null, text: 'Your sixth birthday. The pierogi was nearly as big as your face. You remember it tasted like butter and onions and being allowed to use the big knife.', italic: true },
+        { speaker: null, text: 'You remember Babcia laughing. You don\u2019t remember if you said thank you.', italic: true },
+      ],
+      choices: null, onEnd: null,
+    },
+  },
+
+  /* ---- Suitcase ---- atmospheric, 2 lines */
+  {
+    id: 'gp-suitcase',
+    x: 380,
+    sparkleY: 150,
+    node: {
+      id: 'gp-suitcase-inspect',
+      lines: [
+        { speaker: null, text: 'The suitcase is open. Nothing is folded. A shirt of yours is on top \u2014 the one with the boat on it.', italic: true },
+        { speaker: null, text: 'They didn\u2019t have time to unpack. They didn\u2019t think they would need to.', italic: true },
       ],
       choices: null, onEnd: null,
     },
@@ -579,6 +706,16 @@ const rooms = {
     pipEntryX: {
       fromLeft:  PIP_HALF_W + 8,           //  16 — entering from left
       fromRight: HALL_W - PIP_HALF_W - 8,  // 1424 — entering from right (future use)
+    },
+  },
+  grandparents: {
+    width:    720,
+    pipMaxX:  720 - PIP_HALF_W,            // 712 — right wall
+    objects:  grandparentsObjects,
+    draw:     drawGrandparents,            // defined below (hoisted)
+    pipEntryX: {
+      fromLeft:  PIP_HALF_W + 8,           //  16 — entering from door
+      fromRight: 720 - PIP_HALF_W - 8,     // 704 — entering from right
     },
   },
 };
@@ -619,6 +756,22 @@ const dialogue = {
 
 const transition = {
   active: false,
+};
+
+/* ================================================================
+   CINEMATIC STATE
+   Driven by showCinematic(), skipCinematic(), startCinematicFadeOut().
+   holdTimer: seconds of post-final-line silence before fade (1.2s).
+   played: Set of ids that have fired this session (session-only).
+   ================================================================ */
+
+const cinematic = {
+  active:    false,
+  name:      null,     // currently playing cinematic id
+  holdTimer: 0,        // seconds remaining in post-final-line hold
+  fadingOut: false,
+  played:    new Set(),
+  onEnd:     null,
 };
 
 /* ================================================================
@@ -689,6 +842,12 @@ function handleKeyAction(code) {
   // Suppress all key actions during room transitions
   if (transition.active) return;
 
+  // ESC during cinematic — always skippable, regardless of dialogue state
+  if (cinematic.active && code === 'Escape') {
+    skipCinematic();
+    return;
+  }
+
   // ---- Dialogue active ----
   if (dialogue.active && !dialogue.closing) {
     if (dialogue.showingChoices) {
@@ -716,12 +875,15 @@ function handleKeyAction(code) {
     return; // do not fall through to room actions
   }
 
+  // During cinematic hold (dialogue closed but cinematic still active): block room input
+  if (cinematic.active) return;
+
   // ---- Room mode ----
   if (!dialogue.active) {
     if (code === 'ArrowUp' || code === 'KeyW') {
       tryInspect();
     }
-    /* ESC → journal. Journal not built yet (Sprint 04).
+    /* ESC → journal. Journal not built yet.
        Hint is forward-compatible scaffolding; pressing Esc does nothing this sprint. */
   }
 }
@@ -763,8 +925,17 @@ function update(dt) {
     updateDialogue(dt);
   }
 
-  // Movement gated by dialogue and room transitions
-  if (!dialogue.active && !transition.active) {
+  // Cinematic hold timer — auto-starts fade-out after final line
+  if (cinematic.active && cinematic.holdTimer > 0 && !cinematic.fadingOut) {
+    cinematic.holdTimer -= dt;
+    if (cinematic.holdTimer <= 0) {
+      cinematic.holdTimer = 0;
+      startCinematicFadeOut();
+    }
+  }
+
+  // Movement gated by dialogue, room transitions, and cinematic hold
+  if (!dialogue.active && !transition.active && !cinematic.active) {
     const left  = movingLeft();
     const right = movingRight();
 
@@ -786,6 +957,9 @@ function update(dt) {
       startTransition('hallway', 'fromLeft');
     } else if (currentRoom === 'hallway' && pip.x <= PIP_HALF_W + 1) {
       startTransition('cabin', 'fromRight');
+    } else if (currentRoom === 'grandparents' && pip.x <= PIP_HALF_W + 1) {
+      // Return to hallway at the grandparents' door position
+      startTransition('hallway', 'fromRight', 1164);
     }
   }
 
@@ -887,6 +1061,7 @@ const STRIP_STRINGS = {
   'room-floatable':       '← →  MOVE     ↑  LOOK     SPACE  FLOAT     ESC  JOURNAL',
   'atmospheric-dialogue': 'SPACE  CONTINUE',
   'interactive-dialogue': '↑↓  CHOOSE     SPACE  SELECT',
+  'cinematic':            'SPACE  CONTINUE     ESC  SKIP',
 };
 
 function setControlsStrip(context) {
@@ -1128,14 +1303,19 @@ function render(now) {
 
   ctx.clearRect(0, 0, W, H);
 
-  rooms[currentRoom].draw(camX, now);
-  drawSparkles(camX, now);
-  drawPip(pip.x - camX, pip.y - pip.float.altitude, now);
+  if (cinematic.active) {
+    // Cinematic mode: draw the cinematic scene only; dialogue HTML overlay renders on top
+    drawCinematicScene(cinematic.name, now);
+  } else {
+    rooms[currentRoom].draw(camX, now);
+    drawSparkles(camX, now);
+    drawPip(pip.x - camX, pip.y - pip.float.altitude, now);
 
-  // Passenger drawn after Pip — renders in front when positions overlap,
-  // visually conveying "through Pip" (the no-one-can-see-me rule).
-  if (currentRoom === 'hallway' && passenger.active) {
-    drawPassenger(passenger.x - camX, FLOOR_Y, now);
+    // Passenger drawn after Pip — renders in front when positions overlap,
+    // visually conveying "through Pip" (the no-one-can-see-me rule).
+    if (currentRoom === 'hallway' && passenger.active) {
+      drawPassenger(passenger.x - camX, FLOOR_Y, now);
+    }
   }
 }
 
@@ -1392,7 +1572,10 @@ function drawPipMouth() {
    startTransition(toRoom, entryEdge) — entryEdge: 'fromLeft'|'fromRight'
    ================================================================ */
 
-function startTransition(toRoom, entryEdge) {
+/* Optional entryX overrides the default pipEntryX lookup — used when
+   Pip must land at a specific game-world coordinate (e.g. grandparents → hallway
+   exit at x≈1164, next to the door he just stepped out of). */
+function startTransition(toRoom, entryEdge, entryX) {
   if (transition.active) return;
   transition.active = true;
 
@@ -1408,9 +1591,11 @@ function startTransition(toRoom, entryEdge) {
   setTimeout(() => {
     // Screen is black — swap room, reposition Pip
     currentRoom = toRoom;
-    pip.x = entryEdge === 'fromLeft'
-      ? rooms[toRoom].pipEntryX.fromLeft
-      : rooms[toRoom].pipEntryX.fromRight;
+    pip.x = entryX !== undefined
+      ? entryX
+      : entryEdge === 'fromLeft'
+        ? rooms[toRoom].pipEntryX.fromLeft
+        : rooms[toRoom].pipEntryX.fromRight;
     pip.body.facing = entryEdge === 'fromLeft' ? 'right' : 'left';
 
     // Land Pip on floor on room change (don't carry float state across)
@@ -1473,6 +1658,356 @@ function updatePassenger(dt) {
       onEnd: null,
     });
   }
+}
+
+/* ================================================================
+   CINEMATIC ENGINE
+   showCinematic(name, onEnd) — activates a named cinematic.
+   skipCinematic()            — ESC: instant-close dialogue, run fade.
+   startCinematicFadeOut()    — 600ms fade-to-black then call onEnd.
+   drawCinematicScene(name)   — dispatches to per-scene draw function.
+   ================================================================ */
+
+const CINEMATIC_SCRIPTS = {
+  grandparents: [
+    { speaker: null,  text: 'Babcia is on the bed. She is making a sound that Pip has never heard her make.', italic: true },
+    { speaker: null,  text: 'Dziadek stands at the window. His shoulders are shaking. He says nothing.', italic: true },
+    { speaker: null,  text: 'On the nightstand, a photograph. Pip on his sixth birthday, holding a pierogi as big as his face.', italic: true },
+    { speaker: 'PIP', text: 'Babcia\u2026', italic: false },
+    { speaker: null,  text: 'She does not look up.', italic: true },
+    { speaker: 'PIP', text: 'I\u2019m here. I\u2019m right here.', italic: false },
+    { speaker: null,  text: 'She does not look up.', italic: true },
+    { speaker: null,  text: 'Dziadek turns. For a moment, just a moment, he looks toward the doorway. He frowns. He shakes his head and turns back to the window.', italic: true },
+    { speaker: 'PIP', text: '\u2026you almost saw me.', italic: false },
+  ],
+};
+
+function showCinematic(name, onEnd) {
+  if (cinematic.played.has(name)) {
+    if (onEnd) onEnd();
+    return;
+  }
+
+  cinematic.active    = true;
+  cinematic.name      = name;
+  cinematic.holdTimer = 0;
+  cinematic.fadingOut = false;
+  cinematic.onEnd     = onEnd || null;
+  cinematic.played.add(name);
+
+  showDialogue({
+    id:      'cinematic-' + name,
+    lines:   CINEMATIC_SCRIPTS[name],
+    choices: null,
+    onEnd() {
+      // Final line dismissed — begin 1.2s silence before fade-out
+      cinematic.holdTimer = 1.2;
+    },
+  });
+  // Override the 'atmospheric-dialogue' strip that showDialogue just set
+  setControlsStrip('cinematic');
+}
+
+function skipCinematic() {
+  if (!cinematic.active) return;
+
+  // Force-close dialogue immediately (no 300ms fade delay)
+  if (dialogue.active || dialogue.closing) {
+    document.getElementById('dialogue-box').classList.remove('active');
+    dialogue.active  = false;
+    dialogue.closing = false;
+    dialogue.node    = null;
+    const choicesEl = document.getElementById('dialogue-choices');
+    choicesEl.innerHTML = '';
+    choicesEl.classList.remove('visible');
+    choicesEl.style.display = 'none';
+  }
+
+  cinematic.holdTimer = 0;
+  startCinematicFadeOut();
+}
+
+function startCinematicFadeOut() {
+  if (cinematic.fadingOut) return;
+  cinematic.fadingOut = true;
+
+  const overlay = document.getElementById('room-transition');
+  overlay.style.transition = 'opacity 0.6s ease';
+  overlay.style.opacity    = '1';
+
+  setTimeout(() => {
+    const onEnd = cinematic.onEnd;
+    cinematic.active    = false;
+    cinematic.fadingOut = false;
+    cinematic.name      = null;
+    cinematic.onEnd     = null;
+
+    // Restore overlay to standard room-transition speed
+    overlay.style.transition = 'opacity 0.2s ease';
+    overlay.style.opacity    = '0';
+
+    if (onEnd) onEnd();
+  }, 600);
+}
+
+function drawCinematicScene(name, now) {
+  if (name === 'grandparents') drawGrandparentsCinematic(now);
+}
+
+/* ----------------------------------------------------------------
+   GRANDPARENTS CINEMATIC SCENE
+   Wide painterly shot of the small cabin interior. Five compositional
+   elements: window+Dziadek (left third), suitcase (mid-frame lower),
+   bed+Babcia (right third), bedside lamp (far right), nightstand+photo.
+   Warm dim base — the warmest scene in the chapter.
+   Procedural placeholder (Register B art to replace later).
+   ---------------------------------------------------------------- */
+
+function drawGrandparentsCinematic(now) {
+  // === Base: very dark warm fill ===
+  ctx.fillStyle = '#100c04';
+  ctx.fillRect(0, 0, W, H);
+
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallGrad.addColorStop(0,   '#221608');
+  wallGrad.addColorStop(0.7, '#1a1208');
+  wallGrad.addColorStop(1,   '#141008');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Lamp warm glow pool — anchors right side
+  const lampGlow = ctx.createRadialGradient(452, 88, 0, 452, 88, 145);
+  lampGlow.addColorStop(0,   'rgba(255,210,100,0.26)');
+  lampGlow.addColorStop(0.5, 'rgba(255,170,60,0.10)');
+  lampGlow.addColorStop(1,   'rgba(255,140,40,0)');
+  ctx.fillStyle = lampGlow;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Floor band
+  const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + 20);
+  floorGrad.addColorStop(0, '#241a0c');
+  floorGrad.addColorStop(1, '#100c04');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, FLOOR_Y, W, 20);
+
+  ctx.strokeStyle = 'rgba(80,60,30,0.5)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath(); ctx.moveTo(0, FLOOR_Y); ctx.lineTo(W, FLOOR_Y); ctx.stroke();
+
+  // === Element 1: Window (left third) ===
+  const winX = 28, winY = 18, winW = 68, winH = FLOOR_Y - winY - 12;
+  ctx.fillStyle = '#1a2840';
+  ctx.fillRect(winX, winY, winW, winH);
+  // Panes
+  ctx.strokeStyle = 'rgba(100,130,185,0.5)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath(); ctx.moveTo(winX + winW / 2, winY); ctx.lineTo(winX + winW / 2, winY + winH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(winX, winY + winH * 0.5); ctx.lineTo(winX + winW, winY + winH * 0.5); ctx.stroke();
+  // Frame
+  ctx.strokeStyle = '#2a2010';
+  ctx.lineWidth   = 3;
+  ctx.strokeRect(winX - 2, winY - 2, winW + 4, winH + 4);
+  ctx.lineWidth   = 1;
+  // Subtle moonlight
+  const moonGlow = ctx.createRadialGradient(winX + winW / 2, winY + winH * 0.38, 2, winX + winW / 2, winY + winH * 0.38, 45);
+  moonGlow.addColorStop(0, 'rgba(180,210,240,0.14)');
+  moonGlow.addColorStop(1, 'rgba(100,150,200,0)');
+  ctx.fillStyle = moonGlow;
+  ctx.fillRect(winX, winY, winW, winH);
+
+  // === Dziadek silhouette in front of window ===
+  drawCinDziadek(winX + winW / 2 - 2, FLOOR_Y);
+
+  // === Element 2: Open suitcase (mid-frame, floor level) ===
+  const scX = 185, scW = 68, scH = 16, scY = FLOOR_Y - scH;
+  ctx.fillStyle = '#2a2010';
+  ctx.fillRect(scX, scY, scW, scH);
+  ctx.strokeStyle = 'rgba(100,80,40,0.6)';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(scX, scY, scW, scH);
+  // Open lid
+  ctx.fillStyle = '#241808';
+  ctx.beginPath();
+  ctx.moveTo(scX,        scY);
+  ctx.lineTo(scX + scW,  scY);
+  ctx.lineTo(scX + scW - 5, scY - 17);
+  ctx.lineTo(scX + 5,    scY - 17);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(100,80,40,0.45)';
+  ctx.stroke();
+  // Boat shirt inside
+  ctx.fillStyle = 'rgba(80,100,145,0.35)';
+  ctx.fillRect(scX + 4, scY + 3, scW - 8, 5);
+  // Clasp
+  ctx.fillStyle = '#6a5030';
+  ctx.fillRect(scX + scW / 2 - 2, scY - 1, 4, 2);
+
+  // === Element 3: Bed (right third) ===
+  const bedX = 292, bedW = 148, bedH = 24, bedY = FLOOR_Y - bedH;
+  // Headboard
+  ctx.fillStyle = '#201408';
+  ctx.fillRect(bedX + bedW - 10, bedY - 16, 10, bedH + 16);
+  ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(bedX + bedW - 10, bedY - 16, 10, bedH + 16);
+  // Bed frame
+  ctx.fillStyle = '#1a1208';
+  ctx.fillRect(bedX, bedY, bedW, bedH);
+  ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+  ctx.strokeRect(bedX, bedY, bedW, bedH);
+  // Rumpled bedding
+  ctx.fillStyle = '#2a1e10';
+  ctx.fillRect(bedX + 2,  bedY + 2, bedW - 14, 8);
+  ctx.fillStyle = '#321e0e';
+  ctx.fillRect(bedX + 8,  bedY + 2, 22, 6);
+  ctx.fillRect(bedX + 50, bedY + 3, 16, 5);
+  ctx.fillStyle = '#281a0a';
+  ctx.fillRect(bedX + 80, bedY + 2, 28, 7);
+
+  // === Element 4: Bedside lamp (far right) ===
+  const lampX = 452, lampShadeY = 78;
+  const pulse = 0.85 + Math.sin(now / 2800) * 0.08;
+  // Lamp base (stem)
+  ctx.fillStyle = '#4a3820';
+  ctx.fillRect(lampX - 1, lampShadeY + 18, 3, FLOOR_Y - lampShadeY - 18);
+  // Shade
+  ctx.fillStyle = '#c87828';
+  ctx.beginPath();
+  ctx.moveTo(lampX - 10, lampShadeY + 18);
+  ctx.lineTo(lampX + 11, lampShadeY + 18);
+  ctx.lineTo(lampX + 7,  lampShadeY);
+  ctx.lineTo(lampX - 6,  lampShadeY);
+  ctx.closePath();
+  ctx.fill();
+  // Inner glow
+  ctx.globalAlpha = pulse;
+  ctx.fillStyle   = 'rgba(255,220,120,0.55)';
+  ctx.beginPath();
+  ctx.moveTo(lampX - 8, lampShadeY + 16);
+  ctx.lineTo(lampX + 9, lampShadeY + 16);
+  ctx.lineTo(lampX + 6, lampShadeY + 2);
+  ctx.lineTo(lampX - 5, lampShadeY + 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  // Halo around shade
+  const lampHalo = ctx.createRadialGradient(lampX, lampShadeY + 10, 0, lampX, lampShadeY + 10, 75);
+  lampHalo.addColorStop(0, `rgba(255,210,90,${0.20 * pulse})`);
+  lampHalo.addColorStop(1, 'rgba(255,170,50,0)');
+  ctx.fillStyle = lampHalo;
+  ctx.fillRect(lampX - 75, lampShadeY - 30, 150, 110);
+
+  // === Element 5: Nightstand + photograph ===
+  const nsX = 378, nsW = 20, nsH = 18, nsY = FLOOR_Y - nsH;
+  ctx.fillStyle = '#1e1408';
+  ctx.fillRect(nsX, nsY, nsW, nsH);
+  ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(nsX, nsY, nsW, nsH);
+  // Photo frame
+  ctx.fillStyle = '#3a2c14';
+  ctx.fillRect(nsX + 3, nsY - 10, 14, 10);
+  ctx.strokeStyle = 'rgba(120,100,60,0.7)';
+  ctx.strokeRect(nsX + 3, nsY - 10, 14, 10);
+  // Photo fill + child silhouette (Pip at 6)
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(nsX + 5, nsY - 8, 10, 7);
+  ctx.fillStyle = '#1a1408';
+  ctx.beginPath();
+  ctx.arc(nsX + 10, nsY - 6, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(nsX + 8, nsY - 3, 4, 3);
+
+  // === Babcia seated on bed (sob-bob) ===
+  const babciaSob = Math.sin(now / 1500) * 1;
+  drawCinBabcia(Math.round(bedX + bedW * 0.42), bedY + Math.round(babciaSob));
+
+  // === Optional: dust motes near lamp ===
+  drawDustMotes(now);
+}
+
+/* Dziadek in cinematic — taller than room sprite, facing left (window) */
+function drawCinDziadek(cx, groundY) {
+  ctx.save();
+  ctx.translate(Math.round(cx), groundY);
+  ctx.scale(-1, 1);
+  ctx.fillStyle   = '#2a2030';
+  ctx.globalAlpha = 0.92;
+  ctx.shadowBlur  = 0;
+
+  ctx.fillRect(-6, -42, 13, 3);   // flat cap brim
+  ctx.fillRect(-4, -39,  9, 2);   // cap crown
+  ctx.fillRect(-5, -37, 10, 8);   // head
+  ctx.fillRect(-2, -29,  4, 3);   // neck
+  ctx.fillRect(-9, -26, 18, 3);   // shoulders
+  ctx.fillRect(-7, -23, 14, 12);  // coat body
+  ctx.fillRect(-10,-23,  3, 14);  // left arm
+  ctx.fillRect(  7, -23, 3, 14);  // right arm
+  ctx.fillRect(-6, -11, 12, 4);   // coat lower
+  ctx.fillRect(-5,  -7,  4, 7);   // left leg
+  ctx.fillRect( 1,  -7,  4, 7);   // right leg
+  ctx.fillRect(-6,   0,  5, 2);   // left shoe
+  ctx.fillRect( 1,   0,  5, 2);   // right shoe
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/* Babcia in cinematic — hunched-seated figure, slightly more detail */
+function drawCinBabcia(cx, groundY) {
+  ctx.save();
+  ctx.translate(cx, groundY);
+  ctx.fillStyle   = '#2a2030';
+  ctx.globalAlpha = 0.90;
+  ctx.shadowBlur  = 0;
+
+  // Hair bun
+  ctx.beginPath();
+  ctx.arc(3, -28, 3, 0, Math.PI * 2);
+  ctx.fill();
+  // Head (bowed forward)
+  ctx.fillRect(-4, -26,  9,  7);
+  // Upper torso / hunched
+  ctx.fillRect(-7, -19, 15,  8);
+  // Apron hint (faint lighter band)
+  ctx.globalAlpha = 0.42;
+  ctx.fillStyle   = '#4a3820';
+  ctx.fillRect(-6, -15, 12,  5);
+  ctx.globalAlpha = 0.90;
+  ctx.fillStyle   = '#2a2030';
+  // Lap / skirt (wide, seated)
+  ctx.fillRect(-10, -11, 20,  11);
+  // Hands folded
+  ctx.fillRect(-3,  -13,  6,   3);
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/* Subtle dust motes drifting in the lamp's light cone */
+function drawDustMotes(now) {
+  const MOTES = [
+    { ox: 422, oy:  82, freq: 0.00041, phase: 0.0 },
+    { ox: 440, oy: 102, freq: 0.00037, phase: 1.2 },
+    { ox: 460, oy: 122, freq: 0.00044, phase: 2.5 },
+    { ox: 432, oy:  62, freq: 0.00039, phase: 3.8 },
+    { ox: 412, oy: 112, freq: 0.00042, phase: 0.7 },
+    { ox: 448, oy: 142, freq: 0.00036, phase: 1.9 },
+  ];
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,220,140,1)';
+  for (const m of MOTES) {
+    const x     = m.ox + Math.sin(now * m.freq + m.phase) * 8;
+    const y     = m.oy + Math.cos(now * m.freq * 0.7 + m.phase) * 5;
+    const alpha = 0.28 + Math.sin(now * m.freq * 1.3 + m.phase) * 0.14;
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(x, y, 1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 /* ================================================================
@@ -1693,6 +2228,242 @@ function drawPassengerBody() {
   ctx.fillRect( 1,  -1,  3,  1);
 
   ctx.globalAlpha = 1;
+}
+
+/* ================================================================
+   GRANDPARENTS' CABIN ROOM
+   A small (~720px) warm interior. Cooler than the hallway — it's a
+   home, not a corridor. Single dominant warm-light source: bedside lamp.
+   Babcia and Dziadek are drawn before Pip so Pip renders over them.
+   ================================================================ */
+
+function drawGrandparents(camX, now) {
+  // Base fill (UI zone below FLOOR_Y)
+  ctx.fillStyle = '#0e0a04';
+  ctx.fillRect(0, 0, W, H);
+
+  // Wall gradient — slightly warmer than cabin (a room that was lived in)
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallGrad.addColorStop(0,   '#1e1408');
+  wallGrad.addColorStop(0.5, '#241808');
+  wallGrad.addColorStop(1,   '#1a1208');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Bedside lamp warm glow (right area, game-world ~x=590)
+  const lampGX = 590;
+  const lampSX = lampGX - camX;
+  const lampGlow = ctx.createRadialGradient(lampSX, 100, 0, lampSX, 100, 105);
+  lampGlow.addColorStop(0, 'rgba(255,200,80,0.18)');
+  lampGlow.addColorStop(1, 'rgba(255,160,40,0)');
+  ctx.fillStyle = lampGlow;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Ambient edge darkening
+  const edgeGrad = ctx.createRadialGradient(
+    W / 2, FLOOR_Y * 0.45, FLOOR_Y * 0.2,
+    W / 2, FLOOR_Y * 0.45, H * 0.9
+  );
+  edgeGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  edgeGrad.addColorStop(1, 'rgba(10,5,2,0.5)');
+  ctx.fillStyle = edgeGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  const baseboardH = 12;
+  const baseboardY = FLOOR_Y - baseboardH;
+
+  // --- Window (left, game-world x=80–145) ---
+  const winGX = 80, winGW = 58, winRH = 90, winRY = 24;
+  const winSX = Math.round(winGX - camX);
+  if (winSX < W + winGW && winSX + winGW > 0) {
+    ctx.fillStyle = '#1a2840';
+    ctx.fillRect(winSX, winRY, winGW, winRH);
+    ctx.strokeStyle = 'rgba(80,110,165,0.5)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath(); ctx.moveTo(winSX + winGW / 2, winRY); ctx.lineTo(winSX + winGW / 2, winRY + winRH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(winSX, winRY + winRH * 0.5); ctx.lineTo(winSX + winGW, winRY + winRH * 0.5); ctx.stroke();
+    ctx.strokeStyle = '#241808';
+    ctx.lineWidth   = 2;
+    ctx.strokeRect(winSX - 2, winRY - 2, winGW + 4, winRH + 4);
+    ctx.lineWidth   = 1;
+  }
+
+  // --- Bed (right, game-world x=440–600) ---
+  const bedGX = 440, bedGW = 158, bedH = 22, bedY = FLOOR_Y - bedH;
+  const bedSX = Math.round(bedGX - camX);
+  if (bedSX < W + bedGW && bedSX + bedGW > 0) {
+    // Headboard
+    ctx.fillStyle = '#1e1408';
+    ctx.fillRect(bedSX + bedGW - 10, bedY - 14, 10, bedH + 14);
+    ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+    ctx.lineWidth   = 1;
+    ctx.strokeRect(bedSX + bedGW - 10, bedY - 14, 10, bedH + 14);
+    // Bed frame + bedding
+    ctx.fillStyle = '#1a1208';
+    ctx.fillRect(bedSX, bedY, bedGW, bedH);
+    ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+    ctx.strokeRect(bedSX, bedY, bedGW, bedH);
+    ctx.fillStyle = '#281e0e';
+    ctx.fillRect(bedSX + 2, bedY + 2, bedGW - 14, 7);
+  }
+
+  // --- Bedside lamp (game-world x≈590) ---
+  if (lampSX > -20 && lampSX < W + 20) {
+    const ls = Math.round(lampSX);
+    ctx.fillStyle = '#4a3820';
+    ctx.fillRect(ls - 1, 110, 3, FLOOR_Y - 110);
+    ctx.fillStyle = '#b86820';
+    ctx.beginPath();
+    ctx.moveTo(ls - 8, 126); ctx.lineTo(ls + 9, 126);
+    ctx.lineTo(ls + 6, 110); ctx.lineTo(ls - 5, 110);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,200,80,0.45)';
+    ctx.beginPath();
+    ctx.moveTo(ls - 6, 124); ctx.lineTo(ls + 7, 124);
+    ctx.lineTo(ls + 5, 112); ctx.lineTo(ls - 4, 112);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // --- Nightstand + photograph (game-world x=620) ---
+  const nsSX = Math.round(620 - camX);
+  if (nsSX > -20 && nsSX < W + 20) {
+    ctx.fillStyle = '#1a1208';
+    ctx.fillRect(nsSX - 10, FLOOR_Y - 18, 20, 18);
+    ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+    ctx.lineWidth   = 1;
+    ctx.strokeRect(nsSX - 10, FLOOR_Y - 18, 20, 18);
+    ctx.fillStyle = '#3a2c14';
+    ctx.fillRect(nsSX - 7, FLOOR_Y - 28, 14, 10);
+    ctx.strokeStyle = 'rgba(120,100,60,0.6)';
+    ctx.strokeRect(nsSX - 7, FLOOR_Y - 28, 14, 10);
+    ctx.fillStyle = '#c8a060';
+    ctx.fillRect(nsSX - 5, FLOOR_Y - 26, 10, 7);
+  }
+
+  // --- Open suitcase (game-world x=380) ---
+  const scSX = Math.round(380 - camX);
+  if (scSX > -40 && scSX < W + 40) {
+    const scW2 = 54, scH2 = 13, scY2 = FLOOR_Y - scH2;
+    ctx.fillStyle = '#2a2010';
+    ctx.fillRect(scSX - scW2 / 2, scY2, scW2, scH2);
+    ctx.strokeStyle = 'rgba(100,80,40,0.5)';
+    ctx.lineWidth   = 1;
+    ctx.strokeRect(scSX - scW2 / 2, scY2, scW2, scH2);
+    // Open lid
+    ctx.fillStyle = '#241808';
+    ctx.beginPath();
+    ctx.moveTo(scSX - scW2 / 2, scY2);
+    ctx.lineTo(scSX + scW2 / 2, scY2);
+    ctx.lineTo(scSX + scW2 / 2 - 4, scY2 - 14);
+    ctx.lineTo(scSX - scW2 / 2 + 4, scY2 - 14);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(100,80,40,0.4)';
+    ctx.stroke();
+    // Shirt
+    ctx.fillStyle = 'rgba(70,90,130,0.28)';
+    ctx.fillRect(scSX - scW2 / 2 + 3, scY2 + 2, scW2 - 6, 4);
+  }
+
+  // Floor surface
+  const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + 20);
+  floorGrad.addColorStop(0, '#241a0c');
+  floorGrad.addColorStop(1, '#0e0a04');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, FLOOR_Y, W, 20);
+
+  // Floor line
+  ctx.strokeStyle = 'rgba(80,60,30,0.5)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath(); ctx.moveTo(0, FLOOR_Y); ctx.lineTo(W, FLOOR_Y); ctx.stroke();
+
+  // Baseboard
+  ctx.fillStyle = 'rgba(30,20,8,0.6)';
+  ctx.fillRect(0, baseboardY, W, baseboardH);
+  ctx.strokeStyle = 'rgba(80,60,30,0.3)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath(); ctx.moveTo(0, baseboardY); ctx.lineTo(W, baseboardY); ctx.stroke();
+
+  // Parallax wall panels (half camera speed)
+  const panelSpacing = 120;
+  const panelOffset  = (camX * 0.5) % panelSpacing;
+  ctx.strokeStyle = 'rgba(80,60,20,0.12)';
+  ctx.lineWidth   = 1;
+  for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
+    ctx.beginPath(); ctx.moveTo(px, 18); ctx.lineTo(px, baseboardY); ctx.stroke();
+  }
+
+  // --- NPCs drawn beneath Pip (Pip renders over them) ---
+  const dzSX = Math.round(160 - camX);
+  if (dzSX > -20 && dzSX < W + 20) {
+    drawDziadek(dzSX, FLOOR_Y, now);
+  }
+
+  const babSX = Math.round(560 - camX);
+  if (babSX > -20 && babSX < W + 20) {
+    drawBabcia(babSX, bedY, now);
+  }
+}
+
+/* ---- Babcia: hunched seated figure on bed. ----
+   groundY = top of bed surface. Sob-bob ~1500ms period, ~1px amp.
+   One-piece silhouette; no sprite rig. */
+function drawBabcia(screenX, groundY, now) {
+  const bob = Math.sin(now / 1500) * 1;
+  const cx  = Math.round(screenX);
+  const cy  = Math.round(groundY + bob);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.fillStyle   = '#2a2030';
+  ctx.globalAlpha = 0.90;
+  ctx.shadowBlur  = 0;
+
+  // Hair bun
+  ctx.beginPath();
+  ctx.arc(3, -22, 3, 0, Math.PI * 2);
+  ctx.fill();
+  // Head (bowed forward)
+  ctx.fillRect(-4, -20,  8,  7);
+  // Hunched upper torso
+  ctx.fillRect(-7, -13, 14,  8);
+  // Apron hint
+  ctx.globalAlpha = 0.40;
+  ctx.fillStyle   = '#4a3820';
+  ctx.fillRect(-5, -10, 10,  5);
+  ctx.globalAlpha = 0.90;
+  ctx.fillStyle   = '#2a2030';
+  // Lap / skirt (wide, seated)
+  ctx.fillRect(-9,  -5, 18,  5);
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/* ---- Dziadek: standing, back to player, facing left (window). ----
+   Completely still — no bob. One-piece silhouette. */
+function drawDziadek(screenX, groundY, now) {
+  const cx = Math.round(screenX);
+
+  ctx.save();
+  ctx.translate(cx, groundY);
+  ctx.scale(-1, 1);   // face left (toward window)
+  ctx.fillStyle   = '#2a2030';
+  ctx.globalAlpha = 0.90;
+  ctx.shadowBlur  = 0;
+
+  ctx.fillRect(-5, -30, 11,  3);  // flat cap
+  ctx.fillRect(-4, -27,  8,  2);  // cap top
+  ctx.fillRect(-4, -25,  8,  7);  // head
+  ctx.fillRect(-2, -18,  4,  2);  // neck
+  ctx.fillRect(-7, -16, 14, 10);  // coat body
+  ctx.fillRect(-5,  -6, 10,  3);  // coat lower
+  ctx.fillRect(-4,  -3,  3,  3);  // left leg
+  ctx.fillRect( 1,  -3,  3,  3);  // right leg
+  ctx.fillRect(-5,   0,  4,  1);  // left shoe
+  ctx.fillRect( 1,   0,  4,  1);  // right shoe
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 /* ================================================================

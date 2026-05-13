@@ -414,7 +414,7 @@ Echo-creatures are residues of the Mnemosyne's past incidents. Each chapter's tr
 - **Bats** (16-20 pixels wingspan): swoop through corridors in arcs.
 - **Cockroaches** (10-14 pixels): stampede in groups; players time their pass-through.
 - **Snails** (20-30 pixels with shell — larger because echo-magnified): slow, candle-lit shells, leave glistening slime trails. The Brittany chapter is built around them — see chapter doc when written.
-- **Helga the cat** (28-36 pixels): NOT an echo. Real, alive, recurring NPC. First appearance Chapter 2.
+- **Pätu the cat** (28-36 pixels): NOT an echo. Real, alive, recurring NPC. First appearance Chapter 2.
 
 ---
 
@@ -541,7 +541,7 @@ Pätu is a recurring NPC, not an echo-creature. She's real, alive, and on the sh
 - Estonian cat — gray tabby (locked). Visually distinct from a stray (she has been cared for by Leida).
 - Eyes are yellow and catch warm pool-lights distinctly against the cool-base palette — they should pop.
 - First appears in Chapter 2 (Tallinn). She is *not* hostile to Pip — initial wariness is the Haldjas's, not hers.
-- Across chapters: she chooses to come aboard, comes and goes freely. Sprite needs sitting-pose, walking-pose, hissing-pose (for the bad-ghost-detector beat later in the game), and sleeping-pose variations.
+- Across chapters: she chooses to come aboard, comes and goes freely. Sprite needs sitting-pose, walking-pose, hissing-pose (for moments when Pätu reads something as wrong), and sleeping-pose variations.
 - **Hissing pose is structurally important** — it's a hint to the player that something is wrong. The pose should be unmistakable: arched back, ears flat, fur raised, eyes wide with whites visible.
 
 ---

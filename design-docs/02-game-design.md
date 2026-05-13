@@ -365,25 +365,13 @@ Between chapters, Pip returns to the ship (*The Mnemosyne*). The ship is the per
 - New conversations open with NPCs as the story progresses
 - New rooms unlock as Pip gains abilities or plot triggers happen
 - Henrik is always in the kitchen, ready to talk
-- Helga the cat lives somewhere on the ship, encountered occasionally
+- Pätu the cat lives somewhere on the ship, encountered occasionally
 - The journal is always accessible
 - A world map shows visited ports and the next destination
 
 **This is where slow-burn storytelling lives.** A passenger you saw in Chapter 2 has a different conversation in Chapter 4 because their husband has died. The captain's logbook gains new entries. A locked door from Chapter 1 finally opens in Chapter 6.
 
 **The ship has a haunted history of its own.** The great snail breakout. Other incidents to be specified. The echo-creatures Pip encounters in each traversal are the residues of these past events. Inspectable objects throughout the ship can drip out lore.
-
----
-
-## Helga the Cat
-
-Helga is the ship's living, real, recurring cat. Norwegian, probably Henrik's. Feisty, opinionated, well-named.
-
-**First appearance:** Chapter 2's wordless traversal. Initially hostile to Pip — he smells wrong (a ghost). She hisses, swats, generally complicates the traversal.
-
-**Across chapters:** Warms gradually. By mid-game she may follow Pip occasionally, sit near him while he eats with Henrik, sniff out objects for him (provisional: she's the dill-finder in the gravlaks puzzle, working idea from doc 02's earlier draft).
-
-**Function:** A small living anchor in a haunted setting. The ship is full of ghosts and echoes; Helga is a reminder that life still happens here. She is to the ship what Henrik is to the kitchen — a steady presence Pip returns to.
 
 ---
 

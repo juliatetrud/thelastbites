@@ -1152,7 +1152,12 @@ const STRIP_STRINGS = {
 };
 
 function setControlsStrip(context) {
-  document.getElementById('controls-strip').textContent = STRIP_STRINGS[context] || '';
+  const raw = STRIP_STRINGS[context] || '';
+  // Replace multi-space group separators (3+ spaces) with a fixed-width gap so
+  // every hint group is evenly spaced regardless of adjacent character widths.
+  // Single/double spaces within a group (key  label) are left as-is.
+  document.getElementById('controls-strip').innerHTML =
+    raw.replace(/ {3,}/g, '<span style="display:inline-block;width:2.2em"></span>');
 }
 
 /* Pick 'room' or 'room-floatable' based on pip.float.unlocked.

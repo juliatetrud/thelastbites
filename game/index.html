@@ -251,6 +251,22 @@
   .choice-row.selected .choice-num,
   .choice-row.selected .choice-arrow { color: var(--warm-pool-amber); }
   .choice-row.selected .choice-text  { color: var(--warm-pool-glow); }
+
+  /* ============================================================
+     ROOM TRANSITION OVERLAY
+     Full-screen black div fades in/out during room transitions.
+     z-index 45 — above canvas and grain, below dialogue and strip.
+     Opacity driven by startTransition() via JS.
+     ============================================================ */
+  #room-transition {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 45;
+  }
 </style>
 </head>
 <body>
@@ -267,6 +283,10 @@
 
     <!-- Grain + vignette overlay sits above the canvas -->
     <div id="grain"></div>
+
+    <!-- Room transition overlay: full-screen black fade between rooms.
+         Opacity animated by startTransition() via CSS transition. -->
+    <div id="room-transition"></div>
 
     <!-- Dialogue box: HTML overlay for narration + choices.
          Not canvas-drawn per the display pipeline in 05-tech-architecture.md.
@@ -307,6 +327,8 @@ const FLOAT_MAX_ALT    = 75;   // max pixels above floor (≈3× sprite height �
 const FLOAT_RISE_ACCEL = 220;  // px/s² upward acceleration while Space held
 const FLOAT_GRAVITY    = 180;  // px/s² downward acceleration when Space released
 const FLOAT_MAX_RISE_V = 80;   // px/s upward speed cap
+
+const HALL_W = 1440;           // hallway width — 3× canvas width
 
 /* ================================================================
    CANVAS SETUP
@@ -456,6 +478,114 @@ const cabinObjects = [
 ];
 
 /* ================================================================
+   HALLWAY OBJECTS
+   Four inspectable objects in the ship corridor. Same structure as
+   cabinObjects — proximity sparkle, press ↑ to inspect.
+   Text is verbatim from sprint-03-hallway-and-passenger.md §Hallway
+   inspectable dialogue text, pulled from 04-chapter-01-cabin-646.md.
+   ================================================================ */
+
+const hallwayObjects = [
+  /* ---- Bulletin board ---- atmospheric, 2 lines */
+  {
+    id: 'hallway-bulletin',
+    x: 180,
+    sparkleY: 95,
+    node: {
+      id: 'hallway-bulletin-inspect',
+      lines: [
+        { speaker: null, text: 'A bulletin board near the stairwell. The ship\u2019s itinerary is pinned up like a guest of honor.', italic: true },
+        { speaker: null, text: 'Mnemosyne (Nem-OSS-uh-nee) Welcomes You Aboard. Today\u2019s Port: Bergen.', italic: true },
+      ],
+      choices: null, onEnd: null,
+    },
+  },
+
+  /* ---- Luggage cart ---- atmospheric, 2 lines */
+  {
+    id: 'hallway-luggage',
+    x: 540,
+    sparkleY: 140,
+    node: {
+      id: 'hallway-luggage-inspect',
+      lines: [
+        { speaker: null, text: 'Someone packed in a hurry. A bag, half-zipped, leaks a sleeve onto the floor.', italic: true },
+        { speaker: null, text: 'A stuffed bear sticking out of the top. It looks like one Babcia gave you, once.', italic: true },
+      ],
+      choices: null, onEnd: null,
+    },
+  },
+
+  /* ---- Flickering sconce ---- atmospheric, 2 lines.
+     Forward-references Pip's electricity ability (Beat 8) — the
+     inspection hints but unlocks nothing this sprint. */
+  {
+    id: 'hallway-sconce',
+    x: 820,
+    sparkleY: 80,
+    node: {
+      id: 'hallway-sconce-inspect',
+      lines: [
+        { speaker: null, text: 'A brass wall sconce, flickering. Not quite in time with itself.', italic: true },
+        { speaker: null, text: 'When you step close, it falters. When you step back, it steadies. (It almost feels like it\u2019s reacting to you.)', italic: true },
+      ],
+      choices: null, onEnd: null,
+    },
+  },
+
+  /* ---- Grandparents' door ---- atmospheric placeholder, 2 lines.
+     Future sprint replaces "Not yet" with the cinematic trigger. */
+  {
+    id: 'hallway-grandparents-door',
+    x: 1180,
+    sparkleY: 110,
+    node: {
+      id: 'hallway-grandparents-door-inspect',
+      lines: [
+        { speaker: null, text: 'From inside, the sound of someone crying. Soft. Familiar.', italic: true },
+        { speaker: null, text: 'You reach for the handle. Your hand passes through it. You step back. You can\u2019t bring yourself to go in. Not yet.', italic: true },
+      ],
+      choices: null, onEnd: null,
+    },
+  },
+];
+
+/* ================================================================
+   ROOMS
+   Keyed by id. Each room defines its world width, Pip's movement
+   clamp (pipMaxX), entry x positions per entry edge, inspectable
+   objects, and background draw function (hoisted — defined below).
+
+   Multi-room architecture established Sprint 03.
+   See 06-roadmap-and-open-questions.md Decisions Log.
+   ================================================================ */
+
+const rooms = {
+  cabin: {
+    width:    ROOM_W,                      // 960
+    pipMaxX:  ROOM_W - PIP_HALF_W,         // 952 — right wall
+    objects:  cabinObjects,
+    draw:     drawCabin,                   // defined below (hoisted)
+    pipEntryX: {
+      fromLeft:  PIP_HALF_W + 8,           //  16 — entering from hallway side
+      fromRight: ROOM_W - PIP_HALF_W - 8,  // 944 — entering from initial start (unused currently)
+    },
+  },
+  hallway: {
+    width:    HALL_W,                      // 1440
+    pipMaxX:  1312,                        // 1320 − PIP_HALF_W — stops before dark zone
+    objects:  hallwayObjects,
+    draw:     drawHallway,                 // defined below (hoisted)
+    pipEntryX: {
+      fromLeft:  PIP_HALF_W + 8,           //  16 — entering from left
+      fromRight: HALL_W - PIP_HALF_W - 8,  // 1424 — entering from right (future use)
+    },
+  },
+};
+
+let currentRoom = 'cabin';
+
+/* ================================================================
    DIALOGUE STATE
    Driven by showDialogue(), closeDialogue(), updateDialogue().
    Node shape:
@@ -479,6 +609,34 @@ const dialogue = {
   showingChoices: false,   // true once choice list is visible
   selectedChoice: 0,       // index of highlighted choice
   closing:        false,   // true during the 0.3s fade-out
+};
+
+/* ================================================================
+   TRANSITION STATE
+   Set by startTransition(). While active, all movement and key
+   actions are suppressed. Cleared after the 600ms fade cycle.
+   ================================================================ */
+
+const transition = {
+  active: false,
+};
+
+/* ================================================================
+   PASSENGER STATE
+   One-shot scripted NPC. Walks once the first time Pip enters the
+   hallway (~1.5s after entry). Silhouette, no glow, no dialogue.
+   Aftermath dialogue fires automatically after he exits.
+   Scripted-NPC pattern established Sprint 03.
+   ================================================================ */
+
+const passenger = {
+  active:           false,  // currently mid-walk
+  triggered:        false,  // has walked once — no repeat
+  hallwayEntered:   false,  // tracks whether first hallway entry happened
+  firstEntryTimer:  0,      // counts down from 1.5s on first hallway entry
+  x:                0,      // current game-world x
+  speed:            105,    // px/s — slightly faster than Pip's 90
+  aftermathPending: false,  // true after exit, until aftermath dialogue fires
 };
 
 /* ================================================================
@@ -528,6 +686,9 @@ document.addEventListener('keyup', (e) => {
 /* One-shot key actions — dialogue navigation, inspect trigger.
    Movement is handled via keysHeld in update() (held, not one-shot). */
 function handleKeyAction(code) {
+  // Suppress all key actions during room transitions
+  if (transition.active) return;
+
   // ---- Dialogue active ----
   if (dialogue.active && !dialogue.closing) {
     if (dialogue.showingChoices) {
@@ -593,18 +754,21 @@ function loop(timestamp) {
    ================================================================ */
 
 function update(dt) {
-  // Advance typewriter
-  if (dialogue.active && !dialogue.closing) {
+  // Blink and float gravity always run — Pip is alive even during transitions
+  updateBlink(dt);
+  updateFloat(dt);
+
+  // Typewriter suppressed during room transitions
+  if (dialogue.active && !dialogue.closing && !transition.active) {
     updateDialogue(dt);
   }
 
-  // Movement gated while dialogue is active.
-  // Blink and float gravity continue regardless — Pip is still alive on screen.
-  if (!dialogue.active) {
+  // Movement gated by dialogue and room transitions
+  if (!dialogue.active && !transition.active) {
     const left  = movingLeft();
     const right = movingRight();
 
-    if (left  && !right) {
+    if (left && !right) {
       pip.x -= PIP_SPEED * dt;
       pip.body.facing = 'left';
     }
@@ -612,14 +776,20 @@ function update(dt) {
       pip.x += PIP_SPEED * dt;
       pip.body.facing = 'right';
     }
-    // When stationary, facing retains its last value — no update needed.
+    // When stationary, facing retains its last value.
 
-    // Clamp Pip to room bounds
-    pip.x = Math.max(PIP_HALF_W, Math.min(ROOM_W - PIP_HALF_W, pip.x));
+    // Clamp Pip to current room bounds
+    pip.x = Math.max(PIP_HALF_W, Math.min(rooms[currentRoom].pipMaxX, pip.x));
+
+    // Room edge triggers — walk into the edge to change rooms
+    if (currentRoom === 'cabin' && pip.x >= rooms.cabin.width - PIP_HALF_W - 1) {
+      startTransition('hallway', 'fromLeft');
+    } else if (currentRoom === 'hallway' && pip.x <= PIP_HALF_W + 1) {
+      startTransition('cabin', 'fromRight');
+    }
   }
 
-  updateFloat(dt);
-  updateBlink(dt);
+  updatePassenger(dt);
 }
 
 /* ----------------------------------------------------------------
@@ -924,7 +1094,7 @@ function confirmChoice(idx) {
 /* ---- Attempt to inspect the nearest object ---- */
 function tryInspect() {
   if (dialogue.active) return;
-  for (const obj of cabinObjects) {
+  for (const obj of rooms[currentRoom].objects) {
     if (Math.abs(pip.x - obj.x) < 18) {
       showDialogue(obj.node);
       break;
@@ -946,7 +1116,7 @@ function updateDialogueDOM() {
    ================================================================ */
 
 function getCameraX() {
-  return Math.max(0, Math.min(pip.x - W / 2, ROOM_W - W));
+  return Math.max(0, Math.min(pip.x - W / 2, rooms[currentRoom].width - W));
 }
 
 /* ================================================================
@@ -958,9 +1128,15 @@ function render(now) {
 
   ctx.clearRect(0, 0, W, H);
 
-  drawRoom(camX, now);
+  rooms[currentRoom].draw(camX, now);
   drawSparkles(camX, now);
   drawPip(pip.x - camX, pip.y - pip.float.altitude, now);
+
+  // Passenger drawn after Pip — renders in front when positions overlap,
+  // visually conveying "through Pip" (the no-one-can-see-me rule).
+  if (currentRoom === 'hallway' && passenger.active) {
+    drawPassenger(passenger.x - camX, FLOOR_Y, now);
+  }
 }
 
 /* ----------------------------------------------------------------
@@ -970,7 +1146,7 @@ function render(now) {
    near the bottom. No specific Chapter 1 art (that comes later).
    ---------------------------------------------------------------- */
 
-function drawRoom(camX, now) {
+function drawCabin(camX, now) {
   /* UI zone base fill — covers the entire canvas.
      The area below FLOOR_Y is reserved for the dialogue box and
      controls strip; no room art should appear there. This very dark
@@ -1050,7 +1226,7 @@ function drawRoom(camX, now) {
 
 function drawSparkles(camX, now) {
   if (dialogue.active) return;
-  for (const obj of cabinObjects) {
+  for (const obj of rooms[currentRoom].objects) {
     if (Math.abs(pip.x - obj.x) < 18) {
       drawSparkle(Math.round(obj.x - camX), obj.sparkleY, now);
     }
@@ -1208,6 +1384,315 @@ function drawPipMouth() {
   ctx.fillStyle   = '#1a1428';
   /* Neutral: single pixel centered just below mid-face */
   ctx.fillRect(Math.round(m.offsetX), headCY + 5 + Math.round(m.offsetY), 1, 1);
+}
+
+/* ================================================================
+   ROOM TRANSITION
+   Fade-out / black hold / fade-in over ~600ms total.
+   startTransition(toRoom, entryEdge) — entryEdge: 'fromLeft'|'fromRight'
+   ================================================================ */
+
+function startTransition(toRoom, entryEdge) {
+  if (transition.active) return;
+  transition.active = true;
+
+  // If leaving the hallway while passenger is still walking, cancel him
+  if (currentRoom === 'hallway' && passenger.active) {
+    passenger.active = false;
+    passenger.aftermathPending = false;
+  }
+
+  const overlay = document.getElementById('room-transition');
+  overlay.style.opacity = '1';  // fade to black — 200ms CSS transition
+
+  setTimeout(() => {
+    // Screen is black — swap room, reposition Pip
+    currentRoom = toRoom;
+    pip.x = entryEdge === 'fromLeft'
+      ? rooms[toRoom].pipEntryX.fromLeft
+      : rooms[toRoom].pipEntryX.fromRight;
+    pip.body.facing = entryEdge === 'fromLeft' ? 'right' : 'left';
+
+    // Land Pip on floor on room change (don't carry float state across)
+    pip.float.altitude = 0;
+    pip.float.vy       = 0;
+
+    // First hallway entry: arm the passenger timer
+    if (toRoom === 'hallway' && !passenger.hallwayEntered) {
+      passenger.hallwayEntered  = true;
+      passenger.firstEntryTimer = 1.5;
+    }
+
+    setRoomStrip();
+
+    // 200ms black hold, then fade in
+    setTimeout(() => {
+      overlay.style.opacity = '0';  // fade from black — 200ms CSS transition
+
+      setTimeout(() => {
+        transition.active = false;
+      }, 200);  // wait for fade-out transition to complete
+    }, 200);  // hold duration
+  }, 200);  // wait for fade-in to complete before swapping
+}
+
+/* ================================================================
+   PASSENGER NPC UPDATE
+   ================================================================ */
+
+function updatePassenger(dt) {
+  if (currentRoom !== 'hallway') return;
+
+  // Count down the first-entry spawn timer
+  if (!passenger.triggered && passenger.hallwayEntered && passenger.firstEntryTimer > 0) {
+    passenger.firstEntryTimer -= dt;
+    if (passenger.firstEntryTimer <= 0) {
+      // Spawn just off the right edge of the visible canvas
+      passenger.active    = true;
+      passenger.triggered = true;
+      passenger.x         = getCameraX() + W + 20;
+    }
+  }
+
+  // Walk left
+  if (passenger.active) {
+    passenger.x -= passenger.speed * dt;
+    if (passenger.x < -40) {
+      passenger.active          = false;
+      passenger.aftermathPending = true;
+    }
+  }
+
+  // Fire aftermath dialogue once he exits and no dialogue is already active
+  if (passenger.aftermathPending && !dialogue.active && !dialogue.closing) {
+    passenger.aftermathPending = false;
+    showDialogue({
+      id: 'passenger-aftermath',
+      lines: [{ speaker: 'PIP', text: '\u2026they didn\u2019t see me.', italic: false }],
+      choices: null,
+      onEnd: null,
+    });
+  }
+}
+
+/* ================================================================
+   HALLWAY BACKGROUND
+   Ship corridor — 1440px wide. Doors, sconces, red carpet tint,
+   far-right dark zone. Same palette family as the cabin.
+   ================================================================ */
+
+function drawHallway(camX, now) {
+  // Base fill — full canvas (covers UI zone below FLOOR_Y too)
+  ctx.fillStyle = '#080e20';
+  ctx.fillRect(0, 0, W, H);
+
+  // Wall gradient — room zone only (0 to FLOOR_Y)
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallGrad.addColorStop(0,   '#0c1832');
+  wallGrad.addColorStop(0.5, '#18244e');
+  wallGrad.addColorStop(1,   '#0e1a3a');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Ambient edge darkening
+  const edgeGrad = ctx.createRadialGradient(
+    W / 2, FLOOR_Y * 0.45, FLOOR_Y * 0.2,
+    W / 2, FLOOR_Y * 0.45, H * 0.9
+  );
+  edgeGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  edgeGrad.addColorStop(1, 'rgba(12,6,24,0.55)');
+  ctx.fillStyle = edgeGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  const baseboardH = 12;
+  const baseboardY = FLOOR_Y - baseboardH;
+  const doorH      = 64;
+  const doorW      = 24;
+  const doorTop    = baseboardY - doorH;
+
+  // ---- Door silhouettes ----
+  // Six doors total: five plain + grandparents' door (distinct warm glow)
+  const doorPositions = [80, 280, 480, 700, 920, 1180];
+
+  for (const gx of doorPositions) {
+    const sx = Math.round(gx - camX);
+    if (sx > W + doorW || sx < -doorW) continue;
+
+    const isGP = (gx === 1180);
+    const dl   = sx - Math.floor(doorW / 2);   // door left edge
+
+    if (isGP) {
+      // Warm under-glow: suggests the lit room behind the grandparents' door
+      const gpGlow = ctx.createLinearGradient(sx, doorTop, sx, FLOOR_Y + 10);
+      gpGlow.addColorStop(0,   'rgba(255,180,80,0)');
+      gpGlow.addColorStop(0.6, 'rgba(255,170,70,0.16)');
+      gpGlow.addColorStop(1,   'rgba(255,140,40,0)');
+      ctx.fillStyle = gpGlow;
+      ctx.fillRect(dl - 10, doorTop, doorW + 20, FLOOR_Y - doorTop + 15);
+
+      ctx.fillStyle = '#1c1408';   // warmer dark
+    } else {
+      ctx.fillStyle = '#080910';   // cool dark door silhouette
+    }
+
+    // Door slab
+    ctx.fillRect(dl, doorTop, doorW, doorH);
+
+    // Door frame
+    ctx.strokeStyle = isGP ? 'rgba(160,130,70,0.4)' : 'rgba(35,45,85,0.45)';
+    ctx.lineWidth   = 1;
+    ctx.strokeRect(dl, doorTop, doorW, doorH);
+
+    // Door handle (small rectangle on the pull side)
+    ctx.fillStyle = isGP ? '#a08664' : '#2a3060';
+    ctx.fillRect(dl + doorW - 4, doorTop + Math.floor(doorH * 0.55), 2, 3);
+  }
+
+  // ---- Brass sconces between doors ----
+  // Sconce at x=820 flickers — first hint of Pip's electricity ability (Beat 8)
+  const sconcePositions = [180, 390, 610, 820, 1060];
+  const sconceY = doorTop + 4;   // sits in the wall just above door tops
+
+  for (const gx of sconcePositions) {
+    const sx = Math.round(gx - camX);
+    if (sx > W + 12 || sx < -12) continue;
+
+    const isFlicker = (gx === 820);
+    let brightness;
+    if (isFlicker) {
+      // Multi-frequency flicker — "not quite in time with itself"
+      brightness = 0.55 + Math.sin(now * 0.0061) * 0.18 + Math.sin(now * 0.0113) * 0.11;
+    } else {
+      brightness = 0.7;
+    }
+
+    // Sconce bracket (4×10px vertical + 6×3px cap)
+    ctx.globalAlpha = brightness;
+    ctx.fillStyle   = '#a08664';
+    ctx.fillRect(sx - 2, sconceY,     4, 10);
+    ctx.fillRect(sx - 3, sconceY - 3, 6,  3);
+
+    // Warm light pool
+    ctx.globalAlpha = brightness * 0.13;
+    const lightGrad = ctx.createRadialGradient(sx, sconceY + 5, 0, sx, sconceY + 5, 22);
+    lightGrad.addColorStop(0, 'rgba(255,218,120,1)');
+    lightGrad.addColorStop(1, 'rgba(255,180,80,0)');
+    ctx.fillStyle = lightGrad;
+    ctx.fillRect(sx - 22, sconceY - 16, 44, 36);
+
+    ctx.globalAlpha = 1;
+  }
+
+  // ---- Far-right dark zone (last 120 game-world px: x 1320–1440) ----
+  // Gradient from corridor color to near-black. Pip is clamped before entering.
+  const darkStartSx = Math.round(1320 - camX);
+  if (darkStartSx < W) {
+    const drawLeft  = Math.max(0, darkStartSx);
+    const drawRight = Math.min(W, Math.round(HALL_W - camX));
+    if (drawRight > drawLeft) {
+      const dGrad = ctx.createLinearGradient(darkStartSx, 0, darkStartSx + 120, 0);
+      dGrad.addColorStop(0, 'rgba(2,6,14,0)');
+      dGrad.addColorStop(1, '#02060e');
+      ctx.fillStyle = dGrad;
+      ctx.fillRect(drawLeft, 0, drawRight - drawLeft, FLOOR_Y);
+    }
+  }
+
+  // ---- Floor surface with faint red carpet tint ----
+  const floorSurfH = 20;
+  const floorGrad  = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + floorSurfH);
+  floorGrad.addColorStop(0,    '#1a2848');
+  floorGrad.addColorStop(0.35, '#261828');   // whisper of red-purple
+  floorGrad.addColorStop(1,    '#080e20');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, FLOOR_Y, W, floorSurfH);
+
+  // Carpet runner — thin band just below floor line
+  ctx.fillStyle = 'rgba(90,18,28,0.28)';
+  ctx.fillRect(0, FLOOR_Y - 3, W, 5);
+
+  // Floor line
+  ctx.strokeStyle = 'rgba(90,72,120,0.45)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, FLOOR_Y);
+  ctx.lineTo(W, FLOOR_Y);
+  ctx.stroke();
+
+  // Baseboard
+  ctx.fillStyle = 'rgba(26,40,72,0.6)';
+  ctx.fillRect(0, baseboardY, W, baseboardH);
+  ctx.strokeStyle = 'rgba(90,72,120,0.3)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, baseboardY);
+  ctx.lineTo(W, baseboardY);
+  ctx.stroke();
+
+  // Parallax wall panel lines (half camera speed for depth)
+  const panelSpacing = 120;
+  const panelOffset  = (camX * 0.5) % panelSpacing;
+  ctx.strokeStyle = 'rgba(60,80,140,0.15)';
+  ctx.lineWidth   = 1;
+  for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
+    ctx.beginPath();
+    ctx.moveTo(px, 20);
+    ctx.lineTo(px, baseboardY);
+    ctx.stroke();
+  }
+}
+
+/* ================================================================
+   PASSENGER SPRITE
+   Dark formal silhouette. ~12px wide, ~28px tall. No glow — he
+   is of this world, not Pip's spectral one. Walks with a grounded
+   downward footstep bob.
+   ================================================================ */
+
+function drawPassenger(screenX, groundY, now) {
+  // Downward footstep bob — ~400ms period, reads as living/grounded
+  const bob  = Math.abs(Math.sin(now / 400)) * 2;
+  const foot = Math.round(groundY + bob);
+  const cx   = Math.round(screenX);
+
+  ctx.save();
+  ctx.translate(cx, foot);
+  // Passenger walks left — mirror sprite to face left
+  ctx.scale(-1, 1);
+
+  drawPassengerBody();
+
+  ctx.restore();
+}
+
+/* ---- Passenger body layer ----
+   Local coords: (0,0) = center/foot. Default facing right; caller
+   applies ctx.scale(-1,1) to face left. All in #2a2438, no glow. */
+function drawPassengerBody() {
+  ctx.fillStyle   = '#2a2438';
+  ctx.globalAlpha = 0.96;
+  ctx.shadowBlur  = 0;
+
+  // Top hat crown (7×5px)
+  ctx.fillRect(-3, -28,  7,  5);
+  // Hat brim     (12×2px — widest point)
+  ctx.fillRect(-6, -23, 12,  2);
+  // Head         (6×6px)
+  ctx.fillRect(-3, -21,  6,  6);
+  // Collar       (4×2px)
+  ctx.fillRect(-2, -15,  4,  2);
+  // Coat body    (9×6px)
+  ctx.fillRect(-4, -13,  9,  6);
+  // Coat tails   (7×3px, slightly narrower)
+  ctx.fillRect(-3,  -7,  7,  3);
+  // Legs         (2×3px each)
+  ctx.fillRect(-3,  -4,  2,  3);
+  ctx.fillRect( 1,  -4,  2,  3);
+  // Shoes        (3×1px each)
+  ctx.fillRect(-4,  -1,  3,  1);
+  ctx.fillRect( 1,  -1,  3,  1);
+
+  ctx.globalAlpha = 1;
 }
 
 /* ================================================================

@@ -1770,15 +1770,15 @@ function drawCabin(camX, now) {
   }
 
   // Bed — game-world x=720 (bunk against right wall)
-  const bedGX = 720, bedGW = 80, bedGH = 16, bedGY = FLOOR_Y - bedGH;
+  const bedGX = 720, bedGW = 100, bedGH = 22, bedGY = FLOOR_Y - bedGH;
   const bedSX = Math.round(bedGX - camX);
   if (bedSX < W + bedGW && bedSX + bedGW > 0) {
     // Headboard
     ctx.fillStyle = '#2a2448';
-    ctx.fillRect(bedSX + bedGW - 8, bedGY - 12, 8, bedGH + 12);
+    ctx.fillRect(bedSX + bedGW - 10, bedGY - 14, 10, bedGH + 14);
     ctx.strokeStyle = 'rgba(60,70,140,0.42)';
     ctx.lineWidth   = 1;
-    ctx.strokeRect(bedSX + bedGW - 8, bedGY - 12, 8, bedGH + 12);
+    ctx.strokeRect(bedSX + bedGW - 10, bedGY - 14, 10, bedGH + 14);
     // Bed frame
     ctx.fillStyle = '#1e2040';
     ctx.fillRect(bedSX, bedGY, bedGW, bedGH);
@@ -1786,15 +1786,15 @@ function drawCabin(camX, now) {
     ctx.strokeRect(bedSX, bedGY, bedGW, bedGH);
     // Bedding (rumpled, noticeably lighter than frame)
     ctx.fillStyle = '#363c66';
-    ctx.fillRect(bedSX + 2, bedGY + 2, bedGW - 12, 8);
+    ctx.fillRect(bedSX + 2, bedGY + 3, bedGW - 14, 10);
     ctx.fillStyle = '#404470';
-    ctx.fillRect(bedSX + 6, bedGY + 2, 22, 6);
+    ctx.fillRect(bedSX + 6, bedGY + 3, 28, 8);
   }
 
   // Door — game-world x=120 (hallway door; Pip phases through at the GP door)
   const doorGX = 120;
   const doorSX = Math.round(doorGX - camX);
-  const dw = 26, dh = 72, doorTop = baseboardY - dh;
+  const dw = 32, dh = 110, doorTop = baseboardY - dh;   // 168-110=58
   if (doorSX > -(dw + 6) && doorSX < W + (dw + 6)) {
     drawDoor(doorSX, doorTop, { w: dw, h: dh, warm: false });
   }

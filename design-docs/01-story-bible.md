@@ -498,6 +498,22 @@ Reference passage — Chapter 1 opening narration:
 
 When in doubt about how to phrase narration anywhere in the game, return here. *Vibrates with* (verb-based, kinetic — two things touching that shouldn't quite). *Pip opened his eyes with a yawn* (a yawn is alive — the wrongness arrives before he does). *Still aboard* (one word, doing the work of three). The parenthetical (a stage-whisper from a narrator who is on the player's side).
 
+### Voice rules (locked 2026-05-13)
+
+1. **Third person.** Narration always refers to Pip by name or as "he" — never as "you." The narrator describes Pip from outside, like a storyteller watching him move through the ship.
+
+2. **Active voice, present tense.** "Babcia is on the bed," not "Babcia was on the bed." "Pip reaches for the handle," not "The handle is reached for."
+
+3. **Full sentences, not fragments.** Earlier text used phrase-fragments for atmosphere ("Soft. Familiar.") — those are out. Full thoughts in full sentences. The rhythm comes from clean prose, not stylized punctuation.
+
+4. **Spoken dialogue uses quotes and attribution.** PIP's spoken lines: "Babcia, what's wrong?" Pip asks. Or: "Hello!" Pip says, his stomach turning. Quotes around the speech, attribution after, optional narration tail.
+
+5. **Italics still = interior thought.** But interior thoughts are also full sentences, often with attribution: *How could that be? Pip wonders.* Italic with "Pip wonders" or "Pip thinks" trailing.
+
+6. **Roman = narration.** Description of what's there or what's happening — outside Pip's head. Most lines are roman. Italic is for direct interior voice only.
+
+7. **Sensation has texture.** "Dark water sparkles and dances" rather than "dark water." "A sob breaks through the air" rather than "crying continues." The narration earns its emotional moments through specific physical detail.
+
 ---
 
 ## Themes

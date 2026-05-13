@@ -1561,15 +1561,15 @@ function drawSconce(x, y, opts) {
 
   ctx.globalAlpha = brightness;
   ctx.fillStyle   = '#a08664';
-  ctx.fillRect(x - 2, y,     4, 10);
-  ctx.fillRect(x - 3, y - 3, 6,  3);
+  ctx.fillRect(x - 4, y,     8, 16);   // bracket: 8×16
+  ctx.fillRect(x - 7, y - 6, 14,  6);  // cap: 14×6
 
   ctx.globalAlpha = brightness * 0.13;
-  const lightGrad = ctx.createRadialGradient(x, y + 5, 0, x, y + 5, 22);
+  const lightGrad = ctx.createRadialGradient(x, y + 8, 0, x, y + 8, 30);
   lightGrad.addColorStop(0, 'rgba(255,218,120,1)');
   lightGrad.addColorStop(1, 'rgba(255,180,80,0)');
   ctx.fillStyle = lightGrad;
-  ctx.fillRect(x - 22, y - 16, 44, 36);
+  ctx.fillRect(x - 30, y - 22, 60, 52);
 
   ctx.globalAlpha = 1;
 }
@@ -2399,22 +2399,29 @@ function drawHallway(camX, now) {
     });
   }
 
-  // Portholes — three, full camera speed, between doors
-  // Positioned at game-world x = 350, 650, 1000
-  const portholeY = 85, portholeR = 17;   // bottom edge (85+17=102) clears doorTop (104)
-  for (const gx of [350, 650, 1000]) {
+  // Wall fixtures — one per gap between the 6 doors, all at y=85.
+  // Pattern alternates porthole / sconce / porthole / sconce / porthole.
+  // x positions are gap centres (doors at 80,280,480,700,920,1180):
+  //   gap 1 (80→280)  x=180  porthole
+  //   gap 2 (280→480) x=390  sconce
+  //   gap 3 (480→700) x=600  porthole
+  //   gap 4 (700→920) x=810  sconce (flickering — Beat 8 foreshadowing)
+  //   gap 5 (920→1180) x=1050 porthole
+  const fixtureY  = 85;
+  const portholeR = 17;   // bottom edge 85+17=102 clears doorTop 104
+  const PORTHOLES = [180, 600, 1050];
+  const SCONCES   = [390, 810];   // 810 flickers
+
+  for (const gx of PORTHOLES) {
     const sx = Math.round(gx - camX);
     if (sx < -(portholeR + 5) || sx > W + portholeR + 5) continue;
-    drawPorthole(sx, portholeY, portholeR, { moonlight: true, divider: true });
+    drawPorthole(sx, fixtureY, portholeR, { moonlight: true, divider: true });
   }
 
-  // Sconces — refactored to drawSconce
-  // x=820 flickers — first hint of Pip's electricity ability (Beat 8)
-  const sconceY = 60;   // high on wall, above portholes
-  for (const gx of [180, 390, 610, 820, 1060]) {
+  for (const gx of SCONCES) {
     const sx = Math.round(gx - camX);
-    if (sx > W + 12 || sx < -12) continue;
-    drawSconce(sx, sconceY, { flicker: gx === 820, intensity: 0.7, now });
+    if (sx > W + 20 || sx < -20) continue;
+    drawSconce(sx, fixtureY, { flicker: gx === 810, intensity: 0.7, now });
   }
 
   // Doors — six total; grandparents' door (1180) has warm glow

@@ -28,7 +28,11 @@ Every week, his grandparents took him to a different restaurant — sometimes Po
 
 **Personality:** Curious, gentle, observant. A foodie's foodie. He's not afraid — he's *interested*. The strangeness of being dead is, to him, a new kind of restaurant menu. He misses his grandparents desperately, but he's a kid, and kids can hold grief and wonder at the same time.
 
-**Visual:** Small translucent ghost, slightly hunched. Wears an oversized chef's apron (his grandmother gave it to him for the trip — he was going to learn to cook). Has small dark eye-dots, a faint blush, no defined mouth most of the time. When he's happy, his outline glows a little warmer. When he's frightened or sad, his form blurs at the edges. He floats just above the ground.
+**Visual (present-day ghost):** Small translucent ghost. A simple white form with three soft waves at the bottom. Two small dark eye-dots, a faint pink blush, a tiny dark mouth — that's it. No hair. No clothing. The human details he had in life are not part of his ghost form. He floats just above the ground. When he's happy, his outline glows a little warmer. When he's frightened or sad, his form blurs at the edges.
+
+**Visual (in memory):** The boy he was, before. Short dark brown hair. The oversized chef's apron his grandmother gave him for the trip, the one he was going to learn to cook in. Same eye-dots, same blush, same gentle expression — but with a small human body underneath, with arms and legs and clothing. The apron is beige with a few flour smudges. This Pip appears *only* in flashback memory beats (his own memories, or memories he is given). He does not appear in the present moment of the game.
+
+**Why the form is so spare.** Pip's ghost-form has lost the trappings of the boy he was. The apron meant *I am going to learn to cook* — a small held intention. The hair, the body, the clothing — all the soft particulars of being a person. The ghost has none of that. What remains is essence: eyes, a hint of feeling in the cheeks, a small mouth, a shape. The fullness of him is held inside, waiting to be remembered. The visual difference between ghost-Pip and memory-Pip is a quiet thematic spine of the whole game. Don't break it.
 
 **Powers (revealed gradually across chapters):**
 - Walking through walls (Chapter 1)
@@ -105,6 +109,8 @@ A standard for how ghosts occupy space in the game's pixel-art visuals and in th
 
 - **Pip** floats by default-when-emphasized, passes through objects without thinking, cannot reliably handle solid things, and is *legibly* ghost-like at first glance. His outline blurs when sad or scared and glows warmer when happy.
 - **Iris** can pop in and out of frame (her squeeze-and-pop entrance through the floorboards generalizes — she can do this at will), handles solid objects easily (the switchblade, the plate of brussels sprouts, shaking off seawater like a dog), and reads as *solid* by default. She goes translucent only when sad or stubborn. *That's how Pip eventually realizes she's a ghost — when he sees the wallpaper through her.*
+
+**The loss of human particulars, beyond physics.** What ghosts lose isn't only the ability to sit; they lose the small visual particulars of being a person. Pip's hair and his chef's apron — things that made him a boy with a future as a cook — are not part of his ghost form. They appear only in memory. Iris's Edwardian dress is the exception that proves the rule: Iris has been a ghost for over a century, has built an identity around her unfinished dinner, and clings visually to who she was. Pip is *new* to this. He hasn't yet found what to hold onto. He's a clean blank shape. By the end of the game, when Pip moves on, the audience should sense that the boy in the apron is who he gets to be again on the other side.
 
 **Pätu, by contrast, does what cats do.** She sits, kneels (well, crouches), perches on windowsills, lies down, naps. She is alive. The contrast between her freely-physical body and the ghosts' constrained one is part of the chapter rhythm.
 

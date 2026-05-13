@@ -18,6 +18,73 @@ That's the seven-word brief. Everything else expands on it.
 
 ---
 
+## Visual Registers
+
+The game uses three distinct visual registers. They share a soul — the same color palette, the same warm-pool-in-cool-world logic, the same character designs — but they live at different scales, levels of detail, and rendering techniques. Confusing them produces work that looks "wrong" even when every individual rule was followed.
+
+### Register A — Gameplay Sprite (the in-game register)
+
+This is what the player sees 95% of the time. Pip walking through cabin 646. Pätu sitting on a brass fixture. Henrik at his counter.
+
+- **Scale:** Tiny. Pip is ~16-24 pixels at 480×270 internal canvas. Pätu is ~28-36 pixels. NPCs scale similarly.
+- **Rendering:** True pixel art. Hard pixel edges. Drawn procedurally to canvas using `ctx.fillRect` for placeholders, switched to image draws when art is commissioned.
+- **Detail level:** Sparse. A face is two eye-dots and a single mouth pixel. A body is a silhouette with a hint of color. No painterly shading. No fine ornament inside the sprite itself.
+- **Animation:** Eyes blink. Body bobs. Mouth occasionally changes shape. Driven by the three-layer-rig pattern (see "Sprite-rig layering" section below for the canonical implementation).
+- **Where the atmosphere comes from:** The *room* around the sprite. Ornate Victorian detail belongs in the room background, lamp halos, dust motes, vignette. The sprite itself is small and clean.
+- **What this looks like in practice for Pip:** a bald white ghost shape with three classic waves at the bottom, two black eye-dots, two pink blush pixels, a tiny dark mouth, and a soft cool drop-shadow glow on the floor beneath him. Nothing else. No hair. No apron. The simplicity is intentional and thematic — see the story bible's section on Pip's visual form.
+
+### Register B — Cinematic (the painterly register)
+
+This is what the player sees during the ~9 emotionally-loaded story moments per chapter — the mirror, the kitchen reveal, Henrik's first reaction, the dock, the offer of the journal, the memory of lefse.
+
+- **Scale:** Full canvas. 480×270 pixels of detail. Characters fill 40–60% of frame height in close-ups.
+- **Rendering:** Static images, hand-painted or AI-generated then refined. Painterly, atmospheric.
+- **Detail level:** Rich. Ornate Victorian detail. Painterly shading. Light catching on wood-grain, on metal, on skin. This is where the references (Owlboy, Hyper Light Drifter, Hob's Barrow, 7th Guest, Coraline) actually live.
+- **Animation:** Reserved for highest-impact beats (mirror melt, shimmer-dissolve, dropped pan). Most cinematics are still images with code-driven motion (drifting particles, slow zoom, dissolve).
+- **Where the atmosphere lives:** In the image itself. The whole frame is doing emotional work — light, composition, expression, detail.
+- **Present-day Pip in Register B is the same bald ghost as in Register A, just rendered with more pixels.** No hair, no apron, no human body. The cinematic Pip is "more pixels of the same ghost," not a redesign.
+- **Memory Pip is different.** Memory cinematics show the human boy: hair, apron, body, legs. See the story bible.
+
+### Register C — Puzzle/Cinematic-Hybrid (the CSS-div register, prototype-only)
+
+A third register has emerged in prototype work (e.g. `three-doors-demo.html`). When a *puzzle screen* or *summary card* needs to show characters larger than the gameplay sprite but with less commissioned-art weight than a cinematic — a portrait in a door, a face on a summary option — they're built as CSS-positioned `<div>` stacks.
+
+- **Scale:** Medium. ~40-90 pixels of figure height inside an interactive UI element.
+- **Rendering:** HTML + CSS. No images. No canvas. Pure positioned divs with box-shadow glow effects.
+- **When to use:** Puzzle screens, summary cards, multiple-choice portraits, ornament-heavy UI moments.
+- **When NOT to use:** In-game sprites (use Register A). Major emotional beats (use Register B). Any moment where the character should feel "real" rather than "schematic."
+
+This is a prototype convenience, not a canonical visual layer of the game. As art is commissioned, Register C work may migrate to Register B or be retired.
+
+### Which register to use when
+
+- **In a chapter room, the player is moving and exploring** → Register A
+- **The screen darkens, a static image appears, narration plays** → Register B
+- **A puzzle interface shows two or three faces to choose between** → Register C (until commissioned art replaces it)
+- **A character is being introduced for the first time in a held moment** → Register B
+- **A cat hisses to warn Pip about a bad ghost mid-room** → Register A (it's gameplay, in the room, the player has control)
+- **The cat is shown in a cinematic introduction beat** → Register B
+- **A flashback to Pip's life as a boy** → Register B, memory variant — show the human boy
+
+### References by register
+
+The references in the "Reference Inventory" section apply differently to each register:
+
+- **Register A references:** *Hollow Knight* sprite scale (the actual in-game knight, not the cutscenes), *Thimbleweed Park* in-game sprites, *Owlboy* in-game sprites (not its painted backgrounds). The Pip in the existing prototype is the locked Register A target.
+- **Register B references:** *The 7th Guest*, *Coraline*, *Over the Garden Wall*, *Owlboy* painted backgrounds and key art, *Hyper Light Drifter* atmospheric shots, *The Excavation of Hob's Barrow*'s full-scene compositions, *Spirited Away* spirit-world imagery.
+- **Register C has no formal references** — it's a prototype convenience. The `three-doors-demo.html` figures are the working pattern.
+
+### What this means for commissioning
+
+When commissioning art, specify the register:
+
+- **"Gameplay sprite for Pätu, Register A, ~32 pixels"** — gets you a small clean pixel-art cat
+- **"Cinematic, Register B, present-day, the moment Henrik first sees Pip"** — gets you a painterly 480×270 image of bald ghost-Pip and Henrik
+- **"Cinematic, Register B, memory, the lefse beat (6b)"** — gets you a painterly 480×270 image of *the boy Pip used to be*, with hair and apron, in Babcia's kitchen long ago
+- Without the register tag, an artist looking at the bible's "Owlboy / Hob's Barrow" references will produce Register B work even when Register A was wanted. This was an undocumented hazard in the original brief.
+
+---
+
 ## Resolution
 
 The internal canvas resolution is **480×270**. This is a 16:9 ratio that scales cleanly to common display sizes (4× to 1080p, ~5.3× to 1440p) and gives roughly 2.25× the pixel area of the original 320×180 prototype. The bump gives the artist room for ornate detail in dark spaces, deeper shadow gradients, more readable faces in cinematic close-ups, and longer/deeper rooms.
@@ -221,24 +288,45 @@ Animation is **reserved for highest-impact beats only.** Most of the game's life
 
 ## Pip Sprite Specification
 
-- Roughly 16×24 pixels at 480×270
-- Translucent body (alpha ~0.85)
-- Wavy bottom edge (classic ghost shape, 3 waves)
-- Small dark eye-dots, slight blush
-- Wears an oversized chef's apron — beige/sand color
-- Hair: short dark brown, simple shape
-- Soft cool glow underneath him
-- Idle: gentle vertical bobbing animation (sine wave)
-- Walking: small horizontal drift, eye direction changes with facing
-- Floating (post Beat 8 of Ch1): rises with a soft trailing shimmer; hold-space gradient ascent
-- Future animations needed: surprised pose, tasting pose, sad pose, glowing-bright (when emotionally moved)
-- **Form-blur effect:** When Pip is afraid or sad, his outline blurs at the edges. Iris has the same property (more pronounced — see below).
-- Also needs: a flicker/fade-out animation for the death moment (low-strength flicker → translucent → fade)
-- Also needs: a puddle-ghost form for the third-death game-over
+**Register: A (gameplay sprite).** Pip's gameplay sprite is the spare register — true pixel art, drawn procedurally to canvas. The simplicity is thematic, not technical: Pip has lost the human details he had in life. See the story bible's Pip Visual section for the why.
+
+### Present-day Pip (in-game sprite and cinematics)
+
+- Roughly 16-20 pixels wide, 22-24 pixels tall at 480×270 internal canvas
+- A single rounded ghost shape — head and body in one continuous form
+- Three classic waves at the bottom of the body (the wavy ghost-tail convention)
+- Cool-white body, slightly translucent (alpha ~0.85)
+- Two small dark eye-dots, set wide
+- Two small pink blush pixels, one under each eye
+- One tiny dark mouth pixel
+- A soft cool drop-shadow glow on the floor underneath him (signature `#f0f8ff`)
+- A subtle cool halo around the whole body
+- **No hair. No apron. No clothing. No human body underneath.** These are memory-only — see below.
+- Idle animation: a small vertical bob (1 pixel up, 1 pixel down)
+- When happy: outline glows warmer (subtle warm tint mixed into the halo)
+- When sad or frightened: form-blur at the edges (slight gaussian blur of ~0.4 pixels) and opacity drop
+
+### Memory Pip (flashback cinematic beats only)
+
+Pip in his own memories — or in memories given to him — appears as the human boy he was. This is Register B only; he never appears as the human boy in present-day cinematics.
+
+- The boy underneath the ghost
+- Short dark brown hair, simple shape, with a small stray fringe
+- Oversized chef's apron, beige/sand color, with a few flour smudges
+- Visible arms, legs, a small human body
+- Same face shapes — same eye-dot proportions, same blush, same gentle expression
+- Visible only in cinematic register, at the full 40-60% frame height
+- Memory-Pip moves through memory scenes the way the boy moved: walking, reaching, sitting at the table (the table he can sit at because in the memory he is alive)
+
+### What unites the two
+
+The eye-dots, blush, and mouth are the same across both forms. The face is the constant. What changes is everything around the face — the body, the costume, the human-ness. The audience should feel, when they see memory-Pip for the first time, that they are seeing *who he was*, and that's why ghost-Pip looks so spare.
 
 ---
 
 ## Echo-creature Specifications
+
+**Register: A (gameplay sprite).** All echo-creatures live in Register A — small, procedural, drawn to canvas at room scale. They are never the subject of cinematics; the cinematics frame the *room* containing them, not the creatures themselves.
 
 Echo-creatures are residues of the Mnemosyne's past incidents. Each chapter's traversal uses one variety. Each is rendered in **a slightly different visual register from regular sprites** — a touch more translucent, a touch more shimmer, the suggestion that they aren't fully here. Their footprints/trails leave a faint glow.
 
@@ -369,7 +457,9 @@ Specs to keep in mind even though her chapter is far off — choices made for Ch
 
 Pätu is a recurring NPC, not an echo-creature. She's real, alive, and on the ship across many chapters. (See `01-story-bible.md` for full character canon — backstory with Leida, gameplay function, the promise pact with Pip.)
 
-- Estonian cat — pattern TBD, but visually distinct from a stray (she has been cared for by Leida). Gray tabby or tortoiseshell both possible.
+**Registers needed: A and B. Locked as gray tabby.** Pätu is canonically a gray tabby (not tortoiseshell — locked as of Sprint 00). Her standing gameplay presence is Register A — small procedural pixel-art sprite, ~28-36 pixels. Her introductory cinematic in Chapter 2 (when the Haldjas first reveals her) is Register B. The hissing pose specifically must read clearly in Register A, at room scale, when the player is mid-traversal and may only glance at her.
+
+- Estonian cat — gray tabby (locked). Visually distinct from a stray (she has been cared for by Leida).
 - Eyes are yellow and catch warm pool-lights distinctly against the cool-base palette — they should pop.
 - First appears in Chapter 2 (Tallinn). She is *not* hostile to Pip — initial wariness is the Haldjas's, not hers.
 - Across chapters: she chooses to come aboard, comes and goes freely. Sprite needs sitting-pose, walking-pose, hissing-pose (for the bad-ghost-detector beat later in the game), and sleeping-pose variations.
@@ -424,7 +514,7 @@ Not yet implemented but worth specifying so we don't forget:
 ## Production Strategy for Art
 
 1. **Start with placeholders.** The current prototype draws everything procedurally in canvas. That's fine for prototyping.
-2. **Commission cinematic graphics first.** They have the highest emotional impact and are the easiest to swap in (they're just static images).
+2. Commission **Register B (cinematic) graphics first.** They have the highest emotional impact and are the easiest to swap in (they're just static images). Register A (gameplay sprites) can stay procedural for far longer — the existing canvas-drawn Pip is good enough to ship a whole chapter prototype, and only needs commissioning when polish work begins. Within Register B, prioritize present-day cinematics over memory cinematics, because memory cinematics require a separate design (human-boy Pip) that doesn't carry over from the sprite work.
 3. **Commission Pip's sprite second.** Pip is the player's anchor.
 4. **Commission room background art third.** Most labor-intensive but highest visual return per chapter.
 5. **Commission the strength indicator UI element** alongside the cinematics — it's small but signature.

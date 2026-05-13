@@ -150,7 +150,7 @@ These are the principles that keep the look consistent. When in doubt, return he
 
 8. **Warm lights flicker.** Subtle, not distracting. Adds life.
 
-9. **The two registers share a soul.** Pip in a pixel room and Pip in a cinematic close-up must read as the same character — same chef's apron, same hair, same eye-dot proportions, same soft cool glow underneath. The cinematic Pip is just *more pixels of the same boy*, not a redesign.
+9. **The two registers share a soul.** Pip in a pixel room and Pip in a present-day cinematic close-up must read as the same character — same face (eye-dots, blush, mouth), same proportions, same soft cool glow underneath. The cinematic Pip is just *more pixels of the same ghost*, not a redesign. The apron and hair appear only in memory-Pip (Register B, flashback beats) per the story bible.
 
 ---
 
@@ -547,7 +547,7 @@ Here's a clean spec sheet to give any artist. Includes the locked decisions; exp
 
 **Single light source per scene.** Mandatory. Every gameplay room and every cinematic has one dominant warm light. Everything else falls into shadow.
 
-**Pip's two registers.** The pixel sprite Pip and the cinematic close-up Pip must be unmistakably the same character. Same chef's apron (always visible), same hair, same eye-dot proportions, same soft cool glow. The cinematic Pip is just *more pixels of the same boy*, not a redesign.
+**Pip's two registers.** The pixel sprite Pip and the present-day cinematic Pip must be unmistakably the same character. Same face (eye-dots, blush, mouth), same proportions, same soft cool glow. The cinematic Pip is just *more pixels of the same ghost*, not a redesign. No hair, no apron in present-day — those belong to memory-Pip only (flashback beats, Register B).
 
 **Sprite-rig layering.** Pip's gameplay sprite is rendered as a *stack of separately animatable layers* on the canvas, not as a single monolithic image. Three layers, drawn back to front: **body** (silhouette, hair, apron, glow), **eyes** (two eye-dots, positioned and scaled independently of the body), **mouth** (small mouth-shape, positioned independently). Each layer can be replaced or animated on its own timeline. This means Pip can blink without redrawing his apron, can widen his eyes at a horror beat while his body stays still, can break into a small smile during tasting cinematics without a new full-sprite commission. The same pattern extends to every other character sprite — Henrik, Marta, Jan, Leida, Sandy, Muhittin, Johannes, etc. — when their commissioned art arrives. Sprite art should be authored with this decomposition in mind. *Eye and mouth layers in particular do heavy emotional work; commissioning them as their own asset stacks pays off across the whole game.*
 

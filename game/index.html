@@ -253,6 +253,44 @@
   .choice-row.selected .choice-text  { color: var(--warm-pool-glow); }
 
   /* ============================================================
+     MUSIC TOGGLE
+     Sits in the top-right viewport margin, outside the canvas.
+     Mouse-only — keyboard stays reserved for gameplay.
+     ============================================================ */
+  #music-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #a0b0d0;
+    font-size: 22px;
+    line-height: 32px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.85;
+    z-index: 100;
+    transition: opacity 0.2s ease;
+    font-family: inherit;
+    user-select: none;
+  }
+  #music-toggle:hover { opacity: 1; }
+  #music-toggle.muted { opacity: 0.35; }
+  #music-toggle.muted::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 28px;
+    height: 1.5px;
+    background: currentColor;
+    transform: translate(-50%, -50%) rotate(-30deg);
+  }
+
+  /* ============================================================
      ROOM TRANSITION OVERLAY
      Full-screen black div fades in/out during room transitions.
      z-index 45 — above canvas and grain, below dialogue and strip.
@@ -275,6 +313,15 @@
      from Google Fonts even before any canvas text is drawn. -->
 <span style="position:absolute;opacity:0;pointer-events:none;font-family:'Special Elite',serif;font-size:1px;" aria-hidden="true">&nbsp;</span>
 <span style="position:absolute;opacity:0;pointer-events:none;font-family:'Cormorant Garamond',serif;font-size:1px;" aria-hidden="true">&nbsp;</span>
+
+<!-- Two audio elements for crossfade switching between tracks.
+     A is the initial active track; they alternate roles during crossfades. -->
+<audio id="bg-music-a" loop preload="auto"></audio>
+<audio id="bg-music-b" loop preload="auto"></audio>
+
+<!-- Music toggle: outside the canvas, top-right margin.
+     State: default on (no .muted class). Persisted in localStorage. -->
+<button id="music-toggle" type="button" title="Music on (click to mute)" aria-label="Music on (click to mute)">♪</button>
 
 <div id="game-wrap">
   <div id="game">
@@ -404,7 +451,7 @@ const cabinObjects = [
     node: {
       id: 'door-inspect',
       lines: [
-        { speaker: null, text: 'The door to the hallway. From the other side, you can hear someone crying.', italic: true },
+        { speaker: null, text: 'The door to the hallway. From the other side, you can hear someone crying.', italic: false },
       ],
       choices: [
         {
@@ -413,7 +460,7 @@ const cabinObjects = [
           onSelect() {
             showDialogue({
               id: 'door-handle',
-              lines: [{ speaker: null, text: 'Pip reaches for the handle. His hand passes through it.', italic: true }],
+              lines: [{ speaker: null, text: 'Pip reaches for the handle. His hand passes through it.', italic: false }],
               choices: null, onEnd: null,
             });
           },
@@ -424,7 +471,7 @@ const cabinObjects = [
           onSelect() {
             showDialogue({
               id: 'door-ear',
-              lines: [{ speaker: null, text: 'Through the door, a woman crying. Pip knows the sound of that voice.', italic: true }],
+              lines: [{ speaker: null, text: 'Through the door, a woman crying. Pip knows the sound of that voice.', italic: false }],
               choices: null, onEnd: null,
             });
           },
@@ -435,7 +482,7 @@ const cabinObjects = [
           onSelect() {
             showDialogue({
               id: 'door-wait',
-              lines: [{ speaker: null, text: 'Pip waits. The crying continues.', italic: true }],
+              lines: [{ speaker: null, text: 'Pip waits. The crying continues.', italic: false }],
               choices: null, onEnd: null,
             });
           },
@@ -453,7 +500,7 @@ const cabinObjects = [
     node: {
       id: 'porthole-inspect',
       lines: [
-        { speaker: null,  text: 'Through the porthole, dark water and the lights of a far shore. Norway, the brochure had said. The first stop.', italic: true },
+        { speaker: null,  text: 'Through the porthole, dark water and the lights of a far shore. Norway, the brochure had said. The first stop.', italic: false },
         { speaker: 'PIP', text: 'I never even got to see it.', italic: false },
       ],
       choices: null,
@@ -469,7 +516,7 @@ const cabinObjects = [
     node: {
       id: 'bed-inspect',
       lines: [
-        { speaker: null, text: "The bed is rumpled. Someone slept here recently. There's a small shape under the covers but you don't want to look closer.", italic: true },
+        { speaker: null, text: "The bed is rumpled. Someone slept here recently. There's a small shape under the covers but you don't want to look closer.", italic: false },
       ],
       choices: null,
       onEnd: null,
@@ -494,8 +541,8 @@ const hallwayObjects = [
     node: {
       id: 'hallway-bulletin-inspect',
       lines: [
-        { speaker: null, text: 'A bulletin board near the stairwell. The ship\u2019s itinerary is pinned up like a guest of honor.', italic: true },
-        { speaker: null, text: 'Mnemosyne (Nem-OSS-uh-nee) Welcomes You Aboard. Today\u2019s Port: Bergen.', italic: true },
+        { speaker: null, text: 'A bulletin board near the stairwell. The ship\u2019s itinerary is pinned up like a guest of honor.', italic: false },
+        { speaker: null, text: 'Mnemosyne (Nem-OSS-uh-nee) Welcomes You Aboard. Today\u2019s Port: Bergen.', italic: false },
       ],
       choices: null, onEnd: null,
     },
@@ -509,8 +556,9 @@ const hallwayObjects = [
     node: {
       id: 'hallway-luggage-inspect',
       lines: [
-        { speaker: null, text: 'Someone packed in a hurry. A bag, half-zipped, leaks a sleeve onto the floor.', italic: true },
-        { speaker: null, text: 'A stuffed bear sticking out of the top. It looks like one Babcia gave you, once.', italic: true },
+        { speaker: null, text: 'Hmm. Looks like someone packed in a hurry\u2026', italic: true },
+        { speaker: null, text: 'A stuffed bear sticks out of the top of the suitcase.', italic: false },
+        { speaker: null, text: 'That looks just like the bear Babcia gave me\u2026', italic: true },
       ],
       choices: null, onEnd: null,
     },
@@ -526,8 +574,8 @@ const hallwayObjects = [
     node: {
       id: 'hallway-sconce-inspect',
       lines: [
-        { speaker: null, text: 'A brass wall sconce, flickering. Not quite in time with itself.', italic: true },
-        { speaker: null, text: 'When you step close, it falters. When you step back, it steadies. (It almost feels like it\u2019s reacting to you.)', italic: true },
+        { speaker: null, text: 'A brass wall sconce, flickering. Not quite in time with itself.', italic: false },
+        { speaker: null, text: 'When you step close, it falters. When you step back, it steadies. It almost feels like it\u2019s reacting to you.', italic: true },
       ],
       choices: null, onEnd: null,
     },
@@ -622,8 +670,8 @@ const grandparentsObjects = [
     node: {
       id: 'gp-babcia-inspect',
       lines: [
-        { speaker: null, text: 'Babcia is on the bed. Her hands are folded in her apron. She is making the smallest sound.', italic: true },
-        { speaker: null, text: 'You can stand right next to her. She will not look up.', italic: true },
+        { speaker: null, text: 'Babcia is on the bed. Her hands are folded in her apron. She is making the smallest sound.', italic: false },
+        { speaker: null, text: 'You can stand right next to her. She will not look up.', italic: false },
         { speaker: 'PIP', text: 'Babciu, jestem tutaj.', italic: false },
       ],
       choices: null, onEnd: null,
@@ -638,8 +686,8 @@ const grandparentsObjects = [
     node: {
       id: 'gp-dziadek-inspect',
       lines: [
-        { speaker: null, text: "Dziadek\u2019s back is to you. He hasn\u2019t turned. His shoulders are very still.", italic: true },
-        { speaker: null, text: 'On the windowsill, the small radio he listens to in the evenings. Off, now.', italic: true },
+        { speaker: null, text: "Dziadek\u2019s back is to you. He hasn\u2019t turned. His shoulders are very still.", italic: false },
+        { speaker: null, text: 'On the windowsill, the small radio he listens to in the evenings. Off, now.', italic: false },
         { speaker: null, text: 'You wait, in case he turns. He does not turn.', italic: true },
       ],
       choices: null, onEnd: null,
@@ -669,7 +717,7 @@ const grandparentsObjects = [
     node: {
       id: 'gp-suitcase-inspect',
       lines: [
-        { speaker: null, text: 'The suitcase is open. Nothing is folded. A shirt of yours is on top \u2014 the one with the boat on it.', italic: true },
+        { speaker: null, text: 'The suitcase is open. Nothing is folded. A shirt of yours is on top \u2014 the one with the boat on it.', italic: false },
         { speaker: null, text: 'They didn\u2019t have time to unpack. They didn\u2019t think they would need to.', italic: true },
       ],
       choices: null, onEnd: null,
@@ -773,6 +821,44 @@ const cinematic = {
   fadingOut: false,
   played:    new Set(),
   onEnd:     null,
+};
+
+/* ================================================================
+   MUSIC STATE
+   Two <audio> elements (A and B) alternate roles during crossfades.
+   music.current tracks which is the active element ('a' or 'b').
+   Autoplay is deferred until first keypress (browser policy).
+   Toggle state persists across reloads via localStorage.
+   ================================================================ */
+
+const music = {
+  audioA:      null,   // <audio id="bg-music-a">
+  audioB:      null,   // <audio id="bg-music-b">
+  current:     'a',    // which element is the active track right now
+  trackId:     null,   // logical id: 'main' | 'chefs' | 'monster' | null
+  on:          true,   // player wants music? (mirrors toggle state)
+  unlocked:    false,  // has first keypress fired?
+  baseVolume:  0.4,    // target volume when not crossfading
+  crossfading: false,
+};
+
+/* Logical id → src path (relative to game/index.html). */
+const MUSIC_TRACKS = {
+  main:  'assets/audio/stowaway-polka.mp3',
+  chefs: 'assets/audio/chefs.mp3',
+};
+const MONSTER_TRACKS = [
+  'assets/audio/monster-1.mp3',
+  'assets/audio/monster-2.mp3',
+];
+
+/* Per-room logical track id.
+   All Chapter 1 rooms use 'main'. Kitchen (future sprint) → 'chefs'. */
+const ROOM_MUSIC = {
+  cabin:        'main',
+  hallway:      'main',
+  grandparents: 'main',
+  // kitchen:   'chefs',  // future sprint
 };
 
 /* ================================================================
@@ -1600,6 +1686,7 @@ function startTransition(toRoom, entryEdge, entryX) {
   setTimeout(() => {
     // Screen is black — swap room, reposition Pip
     currentRoom = toRoom;
+    playMusic(ROOM_MUSIC[currentRoom] || 'main');
     pip.x = entryX !== undefined
       ? entryX
       : entryEdge === 'fromLeft'
@@ -1679,14 +1766,14 @@ function updatePassenger(dt) {
 
 const CINEMATIC_SCRIPTS = {
   grandparents: [
-    { speaker: null,  text: 'Babcia is on the bed. She is making a sound that Pip has never heard her make.', italic: true },
-    { speaker: null,  text: 'Dziadek stands at the window. His shoulders are shaking. He says nothing.', italic: true },
-    { speaker: null,  text: 'On the nightstand, a photograph. Pip on his sixth birthday, holding a pierogi as big as his face.', italic: true },
+    { speaker: null,  text: 'Babcia is on the bed. She is making a sound that Pip has never heard her make.', italic: false },
+    { speaker: null,  text: 'Dziadek stands at the window. His shoulders are shaking. He says nothing.', italic: false },
+    { speaker: null,  text: 'On the nightstand, a photograph. Pip on his sixth birthday, holding a pierogi as big as his face.', italic: false },
     { speaker: 'PIP', text: 'Babcia\u2026', italic: false },
-    { speaker: null,  text: 'She does not look up.', italic: true },
+    { speaker: null,  text: 'She does not look up.', italic: false },
     { speaker: 'PIP', text: 'I\u2019m here. I\u2019m right here.', italic: false },
-    { speaker: null,  text: 'She does not look up.', italic: true },
-    { speaker: null,  text: 'Dziadek turns. For a moment, just a moment, he looks toward the doorway. He frowns. He shakes his head and turns back to the window.', italic: true },
+    { speaker: null,  text: 'She does not look up.', italic: false },
+    { speaker: null,  text: 'Dziadek turns. For a moment, just a moment, he looks toward the doorway. He frowns. He shakes his head and turns back to the window.', italic: false },
     { speaker: 'PIP', text: '\u2026you almost saw me.', italic: false },
   ],
 };
@@ -2479,9 +2566,129 @@ function drawDziadek(screenX, groundY, now) {
 }
 
 /* ================================================================
+   MUSIC SYSTEM
+   playMusic(trackId)  — switch to a track, crossfading if needed.
+   unlockMusic()       — called on first keypress; starts playback.
+   toggleMusic()       — bound to the ♪ button click.
+   initMusic()         — runs at page load; reads state, wires up DOM.
+   ================================================================ */
+
+function resolveSrc(trackId) {
+  if (trackId === 'monster') {
+    return MONSTER_TRACKS[Math.random() < 0.5 ? 0 : 1];
+  }
+  return MUSIC_TRACKS[trackId] || MUSIC_TRACKS.main;
+}
+
+function playMusic(trackId) {
+  const targetSrc = resolveSrc(trackId);
+  const activeEl  = music.current === 'a' ? music.audioA : music.audioB;
+
+  // No-op if the current active element is already playing this src
+  if (activeEl.src.endsWith(targetSrc) && music.trackId !== null) return;
+
+  // First call (nothing loaded yet) — just set src; no crossfade
+  if (music.trackId === null) {
+    activeEl.src    = targetSrc;
+    activeEl.volume = music.baseVolume;
+    music.trackId   = trackId;
+    if (music.on && music.unlocked) {
+      activeEl.play().catch(() => {});
+    }
+    return;
+  }
+
+  // Crossfade: ramp active out, incoming in, over ~1.2s
+  const incomingEl = music.current === 'a' ? music.audioB : music.audioA;
+  incomingEl.src    = targetSrc;
+  incomingEl.volume = 0;
+
+  if (music.on && music.unlocked) {
+    incomingEl.play().catch(() => {});
+  }
+
+  const FADE_MS   = 1200;
+  const startTime = performance.now();
+  const fromVol   = activeEl.volume;
+
+  music.crossfading = true;
+
+  function fade(now) {
+    const t = Math.min((now - startTime) / FADE_MS, 1);
+    activeEl.volume  = fromVol * (1 - t);
+    incomingEl.volume = music.on ? music.baseVolume * t : 0;
+
+    if (t < 1) {
+      requestAnimationFrame(fade);
+    } else {
+      activeEl.pause();
+      activeEl.volume   = music.baseVolume;  // reset for next use
+      music.current     = music.current === 'a' ? 'b' : 'a';
+      music.trackId     = trackId;
+      music.crossfading = false;
+    }
+  }
+  requestAnimationFrame(fade);
+}
+
+function unlockMusic() {
+  if (music.unlocked) return;
+  music.unlocked = true;
+  if (music.on && music.trackId !== null) {
+    const activeEl = music.current === 'a' ? music.audioA : music.audioB;
+    activeEl.play().catch(() => {});
+  }
+}
+
+function toggleMusic() {
+  music.on = !music.on;
+  localStorage.setItem('tlb-music-on', music.on ? 'true' : 'false');
+
+  const btn      = document.getElementById('music-toggle');
+  const activeEl = music.current === 'a' ? music.audioA : music.audioB;
+
+  if (music.on) {
+    btn.classList.remove('muted');
+    btn.title      = 'Music on (click to mute)';
+    btn.setAttribute('aria-label', 'Music on (click to mute)');
+    if (music.unlocked) activeEl.play().catch(() => {});
+  } else {
+    btn.classList.add('muted');
+    btn.title      = 'Music off (click to play)';
+    btn.setAttribute('aria-label', 'Music off (click to play)');
+    activeEl.pause();
+  }
+}
+
+function initMusic() {
+  music.audioA = document.getElementById('bg-music-a');
+  music.audioB = document.getElementById('bg-music-b');
+
+  // Restore toggle state from previous session
+  const saved = localStorage.getItem('tlb-music-on');
+  if (saved === 'false') {
+    music.on = false;
+    const btn = document.getElementById('music-toggle');
+    btn.classList.add('muted');
+    btn.title     = 'Music off (click to play)';
+    btn.setAttribute('aria-label', 'Music off (click to play)');
+  }
+
+  // Wire toggle button
+  document.getElementById('music-toggle').addEventListener('click', toggleMusic);
+
+  // Arm first-keypress unlock
+  window.addEventListener('keydown', unlockMusic, { once: true });
+
+  // Queue the opening track (src set immediately; play deferred to first keypress)
+  playMusic('main');
+}
+
+/* ================================================================
    KICK OFF
    ================================================================ */
 
+initMusic();
 setRoomStrip();
 requestAnimationFrame(loop);
 

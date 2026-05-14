@@ -1398,13 +1398,6 @@ let currentRoom = 'hallway';
    pip.x was initially set to ROOM_W/2 in the pip object definition — override here. */
 pip.x = rooms.hallway.pipMinX + 4;
 
-/* Arm the passenger for the opening sequence.
-   Normally the passenger fires on first hallwayEntered flag set by startTransition().
-   Since the game now starts in the hallway, set the flag here. The passenger timer
-   will fire when it's updated in updatePassenger() — but we want it to wait until
-   the opening sequence finishes. See updatePassenger() for the gate. */
-passenger.hallwayEntered = true;
-
 /* ================================================================
    DIALOGUE STATE
    Driven by showDialogue(), closeDialogue(), updateDialogue().
@@ -1518,6 +1511,11 @@ const passenger = {
   speed:            105,    // px/s — slightly faster than Pip's 90
   aftermathPending: false,  // true after exit, until aftermath dialogue fires
 };
+
+/* Sprint 10.7: game starts in the hallway, so arm the passenger flag here.
+   Normally set by startTransition() on first hallway entry; the timer gate
+   in updatePassenger() ensures it still waits for the opening sequence. */
+passenger.hallwayEntered = true;
 
 /* ================================================================
    DEV FLAG

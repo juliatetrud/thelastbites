@@ -365,8 +365,8 @@ const FLOOR_Y = 180;     // y of the floor surface (feet land here).
                          // reserved for the dialogue box and controls strip.
                          // Every room must keep game-world content above this line.
                          // Established Sprint 02.5; see 06-roadmap-and-open-questions.md Decisions Log.
-const PIP_HALF_W = 8;    // half of Pip's sprite width (16px total)
-const PIP_H = 24;        // Pip's sprite height
+const PIP_HALF_W = 12;   // half of Pip's sprite width (24px total)
+const PIP_H = 40;        // Pip's sprite height
 const PIP_SPEED = 90;    // movement speed, pixels per second (game coords)
 
 /* Float capability — see pip.float state and update() for usage */
@@ -1413,7 +1413,7 @@ function render(now) {
     drawCinematicScene(cinematic.name, now);
   } else {
     rooms[currentRoom].draw(camX, now);
-    drawSparkles(camX, now);
+    drawObjectAura(camX, now);
     drawPip(pip.x - camX, pip.y - pip.float.altitude, now);
 
     // Passenger drawn after Pip — renders in front when positions overlap,
@@ -1830,29 +1830,40 @@ function drawCabin(camX, now) {
    object when Pip is within range. Hidden while dialogue is open.
    ---------------------------------------------------------------- */
 
-function drawSparkles(camX, now) {
+/* Object aura: always-on radial glow around interactable objects.
+   Intensity scales from 0.15 (far) up to 1.0 as Pip enters 30px range.
+   Sparkle particle appears only within 18px. */
+function drawObjectAura(camX, now) {
   if (dialogue.active) return;
   for (const obj of rooms[currentRoom].objects) {
-    if (Math.abs(pip.x - obj.x) < 18) {
-      drawSparkle(Math.round(obj.x - camX), obj.sparkleY, now);
+    const screenX  = Math.round(obj.x - camX);
+    const distance = Math.abs(pip.x - obj.x);
+    const intensity = distance < 30 ? 1 - (distance / 30) : 0.15;
+
+    /* Radial gradient aura — always visible */
+    const auraGrad = ctx.createRadialGradient(screenX, obj.sparkleY, 0, screenX, obj.sparkleY, 20);
+    auraGrad.addColorStop(0, `rgba(255, 200, 104, ${(intensity * 0.35).toFixed(3)})`);
+    auraGrad.addColorStop(1, 'rgba(255, 200, 104, 0)');
+    ctx.fillStyle = auraGrad;
+    ctx.beginPath();
+    ctx.arc(screenX, obj.sparkleY, 20, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Sparkle particle — close proximity only */
+    if (distance <= 18) {
+      const drift = Math.sin(now / 1000) * 3;
+      const pulse = 0.75 + Math.sin(now / 500) * 0.2;
+      ctx.save();
+      ctx.shadowColor = 'rgba(255, 200, 104, 0.9)';
+      ctx.shadowBlur  = 12;
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle   = '#ffc868'; /* --warm-pool-amber */
+      ctx.beginPath();
+      ctx.arc(screenX, obj.sparkleY + drift, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
   }
-}
-
-function drawSparkle(screenX, y, now) {
-  /* Gentle vertical drift on a ~2s sine loop */
-  const drift = Math.sin(now / 1000) * 3;
-  const pulse = 0.75 + Math.sin(now / 500) * 0.2;
-
-  ctx.save();
-  ctx.shadowColor = 'rgba(255, 200, 104, 0.9)';
-  ctx.shadowBlur  = 8;
-  ctx.globalAlpha = pulse;
-  ctx.fillStyle   = '#ffc868'; /* --warm-pool-amber */
-  ctx.beginPath();
-  ctx.arc(screenX, y + drift, 2.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
 }
 
 /* ----------------------------------------------------------------
@@ -1900,29 +1911,29 @@ function drawPip(screenX, groundY, now) {
    See 03-art-and-aesthetic.md §Pip Sprite Specification. */
 
 function drawPipBody() {
-  const topY    = -PIP_H;       /* −24: top of sprite                   */
-  const headCY  = topY + 7;    /* −17: centre of head arc               */
-  const bodyBot = -6;           /* straight body ends 6px above foot     */
+  const topY    = -PIP_H;       /* −40: top of sprite                   */
+  const headCY  = topY + 12;   /* −28: centre of head arc               */
+  const bodyBot = -10;          /* straight body ends 10px above foot    */
 
   /* Ghost body glow */
   ctx.shadowColor = 'rgba(240, 248, 255, 0.85)';
-  ctx.shadowBlur  = 7;
+  ctx.shadowBlur  = 12;
   ctx.globalAlpha = 0.85;
 
   /* Ghost body fill */
   ctx.fillStyle = '#dce8ff';
   ctx.beginPath();
 
-  /* Head: semicircle from left arc-start (−7, headCY) up and over to (7, headCY) */
-  ctx.arc(0, headCY, 7, Math.PI, 0);
+  /* Head: semicircle from left arc-start (−12, headCY) up and over to (12, headCY) */
+  ctx.arc(0, headCY, 12, Math.PI, 0);
 
   /* Right wall down to where bumps begin */
-  ctx.lineTo(7, bodyBot);
+  ctx.lineTo(12, bodyBot);
 
-  /* Three downward bumps (right → left). Each bump spans ~4.67px. */
-  ctx.quadraticCurveTo( 4.67, 0,  2.33, bodyBot);
-  ctx.quadraticCurveTo( 0,    0, -2.33, bodyBot);
-  ctx.quadraticCurveTo(-4.67, 0, -7,    bodyBot);
+  /* Three downward bumps (right → left). Each bump spans ~8px. */
+  ctx.quadraticCurveTo( 8, 0,  4, bodyBot);
+  ctx.quadraticCurveTo( 0, 0, -4, bodyBot);
+  ctx.quadraticCurveTo(-8, 0, -12, bodyBot);
 
   ctx.closePath();
   ctx.fill();
@@ -1933,18 +1944,18 @@ function drawPipBody() {
      chef's apron Babcia gave him. */
   ctx.globalAlpha = 0.28;
   ctx.fillStyle   = '#d4c89a';
-  ctx.fillRect(-5, topY + 14, 10, 5);
+  ctx.fillRect(-8, topY + 23, 17, 8);
   ctx.fillStyle = '#b8a87a';
-  ctx.fillRect(-1, topY + 13,  2, 2);
+  ctx.fillRect(-2, topY + 22,  3, 3);
 
   /* Cool underglow beneath Pip */
   ctx.globalAlpha = 0.12;
-  const glowGrad = ctx.createRadialGradient(0, 1, 0, 0, 1, 10);
+  const glowGrad = ctx.createRadialGradient(0, 2, 0, 0, 2, 17);
   glowGrad.addColorStop(0, '#c0d8ff');
   glowGrad.addColorStop(1, 'rgba(180, 210, 255, 0)');
   ctx.fillStyle = glowGrad;
   ctx.beginPath();
-  ctx.ellipse(0, 1, 10, 3, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 2, 17, 5, 0, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -1955,25 +1966,25 @@ function drawPipBody() {
    both facing directions — no manual swap needed. */
 
 function drawPipEyes() {
-  const headCY = -PIP_H + 7;    /* −17 */
+  const headCY = -PIP_H + 12;   /* −28 */
   const e      = pip.eyes;
 
   /* Eye height driven by openness; minimum 1px so they're never invisible */
-  const eyeH = Math.max(1, Math.round(3 * e.openness));
+  const eyeH = Math.max(1, Math.round(5 * e.openness));
 
   const offX = Math.round(e.offsetX);
   const offY = Math.round(e.offsetY);
 
   ctx.globalAlpha = 0.92;
   ctx.fillStyle   = '#1a1428';
-  ctx.fillRect(-3 + offX, headCY - 1 + offY, 2, eyeH);   /* left eye  */
-  ctx.fillRect( 2 + offX, headCY - 1 + offY, 2, eyeH);   /* right eye */
+  ctx.fillRect(-5 + offX, headCY - 2 + offY, 3, eyeH);   /* left eye  */
+  ctx.fillRect( 3 + offX, headCY - 2 + offY, 3, eyeH);   /* right eye */
 
   /* Subtle blush */
   ctx.globalAlpha = 0.18;
   ctx.fillStyle   = '#e8a0a0';
-  ctx.fillRect(-5, headCY + 2, 3, 2);
-  ctx.fillRect( 3, headCY + 2, 3, 2);
+  ctx.fillRect(-8, headCY + 3, 5, 3);
+  ctx.fillRect( 4, headCY + 3, 5, 3);
 }
 
 /* ---- Layer 3: Mouth ----
@@ -1983,13 +1994,13 @@ function drawPipEyes() {
    sprints add those shapes without re-architecting. */
 
 function drawPipMouth() {
-  const headCY = -PIP_H + 7;    /* −17 */
+  const headCY = -PIP_H + 12;   /* −28 */
   const m      = pip.mouth;
 
   ctx.globalAlpha = 0.65;
   ctx.fillStyle   = '#1a1428';
-  /* Neutral: single pixel centered just below mid-face */
-  ctx.fillRect(Math.round(m.offsetX), headCY + 5 + Math.round(m.offsetY), 1, 1);
+  /* Neutral: 2×2 dot centered just below mid-face */
+  ctx.fillRect(Math.round(m.offsetX), headCY + 8 + Math.round(m.offsetY), 2, 2);
 }
 
 /* ================================================================
@@ -2591,24 +2602,24 @@ function drawPassengerBody() {
   ctx.globalAlpha = 0.96;
   ctx.shadowBlur  = 0;
 
-  // Top hat crown (7×5px)
-  ctx.fillRect(-3, -28,  7,  5);
-  // Hat brim     (12×2px — widest point)
-  ctx.fillRect(-6, -23, 12,  2);
-  // Head         (6×6px)
-  ctx.fillRect(-3, -21,  6,  6);
-  // Collar       (4×2px)
-  ctx.fillRect(-2, -15,  4,  2);
-  // Coat body    (9×6px)
-  ctx.fillRect(-4, -13,  9,  6);
-  // Coat tails   (7×3px, slightly narrower)
-  ctx.fillRect(-3,  -7,  7,  3);
-  // Legs         (2×3px each)
-  ctx.fillRect(-3,  -4,  2,  3);
-  ctx.fillRect( 1,  -4,  2,  3);
-  // Shoes        (3×1px each)
-  ctx.fillRect(-4,  -1,  3,  1);
-  ctx.fillRect( 1,  -1,  3,  1);
+  // Top hat crown (15×11px)
+  ctx.fillRect( -7, -62, 15, 11);
+  // Hat brim     (27×4px — widest point)
+  ctx.fillRect(-13, -51, 27,  4);
+  // Head         (13×13px)
+  ctx.fillRect( -7, -47, 13, 13);
+  // Collar       (9×4px)
+  ctx.fillRect( -4, -34,  9,  4);
+  // Coat body    (20×13px)
+  ctx.fillRect( -9, -30, 20, 13);
+  // Coat tails   (15×7px, slightly narrower)
+  ctx.fillRect( -7, -17, 15,  7);
+  // Legs         (4×7px each)
+  ctx.fillRect( -7,  -9,  4,  7);
+  ctx.fillRect(  2,  -9,  4,  7);
+  // Shoes        (7×2px each)
+  ctx.fillRect( -9,  -2,  7,  2);
+  ctx.fillRect(  2,  -2,  7,  2);
 
   ctx.globalAlpha = 1;
 }
@@ -2811,20 +2822,20 @@ function drawBabcia(screenX, groundY, now) {
 
   // Hair bun
   ctx.beginPath();
-  ctx.arc(3, -22, 3, 0, Math.PI * 2);
+  ctx.arc(7, -53, 7, 0, Math.PI * 2);
   ctx.fill();
   // Head (bowed forward)
-  ctx.fillRect(-4, -20,  8,  7);
+  ctx.fillRect(-10, -48, 19, 17);
   // Hunched upper torso
-  ctx.fillRect(-7, -13, 14,  8);
+  ctx.fillRect(-17, -31, 34, 19);
   // Apron hint
   ctx.globalAlpha = 0.40;
   ctx.fillStyle   = '#4a3820';
-  ctx.fillRect(-5, -10, 10,  5);
+  ctx.fillRect(-12, -24, 24, 12);
   ctx.globalAlpha = 0.90;
   ctx.fillStyle   = '#2a2030';
   // Lap / skirt (wide, seated)
-  ctx.fillRect(-9,  -5, 18,  5);
+  ctx.fillRect(-22, -12, 43, 12);
 
   ctx.globalAlpha = 1;
   ctx.restore();
@@ -2842,16 +2853,16 @@ function drawDziadek(screenX, groundY, now) {
   ctx.globalAlpha = 0.90;
   ctx.shadowBlur  = 0;
 
-  ctx.fillRect(-5, -30, 11,  3);  // flat cap
-  ctx.fillRect(-4, -27,  8,  2);  // cap top
-  ctx.fillRect(-4, -25,  8,  7);  // head
-  ctx.fillRect(-2, -18,  4,  2);  // neck
-  ctx.fillRect(-7, -16, 14, 10);  // coat body
-  ctx.fillRect(-5,  -6, 10,  3);  // coat lower
-  ctx.fillRect(-4,  -3,  3,  3);  // left leg
-  ctx.fillRect( 1,  -3,  3,  3);  // right leg
-  ctx.fillRect(-5,   0,  4,  1);  // left shoe
-  ctx.fillRect( 1,   0,  4,  1);  // right shoe
+  ctx.fillRect(-11, -66, 24,  7);  // flat cap
+  ctx.fillRect( -9, -59, 18,  4);  // cap top
+  ctx.fillRect( -9, -55, 18, 15);  // head
+  ctx.fillRect( -4, -40,  9,  4);  // neck
+  ctx.fillRect(-15, -35, 31, 22);  // coat body
+  ctx.fillRect(-11, -13, 22,  7);  // coat lower
+  ctx.fillRect( -9,  -7,  7,  7);  // left leg
+  ctx.fillRect(  2,  -7,  7,  7);  // right leg
+  ctx.fillRect(-11,   0,  9,  2);  // left shoe
+  ctx.fillRect(  2,   0,  9,  2);  // right shoe
 
   ctx.globalAlpha = 1;
   ctx.restore();

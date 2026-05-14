@@ -56,6 +56,17 @@ A third register has emerged in prototype work (e.g. `three-doors-demo.html`). W
 
 This is a prototype convenience, not a canonical visual layer of the game. As art is commissioned, Register C work may migrate to Register B or be retired.
 
+### Interactable object affordances
+
+Every object Pip can inspect, carry, or interact with carries a warm-amber aura in gameplay Register A. The aura uses the locked palette tokens `--warm-pool-amber` (`#ffc868`) and `--warm-pool-glow` (`#ffe088`).
+
+- **Always-on outer aura.** A faint radial gradient surrounds the object at all times — visible even when Pip is far away, establishing that this object is "live." Baseline alpha ~0.15.
+- **Distance-driven intensity.** As Pip enters a ~30 px radius around the object, the aura ramps from baseline to full brightness. Intensity = `1 − (distance / 30)` within the 30 px radius; clamped to 0.15 outside it.
+- **Sparkle particle at close range.** Within ~18 px (interaction range), a small warm-amber particle drifts vertically on a sine loop above the object, confirming that the interaction is available right now.
+- **Hidden during dialogue.** Both aura and sparkle are suppressed while a dialogue box is open.
+
+This is the canonical interactable affordance for the entire game. No other visual language (outlines, icon badges, pulse rings) is used for object interaction.
+
 ### Which register to use when
 
 - **In a chapter room, the player is moving and exploring** → Register A
@@ -117,10 +128,10 @@ This is a "1 door-height" unit. Everything else is expressed as a fraction or mu
 | Element                     | Height (door-fraction) | Pixels @ 480×270 |
 |-----------------------------|------------------------|------------------|
 | Door (canonical)            | 1.00                   | 110              |
-| Adult NPC (Babcia, Dziadek, the passenger, Henrik, Iris, etc.) | 0.55–0.65 | 60–72 |
-| Child / Pip-aged human (memory-Pip in cinematic) | 0.40–0.45 | 44–50 |
-| Pip (ghost form, gameplay sprite) | 0.30–0.35           | 32–38             |
-| Pätu (gray tabby cat)       | 0.20–0.25              | 22–28            |
+| Adult NPC (Babcia, Dziadek, the passenger, Henrik, etc.) | 0.55–0.65 | 60–72 |
+| Child / Pip-aged human (memory-Pip in cinematic; Iris ghost-child) | 0.35–0.45 | 38–50 |
+| Pip (ghost form, gameplay sprite) | 0.35–0.40           | 38–44             |
+| Pätu (gray tabby cat)       | 0.18–0.22              | 20–24            |
 | Echo-creatures (spiders, mice, cockroaches) | 0.06–0.14   | 7–16             |
 | Furniture: bed              | 0.85–1.00 wide × 0.18–0.22 tall (frame) | 95–110 × 20–24 |
 | Furniture: nightstand       | 0.16–0.20 wide × 0.16–0.20 tall | 18–22 × 18–22 |
@@ -135,7 +146,7 @@ A real ship-corridor door is roughly **2 meters (6'6") tall**. Treating the door
 
 - **An adult human is ~1.7 meters → 0.85 door-heights.** In the game we render adults at 0.55–0.65 because the camera framing flattens vertical perspective slightly and we want adults to feel imposingly tall against Pip without dominating the frame. Babcia, Dziadek, the passenger, Henrik, Iris — all in this band.
 - **A six-year-old human is ~1.15 meters → 0.57 door-heights.** Memory-Pip in cinematic gets ~0.40–0.45 because we want him to feel small even at six.
-- **A ghost-child Pip is smaller still.** Ghost-Pip is *more compact than living-Pip* — he's lost the body, not just changed form. 0.30–0.35 puts him at "knee-high to an adult," which is the correct emotional register: a child-shaped being looking up at a world that no longer registers him.
+- **A ghost-child Pip is smaller still.** Ghost-Pip is *more compact than living-Pip* — he's lost the body, not just changed form. 0.35–0.40 puts him at "knee-high to an adult," which is the correct emotional register: a child-shaped being looking up at a world that no longer registers him.
 - **Pätu is a real cat scale.** Real cats are ~0.25 meters tall at the shoulder; on the door scale that's ~0.12. We render at 0.20–0.25 because she's a slightly-larger-than-life storybook cat, and because Pip needs to feel a kinship of small things with her.
 
 ### What this means in practice
@@ -152,7 +163,11 @@ As of Sprint 06, the following will need adjustment to honor this scale:
 - **Hallway doors (×6):** currently 24×64. Bump to 32×110.
 - **Babcia, Dziadek (Sprint 04):** currently ~22-30px tall. Bump to ~60-65px.
 - **Passenger (Sprint 03):** currently ~22-26px tall. Bump to ~60-66px.
-- **Cinematic Babcia and Dziadek:** currently ~28-42px. Bump cinematic figures proportionally — cinematic register is allowed to draw larger because of the closer framing, so adult cinematic figures can reach 0.75–0.90 door-heights (~85-100px). Cinematic Pip (when shown) stays the same as gameplay (he's the same ghost, just more pixels) — roughly 0.30–0.40 cinematic-door-heights.
+- **Cinematic figures use the same canonical scale as gameplay figures.** A character's height in pixels does not change between gameplay and cinematic — Babcia is ~60 px in the cabin and ~60 px in the grandparents' cinematic. *Cinematic closeness is achieved via camera zoom on the canonical-scale room, not by redrawing the character at inflated size.*
+
+  **Camera zoom convention (canonical for in-place cinematics):** Cinematics that take place in a space Pip is already in — Henrik in the kitchen, Babcia and Dziadek in the cabin, the mirror — use a procedural canvas viewport zoom: scale up a sub-region of the canonical 480×270 frame to fill the screen. The room and its characters are still rendered at canonical pixel size; the *viewport* changes. This preserves continuity (the character you see in gameplay is the same character you see in cinematic) and avoids the dual-scale system the prior spec implied.
+
+  **Bespoke cinematic compositions:** Cinematics that take place in a *different* space (a memory of decades-ago Norway, the bottom-of-the-well dinner, the dock farewell) are composed independently. They still respect canonical character scales relative to one another — an adult is still ~0.55–0.65 door-heights, a child is still ~0.35–0.45, etc. — but the door itself may not appear in the frame.
 - **Pip himself:** currently 16×24. Could bump slightly toward 18×34 (still in the 0.30–0.35 range against the new 110px door). Not required, but worth considering when NPCs scale up. The point is that Pip's scale is now derived from the door, not the other way around.
 
 ### What does NOT change

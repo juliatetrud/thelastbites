@@ -23,7 +23,7 @@ Prepend this to every prompt for consistency. Adjust the trailing keywords per s
 
 > **Pixel art, 480×270 resolution, hard pixel edges, no anti-aliasing, no sub-pixel detail. 7th Guest meets Hyper Light Drifter aesthetic. Deep velvety blacks, single warm warm-amber light source per scene, ornate Victorian/baroque detail, painterly atmosphere. Moonlit-blue base palette: deep blues `#1c2858`, `#0e1a3a`, warm-amber pools `#ffc868`, `#c87830`. Subtle film grain. Strong vignette. References: Owlboy, Hollow Knight, The Excavation of Hob's Barrow, Thimbleweed Park, Coraline, Over the Garden Wall.**
 
-For Pip specifically, append: *cool-white translucent ghost-boy, soft cool glow `#f0f8ff`, ~16×24 pixels in sprite form, 40–60% frame height in cinematic close-ups, chef's apron always visible, soft hair, two small dark eye-dots.*
+For Pip specifically, append: *cool-white translucent ghost-boy, soft cool glow `#f0f8ff`, ~38–44 pixels tall in sprite form (door-fraction 0.35–0.40), 40–60% frame height in cinematic close-ups, chef's apron always visible, soft hair, two small dark eye-dots.*
 
 Tone reminder for every prompt: **gentle horror, never cruel. Warm-spooky, not gory.**
 
@@ -64,10 +64,10 @@ Pip needs *consistent* art across multiple poses, animation cycles, and cinemati
 
 | Filename | Type | Description | AI prompt |
 |---|---|---|---|
-| `sprite-pip-idle.png` | Sprite | Idle pose with subtle bob animation. ~16×24 pixels. | Pixel art ghost-boy character, ~16×24 pixels, idle pose facing camera, translucent cool-white body `#f0f8ff` with soft cyan glow, soft brown hair, two small dark eye-dots, small chef's apron stained with flour, slight transparency, gentle bob animation possible, hard pixel edges. |
-| `sprite-pip-walk.png` | Sprite animation | Walk cycle, 4 frames left + 4 frames right. | Pixel art walk cycle for a translucent ghost-boy character, 4 frames profile view, ~16×24 pixels per frame, chef's apron visible, soft cool glow, feet not quite touching ground (he floats just slightly), hard pixel edges, frame-by-frame animation sheet. |
-| `sprite-pip-float.png` | Sprite animation | Float-upward pose. Held while space-bar is pressed. | Pixel art ghost-boy in floating pose, arms slightly outstretched, body drifting upward, ~16×24 pixels, cool-white translucent, soft cyan glow trailing downward, chef's apron, hard pixel edges. |
-| `sprite-pip-inspect.png` | Sprite | Leaning forward, looking-at-object pose. | Pixel art ghost-boy in inspection pose, leaning slightly forward, head tilted, examining something off-screen, ~16×24 pixels, translucent cool-white body, chef's apron visible. |
+| `sprite-pip-idle.png` | Sprite | Idle pose with subtle bob animation. ~38–44 pixels tall (door-fraction 0.35–0.40). | Pixel art ghost-boy character, ~38–44 pixels tall (door-fraction 0.35–0.40), idle pose facing camera, translucent cool-white body `#f0f8ff` with soft cyan glow, soft brown hair, two small dark eye-dots, small chef's apron stained with flour, slight transparency, gentle bob animation possible, hard pixel edges. |
+| `sprite-pip-walk.png` | Sprite animation | Walk cycle, 4 frames left + 4 frames right. | Pixel art walk cycle for a translucent ghost-boy character, 4 frames profile view, ~38–44 pixels tall per frame, chef's apron visible, soft cool glow, feet not quite touching ground (he floats just slightly), hard pixel edges, frame-by-frame animation sheet. |
+| `sprite-pip-float.png` | Sprite animation | Float-upward pose. Held while space-bar is pressed. | Pixel art ghost-boy in floating pose, arms slightly outstretched, body drifting upward, ~38–44 pixels tall, cool-white translucent, soft cyan glow trailing downward, chef's apron, hard pixel edges. |
+| `sprite-pip-inspect.png` | Sprite | Leaning forward, looking-at-object pose. | Pixel art ghost-boy in inspection pose, leaning slightly forward, head tilted, examining something off-screen, ~38–44 pixels tall, translucent cool-white body, chef's apron visible. |
 | `sprite-pip-cinematic-closeup.png` | Cinematic reference | Pip's face in cinematic close-up framing, 40-60% of 480×270 frame. The "same boy with more pixels." | Pixel art close-up portrait of a young ghost-boy, age 10-12, soft brown hair, two pale eye-dots with soft pinprick highlights, slightly translucent cool-white skin with soft cyan rim-light, small chef's apron just visible at frame bottom, single warm-amber light from upper left, deep shadow on right, ornate dark background suggesting ship interior, painterly pixel art, hard pixel edges. |
 
 ---
@@ -105,11 +105,11 @@ The project's foundational chapter. 9 cinematics (the doubled first-taste means 
 
 | Filename | Type | Description | AI prompt |
 |---|---|---|---|
-| `sprite-henrik-idle.png` | NPC sprite | Older man, gray beard, white chef's coat, apron with flour. Pipe sometimes. | Pixel art older man sprite, ~24×40 pixels, gray beard, weathered kind face, white chef's coat and apron stained with flour, pipe occasionally visible, slight stoop, warm presence, hard pixel edges. |
-| `sprite-marta-idle.png` | NPC sprite | Babcia. Elderly, kerchief, soft features, dark coat. Carries grief in her shoulders. | Pixel art elderly Polish woman sprite, ~24×40 pixels, headscarf/kerchief, soft features, dark coat, grief visible in her posture and shoulder set, hard pixel edges, painterly. |
-| `sprite-jan-idle.png` | NPC sprite | Dziadek. Elderly, wool flat cap, beard. Stooped slightly. | Pixel art elderly Polish man sprite, ~24×40 pixels, wool flat cap, gray beard, dark wool coat, slight stoop, hard pixel edges. |
-| `sprite-janitor-idle.png` | NPC sprite | Crew uniform. Mop or cart. Walks past Pip without seeing him. | Pixel art ship janitor sprite, ~24×40 pixels, crew uniform with name tag, holds a mop, weary expression, walks with purpose, hard pixel edges. |
-| `sprite-passenger-idle.png` | NPC sprite | Wealthy older traveler in evening clothes. Walks past Pip without seeing him. | Pixel art wealthy elderly cruise passenger sprite, ~24×40 pixels, evening wear, tuxedo or evening dress, walks the corridor obliviously, hard pixel edges. |
+| `sprite-henrik-idle.png` | NPC sprite | Older man, gray beard, white chef's coat, apron with flour. Pipe sometimes. | Pixel art older man sprite, ~60–72 pixels tall (door-fraction 0.55–0.65), gray beard, weathered kind face, white chef's coat and apron stained with flour, pipe occasionally visible, slight stoop, warm presence, hard pixel edges. |
+| `sprite-marta-idle.png` | NPC sprite | Babcia. Elderly, kerchief, soft features, dark coat. Carries grief in her shoulders. | Pixel art elderly Polish woman sprite, ~60 pixels tall (door-fraction ~0.55, lower end of adult band), headscarf/kerchief, soft features, dark coat, grief visible in her posture and shoulder set, hard pixel edges, painterly. |
+| `sprite-jan-idle.png` | NPC sprite | Dziadek. Elderly, wool flat cap, beard. Stooped slightly. | Pixel art elderly Polish man sprite, ~66–72 pixels tall (door-fraction 0.60–0.65), wool flat cap, gray beard, dark wool coat, slight stoop, hard pixel edges. |
+| `sprite-janitor-idle.png` | NPC sprite | Crew uniform. Mop or cart. Walks past Pip without seeing him. | Pixel art ship janitor sprite, ~60–72 pixels tall (door-fraction 0.55–0.65), crew uniform with name tag, holds a mop, weary expression, walks with purpose, hard pixel edges. |
+| `sprite-passenger-idle.png` | NPC sprite | Wealthy older traveler in evening clothes. Walks past Pip without seeing him. | Pixel art wealthy elderly cruise passenger sprite, ~60–72 pixels tall (door-fraction 0.55–0.65), evening wear, tuxedo or evening dress, walks the corridor obliviously, hard pixel edges. |
 | `sprite-pip-in-bed.png` | NPC sprite (one-shot) | Pip's body in the bed. Small form under sheets. Don't show his face. | Pixel art image of a child-sized form lying still under bedsheets, face hidden by sheet edge, small and motionless, somber, soft shadow, painterly. |
 
 ### Echo-creatures (Chapter 1 traversal)

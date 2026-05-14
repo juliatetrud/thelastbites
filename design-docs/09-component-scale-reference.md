@@ -101,27 +101,25 @@ Rows marked **[PROPOSED]** are sized by the author of this doc using the Scale A
 
 ## Characters
 
-*All dimensions are Register A (gameplay sprite) unless marked [CIN] for cinematic register. Register A is the in-game sprite scale; Register B/cinematic figures may be drawn 20–40% larger in their specific scenes. See `03-art-and-aesthetic.md` §Visual Registers.*
+*All dimensions are Register A (gameplay sprite). Cinematic figures use the same canonical scale as gameplay figures; cinematic closeness is achieved via camera zoom, not inflated character sizes. See `03-art-and-aesthetic.md` §Visual Registers and §Interactable object affordances.*
 
 | Component | Door-fraction | Pixel dims (480×270) | Chapter(s) | Notes |
 |---|---|---|---|---|
-| Pip (ghost form, gameplay) | 0.30–0.35 H | 32–38 px tall | All | Canonical from `03-art-and-aesthetic.md`. Current impl is 16×24 px (0.22 H) — **DISCREPANCY, see below.** |
+| Pip (ghost form, gameplay) | 0.35–0.40 H | 38–44 px tall | All | Canonical. `game/index.html` impl: `PIP_H = 40`. |
 | Adult NPC (representative) | 0.55–0.65 H | 60–72 px tall | All adult characters | Canonical. Henrik, Leida, Muhittin, Johannes, Tirta, Joana, Beatriz, Brian, Passenger, Janitor all in this band. |
 | Sandy (tall adult, Ch3) | 0.65–0.70 H | 72–77 px tall | Ch3 | Sandy is noticeably taller than other adults. Brown hair, beer belly, Scottish. |
-| Babcia (gameplay, seated) | 0.55–0.65 H (standing equiv.) | 60–72 px standing; seated figure should read ~0.40–0.45 H | Ch1 grandparents room | Current impl: `drawBabcia` is ~25 px (0.23 H) — **DISCREPANCY, see below.** |
-| Dziadek (gameplay, standing) | 0.55–0.65 H | 60–72 px | Ch1 grandparents room | Current impl: `drawDziadek` is ~31 px (0.28 H) — **DISCREPANCY, see below.** |
-| Passenger (scripted walk) | 0.55–0.65 H | 60–72 px | Ch1 hallway | Current impl: `drawPassengerBody` is 28 px (0.25 H) — **DISCREPANCY, see below.** |
-| Babcia (cinematic) | 0.75–0.90 H [CIN] | 85–100 px | Ch1 cinematic | Cinematic register allows larger scale. Current impl: `drawCinBabcia` is ~28 px (0.25 H) — **DISCREPANCY, see below.** |
-| Dziadek (cinematic) | 0.75–0.90 H [CIN] | 85–100 px | Ch1 cinematic | Current impl: `drawCinDziadek` is ~44 px (0.40 H) — **DISCREPANCY, see below.** |
-| Child NPC representative | 0.40–0.45 H | 44–50 px | Ch1 memory-Pip; Ch2 Bibi etc. | Canonical from `03-art-and-aesthetic.md`. Memory-Pip in cinematic register is a human child, not the ghost. |
-| Iris (Edwardian ghost child) | 0.40–0.45 H | 44–50 px | Ch5 | From `08-character-reference-sheets.md`. Looks like a living girl. Turns translucent when sad. Not yet implemented. |
+| Babcia (gameplay, seated) | ~0.55 H (lower end of Adult NPC band) | ~60 px | Ch1 grandparents room | Visibly shorter than Dziadek/Henrik. Seated figure reads ~0.55 H from top of bun to lap bottom. Impl updated Sprint 08.5. |
+| Dziadek (gameplay, standing) | 0.60–0.65 H | 66–72 px | Ch1 grandparents room | Standard Adult NPC. Impl updated Sprint 08.5. |
+| Passenger (scripted walk) | 0.55–0.65 H | 60–66 px | Ch1 hallway | Top-hatted figure; hat crown adds ~10 px above head. Impl updated Sprint 08.5. |
+| Child NPC representative | 0.35–0.45 H | 38–50 px | Ch1 memory-Pip; Ch2 Bibi etc. | Canonical from `03-art-and-aesthetic.md`. Memory-Pip in cinematic is a human child. |
+| Iris (Edwardian ghost child) | 0.35–0.40 H | 38–44 px | Ch5 | From `08-character-reference-sheets.md`. Small Edwardian girl. Smaller than memory-Pip band; confirmed by user review. Not yet implemented. |
 | Erik (Norwegian ghost boy, ~12) | 0.40–0.45 H | 44–50 px | Ch7 (first appearance), Ch8 | From `08-character-reference-sheets.md`. Dark hair, slight gap between front teeth, warm-amber at-peace glow. Not yet implemented. |
-| Pätu (gray tabby cat) | 0.20–0.25 H | 22–28 px | Ch2+ (recurring) | Canonical from `03-art-and-aesthetic.md`. Not yet implemented in canvas (CSS-div placeholder exists). |
+| Pätu (gray tabby cat) | 0.18–0.22 H | 20–24 px | Ch2+ (recurring) | Canonical from `03-art-and-aesthetic.md`. Not yet implemented in canvas (CSS-div placeholder exists). |
 | Capuchin monkey (Ch7) | 0.15–0.20 H | 16–22 px | Ch7 Brazil forest | From `08-character-reference-sheets.md`. Small, sharp-eyed, white-tipped ears. Not yet implemented. |
-| Black Shuck (Ch3) | 0.30–0.40 H | 33–44 px | Ch3 Southampton | From `08-character-reference-sheets.md`. Large ghostly dog, approx. shoulder-height to an adult's waist. Not yet implemented. |
-| Pocong (Ch6) | 0.50–0.65 H | 55–72 px | Ch6 Indonesia | From `08-character-reference-sheets.md`. Tall shrouded figure, hopping. Note: test checklist requires Pocong be taller than adult NPC (60–72 px) — see Discrepancies. Not yet implemented. |
+| Black Shuck (Ch3) | 0.40–0.50 H | 44–55 px at shoulder | Ch3 Southampton | From `08-character-reference-sheets.md`. Large ghostly dog. Confirmed by user review Sprint 08.5. Not yet implemented. |
+| Pocong (Ch6) | 0.70–0.85 H | 77–94 px | Ch6 Indonesia | From `08-character-reference-sheets.md`. Tall shrouded figure, hopping — looms above adult NPCs. Confirmed by user review Sprint 08.5. Not yet implemented. |
 | Karakoncolos (Ch4) | 0.50–0.65 H | 55–72 px | Ch4 Türkiye | From `08-character-reference-sheets.md`. Folkloric hairy creature, stooped with long arms, dark-furred. Not yet implemented. |
-| Haldjas (Ch2) | particle cluster | ~40 px swarm area | Ch2 Estonia | No single sprite height. Warm gold-amber sparkles with loose humanoid suggestion when materialized. |
+| Haldjas (Ch2) | 0.50–0.65 spread | ~55–72 px diameter when materialized | Ch2 Estonia | No single sprite height. Warm gold-amber sparkle cluster with loose humanoid suggestion. Confirmed by user review Sprint 08.5. |
 | Mamlambo (Ch5) | not a standalone sprite | porthole glimpse only | Ch5 South Africa | Body coils against the hull; only the eye is visible through the porthole. Blood-iron color (`#7a1418`). |
 | Boitatá (Ch7) | > 1.0 H (vast) | extends beyond any single cell | Ch7 Brazil | Vast fire-serpent. No fixed sprite box — staged in cinematic framing with only part of the body visible. |
 
@@ -135,7 +133,7 @@ Rows marked **[PROPOSED]** are sized by the author of this doc using the Scale A
 |---|---|---|
 | Dialogue box | 76% canvas width (~365 px) × variable height; bottom: 10% from canvas bottom (~27 px from base) | HTML `<div>`, dark panel with double-border chrome. `padding: 16px 24px`. Not canvas-drawn. |
 | Controls strip | full canvas width × ~14 px text height; bottom: 2% (~5 px from base) | HTML `<div>`, faint uppercase text hint. Context-sensitive. Not canvas-drawn. |
-| Sparkle indicator | ~5 px dot + 8 px glow radius | Canvas-drawn (`drawSparkle`). Amber dot, sine-drift animation. Appears near inspectable objects within 18 px of Pip. |
+| Sparkle indicator / object aura | Always-on radial aura (20 px radius); sparkle particle (~3 px dot + 12 px glow) at ≤18 px | Canvas-drawn (`drawObjectAura`). Warm-amber aura (`--warm-pool-amber` #ffc868) around every interactable object at all times — faint baseline (α 0.15) ramping to full intensity as Pip enters 30 px range. Sparkle particle (sine-drift) appears when Pip is within 18 px. Both hidden during dialogue. See `03-art-and-aesthetic.md` §Interactable object affordances. |
 | Room transition overlay | 480 × 270 (full canvas) | HTML `<div>` black overlay. Fades in/out on room change. |
 | Music toggle button | 32 × 32 px | Fixed outside canvas, top-right viewport corner. |
 | Journal UI (full screen) | 480 × 270 (full canvas) | Described in `03b-ui-spec.md`. Not yet implemented. |
@@ -164,72 +162,54 @@ Rows marked **[PROPOSED]** are sized by the author of this doc using the Scale A
 
 ---
 
-## Discrepancies found
+## Discrepancies — resolution status
 
-*Components whose canonical scale (as documented in this doc and `03-art-and-aesthetic.md`) does not match their current implementation in `game/index.html` or their spec in `art-asset-list.md`. No resolution proposed here — these are catalogued for a follow-up sprint.*
+*Sprint 08 surfaced 12 discrepancies. Sprint 08.5 resolved 9; 3 remain open as proposals awaiting user confirmation.*
 
 ### Discrepancies: `game/index.html` vs canonical scale
 
-**1. Pip (gameplay sprite)**
-- Canonical: 0.30–0.35 H → 32–38 px tall
-- Current (`drawPipBody`, `PIP_H = 24`): 16 × 24 px (0.22 H)
-- Also noted in `03-art-and-aesthetic.md` §Existing assets to reconcile: "currently 16×24. Could bump slightly toward 18×34."
+**1. Pip (gameplay sprite) — RESOLVED Sprint 08.5**
+- Was: 16 × 24 px (0.22 H). New canonical: 0.35–0.40 H → 38–44 px. `PIP_H` updated to 40 in `game/index.html`; sprite geometry rescaled.
 
-**2. Passenger (scripted-walk NPC)**
-- Canonical: 0.55–0.65 H → 60–72 px tall
-- Current (`drawPassengerBody`): from y=−28 to y=0 in local coords = 28 px (0.25 H), 12 px wide
-- Also noted in `03-art-and-aesthetic.md` §Existing assets to reconcile: "currently ~22-26px tall. Bump to ~60-66px."
+**2. Passenger (scripted-walk NPC) — RESOLVED Sprint 08.5**
+- Was: 28 px (0.25 H). Bumped to ~62 px in `game/index.html` — within the Adult NPC band (0.55–0.65 H).
 
-**3. Babcia (gameplay sprite, seated)**
-- Canonical: 0.55–0.65 H standing; seated figure should still read ≥ 0.40 H
-- Current (`drawBabcia`): from y=−25 (hair bun arc) to y=0 = ~25 px (0.23 H)
-- Also noted in `03-art-and-aesthetic.md` §Existing assets to reconcile: "currently ~22-30px tall. Bump to ~60-65px."
+**3. Babcia (gameplay sprite, seated) — RESOLVED Sprint 08.5**
+- Was: ~25 px (0.23 H). Bumped to ~60 px (`drawBabcia`) — lower end of Adult NPC band, visibly shorter than Dziadek.
 
-**4. Dziadek (gameplay sprite, standing)**
-- Canonical: 0.55–0.65 H → 60–72 px
-- Current (`drawDziadek`): from y=−30 (flat cap) to y=+1 (shoe) = ~31 px (0.28 H)
-- Also noted in `03-art-and-aesthetic.md` §Existing assets to reconcile.
+**4. Dziadek (gameplay sprite, standing) — RESOLVED Sprint 08.5**
+- Was: ~31 px (0.28 H). Bumped to ~66 px (`drawDziadek`) — 0.60–0.65 H, standard Adult NPC.
 
-**5. Babcia (cinematic sprite)**
-- Canonical cinematic allowance: 0.75–0.90 H → 85–100 px (cinematic register allows larger framing)
-- Current (`drawCinBabcia`): from y=−28 (hair bun) to y=0 = ~28 px (0.25 H)
-- Both cinematic and gameplay Babcia are well below spec.
+**5. Babcia (cinematic sprite) — RESOLVED Sprint 08.5 (spec was wrong)**
+- Prior spec allowed cinematic figures to reach 0.75–0.90 H. That spec is retired. Cinematic figures use the same canonical scale as gameplay figures. `drawCinBabcia` stays at its current size (~28 px); cinematic closeness will come from camera zoom when cinematic code is built. No code change needed.
 
-**6. Dziadek (cinematic sprite)**
-- Canonical cinematic allowance: 0.75–0.90 H → 85–100 px
-- Current (`drawCinDziadek`): from y=−42 (cap brim) to y=+2 (shoes) = ~44 px (0.40 H)
-- Better than the gameplay sprite but still below the cinematic spec.
+**6. Dziadek (cinematic sprite) — RESOLVED Sprint 08.5 (spec was wrong)**
+- Same as #5. `drawCinDziadek` stays at ~44 px. Prior "cinematic allowance" spec retired.
 
 ### Discrepancies: `art-asset-list.md` specs vs canonical scale
 
-**7. Adult NPC sprites (generic prompt spec)**
-- Canonical: 0.55–0.65 H → 60–72 px
-- `art-asset-list.md` AI prompt dimensions consistently say "~24×40 pixels" for NPC sprites
-- The asset list was written before the Scale Anchor was locked and has not been updated to reflect the new ratios.
+**7. Adult NPC sprites (generic prompt spec) — RESOLVED Sprint 08.5**
+- Updated `art-asset-list.md` prompt entries for adult NPC sprites to specify 60–72 px (door-fraction 0.55–0.65).
 
-**8. Pip sprite in `art-asset-list.md`**
-- Canonical: 0.30–0.35 H → 32–38 px
-- `art-asset-list.md`: "~16×24 pixels"
-- Matches the current prototype implementation but not the canonical target after the Scale Anchor lock.
+**8. Pip sprite in `art-asset-list.md` — RESOLVED Sprint 08.5**
+- Updated Pip sprite prompt entries to specify 38–44 px (door-fraction 0.35–0.40).
 
-**9. Echo-fish**
-- Canonical: 0.06–0.14 H → 7–16 px
-- `art-asset-list.md`: ~28–32 px
-- Significantly oversize for the echo-creature scale band. If echo-fish are intended to be larger than other echo-creatures, their door-fraction should be explicitly defined and the table extended.
+**9. Echo-fish — PROPOSAL PENDING USER CONFIRMATION**
+- Canonical echo-creature: 0.06–0.14 H (7–16 px). `art-asset-list.md`: ~28–32 px.
+- *Proposed exception:* Echo-fish render larger than other echo-creatures because they drift visibly in mid-air rather than skittering at floor level. Proposed door-fraction: 0.25–0.30 H (28–33 px). Kept at asset-list size pending confirmation.
+- **Awaiting user yes/no before closing.**
 
-**10. Echo-deer**
-- Canonical: 0.06–0.14 H → 7–16 px
-- `art-asset-list.md`: ~44 × 40 px
-- Significantly oversize. Echo-deer at 44 px would read at adult NPC scale (0.40 H). The asset list treats them as mid-size creatures; the Scale Anchor treats echo-creatures as tiny vermin. These two specs need reconciliation before Ch2 is built.
+**10. Echo-deer — PROPOSAL PENDING USER CONFIRMATION**
+- Canonical echo-creature: 0.06–0.14 H (7–16 px). `art-asset-list.md`: ~44 × 40 px.
+- *Proposed exception:* Echo-deer are larger because they're visibly crossing streets in traversal sections, not background skitter. Same "visible echo-creature" exception group as fish. Proposed door-fraction: 0.35–0.40 H (~40–44 px). Kept at asset-list size pending confirmation.
+- **Awaiting user yes/no before closing.**
 
-**11. Echo-cats**
-- Canonical: 0.06–0.14 H → 7–16 px
-- `art-asset-list.md`: ~24 px
-- 24 px is cat-scale (0.22 H), not echo-creature vermin scale. Echo-cats in the alley scene (Ch4) may be intended to feel larger than mice and spiders — their scale needs an explicit design decision.
+**11. Echo-cats — PROPOSAL PENDING USER CONFIRMATION**
+- Canonical echo-creature: 0.06–0.14 H (7–16 px). `art-asset-list.md`: ~24 px.
+- *Proposed exception:* Echo-cats (Ch4 alley) are visibly recognizable cats, not background vermin. Same "visible echo-creature" exception group. Proposed door-fraction: 0.20–0.22 H (~22–24 px). Kept at asset-list size pending confirmation.
+- **Awaiting user yes/no before closing.**
 
 ### Discrepancy: doc 03 vs doc 08 (Iris)
 
-**12. Iris listed as Adult NPC in `03-art-and-aesthetic.md` Scale Anchor table**
-- `03-art-and-aesthetic.md` (Scale Anchor table, row "Adult NPC"): lists Iris among the examples
-- `08-character-reference-sheets.md`: Iris is "~10 years old," door-fraction 0.40–0.45 H (44–50 px) — a child, not an adult
-- The Scale Anchor table was written before Iris's age and fraction were locked in the character ref sheet. The table in doc 03 needs a one-line correction: remove "Iris" from the Adult NPC row and add her to the Child row.
+**12. Iris listed as Adult NPC in `03-art-and-aesthetic.md` — RESOLVED Sprint 08.5**
+- Iris removed from Adult NPC row in doc 03 Scale Anchor table and added to Child NPC row (0.35–0.40 H, 38–44 px). Matches `08-character-reference-sheets.md` description of Iris as ~10 years old.

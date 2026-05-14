@@ -217,7 +217,7 @@
   <h2>Characters</h2>
   <p class="section-note">
     All adult NPCs render in the 60–72 px band; specific characters vary in silhouette but scale is consistent.
-    Orange border = current implementation does not match canonical scale.
+    Cinematic figures use the same canonical scale as gameplay; cinematic closeness comes from camera zoom.
   </p>
   <div class="grid" id="grid-chars"></div>
 </section>
@@ -878,48 +878,37 @@ makeCard('grid-props', 'c-journal', ctx => {
    CHARACTERS
    ================================================================ */
 
-// Pip (current — DISCREPANCY)
+// Pip (canonical — 40px)
 makeCard('grid-chars', 'c-pip', ctx => {
   const cx=CX+30, foot=FLOOR_Y;
-  const PIP_H=24;
+  const PIP_H=40;
   ctx.save(); ctx.translate(cx, foot);
   // body
-  ctx.shadowColor='rgba(240,248,255,0.85)'; ctx.shadowBlur=5;
+  ctx.shadowColor='rgba(240,248,255,0.85)'; ctx.shadowBlur=12;
   ctx.globalAlpha=0.85; ctx.fillStyle='#dce8ff';
   ctx.beginPath();
-  ctx.arc(0,-PIP_H+7,7,Math.PI,0);
-  ctx.lineTo(7,-6);
-  ctx.quadraticCurveTo(4.67,0,2.33,-6);
-  ctx.quadraticCurveTo(0,0,-2.33,-6);
-  ctx.quadraticCurveTo(-4.67,0,-7,-6);
+  ctx.arc(0,-PIP_H+12,12,Math.PI,0);
+  ctx.lineTo(12,-10);
+  ctx.quadraticCurveTo(8,0,4,-10);
+  ctx.quadraticCurveTo(0,0,-4,-10);
+  ctx.quadraticCurveTo(-8,0,-12,-10);
   ctx.closePath(); ctx.fill();
   ctx.shadowBlur=0;
   // apron
   ctx.globalAlpha=0.28; ctx.fillStyle='#d4c89a';
-  ctx.fillRect(-5,-PIP_H+14,10,5);
+  ctx.fillRect(-8,-PIP_H+23,17,8);
   // eyes
   ctx.globalAlpha=0.92; ctx.fillStyle='#1a1428';
-  ctx.fillRect(-3,-PIP_H+6,2,2); ctx.fillRect(2,-PIP_H+6,2,2);
+  ctx.fillRect(-5,-PIP_H+10,3,4); ctx.fillRect(3,-PIP_H+10,3,4);
   // underglow
   ctx.globalAlpha=0.12;
-  const ug=ctx.createRadialGradient(0,1,0,0,1,10);
+  const ug=ctx.createRadialGradient(0,2,0,0,2,17);
   ug.addColorStop(0,'#c0d8ff'); ug.addColorStop(1,'rgba(180,210,255,0)');
   ctx.fillStyle=ug;
-  ctx.beginPath(); ctx.ellipse(0,1,10,3,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(0,2,17,5,0,0,Math.PI*2); ctx.fill();
   ctx.globalAlpha=1; ctx.restore();
-  // label: current vs canonical
-  ctx.fillStyle='rgba(220,100,60,0.7)'; ctx.font='7px monospace';
-  ctx.fillText('current 24px', CX+4, FLOOR_Y-27);
-  ctx.strokeStyle='rgba(220,100,60,0.5)'; ctx.lineWidth=1; ctx.setLineDash([2,2]);
-  ctx.beginPath(); ctx.moveTo(CX+4,FLOOR_Y-36); ctx.lineTo(CX+58,FLOOR_Y-36); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle='rgba(100,180,100,0.6)';
-  ctx.fillText('target 34px', CX+4, FLOOR_Y-39);
-  ctx.strokeStyle='rgba(100,180,100,0.4)'; ctx.setLineDash([2,2]);
-  ctx.beginPath(); ctx.moveTo(CX+4,FLOOR_Y-FLOOR_Y+FLOOR_Y-34-1); ctx.lineTo(CX+58,FLOOR_Y-34-1); ctx.stroke();
-  ctx.setLineDash([]);
 },
-`<strong>Pip (ghost form)</strong>current: 0.22 H (24 px)<br>canonical: 0.30–0.35 H (32–38 px)`, true, false);
+`<strong>Pip (ghost form)</strong>0.35–0.40 H · 38–44 px<br><em>All chapters</em>`, false, false);
 
 // Adult NPC representative (canonical, not yet implemented)
 makeCard('grid-chars', 'c-adult', ctx => {
@@ -977,57 +966,53 @@ makeCard('grid-chars', 'c-child', ctx => {
 },
 `<strong>Child NPC (canonical)</strong>0.40–0.45 H<br><em>44–50 px · Not yet impl.</em>`, false, false);
 
-// Babcia gameplay (DISCREPANCY)
+// Babcia gameplay (canonical — 60px)
 makeCard('grid-chars', 'c-babcia-gp', ctx => {
   const cx=CX+28, groundY=FLOOR_Y;
   ctx.save(); ctx.translate(cx, groundY);
   ctx.fillStyle='#2a2030'; ctx.globalAlpha=0.9;
-  ctx.beginPath(); ctx.arc(3,-22,3,0,Math.PI*2); ctx.fill();
-  ctx.fillRect(-4,-20,8,7);
-  ctx.fillRect(-7,-13,14,8);
-  ctx.fillRect(-9,-5,18,5);
-  ctx.fillRect(-3,-13,6,3);
+  ctx.beginPath(); ctx.arc(7,-53,7,0,Math.PI*2); ctx.fill();
+  ctx.fillRect(-10,-48,19,17);
+  ctx.fillRect(-17,-31,34,19);
+  ctx.globalAlpha=0.40; ctx.fillStyle='#4a3820';
+  ctx.fillRect(-12,-24,24,12);
+  ctx.globalAlpha=0.90; ctx.fillStyle='#2a2030';
+  ctx.fillRect(-22,-12,43,12);
   ctx.globalAlpha=1; ctx.restore();
-  ctx.fillStyle='rgba(220,100,60,0.7)'; ctx.font='7px monospace';
-  ctx.fillText('~25px actual', CX+4, FLOOR_Y-27);
 },
-`<strong>Babcia (gameplay, seated)</strong>current: 0.23 H (~25 px)<br>canonical: ≥ 0.40 H`, true, false);
+`<strong>Babcia (gameplay, seated)</strong>~0.55 H · ~60 px<br><em>Ch1 grandparents room</em>`, false, false);
 
-// Dziadek gameplay (DISCREPANCY)
+// Dziadek gameplay (canonical — 66px)
 makeCard('grid-chars', 'c-dziadek-gp', ctx => {
   const cx=CX+28, groundY=FLOOR_Y;
   ctx.save(); ctx.translate(cx, groundY); ctx.scale(-1,1);
   ctx.fillStyle='#2a2030'; ctx.globalAlpha=0.9;
-  ctx.fillRect(-5,-30,11,3); ctx.fillRect(-4,-27,8,2);
-  ctx.fillRect(-4,-25,8,7); ctx.fillRect(-2,-18,4,2);
-  ctx.fillRect(-7,-16,14,10); ctx.fillRect(-5,-6,10,3);
-  ctx.fillRect(-4,-3,3,3); ctx.fillRect(1,-3,3,3);
-  ctx.fillRect(-5,0,4,1); ctx.fillRect(1,0,4,1);
+  ctx.fillRect(-11,-66,24,7); ctx.fillRect(-9,-59,18,4);
+  ctx.fillRect(-9,-55,18,15); ctx.fillRect(-4,-40,9,4);
+  ctx.fillRect(-15,-35,31,22); ctx.fillRect(-11,-13,22,7);
+  ctx.fillRect(-9,-7,7,7); ctx.fillRect(2,-7,7,7);
+  ctx.fillRect(-11,0,9,2); ctx.fillRect(2,0,9,2);
   ctx.globalAlpha=1; ctx.restore();
-  ctx.fillStyle='rgba(220,100,60,0.7)'; ctx.font='7px monospace';
-  ctx.fillText('~31px actual', CX+4, FLOOR_Y-33);
 },
-`<strong>Dziadek (gameplay)</strong>current: 0.28 H (~31 px)<br>canonical: 0.55–0.65 H`, true, false);
+`<strong>Dziadek (gameplay)</strong>0.60–0.65 H · 66–72 px<br><em>Ch1 grandparents room</em>`, false, false);
 
-// Passenger (DISCREPANCY)
+// Passenger (canonical — 62px)
 makeCard('grid-chars', 'c-passenger', ctx => {
   const cx=CX+28, foot=FLOOR_Y;
   ctx.save(); ctx.translate(cx, foot); ctx.scale(-1,1);
   ctx.fillStyle='#2a2438'; ctx.globalAlpha=0.96;
-  ctx.fillRect(-3,-28,7,5); ctx.fillRect(-6,-23,12,2);
-  ctx.fillRect(-3,-21,6,6); ctx.fillRect(-2,-15,4,2);
-  ctx.fillRect(-4,-13,9,6); ctx.fillRect(-3,-7,7,3);
-  ctx.fillRect(-3,-4,2,3); ctx.fillRect(1,-4,2,3);
-  ctx.fillRect(-4,-1,3,1); ctx.fillRect(1,-1,3,1);
+  ctx.fillRect(-7,-62,15,11); ctx.fillRect(-13,-51,27,4);
+  ctx.fillRect(-7,-47,13,13); ctx.fillRect(-4,-34,9,4);
+  ctx.fillRect(-9,-30,20,13); ctx.fillRect(-7,-17,15,7);
+  ctx.fillRect(-7,-9,4,7); ctx.fillRect(2,-9,4,7);
+  ctx.fillRect(-9,-2,7,2); ctx.fillRect(2,-2,7,2);
   ctx.globalAlpha=1; ctx.restore();
-  ctx.fillStyle='rgba(220,100,60,0.7)'; ctx.font='7px monospace';
-  ctx.fillText('~28px actual', CX+4, FLOOR_Y-30);
 },
-`<strong>Passenger (scripted walk)</strong>current: 0.25 H (28 px)<br>canonical: 0.55–0.65 H`, true, false);
+`<strong>Passenger (scripted walk)</strong>0.55–0.65 H · ~62 px<br><em>Ch1 hallway</em>`, false, false);
 
 // Pätu (canonical, not yet impl)
 makeCard('grid-chars', 'c-patu', ctx => {
-  const cx=CX+28, foot=FLOOR_Y, H=25;
+  const cx=CX+28, foot=FLOOR_Y, H=22;
   ctx.fillStyle='#4a4840'; ctx.globalAlpha=0.9;
   // body
   ctx.beginPath(); ctx.ellipse(cx,foot-H/2,10,H/2,0,0,Math.PI*2); ctx.fill();
@@ -1050,7 +1035,7 @@ makeCard('grid-chars', 'c-patu', ctx => {
   ctx.beginPath(); ctx.arc(cx+11,foot-H-2,1.5,0,Math.PI*2); ctx.fill();
   ctx.globalAlpha=1;
 },
-`<strong>Pätu (gray tabby)</strong>0.20–0.25 H<br><em>22–28 px · Not yet impl.</em>`, false, false);
+`<strong>Pätu (gray tabby)</strong>0.18–0.22 H<br><em>20–24 px · Not yet impl.</em>`, false, false);
 
 // Capuchin [PROPOSED]
 makeCard('grid-chars', 'c-capuchin', ctx => {
@@ -1076,7 +1061,7 @@ makeCard('grid-chars', 'c-capuchin', ctx => {
 
 // Pocong [PROPOSED]
 makeCard('grid-chars', 'c-pocong', ctx => {
-  const cx=CX+26, foot=FLOOR_Y, H=65;
+  const cx=CX+26, foot=FLOOR_Y, H=85;
   ctx.fillStyle='#e8e8e0'; ctx.globalAlpha=0.88;
   // main shroud
   ctx.fillRect(cx-10,foot-H,20,H-10);
@@ -1093,11 +1078,11 @@ makeCard('grid-chars', 'c-pocong', ctx => {
   ctx.fillRect(cx-5,foot-H+14,10,3); // eyes closed = horizontal lines
   ctx.globalAlpha=1;
 },
-`<strong>Pocong (Ch6)</strong>0.50–0.65 H<br><em>55–72 px · Not yet impl.</em>`, false, true);
+`<strong>Pocong (Ch6)</strong>0.70–0.85 H<br><em>77–94 px · Not yet impl.</em>`, false, true);
 
 // Iris ghost child [PROPOSED]
 makeCard('grid-chars', 'c-iris', ctx => {
-  const cx=CX+26, foot=FLOOR_Y, H=48;
+  const cx=CX+26, foot=FLOOR_Y, H=41;
   ctx.fillStyle='#e8ecf4'; ctx.globalAlpha=0.75;
   // dress (somewhat translucent)
   ctx.fillRect(cx-9,foot-H+16,18,H-16); // skirt
@@ -1115,11 +1100,11 @@ makeCard('grid-chars', 'c-iris', ctx => {
   ctx.fillRect(cx-3,foot-H+5,2,2); ctx.fillRect(cx+1,foot-H+5,2,2);
   ctx.globalAlpha=1;
 },
-`<strong>Iris (Edwardian ghost, Ch5)</strong>0.40–0.45 H<br><em>44–50 px · Not yet impl.</em>`, false, true);
+`<strong>Iris (Edwardian ghost, Ch5)</strong>0.35–0.40 H<br><em>38–44 px · Not yet impl.</em>`, false, true);
 
 // Black Shuck [PROPOSED]
 makeCard('grid-chars', 'c-shuck', ctx => {
-  const cx=CX+28, foot=FLOOR_Y, H=38;
+  const cx=CX+28, foot=FLOOR_Y, H=50;
   ctx.fillStyle='#0e0c12'; ctx.globalAlpha=0.9;
   // body
   ctx.beginPath(); ctx.ellipse(cx,foot-H/2,18,H/2,0,0,Math.PI*2); ctx.fill();
@@ -1145,23 +1130,24 @@ makeCard('grid-chars', 'c-shuck', ctx => {
   ctx.stroke();
   ctx.globalAlpha=1;
 },
-`<strong>Black Shuck (Ch3)</strong>0.30–0.40 H<br><em>33–44 px · Not yet impl.</em>`, false, true);
+`<strong>Black Shuck (Ch3)</strong>0.40–0.50 H<br><em>44–55 px · Not yet impl.</em>`, false, true);
 
-// Haldjas (sparkle cluster)
+// Haldjas (sparkle cluster — 65px spread)
 makeCard('grid-chars', 'c-haldjas', ctx => {
-  const cx=CX+35, cy=FLOOR_Y-50;
-  // sparkle swarm
+  const cx=CX+35, cy=FLOOR_Y-60;
+  // sparkle swarm — spread to ~65px diameter
   const motes=[
-    {ox:0,oy:0},{ox:8,oy:-12},{ox:-6,oy:-8},{ox:12,oy:4},
-    {ox:-10,oy:6},{ox:4,oy:-18},{ox:-2,oy:14},{ox:16,oy:-6},
-    {ox:-14,oy:-2},{ox:6,oy:10},{ox:-8,oy:16},{ox:18,oy:8}
+    {ox:0,oy:0},{ox:12,oy:-18},{ox:-10,oy:-14},{ox:18,oy:6},
+    {ox:-16,oy:8},{ox:6,oy:-26},{ox:-4,oy:20},{ox:24,oy:-10},
+    {ox:-22,oy:-4},{ox:10,oy:16},{ox:-14,oy:22},{ox:26,oy:12},
+    {ox:-8,oy:-30},{ox:20,oy:22},{ox:-26,oy:16}
   ];
   motes.forEach((m,i)=>{
     const alpha = 0.4 + (i%3)*0.2;
     ctx.globalAlpha=alpha;
     ctx.fillStyle='#f8d850';
     ctx.beginPath(); ctx.arc(cx+m.ox,cy+m.oy,1.5,0,Math.PI*2); ctx.fill();
-    if(i<5){
+    if(i<6){
       ctx.globalAlpha=alpha*0.3;
       ctx.fillStyle='rgba(255,210,80,0.5)';
       ctx.beginPath(); ctx.arc(cx+m.ox,cy+m.oy,4,0,Math.PI*2); ctx.fill();
@@ -1170,9 +1156,9 @@ makeCard('grid-chars', 'c-haldjas', ctx => {
   ctx.globalAlpha=1;
   // rough humanoid suggestion (very faint)
   ctx.fillStyle='rgba(255,220,100,0.08)';
-  ctx.beginPath(); ctx.ellipse(cx+2,cy+4,10,18,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+2,cy+6,14,26,0,0,Math.PI*2); ctx.fill();
 },
-`<strong>Haldjas (Ch2)</strong>particle cluster<br><em>~40 px swarm area</em>`, false, false);
+`<strong>Haldjas (Ch2)</strong>0.50–0.65 spread · ~55–72 px<br><em>Ch2 Estonia</em>`, false, false);
 
 
 /* ================================================================
@@ -1197,16 +1183,23 @@ makeCard('grid-ui', 'c-diag', ctx => {
 },
 `<strong>Dialogue box (HTML overlay)</strong>76% canvas width ~365 px<br><em>CSS-positioned; not canvas-drawn</em>`, false, false);
 
-// Sparkle indicator
+// Sparkle indicator / object aura
 makeCard('grid-ui', 'c-sparkle', ctx => {
   const sx=CX+40, sy=FLOOR_Y-50;
+  // outer aura (always on, mid-range intensity ~0.5 shown)
+  const aura=ctx.createRadialGradient(sx,sy,0,sx,sy,20);
+  aura.addColorStop(0,'rgba(255,200,104,0.18)');
+  aura.addColorStop(1,'rgba(255,200,104,0)');
+  ctx.fillStyle=aura;
+  ctx.beginPath(); ctx.arc(sx,sy,20,0,Math.PI*2); ctx.fill();
+  // sparkle particle (close proximity)
   ctx.save();
-  ctx.shadowColor='rgba(255,200,104,0.9)'; ctx.shadowBlur=8;
+  ctx.shadowColor='rgba(255,200,104,0.9)'; ctx.shadowBlur=12;
   ctx.fillStyle='#ffc868'; ctx.globalAlpha=0.9;
-  ctx.beginPath(); ctx.arc(sx,sy,2.5,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(sx,sy-2,3,0,Math.PI*2); ctx.fill();
   ctx.restore();
 },
-`<strong>Sparkle indicator</strong>~5 px dot + 8 px glow<br><em>Canvas-drawn; proximity trigger</em>`, false, false);
+`<strong>Object aura + sparkle</strong>20 px aura (always-on) + 3 px dot<br><em>Canvas-drawn; distance-driven intensity</em>`, false, false);
 
 // Controls strip
 makeCard('grid-ui', 'c-strip', ctx => {

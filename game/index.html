@@ -496,7 +496,32 @@ const pip = {
 
 const cabinState = {
   bedRevealed: false,   // set true by Sprint 11 bed-reveal cinematic
+
+  /* Sprint 11 breadcrumb progression:
+     'pre-grandparents' — before grandparents cinematic played
+     'pre-mirror'       — after grandparents, mirror and bed elevated aura
+     'pre-bed'          — after mirror cinematic, bed aura intensified further
+     'post-bed'         — after bed reveal; all enhanced auras revert */
+  beatStage: 'pre-grandparents',
+
+  mirrorRevealed: false,   // true after mirror cinematic plays; mirror shows ghost-face
 };
+
+/* Sprint 11 — cinematic / sequence state for mirror beat */
+const mirrorBeat = {
+  /* Scripted panic sequence (post-bed-reveal) */
+  panicPhase:   'none',   // 'none' | 'floating-up' | 'floating-hold' | 'floating-down' | 'gliding' | 'done'
+  panicTimer:   0,
+  panicFloatAlt: 0,       // altitude during scripted float
+  glideStartX:  0,
+
+  /* Tear-spray particles */
+  tears: [],   // [{x, y, vx, vy, age, maxAge}]
+};
+
+/* Sprint 11 memory mist — defined but NOT active.
+   Set cinematic.isMemory = true to enable for testing; must be false before commit.
+   Verified: mirror cinematic and bed-reveal cinematic both have isMemory = false. */
 
 const chapterState = {
   openingPlayed: false, // true once the materialization/yawn/narration sequence completes
@@ -612,12 +637,33 @@ const cabinObjects = [
 
   /* ---- Bed ---- state-gated dialogue (Sprint 10.7)
      Pre-reveal: lump is visible, Pip doesn't want to investigate.
-     Post-reveal: after Sprint 11 bed-reveal cinematic (cabinState.bedRevealed). */
+     Post-reveal: after Sprint 11 bed-reveal cinematic (cabinState.bedRevealed).
+     Sprint 11: bed uses breadcrumb aura after mirror cinematic completes. */
   {
     id: 'bed',
     x: 720,
     sparkleY: 165,
+    get breadcrumb() {
+      return cabinState.beatStage === 'pre-bed' || cabinState.beatStage === 'post-bed';
+    },
     get node() {
+      // Sprint 11: after mirror cinematic, bed triggers the bed-reveal cinematic
+      if (!cabinState.bedRevealed && cabinState.beatStage === 'pre-bed') {
+        return {
+          id: 'bed-reveal-trigger',
+          lines: [],   // no narration — immediately starts cinematic
+          choices: null,
+          onEnd() {
+            // Start bed-reveal cinematic
+            showCinematic('bed-reveal', () => {
+              // After cinematic, set flag and start panic sequence
+              cabinState.bedRevealed   = true;
+              cabinState.beatStage     = 'post-bed';
+              startPanicSequence();
+            });
+          },
+        };
+      }
       if (cabinState.bedRevealed) {
         return {
           id: 'bed-post-reveal',
@@ -635,6 +681,55 @@ const cabinObjects = [
         ],
         choices: null,
         onEnd: null,
+      };
+    },
+  },
+
+  /* ---- Mirror (Sprint 11) ----
+     New interactable. Visible always. Gated by grandparents cinematic played.
+     After grandparents cinematic, breadcrumb aura activates.
+     Pressing ↑ near it (when unlocked) starts the mirror cinematic. */
+  {
+    id: 'mirror',
+    x: 280,
+    sparkleY: 105,
+    get breadcrumb() {
+      return cabinState.beatStage === 'pre-mirror' || cabinState.beatStage === 'pre-bed';
+    },
+    get node() {
+      // Unlocked only after grandparents cinematic
+      if (!cinematic.played.has('grandparents')) {
+        return {
+          id: 'mirror-locked',
+          lines: [
+            { speaker: null, text: 'A small mirror on the wall. The surface looks dim, somehow.', italic: false },
+          ],
+          choices: null,
+          onEnd: null,
+        };
+      }
+      // If mirror cinematic already played
+      if (cabinState.mirrorRevealed) {
+        return {
+          id: 'mirror-post',
+          lines: [
+            { speaker: null, text: 'The mirror shows Pip his ghost-face. He already knows.', italic: false },
+          ],
+          choices: null,
+          onEnd: null,
+        };
+      }
+      // Trigger the mirror cinematic
+      return {
+        id: 'mirror-trigger',
+        lines: [],
+        choices: null,
+        onEnd() {
+          showCinematic('mirror-realization', () => {
+            cabinState.mirrorRevealed = true;
+            cabinState.beatStage      = 'pre-bed';
+          });
+        },
       };
     },
   },
@@ -791,7 +886,11 @@ const hallwayObjects = [
                     pip.body.facing = 'right';
                     pip.float.altitude = 0;
                     pip.float.vy       = 0;
-                    showCinematic('grandparents', () => setRoomStrip());
+                    showCinematic('grandparents', () => {
+                      // Sprint 11: advance breadcrumb stage so mirror and bed glow when Pip returns
+                      cabinState.beatStage = 'pre-mirror';
+                      setRoomStrip();
+                    });
                     transition.active = false;
                     setTimeout(() => { overlay.style.opacity = '0'; }, 200);
                   }, 200);
@@ -988,6 +1087,11 @@ const cinematic = {
   fadingOut: false,
   played:    new Set(),
   onEnd:     null,
+  /* Sprint 11: memory mist opt-in flag.
+     true = draw the foggy-mist surround during this cinematic.
+     Default false — only memory/flashback cinematics set this.
+     Mirror and bed-reveal cinematics are present-tense: isMemory = false. */
+  isMemory:  false,
 };
 
 /* ================================================================
@@ -1108,6 +1212,9 @@ function handleKeyAction(code) {
   // Suppress all key actions during room transitions
   if (transition.active) return;
 
+  // Suppress non-music key actions during panic sequence
+  if (mirrorBeat.panicPhase !== 'none' && mirrorBeat.panicPhase !== 'done') return;
+
   // ESC during cinematic — always skippable, regardless of dialogue state
   if (cinematic.active && code === 'Escape') {
     skipCinematic();
@@ -1124,6 +1231,9 @@ function handleKeyAction(code) {
         selectChoice(dialogue.selectedChoice + 1);
       } else if (code === 'Space' || code === 'Enter') {
         confirmChoice(dialogue.selectedChoice);
+      } else if (code === 'ArrowLeft') {
+        // Sprint 11: left-arrow-back — from choice screen, step back to last narration line
+        stepDialogueBack();
       } else if (code === 'Digit1') { confirmChoice(0); }
       else if (code === 'Digit2') { confirmChoice(1); }
       else if (code === 'Digit3') { confirmChoice(2); }
@@ -1136,6 +1246,9 @@ function handleKeyAction(code) {
         } else {
           advanceDialogue();
         }
+      } else if (code === 'ArrowLeft') {
+        // Sprint 11: left-arrow-back — step backward one line (no-op at line 0)
+        stepDialogueBack();
       }
     }
     return; // do not fall through to room actions
@@ -1193,6 +1306,9 @@ function update(dt) {
   updateBlink(dt);
   updateFloat(dt);
 
+  // Sprint 11: panic sequence runs when active (overrides player movement)
+  updatePanicSequence(dt);
+
   // Typewriter suppressed during room transitions
   if (dialogue.active && !dialogue.closing && !transition.active) {
     updateDialogue(dt);
@@ -1207,8 +1323,9 @@ function update(dt) {
     }
   }
 
-  // Movement gated by dialogue, room transitions, cinematic hold, AND opening sequence
-  if (!dialogue.active && !transition.active && !cinematic.active && openingSeq.state === 'complete') {
+  // Movement gated by dialogue, room transitions, cinematic hold, opening sequence, AND panic sequence
+  const panicActive = mirrorBeat.panicPhase !== 'none' && mirrorBeat.panicPhase !== 'done';
+  if (!dialogue.active && !transition.active && !cinematic.active && openingSeq.state === 'complete' && !panicActive) {
     const left  = movingLeft();
     const right = movingRight();
 
@@ -1270,6 +1387,106 @@ function updateFloat(dt) {
   } else if (f.altitude <= 0) {
     f.altitude = 0;
     f.vy       = 0;
+  }
+}
+
+/* ================================================================
+   PANIC SEQUENCE  (Sprint 11)
+   Scripted post-bed-reveal sequence: float up → hold → descend → glide to door.
+   Player input suspended throughout (panicPhase !== 'none' is checked in update).
+   Tear particles emitted during glide phase.
+   ================================================================ */
+
+const PANIC_FLOAT_TARGET = 30;   // px above floor
+const PANIC_RISE_T       = 0.4;  // seconds to rise
+const PANIC_HOLD_T       = 0.5;  // seconds to hang
+const PANIC_FALL_T       = 0.6;  // seconds to drop back
+const PANIC_SPEED        = PIP_SPEED * 1.8;  // 162 px/s
+
+function startPanicSequence() {
+  mirrorBeat.panicPhase    = 'floating-up';
+  mirrorBeat.panicTimer    = 0;
+  mirrorBeat.panicFloatAlt = 0;
+  mirrorBeat.tears         = [];
+  pip.body.facing          = 'left';  // facing toward cabin door
+  setControlsStrip('');  // blank strip — player has no inputs
+}
+
+function updatePanicSequence(dt) {
+  const mb = mirrorBeat;
+  if (mb.panicPhase === 'none' || mb.panicPhase === 'done') return;
+
+  mb.panicTimer += dt;
+
+  switch (mb.panicPhase) {
+    case 'floating-up': {
+      const t = Math.min(1, mb.panicTimer / PANIC_RISE_T);
+      pip.float.altitude = PANIC_FLOAT_TARGET * t;
+      if (t >= 1) {
+        mb.panicPhase = 'floating-hold';
+        mb.panicTimer = 0;
+        pip.float.altitude = PANIC_FLOAT_TARGET;
+      }
+      break;
+    }
+    case 'floating-hold': {
+      // Bob slightly at peak
+      pip.float.altitude = PANIC_FLOAT_TARGET + Math.sin(mb.panicTimer * 8) * 1.5;
+      if (mb.panicTimer >= PANIC_HOLD_T) {
+        mb.panicPhase = 'floating-down';
+        mb.panicTimer = 0;
+      }
+      break;
+    }
+    case 'floating-down': {
+      const t = Math.min(1, mb.panicTimer / PANIC_FALL_T);
+      pip.float.altitude = PANIC_FLOAT_TARGET * (1 - t);
+      if (t >= 1) {
+        pip.float.altitude = 0;
+        pip.float.vy = 0;
+        mb.panicPhase = 'gliding';
+        mb.panicTimer = 0;
+        mb.glideStartX = pip.x;
+      }
+      break;
+    }
+    case 'gliding': {
+      // Move toward cabin door (left)
+      pip.x -= PANIC_SPEED * dt;
+      pip.body.facing = 'left';
+
+      // Spawn tear particles (~6/s)
+      if (Math.random() < dt * 6) {
+        const tearVX = PANIC_SPEED * 0.3;   // arc backward (rightward, opposite of movement)
+        mb.tears.push({
+          x:      pip.x + 4,  // trailing side (facing left, so right side trails)
+          y:      pip.y - pip.float.altitude - PIP_H * 0.65,
+          vx:     tearVX + (Math.random() - 0.5) * 10,
+          vy:     -15 - Math.random() * 10,
+          age:    0,
+          maxAge: 0.4,
+        });
+      }
+
+      // Check for cabin exit (left wall)
+      if (pip.x <= rooms.cabin.pipMinX + 1) {
+        mb.panicPhase = 'done';
+        mb.tears = [];
+        // Transition to hallway — startTransition restores control and room strip
+        startTransition('hallway', 'fromRight', 464);
+      }
+      break;
+    }
+  }
+
+  // Update tear particles
+  for (let i = mb.tears.length - 1; i >= 0; i--) {
+    const t = mb.tears[i];
+    t.age += dt;
+    t.x   += t.vx * dt;
+    t.y   += t.vy * dt;
+    t.vy  += 100 * dt;  // gravity
+    if (t.age >= t.maxAge) mb.tears.splice(i, 1);
   }
 }
 
@@ -1371,8 +1588,8 @@ function updateOpeningSequence(dt) {
 const STRIP_STRINGS = {
   'room':                 '← →  MOVE     ↑  LOOK     ESC  JOURNAL',
   'room-floatable':       '← →  MOVE     ↑  LOOK     SPACE  FLOAT     ESC  JOURNAL',
-  'atmospheric-dialogue': 'SPACE  CONTINUE',
-  'interactive-dialogue': '↑↓  CHOOSE     SPACE  SELECT',
+  'atmospheric-dialogue': '←  BACK     SPACE  CONTINUE',
+  'interactive-dialogue': '←  BACK     ↑↓  CHOOSE     SPACE  SELECT',
   'cinematic':            'SPACE  CONTINUE     ESC  SKIP',
 };
 
@@ -1539,6 +1756,50 @@ function advanceDialogue() {
   }
 }
 
+/* ---- Sprint 11: Step backward one dialogue line (left-arrow-back) ----
+   If at a choice screen: collapses choices, steps back to previous narration line.
+   If at first line (index 0): no-op (silently consume the input).
+   Re-shows the line in full (no typewriter re-animation). */
+function stepDialogueBack() {
+  if (!dialogue.active || !dialogue.node) return;
+
+  // If choices are showing, collapse them first then decrement
+  if (dialogue.showingChoices) {
+    const choicesEl = document.getElementById('dialogue-choices');
+    choicesEl.classList.remove('visible');
+    choicesEl.innerHTML = '';
+    choicesEl.style.display = 'none';
+    dialogue.showingChoices = false;
+    setControlsStrip('atmospheric-dialogue');
+    // Now we're back at the last narration line — show it in full
+    _renderDialogueLineImmediate();
+    return;
+  }
+
+  // Already at first line — no-op
+  if (dialogue.lineIndex === 0) return;
+
+  // Decrement
+  dialogue.lineIndex--;
+  _renderDialogueLineImmediate();
+}
+
+/* Render the current dialogue line immediately (no typewriter). */
+function _renderDialogueLineImmediate() {
+  const line = dialogue.node.lines[dialogue.lineIndex];
+  dialogue.charIndex    = line.text.length;
+  dialogue.charTimer    = 0;
+  dialogue.lineComplete = true;
+
+  const speakerEl = document.getElementById('dialogue-speaker');
+  speakerEl.style.display = line.speaker ? 'block' : 'none';
+  if (line.speaker) speakerEl.textContent = line.speaker;
+
+  const textEl = document.getElementById('dialogue-text');
+  textEl.textContent = line.text;
+  textEl.classList.toggle('italic', !!line.italic);
+}
+
 /* ---- Fade in the choice list ---- */
 function showChoices() {
   if (dialogue.showingChoices) return;
@@ -1647,6 +1908,11 @@ function render(now) {
       drawObjectAura(camX, now);
       drawPip(pip.x - camX, pip.y - pip.float.altitude, now);
 
+      // Sprint 11: tear particles during panic glide
+      if (mirrorBeat.tears.length > 0) {
+        drawTears(camX);
+      }
+
       // Passenger drawn after Pip — renders in front when positions overlap,
       // visually conveying "through Pip" (the no-one-can-see-me rule).
       if (currentRoom === 'hallway' && passenger.active) {
@@ -1654,6 +1920,30 @@ function render(now) {
       }
     }
   }
+}
+
+/* ----------------------------------------------------------------
+   TEAR PARTICLES  (Sprint 11)
+   Rendered during panic glide. Cool-white/cyan droplets arc backward.
+   ---------------------------------------------------------------- */
+
+function drawTears(camX) {
+  ctx.save();
+  for (const t of mirrorBeat.tears) {
+    const alpha = Math.max(0, 1 - t.age / t.maxAge) * 0.85;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = '#c0d8ff';
+    const sx = t.x - camX;
+    const sy = t.y;
+    // 2×3 teardrop — taller than wide, rounded top
+    ctx.beginPath();
+    ctx.moveTo(sx, sy + 3);
+    ctx.quadraticCurveTo(sx - 1.5, sy, sx, sy - 3);
+    ctx.quadraticCurveTo(sx + 1.5, sy, sx, sy + 3);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
 }
 
 /* ----------------------------------------------------------------
@@ -2066,8 +2356,8 @@ function drawCabin(camX, now) {
 
   // Wall gradient — lifted cool blue; dim but legibly lit
   const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
-  wallGrad.addColorStop(0,   '#1e2e54');   // lifted from #0e1a3a
-  wallGrad.addColorStop(0.5, '#2e3e72');   // lifted from #1c2858
+  wallGrad.addColorStop(0,   '#1e2e54');
+  wallGrad.addColorStop(0.5, '#2e3e72');
   wallGrad.addColorStop(1,   '#1e2e54');
   ctx.fillStyle = wallGrad;
   ctx.fillRect(0, 0, W, FLOOR_Y);
@@ -2097,10 +2387,137 @@ function drawCabin(camX, now) {
     });
   }
 
+  /* ---- Left wall cap (game-world x=0) — cabin has ends, not hallway openness ---- */
+  const leftWallSX = Math.round(0 - camX);
+  if (leftWallSX < W) {
+    const lwW = 36;
+    // Wall cap: dark panel filling left end of playable area
+    ctx.fillStyle = '#0a1228';
+    ctx.fillRect(leftWallSX, panelTop, lwW, panelH + baseboardH);
+    // Inner edge highlight to separate wall from room space
+    ctx.fillStyle = 'rgba(80,100,170,0.25)';
+    ctx.fillRect(leftWallSX + lwW - 2, panelTop, 2, panelH + baseboardH);
+    // Rivet strip
+    for (let ry = panelTop + 12; ry < baseboardY; ry += 20) {
+      ctx.fillStyle = 'rgba(65,85,140,0.5)';
+      ctx.beginPath();
+      ctx.arc(leftWallSX + lwW - 8, ry, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  /* ---- Right wall cap (game-world x=ROOM_W) — closes the right end of the cabin ---- */
+  const rightWallSX = Math.round(ROOM_W - camX);
+  if (rightWallSX > 0) {
+    const rwW = 48;
+    ctx.fillStyle = '#0a1228';
+    ctx.fillRect(rightWallSX - rwW, panelTop, rwW, panelH + baseboardH);
+    ctx.fillStyle = 'rgba(80,100,170,0.25)';
+    ctx.fillRect(rightWallSX - rwW, panelTop, 2, panelH + baseboardH);
+    for (let ry = panelTop + 12; ry < baseboardY; ry += 20) {
+      ctx.fillStyle = 'rgba(65,85,140,0.5)';
+      ctx.beginPath();
+      ctx.arc(rightWallSX - rwW + 8, ry, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Small brass ship plate on right wall — "CABIN 646"
+    const plx = rightWallSX - rwW + 4, ply = panelTop + 18, plW = 40, plH = 12;
+    ctx.fillStyle = 'rgba(120,90,30,0.7)';
+    ctx.fillRect(plx - rwW + rwW, ply, plW, plH);  // recompute: plx is already correct
+    ctx.fillStyle = 'rgba(120,90,30,0.7)';
+    ctx.fillRect(rightWallSX - rwW + 4, ply, plW, plH);
+    ctx.strokeStyle = 'rgba(180,140,50,0.55)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(rightWallSX - rwW + 4, ply, plW, plH);
+  }
+
   // Porthole — game-world x=380 (the cabin's only window)
   const phSX = Math.round(380 - camX);
   if (phSX > -24 && phSX < W + 24) {
     drawPorthole(phSX, 58, 18, { moonlight: true, divider: true });
+  }
+
+  /* ---- Mirror — game-world x=280 (Sprint 11, on the wall opposite the bed) ---- */
+  const mirrorGX = 280;
+  const mirrorSX = Math.round(mirrorGX - camX);
+  if (mirrorSX > -40 && mirrorSX < W + 40) {
+    const mfW = 24, mfH = 32;   // frame outer dimensions
+    const mfX = mirrorSX - mfW / 2;
+    const mfY = baseboardY - mfH - 24;  // hanging on wall at eye height
+    // Frame — dark wood/bronze
+    ctx.fillStyle = '#3a2810';
+    ctx.fillRect(mfX, mfY, mfW, mfH);
+    ctx.strokeStyle = 'rgba(140,100,40,0.6)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(mfX, mfY, mfW, mfH);
+    // Reflective surface (inner)
+    const mInset = 3;
+    const msX = mfX + mInset, msY = mfY + mInset, msW = mfW - mInset * 2, msH = mfH - mInset * 2;
+    if (cabinState.mirrorRevealed) {
+      // Post-cinematic: shows ghost-face (cool-white tint)
+      ctx.fillStyle = '#8ab8d8';
+      ctx.fillRect(msX, msY, msW, msH);
+      // Tiny Pip ghost outline in the mirror
+      ctx.fillStyle = 'rgba(240,248,255,0.9)';
+      ctx.beginPath();
+      ctx.arc(msX + msW / 2, msY + msH * 0.38, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(200,220,255,0.6)';
+      ctx.fillRect(msX + msW / 2 - 3, msY + msH * 0.58, 6, 7);
+    } else {
+      // Default: dark reflective surface
+      ctx.fillStyle = '#182038';
+      ctx.fillRect(msX, msY, msW, msH);
+      // Faint highlight sheen
+      ctx.fillStyle = 'rgba(120,160,200,0.12)';
+      ctx.fillRect(msX, msY, msW, 6);
+    }
+    // Mirror frame corner rivets
+    const mRivets = [[mfX+2,mfY+2],[mfX+mfW-2,mfY+2],[mfX+2,mfY+mfH-2],[mfX+mfW-2,mfY+mfH-2]];
+    for (const [rx,ry] of mRivets) {
+      ctx.fillStyle = 'rgba(160,120,50,0.7)';
+      ctx.beginPath(); ctx.arc(rx, ry, 1.5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  /* ---- Child's drawing on wall — Pip's identifying detail (game-world x=160) ---- */
+  /* A small framed child's drawing — a boat at sea, crayoned bright, pinned to the wall panel.
+     This is Pip's room specifically; Babcia packed it for him. */
+  const drawingGX = 160;
+  const drawingSX = Math.round(drawingGX - camX);
+  if (drawingSX > -36 && drawingSX < W + 36) {
+    const dwW = 20, dwH = 16;
+    const dwX = drawingSX - dwW / 2;
+    const dwY = baseboardY - dwH - 44;
+    // Paper background (slightly yellowed)
+    ctx.fillStyle = '#d8c898';
+    ctx.fillRect(dwX, dwY, dwW, dwH);
+    ctx.strokeStyle = 'rgba(100,80,40,0.5)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(dwX, dwY, dwW, dwH);
+    // Sea — blue squiggle
+    ctx.fillStyle = '#4870b8';
+    ctx.fillRect(dwX + 1, dwY + dwH - 5, dwW - 2, 4);
+    // Boat hull — orange-ish
+    ctx.fillStyle = '#c86030';
+    ctx.beginPath();
+    ctx.moveTo(dwX + 4, dwY + dwH - 5);
+    ctx.lineTo(dwX + 16, dwY + dwH - 5);
+    ctx.lineTo(dwX + 14, dwY + dwH - 8);
+    ctx.lineTo(dwX + 6, dwY + dwH - 8);
+    ctx.closePath();
+    ctx.fill();
+    // Sail
+    ctx.fillStyle = '#e8d8a8';
+    ctx.beginPath();
+    ctx.moveTo(dwX + 10, dwY + dwH - 8);
+    ctx.lineTo(dwX + 10, dwY + 3);
+    ctx.lineTo(dwX + 15, dwY + dwH - 8);
+    ctx.closePath();
+    ctx.fill();
+    // Pushpin dot
+    ctx.fillStyle = '#c83030';
+    ctx.beginPath(); ctx.arc(dwX + dwW / 2, dwY + 1, 2, 0, Math.PI * 2); ctx.fill();
   }
 
   // Bed — game-world x=720 (bunk against right wall)
@@ -2127,14 +2544,11 @@ function drawCabin(camX, now) {
     // Lump-in-bed overlay (Sprint 10.7) — visible until Sprint 11 bed-reveal
     // A soft body-shaped bump under the covers. Implied, not detailed.
     if (!cabinState.bedRevealed) {
-      // Lump: long bump along bed length, slightly larger at head end
-      // Head end is at bedSX+bedGW-10 (headboard side)
       const lumpX    = bedSX + 6;
       const lumpY    = bedGY + 1;
-      const lumpW    = bedGW - 22;   // slightly shorter than bed
-      const lumpH    = 10;           // peak height
+      const lumpW    = bedGW - 22;
+      const lumpH    = 10;
 
-      // Darken-shadow tint under lump
       ctx.fillStyle   = 'rgba(20, 18, 48, 0.45)';
       ctx.beginPath();
       ctx.moveTo(lumpX, lumpY + lumpH);
@@ -2143,11 +2557,9 @@ function drawCabin(camX, now) {
       ctx.closePath();
       ctx.fill();
 
-      // Lump body — faint darker tint suggesting bulk under covers
       ctx.fillStyle   = 'rgba(50, 46, 88, 0.55)';
       ctx.beginPath();
       ctx.moveTo(lumpX, lumpY + lumpH);
-      // Slight shoulder rise near head end
       ctx.quadraticCurveTo(lumpX + lumpW * 0.15, lumpY - 4, lumpX + lumpW * 0.35, lumpY - 2);
       ctx.quadraticCurveTo(lumpX + lumpW * 0.55, lumpY - 3, lumpX + lumpW * 0.75, lumpY + 1);
       ctx.quadraticCurveTo(lumpX + lumpW * 0.90, lumpY + 3, lumpX + lumpW, lumpY + lumpH);
@@ -2156,7 +2568,7 @@ function drawCabin(camX, now) {
     }
   }
 
-  // Door — game-world x=120 (hallway door; Pip phases through at the GP door)
+  // Door — game-world x=120 (hallway door)
   const doorGX = 120;
   const doorSX = Math.round(doorGX - camX);
   const dw = 32, dh = 110, doorTop = baseboardY - dh;   // 168-110=58
@@ -2166,7 +2578,7 @@ function drawCabin(camX, now) {
 
   // Floor surface
   const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + 20);
-  floorGrad.addColorStop(0, '#283858');   // lifted from #1a2848
+  floorGrad.addColorStop(0, '#283858');
   floorGrad.addColorStop(1, '#080e20');
   ctx.fillStyle = floorGrad;
   ctx.fillRect(0, FLOOR_Y, W, 20);
@@ -2198,7 +2610,12 @@ function drawObjectAura(camX, now) {
   for (const obj of rooms[currentRoom].objects) {
     const screenX  = Math.round(obj.x - camX);
     const distance = Math.abs(pip.x - obj.x);
-    const intensity = distance < 30 ? 1 - (distance / 30) : 0.15;
+    // Sprint 11: breadcrumb objects have elevated baseline + slow pulse (~3s cycle)
+    const isBreadcrumb = !!(obj.breadcrumb);
+    const baseline = isBreadcrumb
+      ? 0.45 + Math.sin(now / 1000 * Math.PI / 1.5) * 0.15   // pulses 0.30 → 0.60
+      : 0.15;
+    const intensity = distance < 30 ? 1 - (distance / 30) : baseline;
 
     /* Radial gradient aura — always visible */
     const auraGrad = ctx.createRadialGradient(screenX, obj.sparkleY, 0, screenX, obj.sparkleY, 20);
@@ -2483,6 +2900,21 @@ const CINEMATIC_SCRIPTS = {
     { speaker: 'PIP', text: '\u201cDziadek\u2026\u201d', italic: false },
     { speaker: null,  text: 'Pip tries. But Dziadek does not hear him.', italic: false },
   ],
+
+  /* Sprint 11: mirror-realization cinematic.
+     Present-tense (isMemory = false). Pip sees his ghost-face in the mirror.
+     Melt animation happens in drawMirrorCinematic(); dialogue follows. */
+  'mirror-realization': [
+    { speaker: null,  text: 'Pip looks. Pip looks again. The boy in the mirror is not the boy who walked in.', italic: false },
+    { speaker: null,  text: 'I\u2019m not me.', italic: true },
+  ],
+
+  /* Sprint 11: bed-reveal cinematic.
+     Present-tense (isMemory = false). Sheets pull back; small still form. */
+  'bed-reveal': [
+    { speaker: null,  text: 'The boy in the bed does not move.', italic: false },
+    { speaker: null,  text: 'Oh.', italic: true },
+  ],
 };
 
 function showCinematic(name, onEnd) {
@@ -2496,7 +2928,17 @@ function showCinematic(name, onEnd) {
   cinematic.holdTimer = 0;
   cinematic.fadingOut = false;
   cinematic.onEnd     = onEnd || null;
+  cinematic.isMemory  = false;   // Sprint 11: present-tense by default; set true for memory cinematics
   cinematic.played.add(name);
+
+  // Sprint 11: reset per-cinematic draw timers
+  if (name === 'mirror-realization') {
+    mirrorCinState.elapsed = 0;
+    mirrorCinState.lastNow = null;
+  } else if (name === 'bed-reveal') {
+    bedRevealCinState.elapsed = 0;
+    bedRevealCinState.lastNow = null;
+  }
 
   showDialogue({
     id:      'cinematic-' + name,
@@ -2554,7 +2996,11 @@ function startCinematicFadeOut() {
 }
 
 function drawCinematicScene(name, now) {
-  if (name === 'grandparents') drawGrandparentsCinematic(now);
+  if (name === 'grandparents')        drawGrandparentsCinematic(now);
+  else if (name === 'mirror-realization') drawMirrorCinematic(now);
+  else if (name === 'bed-reveal')     drawBedRevealCinematic(now);
+  // Sprint 11: memory mist opt-in — drawn on top of scene, below dialogue overlay
+  if (cinematic.isMemory) drawMemoryMist(now);
 }
 
 /* ----------------------------------------------------------------
@@ -2812,6 +3258,340 @@ function drawDustMotes(now) {
   }
   ctx.globalAlpha = 1;
   ctx.restore();
+}
+
+/* ----------------------------------------------------------------
+   MIRROR REALIZATION CINEMATIC  (Sprint 11)
+   Close-up of Pip looking into the mirror. His face melts downward
+   over ~2s (pixel-distortion approach), then resolves as ghost-face.
+   Dialogue lines follow in the standard cinematic overlay.
+   Present-tense — no memory mist.
+   ---------------------------------------------------------------- */
+
+/* Per-session timer that advances during the mirror cinematic frame render.
+   Reset in showCinematic; purely visual, no gameplay consequences. */
+const mirrorCinState = {
+  elapsed: 0,    // seconds since cinematic started, tracked in draw
+  lastNow: null, // previous timestamp (ms) for delta calc
+};
+
+function drawMirrorCinematic(now) {
+  // Advance internal timer using real time delta
+  if (mirrorCinState.lastNow !== null) {
+    mirrorCinState.elapsed += (now - mirrorCinState.lastNow) / 1000;
+  }
+  mirrorCinState.lastNow = now;
+
+  const HOLD_T  = 1.5;   // seconds showing face before melt
+  const MELT_T  = 2.0;   // melt duration
+  const elapsed = mirrorCinState.elapsed;
+
+  // Dark base
+  ctx.fillStyle = '#06080e';
+  ctx.fillRect(0, 0, W, H);
+
+  // Warm ambient — slight ember glow from offscreen lamp
+  const ambGrad = ctx.createRadialGradient(W * 0.85, H * 0.6, 0, W * 0.85, H * 0.6, W * 0.55);
+  ambGrad.addColorStop(0, 'rgba(90,50,10,0.35)');
+  ambGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = ambGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // ---- Mirror frame (cinematic close-up — fills most of canvas) ----
+  const mfW = 140, mfH = 190;
+  const mfX = (W - mfW) / 2;
+  const mfY = (H - mfH) / 2 - 8;
+  ctx.fillStyle = '#2e1e0a';
+  ctx.fillRect(mfX, mfY, mfW, mfH);
+  ctx.strokeStyle = 'rgba(160,110,40,0.7)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(mfX, mfY, mfW, mfH);
+
+  const inset = 8;
+  const msX = mfX + inset, msY = mfY + inset, msW = mfW - inset * 2, msH = mfH - inset * 2;
+
+  // ---- Reflective surface ----
+  // Draw a temporary offscreen-style composite using main canvas save/clip
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(msX, msY, msW, msH);
+  ctx.clip();
+
+  // Melt progress: 0 during hold, 0→1 during melt
+  const meltT = Math.max(0, Math.min(1, (elapsed - HOLD_T) / MELT_T));
+
+  // --- Human face (drawn using simple pixel-block face, then shifted downward) ---
+  const faceCX = msX + msW / 2;
+  const faceCY = msY + msH * 0.38;
+  const humanShift = meltT * msH * 0.55;   // pixels face drips downward
+
+  if (meltT < 1) {
+    const fAlpha = 1 - meltT * 0.85;  // face fades as it melts
+    ctx.globalAlpha = fAlpha;
+
+    // Face background fill (flesh-like neutral tone for human Pip)
+    ctx.fillStyle = '#d8b888';
+    ctx.beginPath();
+    ctx.ellipse(faceCX, faceCY + humanShift * 0.6, 28, 34, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes (drip slightly faster)
+    const eyeShift = humanShift * 1.1;
+    ctx.fillStyle = '#3a2818';
+    ctx.beginPath(); ctx.ellipse(faceCX - 8, faceCY - 6 + eyeShift, 4, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(faceCX + 8, faceCY - 6 + eyeShift, 4, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    // Eye glint
+    ctx.fillStyle = '#f0f0f0';
+    ctx.beginPath(); ctx.arc(faceCX - 7, faceCY - 7 + eyeShift, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(faceCX + 9, faceCY - 7 + eyeShift, 1.5, 0, Math.PI * 2); ctx.fill();
+
+    // Nose (drips faster than eyes)
+    const noseShift = humanShift * 1.25;
+    ctx.fillStyle = '#c09060';
+    ctx.beginPath();
+    ctx.moveTo(faceCX, faceCY + noseShift);
+    ctx.lineTo(faceCX - 4, faceCY + 8 + noseShift);
+    ctx.lineTo(faceCX + 4, faceCY + 8 + noseShift);
+    ctx.closePath();
+    ctx.fill();
+
+    // Mouth (drips fastest — jaw drips)
+    const mouthShift = humanShift * 1.4;
+    ctx.fillStyle = '#b07048';
+    ctx.beginPath();
+    ctx.ellipse(faceCX, faceCY + 14 + mouthShift, 8, 3, 0, 0, Math.PI);
+    ctx.fill();
+
+    // Drip streaks during melt — vertical liquid strands
+    if (meltT > 0.1) {
+      ctx.globalAlpha = fAlpha * meltT * 0.7;
+      ctx.strokeStyle = '#d8b888';
+      ctx.lineWidth = 1.5;
+      const dripSeeds = [faceCX - 12, faceCX - 4, faceCX + 2, faceCX + 10, faceCX + 18];
+      for (let d = 0; d < dripSeeds.length; d++) {
+        const dripLen = meltT * msH * 0.45 * (0.6 + (d % 3) * 0.2);
+        ctx.beginPath();
+        ctx.moveTo(dripSeeds[d], faceCY + 18);
+        ctx.lineTo(dripSeeds[d] + (d % 2 === 0 ? 1 : -1), faceCY + 18 + dripLen);
+        ctx.stroke();
+      }
+    }
+
+    ctx.globalAlpha = 1;
+  }
+
+  // --- Ghost face resolves as melt progresses ---
+  if (meltT > 0.3) {
+    const ghostAlpha = Math.min(1, (meltT - 0.3) / 0.7);
+    ctx.globalAlpha = ghostAlpha;
+    // Ghost-face: cool white, same design as Pip's sprite but scaled up
+    ctx.fillStyle = '#dce8f8';   // spirit-pip cool white
+    ctx.beginPath();
+    ctx.arc(faceCX, faceCY, 26, Math.PI, 0);  // head arc top
+    // Wavy ghost bottom (3 bumps)
+    const ghostBase = faceCY + 26;
+    const bumpW = 17;
+    ctx.lineTo(faceCX + 26, ghostBase);
+    ctx.quadraticCurveTo(faceCX + 26 - bumpW * 0.25, ghostBase + 10, faceCX + 26 - bumpW * 0.5, ghostBase);
+    ctx.quadraticCurveTo(faceCX + 26 - bumpW * 0.75, ghostBase + 10, faceCX + 26 - bumpW, ghostBase);
+    ctx.quadraticCurveTo(faceCX + 26 - bumpW * 1.25, ghostBase + 10, faceCX + 26 - bumpW * 1.5, ghostBase);
+    ctx.lineTo(faceCX - 26, ghostBase);
+    ctx.closePath();
+    ctx.fill();
+    // Ghost eyes — large, cool-tinted
+    const bEyeOpenness = 1.0;
+    ctx.fillStyle = '#0a1828';
+    const eyeH = 5 * bEyeOpenness;
+    ctx.beginPath(); ctx.ellipse(faceCX - 8, faceCY - 6, 4.5, eyeH, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(faceCX + 8, faceCY - 6, 4.5, eyeH, 0, 0, Math.PI * 2); ctx.fill();
+    // Eye glow
+    ctx.fillStyle = 'rgba(200,228,255,0.55)';
+    ctx.beginPath(); ctx.arc(faceCX - 7, faceCY - 7, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(faceCX + 9, faceCY - 7, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // Mirror surface background — cool dark tint
+  if (meltT < 0.3) {
+    ctx.fillStyle = '#0e1830';
+    ctx.globalAlpha = 0.6;
+    ctx.fillRect(msX, msY, msW, msH);
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.restore();   // unclip
+
+  // Mirror frame corners
+  const cornerR = 4;
+  for (const [cx, cy] of [[mfX, mfY],[mfX+mfW, mfY],[mfX, mfY+mfH],[mfX+mfW, mfY+mfH]]) {
+    ctx.fillStyle = 'rgba(180,130,50,0.8)';
+    ctx.beginPath(); ctx.arc(cx, cy, cornerR, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Ambient glow from mirror — cool spirit light spilling into room
+  const glowAlpha = meltT > 0.3 ? 0.12 + (meltT - 0.3) * 0.18 : 0.06;
+  const mirrorGlow = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, mfW * 0.9);
+  mirrorGlow.addColorStop(0, `rgba(160,200,255,${glowAlpha})`);
+  mirrorGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = mirrorGlow;
+  ctx.fillRect(0, 0, W, H);
+
+  // Subtle trembling during hold phase
+  if (elapsed < HOLD_T && elapsed > 0.3) {
+    const tremble = (Math.sin(now * 0.023) + Math.sin(now * 0.037)) * 0.5;
+    const tAlpha = 0.04 + Math.abs(tremble) * 0.04;
+    ctx.fillStyle = `rgba(240,248,255,${tAlpha.toFixed(3)})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+/* ----------------------------------------------------------------
+   BED REVEAL CINEMATIC  (Sprint 11)
+   Close-up on the bed. Sheets pull back over ~0.6s. Small still form.
+   Face turned away. Body implied, not detailed.
+   Present-tense — no memory mist.
+   ---------------------------------------------------------------- */
+
+const bedRevealCinState = {
+  elapsed: 0,
+  lastNow: null,
+};
+
+function drawBedRevealCinematic(now) {
+  if (bedRevealCinState.lastNow !== null) {
+    bedRevealCinState.elapsed += (now - bedRevealCinState.lastNow) / 1000;
+  }
+  bedRevealCinState.lastNow = now;
+
+  const SHEET_T = 0.6;   // sheet pull duration
+  const sheetT  = Math.min(1, bedRevealCinState.elapsed / SHEET_T);
+
+  // Dark base
+  ctx.fillStyle = '#06080e';
+  ctx.fillRect(0, 0, W, H);
+
+  // Ambient warmth — faint glow (same porthole light that exists in gameplay)
+  const ambGrad = ctx.createRadialGradient(W * 0.3, H * 0.25, 0, W * 0.3, H * 0.25, W * 0.45);
+  ambGrad.addColorStop(0, 'rgba(30,50,100,0.25)');
+  ambGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = ambGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // ---- Bed close-up ----
+  const bW = 260, bH = 70;
+  const bX = (W - bW) / 2, bY = H / 2 - bH * 0.4;
+
+  // Headboard (right side)
+  ctx.fillStyle = '#1a1830';
+  ctx.fillRect(bX + bW - 16, bY - 24, 16, bH + 24);
+  ctx.strokeStyle = 'rgba(60,70,140,0.5)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(bX + bW - 16, bY - 24, 16, bH + 24);
+
+  // Bed frame
+  ctx.fillStyle = '#141028';
+  ctx.fillRect(bX, bY, bW, bH);
+  ctx.strokeStyle = 'rgba(50,60,120,0.5)';
+  ctx.strokeRect(bX, bY, bW, bH);
+
+  // ---- Body underneath — small still form ----
+  // Face is turned away (toward headboard/right). Body implied not detailed.
+  const bodyX = bX + bW * 0.3, bodyY = bY + 12;
+  const bodyW  = bW * 0.6,     bodyH  = bH - 22;
+  // Hair (soft brown, visible)
+  ctx.fillStyle = '#6a4820';
+  ctx.beginPath();
+  ctx.ellipse(bX + bW * 0.82, bodyY + 8, 14, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Body shape — pale, slight, curved like a sleeping child
+  ctx.fillStyle = '#c8c0d8';
+  ctx.globalAlpha = 0.65;
+  ctx.beginPath();
+  ctx.moveTo(bodyX, bodyY + bodyH);
+  ctx.quadraticCurveTo(bodyX + bodyW * 0.2, bodyY + 4, bodyX + bodyW * 0.55, bodyY + 6);
+  ctx.quadraticCurveTo(bodyX + bodyW * 0.75, bodyY + 3, bodyX + bodyW, bodyY + 8);
+  ctx.lineTo(bodyX + bodyW, bodyY + bodyH);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // ---- Sheets ----
+  // Full sheet starts at bX, bY+4 covering entire bed width
+  // As sheetT progresses: sheet foot-end (bX side) pulls back, revealing body
+  const sheetsRemainW = bW * (1 - sheetT * 0.72);  // how much of bed is still covered (from foot end)
+  const sheetX = bX + (bW - sheetsRemainW);         // sheet starts further right as it pulls back
+
+  // Under-sheet remnant at foot (slight fold visible)
+  if (sheetT < 1) {
+    ctx.fillStyle = '#2a2c50';
+    ctx.fillRect(bX, bY + 4, sheetX - bX + 8, bH - 6);  // foot-end residual
+  }
+
+  // Main sheet (pulled back toward foot)
+  ctx.fillStyle = '#363c66';
+  ctx.fillRect(sheetX, bY + 4, sheetsRemainW, bH - 6);
+  // Sheet highlight / wrinkles
+  ctx.fillStyle = '#404470';
+  ctx.fillRect(sheetX + 4, bY + 5, Math.min(sheetsRemainW - 8, 48), 7);
+  ctx.fillStyle = '#2e3258';
+  ctx.fillRect(sheetX + sheetsRemainW - 16, bY + 4, 16, bH - 8);  // fold at free edge
+
+  // Pillow (always visible at head end)
+  ctx.fillStyle = '#4a4870';
+  ctx.fillRect(bX + bW - 70, bY + 4, 52, 20);
+  ctx.strokeStyle = 'rgba(80,80,120,0.5)';
+  ctx.strokeRect(bX + bW - 70, bY + 4, 52, 20);
+
+  // ---- Vignette — focus attention on the bed ----
+  const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.18, W / 2, H / 2, H * 0.65);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(4,4,16,0.7)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+}
+
+/* ----------------------------------------------------------------
+   MEMORY MIST  (Sprint 11)
+   Soft white/blue mist drifts inward from the four canvas edges.
+   Rendered when cinematic.isMemory === true, after the scene draw,
+   before the dialogue overlay.
+   Not used by any cinematic in Sprint 11 — defined for Sprint 12+.
+   ---------------------------------------------------------------- */
+
+function drawMemoryMist(now) {
+  const edges = [
+    { axis: 'top',    x0: 0,   y0: 0,       x1: 0,   y1: H * 0.45,   w: W, h: H * 0.45, phase: 0.0  },
+    { axis: 'bottom', x0: 0,   y0: H,        x1: 0,   y1: H * 0.55,   w: W, h: H * 0.45, phase: 1.5  },
+    { axis: 'left',   x0: 0,   y0: 0,        x1: W*0.4,y1: 0,         w: W*0.4, h: H,    phase: 3.0  },
+    { axis: 'right',  x0: W,   y0: 0,        x1: W*0.6,y1: 0,         w: W*0.4, h: H,    phase: 4.5  },
+  ];
+
+  for (const e of edges) {
+    const sway = Math.sin((now / 6000) * Math.PI * 2 + e.phase) * 8;  // ±8px on ~6s cycle
+
+    let g;
+    if (e.axis === 'top') {
+      g = ctx.createLinearGradient(0, 0, 0, H * 0.45 + sway);
+      g.addColorStop(0, 'rgba(220,230,255,0.18)');
+      g.addColorStop(1, 'rgba(220,230,255,0)');
+    } else if (e.axis === 'bottom') {
+      g = ctx.createLinearGradient(0, H, 0, H * 0.55 + sway);
+      g.addColorStop(0, 'rgba(220,230,255,0.18)');
+      g.addColorStop(1, 'rgba(220,230,255,0)');
+    } else if (e.axis === 'left') {
+      g = ctx.createLinearGradient(0, 0, W * 0.4 + sway, 0);
+      g.addColorStop(0, 'rgba(220,230,255,0.15)');
+      g.addColorStop(1, 'rgba(220,230,255,0)');
+    } else {
+      g = ctx.createLinearGradient(W, 0, W * 0.6 + sway, 0);
+      g.addColorStop(0, 'rgba(220,230,255,0.15)');
+      g.addColorStop(1, 'rgba(220,230,255,0)');
+    }
+
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  }
 }
 
 /* ================================================================

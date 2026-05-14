@@ -78,22 +78,37 @@ The lump carries the standard warm-amber aura (baseline ~0.15, not breadcrumb-el
 ---
 
 ### Beat 3: THE MIRROR (inciting incident — a return to the cabin)
-**Mode:** Cinematic 2 (MIRROR)
+**Mode:** Cinematic 2 (MIRROR) + Cinematic — Bed Reveal + Scripted Panic Sequence
 
 *(Sprint 10.7 note: this is now a *return* to Cabin 646 — Pip has already been in the cabin earlier in the chapter. The dread has been building since he first saw the lump in the bed. The mirror gives him no choice but to confront what he has been walking past.)*
 
-Pip approaches the mirror. The screen transitions to the close-up cinematic. The melting face.
+*(Sprint 11: this beat now has four parts: mirror cinematic → breadcrumb-led bed investigation → bed-reveal cinematic → panic exit.)*
 
-Dialogue:
-> PIP: *My face… why does it look like that?*
-> PIP: *…it's melting. Like wax left near the stove.*
-> *The boy in the mirror does not blink when Pip blinks.*
-> PIP: *Oh.*
-> PIP: *Oh, no.*
+**Precondition:** Pip has visited the grandparents' cabin (the grandparents' cinematic has played). After returning to the hallway, the mirror and bed in Pip's cabin now glow with elevated breadcrumb auras (~0.45 baseline + slow pulse), drawing the player back.
 
-The cinematic ends. We return to the cabin. Pip is now visibly slightly more transparent, drifting more obviously, less anchored. His glow is fainter — he's afraid.
+**Part 1: Mirror cinematic.** Pip approaches the mirror. The screen transitions to the close-up cinematic. His human face melts downward over ~2s — the liquid-drip effect — resolving into his ghost-face in the mirror's surface.
 
-A new hint: *"Find Babcia."*
+Dialogue (Sprint 11):
+> *Pip looks. Pip looks again. The boy in the mirror is not the boy who walked in.*
+> *I'm not me.*
+
+The cinematic ends. The mirror's reflective surface now permanently shows the ghost-face. The cabin returns to room mode.
+
+**Part 2: Bed reveal.** The bed's aura intensifies (sole breadcrumb-elevated object). Pip walks to the bed. Pressing `↑` triggers the bed-reveal cinematic: the sheets pull back over ~0.6s, revealing a small still child-shaped form — pale, hair soft brown, face turned away toward the wall. No facial features drawn. The body is partially obscured by the remaining sheet edge.
+
+Dialogue (Sprint 11):
+> *The boy in the bed does not move.*
+> *Oh.*
+
+The cinematic fades out. The cabin returns to room mode. **The bed reverts to its pre-reveal appearance — the body is not shown in the room after the cinematic ends.** The image lives in the player's head, not on screen.
+
+**Part 3: Panic float.** Immediately after the bed-reveal dialogue closes, Pip's sprite involuntarily floats upward ~30 px, hangs briefly (~0.5s), then drops back to the floor. Player has no input control during this sequence. **This does NOT unlock the float ability** — space bar continues to do nothing for the player. This is a scripted one-shot foreshadowing Beat 8. *(See `06-roadmap-and-open-questions.md` Decisions Log, 2026-05-14: "Involuntary panic-float locked as foreshadowing for Beat 8.")*
+
+**Part 4: Panic glide + tear spray.** Once Pip's feet touch the floor, his sprite glides toward the cabin door at 1.8× normal walk speed. Small cool-white teardrop particles arc backward from his eyes, fading within ~0.4s (~6 drops/second). He continues gliding through the door and into the hallway. Player control is restored once he is in the hallway. The tears stop.
+
+**Tone note:** This sequence must read as *gentle-comic* alongside the grief. The fast glide + tear spray is not undercutting Pip's devastation — it is both real grief and a small ghost going very fast. That's the register. Don't dampen the comic.
+
+A new hint (for Beat 4): *"Find Babcia."*
 
 Now the cabin door becomes the trigger.
 
@@ -194,7 +209,11 @@ He leaves the cabin (phasing back through the door) and returns to the hallway. 
 
 ---
 
-### Beat 8: THE DARK CORRIDOR (puzzle - the broken light + the janitor)
+### Beat 8: THE DARK CORRIDOR (puzzle - the broken light + the janitor + float unlock)
+
+*(Sprint 11 note: The panic-float in Beat 3 is **foreshadowing** for this beat, not the actual float unlock. The panic-float is a scripted one-shot — it happens to Pip involuntarily and does not change pip.float.enabled. The player presses space bar and nothing happens after Beat 3. This beat is where float is genuinely unlocked as a player skill. The distinction is story-critical: the panic-float plants the seed; this beat waters it.)*
+
+
 **Mode:** Room — Lower Hallway / Stairwell
 
 Pip continues down the corridor. It's pitch black. He can barely see. To proceed safely, he needs to fix the lights.

@@ -252,6 +252,18 @@ These are the principles that keep the look consistent. When in doubt, return he
 
 9. **The two registers share a soul.** Pip in a pixel room and Pip in a present-day cinematic close-up must read as the same character — same face (eye-dots, blush, mouth), same proportions, same soft cool glow underneath. The cinematic Pip is just *more pixels of the same ghost*, not a redesign. The apron and hair appear only in memory-Pip (Register B, flashback beats) per the story bible.
 
+### Memory cinematic visual language
+
+*(Locked in Sprint 11. Defined in `game/index.html`'s `drawMemoryMist()` function. Not used by any cinematic in Sprint 11.)*
+
+**Memory/flashback cinematics receive a soft white/blue mist surround.** Soft mist patches drift inward from the four canvas edges — top, bottom, left, right — each as a gradient fading from `rgba(220, 230, 255, 0.15)` at the inward end to transparent. The patches animate on slow sine waves (~6s period, ~8px amplitude) so they appear to swirl gently inward.
+
+**This treatment is opt-in and meaningful, not decorative.** The mist says: *this is not happening now; this happened then.* Present-tense cinematics (grandparents' cabin visit, mirror realization, bed reveal) explicitly do NOT receive the mist. Applying the mist to a present-tense cinematic would be a continuity error.
+
+**Activation:** `cinematic.isMemory = true` in the cinematic state object. Default `false`. Memory cinematics set this flag in their `showCinematic()` call. The `drawCinematicScene()` function checks the flag and calls `drawMemoryMist()` after the scene renders but before the dialogue overlay.
+
+**First use:** Sprint 12 — the first-taste cinematic with Henrik (Cinematic 6a/6b, flashback to Henrik's past). Every flashback memory in the game uses this treatment from Sprint 12 onward.
+
 ---
 
 ## Universal & Regional Palette

@@ -4,7 +4,9 @@ The opening chapter. Establishes Pip, the world, the mechanics, the emotional st
 
 **Estimated playtime:** 15-20 minutes
 **Cinematics needed:** 9 (see art doc — note the doubled first-taste scene)
-**Rooms needed:** 5 (Cabin 646, Hallway, Grandparents' Cabin, Radio Room or Stairwell, Kitchen)
+**Rooms needed:** 6 (Cabin 646, Hallway, Grandparents' Cabin, Radio Room or Stairwell, Kitchen, Observation Deck)
+
+*(Sprint 12: observation deck added — see "The Observation Deck" section below. Implementation deferred to a future Ch1 content sprint.)*
 
 *(Sprint 10.7 note: Pip now starts in the Hallway, not Cabin 646. The cabin is entered from the hallway. See Beat 1 rewrite below.)*
 **Recipe unlocked:** Norwegian lefse and gravlaks (with Norwegian pickles) — **Erik's favorite meal**, served by Henrik because the player doesn't know yet that Henrik had a son
@@ -132,7 +134,7 @@ After cinematic, control returns. The door is still "locked" mechanically, but *
 
 Pressing into the door long enough triggers a cool ability-discovery animation — Pip phasing through. **First ability earned.**
 
-The chapter journal updates: *"I can pass through wood. Not metal — that still feels solid."*
+The chapter notebook updates: *"I can pass through wood. Not metal — that still feels solid."*
 
 Pip steps into the hallway.
 
@@ -184,7 +186,7 @@ Dialogue:
 The cinematic holds for a beat longer than feels comfortable. Then fades.
 
 Back in the room view (the grandparents' cabin in 2D), Pip can inspect:
-- **The photograph** — adds a memory to his journal
+- **The photograph** — adds a memory to his notebook
 - **The suitcase** — Babcia's pierogi recipe card is sticking out (foreshadowing the final chapter)
 - **A radio on the desk** (the next ability hook)
 
@@ -317,9 +319,57 @@ The visions fade. Pip is back in the kitchen.
 > PIP: *Will it always do that?*
 > HENRIK: *I think, perhaps, yes. I think that is what you are now.*
 
-**Central mechanic established.** The journal gains a new tab: "Recipes." The first entry — Norwegian lefse and gravlaks (with Norwegian pickles) — is added with a sketch.
+**Central mechanic established.** The notebook gains a new section: "Recipes." The first entry — Norwegian lefse and gravlaks (with Norwegian pickles) — is added with a sketch.
 
-**On the website:** This unlocks the lefse and gravlaks recipe pages. A pop-up notification: *"You've earned a recipe! Check Pip's Journal."*
+**On the website:** This unlocks the lefse and gravlaks recipe pages. A pop-up notification: *"You've earned a recipe! Check Pip's Notebook."*
+
+---
+
+### Beat 11b: THE BAMSEMUMS (the collect verb — tutorial beat)
+
+*(Sprint 12: New beat, inserted after the lefse-and-gravlaks tasting. Teaches `↓ COLLECT`. Sprint 13 implements this beat.)*
+
+**Mode:** Room — Kitchen
+
+Henrik is finishing cleaning up. Pip drifts around the kitchen, still settling from the tasting. On the counter, half-hidden behind a wooden cutting board, a small bag of Bamsemums sits. They emit a warm humming glow — different from the cool shimmer Pip has learned to recognize on inspectable objects. This is the **collect aura**: warmer, broader, pulsing slowly.
+
+Pip approaches. The dialogue box opens:
+
+> *A small bag of Bamsemums, foam-and-chocolate bears, sits on the counter. Henrik didn't say they were for him. They are.*
+>
+> *He could pocket this. ↓ to collect. He'll find it later in his notebook.*
+
+Player presses `↓`. The Bamsemums tweens into the notebook icon in the HUD corner. The notebook icon pulses warm. Pip's stomach refills by a small amount (exact value TBD — provisionally ~10 points).
+
+The Bamsemums is added as the first entry in the notebook's Items section, with the annotation: *"Bamsemums — from Henrik, in the kitchen."*
+
+If the player opens the notebook (`TAB`) at this point, they see their first Items page entry.
+
+The beat ends with Pip continuing toward the observation deck (the next room).
+
+---
+
+### Beat 11c: THE OBSERVATION DECK (quiet wonder — implementation deferred)
+
+*(Sprint 12: New room locked into the chapter. Implementation deferred to a future Ch1 content sprint.)*
+
+**Mode:** Room — Observation Deck
+
+Pip drifts up from the kitchen to the ship's observation deck. The room is open-air at one end. Cold. He can feel the cold without being affected by it.
+
+**The northern lights.** A wide curved viewport runs along the top half of the room. Beyond it: the aurora, in cool greens and violets, moving slowly across the dark sky. The room is quiet. Pip may be the only one here.
+
+> *Pip has never seen the northern lights before. He wonders if he would have, had things gone differently.*
+
+**Inspectables:** At least one — the aurora itself (atmospheric narration about its movement and what it makes Pip feel). Additional inspectables TBD in the Ch1 content sprint. Candidates: the telescope (Pip looks through it; sees a far shore), the bench (someone was sitting here recently), the coiled rope (a working detail he notices because the room is still).
+
+**Treat placement:** One treat is hidden on the deck — mood-appropriate to the open-air aurora setting. Specific treat TBD in Ch1 content sprint.
+
+**Exit:** Walking to the right edge triggers the dock-farewell sequence.
+
+**Emotional purpose:** A quiet wonder beat. Pip has just been seen and fed by Henrik. He has just received the empty notebook. He has not yet seen his grandparents leave. This is the *breath* between those two moments. The chapter saying: *there is also beauty in this world; you can stop for it.*
+
+Bergen sits at ~60°N. The aurora is visible there, especially in winter. This is realistic, not invented.
 
 ---
 
@@ -345,7 +395,7 @@ Dialogue:
 ### Beat 13: HENRIK'S OFFER (the mission)
 **Mode:** Cinematic 8 (HENRIK'S OFFER)
 
-Sunset. Pip and Henrik on the deck. Henrik holds out a leatherbound recipe journal. Empty pages.
+Sunset. Pip and Henrik on the deck. Henrik holds out a leatherbound notebook. Empty pages.
 
 > HENRIK: *The Mnemosyne is docked here for the day. Tomorrow, we sail for the next port. And the one after that. And the one after.*
 > HENRIK: *I have been on this ship for thirty years. I have eaten food in every port we visit.*
@@ -353,7 +403,7 @@ Sunset. Pip and Henrik on the deck. Henrik holds out a leatherbound recipe journ
 > HENRIK: *Will you come?*
 > *[ Player presses space ]*
 > PIP: *Yes.*
-> *Henrik hands Pip the journal.*
+> *Henrik hands Pip the notebook.*
 > HENRIK: *Then let us begin. Tomorrow we are in Bergen. There is something I want you to taste there.*
 > HENRIK: *Get some rest, Pip.*
 > PIP: *Do ghosts rest?*
@@ -399,3 +449,33 @@ Once the chapter is functionally playable end-to-end:
 - Animation polish (Pip's surprised pose, his sad pose, his glowing-warmer when he tastes)
 - Replace placeholder cinematics with commissioned art (now 9 pieces — Cinematic 6 split into 6a and 6b)
 - Mobile tap controls
+
+---
+
+## Abilities Earned (implementation summary)
+
+*(Sprint 12: `↓ COLLECT` added. See `ch01-cabin-646-outline.md` for fuller descriptions.)*
+
+1. **Walk through wood (not metal).** Beat 4, cabin door.
+2. **Talk through speakers.** Beat 7, radio in grandparents' cabin.
+3. **Flicker electricity.** Beat 8, dark corridor, broken sconce.
+4. **Float.** Beat 8, alongside electricity — broken glass on the floor triggers involuntary rise; becomes player-controlled ability from that point.
+5. **Taste-memory.** Beat 11 (Beats 11/6a and 11/6b), kitchen, doubled first-taste with Henrik.
+6. **`↓ COLLECT` (the collect verb).** Beat 11b, kitchen, Bamsemums tutorial. This is not a ghostly ability — it is a built-in verb taught here diegetically. Before this beat, `↓` makes Pip squat in place; after this beat, the player understands what the collect aura means and what `↓` does near one.
+
+---
+
+## What This Chapter Teaches the Player
+
+- How to walk and inspect (room mode)
+- How dialogue choices appear and resolve (narration-with-choices model)
+- That abilities are *discovered*, not granted from a menu
+- That the world has things you can't immediately solve (the locked door, the dark corridor) and abilities are how you solve them
+- That food is the central verb of this game
+- That cinematics happen at emotional peaks, not as cutscenes between zones
+- **That the world contains hidden treats, scattered for him to find** *(Sprint 12)*
+- **That food picked up refills his stomach — the verb is the system** *(Sprint 12)*
+- **That the notebook keeps a record of what he's eaten** *(Sprint 12)*
+- **That the world also contains beauty without purpose — the northern lights, seen for their own sake** *(Sprint 12)*
+
+By the end of Ch1, the player should know how to inspect, choose, walk, float (briefly), phase through wood, spark electricity, talk through speakers, taste food, and pocket a treat with `↓`. They should not yet have seen a wordless traversal, a monster encounter, or a chef puzzle — those arrive in Chapter 2.

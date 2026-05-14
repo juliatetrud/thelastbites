@@ -26,15 +26,18 @@ Pip wakes not knowing he's dead. Through the mirror, the truth lands. He explore
 
 ## Setting
 
-The Mnemosyne, in port at Bergen, Norway. Five rooms in this chapter:
+The Mnemosyne, in port at Bergen, Norway. Six rooms in this chapter:
 
-- **Cabin 646** — where Pip wakes
+- **Cabin 646** — where Pip wakes (after the Sprint 10.7 restructure, Pip actually starts in the hallway; the cabin is a destination)
 - **The hallway** — corridors, the passenger and the janitor
 - **Grandparents' cabin** — the gut-punch
 - **Dark corridor / stairwell** — the broken-light puzzle, the float discovery
 - **The kitchen** — Henrik
+- **The observation deck** *(Sprint 12, locked but deferred)* — quiet wonder beat between kitchen and dock farewell; northern lights through a wide viewport
 
 The chapter ends on the deck, looking down at the dock.
+
+*(Sprint 12: updated to six rooms — the observation deck is now locked into the chapter between kitchen and dock farewell. Its implementation is deferred to a future Ch1 content sprint.)*
 
 ---
 
@@ -94,6 +97,24 @@ Five abilities are introduced in this chapter, in this order:
 
 Before Beat 8, space-bar does nothing. The float ability is *gated* by the discovery moment — the verb arrives in the player's hands when the chapter says it does, not before.
 
+*(Sprint 12: A sixth "ability" is now taught in this chapter: `↓ COLLECT`. It is not a ghostly ability but a built-in verb taught diegetically at the kitchen Bamsemums beat. Before Beat 11b, `↓` makes Pip squat; after it, the player understands the warm-humming collect aura and what `↓` does near one.)*
+
+## Treats in Ch1
+
+*(Sprint 12: New section. Ch1 has four treats — fewer than the 3–6 standard for later chapters because the collect verb is taught mid-chapter. Earlier-placed treats function as replay rewards rather than first-playthrough finds.)*
+
+1. **Cabin (early, replay-reward).** A treat hidden in the cabin. The warm-humming collect aura is visible from the chapter's start, but Pip cannot collect it because he hasn't learned `↓` yet. After learning `↓` at the kitchen Bamsemums, a player who returns to the cabin (or replays the chapter) can collect it. **Suggested treat:** a Smørbukk (Norwegian caramel toffee in yellow wrapper), tucked in the bedside drawer. Specific treat TBD in Ch1 content sprint.
+
+2. **Kitchen counter (tutorial treat, locked).** Bamsemums, placed by Henrik. The treat that teaches the `↓` verb via inline narration (see Beat 11b in `04-chapter-01-cabin-646.md`). Sprint 13 implements this one.
+
+3. **Dark-corridor cleaning cart.** A treat tucked into the janitor's abandoned cleaning cart. Collectable on a return pass after Pip has learned both `↓` (kitchen) and float (broken-glass moment). **Suggested treat:** a Skillingsboller (Bergen's signature cinnamon bun) wrapped in waxed paper — a half-eaten end-of-shift snack the janitor left behind. Specific treat TBD in Ch1 content sprint.
+
+4. **Observation deck.** A treat on the new observation deck room. Mood-appropriate to the open-air aurora setting. Specific treat TBD in Ch1 content sprint — could be a chocolate left by a stargazer, a packet of Smørbukk someone forgot in the cold, or a regional Norwegian sweet that fits the contemplative tone.
+
+**Tone constraint:** No treat is placed in the grandparents' cabin. The room is grief-coded; the gesture of Pip eating a snack while Babcia sobs nearby would feel wrong. This is the standing case-law for treat-placement-vs-tone decisions across the whole game.
+
+---
+
 ## Objects earned
 
 - **The candle.** Henrik gives Pip a small candle at Beat 13, alongside the journal, when Pip mentions he doesn't sleep much. *"Then take this. The ship's quieter than it looks at night, but the corridors get dark."* Pip pockets it. The candle becomes Pip's nighttime companion on the ship — useful narratively whenever a chapter needs warmth in cold places. **First load-bearing use: Ch4 (the Karakoncolos puzzle).** Matches are added to Pip's pocket at the end of Ch3 (Pätu meows at them on the way back to the ship).
@@ -119,8 +140,12 @@ These are notes for the eventual implementation update, not for now.
 
 - Henrik's specific Nøkken-story dialogue, when written, should match the narrator's voice (kinetic verbs, gentle parenthetical winks, a single sharp word) but be shaped to *Henrik's* voice, which is gruffer, more economical. Worth drafting carefully.
 - The lefse-vs-gravlaks split for the final climax (which one Pip reaches last in his reverse-chronological override). Provisional answer: gravlaks. Confirm when planning the climax.
-- The doubled first-taste cinematic (6a + 6b) is canonically two taste-memories from one chapter, both load-bearing. Worth flagging in the journal UI design that Ch1 contributes *two* meal-memories rather than one.
+- The doubled first-taste cinematic (6a + 6b) is canonically two taste-memories from one chapter, both load-bearing. Worth flagging in the notebook UI design that Ch1 contributes *two* meal-memories rather than one.
 - Whether Henrik says aloud, in Ch1, that he believes the dead live in the sea — or whether that line is reserved for Ch4. Provisional answer: reserved for Ch4. The Ch1 telling of the Nøkken story is enough for the player to feel it.
+- **Ch1 cabin replay-treat: specific treat and exact placement.** Suggested Smørbukk in the bedside drawer; alternatives welcome. Flagged 2026-05-14. To be resolved in Ch1 content sprint.
+- **Ch1 cleaning-cart treat: specific treat.** Suggested half-eaten Skillingsboller wrapped in waxed paper. Flagged 2026-05-14. To be resolved in Ch1 content sprint.
+- **Ch1 observation deck treat: specific treat.** Mood-appropriate to open-air aurora setting. TBD. Flagged 2026-05-14. To be resolved in Ch1 content sprint.
+- **Observation deck implementation.** Background art, navigation, aurora visual, beat dialogue, inspectable list, exact arrival mechanism from kitchen. Locked in docs but not yet built. Flagged 2026-05-14. Will be its own sprint (or part of the broader Ch1 content sprint).
 
 ---
 
@@ -132,5 +157,9 @@ These are notes for the eventual implementation update, not for now.
 - That the world has things you can't immediately solve (the locked door, the dark corridor) and abilities are how you solve them
 - That food is the central verb of this game
 - That cinematics happen at emotional peaks, not as cutscenes between zones
+- **That the world contains hidden treats, scattered for him to find** *(Sprint 12)*
+- **That food picked up refills his stomach — the verb is the system** *(Sprint 12)*
+- **That the notebook keeps a record of what he's eaten** *(Sprint 12)*
+- **That the world also contains beauty without purpose — the northern lights, seen for their own sake** *(Sprint 12)*
 
-By the end of Ch1, the player should know how to inspect, choose, walk, float (briefly), phase through wood, spark electricity, talk through speakers, and taste food. They should not yet have seen a wordless traversal, a monster encounter, or a chef puzzle — those arrive in Chapter 2.
+By the end of Ch1, the player should know how to inspect, choose, walk, float (briefly), phase through wood, spark electricity, talk through speakers, taste food, and pocket a treat with `↓`. They should not yet have seen a wordless traversal, a monster encounter, or a chef puzzle — those arrive in Chapter 2.

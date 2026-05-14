@@ -267,7 +267,7 @@ Reference implementation: scripted passenger NPC in `game/index.html`, establish
 **Color signature:** Tall white chef's toque `#f0f0e8` + amber-cream apron `#e8d8b0` over near-black shirt + slacks `#1a1a24`. Gray hair `#8a8898`. See Table A.
 **Silhouette tell:** Tall white chef's toque (~14 px) pillared above the head. Gray hairline peek at toque band + gray temple slivers frame the face. Cream-white apron over near-black button-up and slacks — high-contrast silhouette in moonlit-blue rooms. Pipe in right hand, smoke drifting. Sleek, fit, straight-backed; subtle head-incline at most.
 **Eyes:** Canonical human treatment — cream whites (3 px wide × 2 px tall) with dark grey pupils. Eyebrows: dark grey lines above eyes.
-**Facial detail:** Darker mustache (`#3a3a40`) on upper lip. Low-alpha 5 o'clock shadow on cheeks and chin (subtle stubble texture). Visible neck skin strip (~3 px) between head and collar.
+**Facial detail:** Mustache (`#8a8898`, matches hairline and temple gray) on upper lip. Low-alpha 5 o'clock shadow on cheeks and chin using the same hair gray (`rgba(138,136,152,...)`). Visible neck skin strip (~3 px) between head and collar.
 **Movement register:** See Table C.
 
 Norwegian. In his sixties. Has worked on cruise ships for thirty years. Lost his son Erik and his wife Henrietta in a boating accident — he was there, could not reach them. That is why he can see Pip.

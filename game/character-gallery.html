@@ -833,12 +833,12 @@ function drawHenrik(ctx, cx, floor, t, speaking) {
   rect(ctx, hx+3, ht+1, 2, 3, '#8a8898');  // right temple
 
   // 5 o'clock shadow — subtle low-alpha stubble on cheeks and chin
-  rect(ctx, hx-4, ht+5, 2, 4, 'rgba(100,100,108,0.28)');  // left cheek
-  rect(ctx, hx+2, ht+5, 2, 4, 'rgba(100,100,108,0.28)');  // right cheek
-  rect(ctx, hx-3, ht+7, 7, 2, 'rgba(100,100,108,0.18)');  // chin
+  rect(ctx, hx-4, ht+5, 2, 4, 'rgba(138,136,152,0.28)');  // left cheek
+  rect(ctx, hx+2, ht+5, 2, 4, 'rgba(138,136,152,0.28)');  // right cheek
+  rect(ctx, hx-3, ht+7, 7, 2, 'rgba(138,136,152,0.18)');  // chin
 
-  // Mustache (darker gray, upper lip — replaces full beard)
-  rect(ctx, hx-3, ht+7, 7, 2, '#3a3a40');
+  // Mustache (hair gray, upper lip — matches hairline and temples)
+  rect(ctx, hx-3, ht+7, 7, 2, '#8a8898');
 
   // Eyes — canonical human treatment, slightly enlarged (3×2)
   drawHumanEye(ctx, hx-3, ht+3, 3, 2, '#e8e0d0', '#3a3040');  // left

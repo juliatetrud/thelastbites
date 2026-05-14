@@ -50,10 +50,11 @@ Versioning: append `_v1`, `_v2`, etc. for iterations. Append source: `_mj` (Midj
 |---|---|---|---|
 | `ui-strength-meter-frame.png` | UI ornament | Ornate oval pewter frame, ~44×56px, holds the chewing-boy face and stomach pouch inside. Double-bordered. | Ornate pewter oval frame for a video game UI element, brass-and-gunmetal pixel art, Victorian baroque trim, tiny scale roughly 44 by 56 pixels, dark interior chamber that will hold a portrait, double-bordered with thin inner border, atmospheric. |
 | `ui-strength-meter-states.png` | UI animation set | Five states: full, mid, low, critical, dying. Chewing boy face (mouth open / mouth closed) + stomach pouch fill levels. | Pixel art animation sheet, five states of a small chubby chewing ghost-boy face, tiny round stomach pouch beneath, amber-glowing food contents shrinking across the states from full to empty, faces progressing from contented to worried to fading, hard pixel edges, ~24×40 pixel total, 2-frame chewing cycle per state. |
-| `ui-pip-icon-life.png` | UI icon | Tiny ghost silhouette (~12×16px) for the three-life display. Two states: active and spent. | Tiny pixel art ghost silhouette, ~12 by 16 pixels, cool white with soft cyan glow, two variants: bright/active and faint/spent imprint, hard pixel edges, minimalist. |
-| `ui-journal-cover.png` | UI element | Closed leather journal cover for the journal screen header or the journal icon. Worn, weathered, slightly nautical. | Pixel art weathered leather travel journal, brass corners, slightly nautical, worn from use, closed view, hard pixel edges, dimly lit single warm light source, ornate but humble. |
-| `ui-journal-pages.png` | UI element | Open journal parchment page texture, used as background for journal screen. | Pixel art open journal spread, aged parchment paper texture, faint grid lines, subtle inner shadow at the spine, warm-cream color `#e8dcc0`, no text or illustrations, flat clean background asset. |
-| `ui-sparkle.png` | UI animation set | The inspection sparkle that appears near interactable objects. 4-frame loop. | Pixel art animated sparkle, 4-frame cycle, small warm-amber dot with subtle radiating glow, drifting upward gently, hard pixel edges, ~6×6 pixels per frame. |
+| `ui-pip-icon-life.png` | UI icon — **RETIRED** | *(Sprint 12: The three-lives display is retired. This asset is no longer needed. The faint-imprint "spent" state is visually recycled into the blink-back fade animation, but no dedicated icon is required.)* | — |
+| `ui-journal-cover.png` | UI element | Closed leather notebook cover for the notebook screen header or the notebook icon. (File name retained to avoid churn; in-game it is called "the notebook.") Worn, weathered, slightly nautical. | Pixel art weathered leather travel notebook, brass corners, slightly nautical, worn from use, closed view, hard pixel edges, dimly lit single warm light source, ornate but humble. |
+| `ui-journal-pages.png` | UI element | Open notebook parchment page texture, used as background for the notebook screen. (File name retained to avoid churn.) | Pixel art open notebook spread, aged parchment paper texture, faint grid lines, subtle inner shadow at the spine, warm-cream color `#e8dcc0`, no text or illustrations, flat clean background asset. |
+| `ui-sparkle.png` | UI animation set | Cool drifting sparkle for inspect targets (`↑ INSPECT`). 4-frame loop. One of two distinct sparkle types — see `ui-collect-aura.png` for the collect aura. | Pixel art animated sparkle, 4-frame cycle, small warm-amber dot with subtle radiating glow, drifting upward gently, hard pixel edges, ~6×6 pixels per frame. |
+| `ui-collect-aura.png` | UI animation set | Warm pulsing aura for collectible objects (`↓ COLLECT`). 6-frame loop. Distinct from the inspect sparkle: broader radius, slower pulse (1.2s cycle), saturated warm amber, no drift — present and steady like something breathing. | Pixel art animated soft aura, 6-frame cycle, broad warm amber radial glow pulsing slowly, ~12×12 pixels per frame, saturated and present, hard pixel edges, distinct from a sparkle — this is a hum, not a glint. No directional drift; the glow expands and contracts in place. |
 | `ui-dialogue-box-frame.png` | UI element | Optional ornamental corner pieces for the dialogue box (if not done in CSS). | Pixel art ornate corner ornaments for a Victorian dialogue panel, brass-and-shadow tones, four corner pieces that fit a rectangular frame, baroque flourishes, subtle. |
 
 ---
@@ -74,7 +75,7 @@ Pip needs *consistent* art across multiple poses, animation cycles, and cinemati
 
 ## Chapter 1 — Cabin 646
 
-The project's foundational chapter. 9 cinematics (the doubled first-taste means Cinematic 6 splits into 6a and 6b), 5 rooms, and several NPCs.
+The project's foundational chapter. 9 cinematics (the doubled first-taste means Cinematic 6 splits into 6a and 6b), 6 rooms (including the observation deck added in Sprint 12), and several NPCs.
 
 ### Cinematics
 
@@ -100,6 +101,7 @@ The project's foundational chapter. 9 cinematics (the doubled first-taste means 
 | `room-ch01-radio-room.png` | Room background | Small radio operator's room. Brass equipment, dials, a worn chair, microphone. Single overhead lamp. | Pixel art side-scrolling room background at 480×270, a small Edwardian ship's radio operator room at night, brass radio equipment with dials and gauges, an old microphone on a worn wooden table, a single overhead amber lamp, ornate detail, deep shadows, a small worn leather chair, painterly pixel art. |
 | `room-ch01-dark-corridor.png` | Room background | Lower-deck corridor in disrepair. Most sconces broken, one flickering. Janitor's cart at one end. Atmospheric and tense. | Pixel art side-scrolling ship corridor background at 480×270, lower-deck service corridor in disrepair, most wall sconces broken or extinguished, one sconce flickering with weak amber light, a janitor's cleaning cart abandoned at one end, exposed pipes overhead, scuffed floor, atmospheric tension, deep shadow, painterly pixel art. |
 | `room-ch01-kitchen.png` | Room background | Grand ship's kitchen. Industrial stainless steel, hanging copper pots, deep ovens, a single overhead pendant light. | Pixel art side-scrolling room background at 480×270, an industrial Edwardian cruise ship kitchen at deep night, stainless steel counters and prep tables, an entire wall of hanging copper pots and pans, two deep stone-and-iron ovens, a single warm amber overhead pendant light creating the only pool of warmth, deep shadow at the edges, painterly pixel art. |
+| `room-ch01-observation-deck.png` | Room background | *(Sprint 12: New — observation deck. Implementation deferred to future Ch1 content sprint.)* Ship observation deck, open-air. Wide curved viewport with the aurora (northern lights) visible across the upper portion in cool greens and violets. Dim wooden-paneled interior. Wooden benches, coiled rope, a small brass telescope on a tripod. Cosmic-lit, not domestic — the aurora is the light source. | Pixel art side-scrolling room background at 480×270, an Edwardian cruise ship observation deck at night, wide curved viewport window taking the upper half of the frame, the northern lights visible beyond in slow-moving cool greens and violets, dim wooden-paneled deck interior, two or three simple wooden benches, a coiled rope, a small brass telescope on a tripod, faint cold-blue ambient light from the aurora through the glass, no warm light sources, atmospheric quiet, painterly pixel art. |
 
 ### NPC sprites
 
@@ -119,6 +121,17 @@ The project's foundational chapter. 9 cinematics (the doubled first-taste means 
 | `echo-spider.png` | Echo-creature | 8-12 pixels. Scuttle unpredictably across walls, ceilings, floors. Slightly translucent. | Pixel art ghost-spider sprite, ~10 pixels wide, slightly translucent and shimmery, with a faint warm-amber glow trail beneath, scuttling pose, hard pixel edges. |
 | `echo-mouse.png` | Echo-creature | 10-14 pixels. Scurry in small lines along baseboards. Translucent. | Pixel art ghost-mouse sprite, ~12 pixels wide, slightly translucent and shimmery, faint cool glow trail, scurrying pose, hard pixel edges. |
 | `echo-bat.png` | Echo-creature | 16-20 pixels wingspan. Swoop in arcs. Translucent. | Pixel art ghost-bat sprite, ~18 pixels wingspan, slightly translucent, swooping wing pose, faint glow trail, hard pixel edges. |
+
+### Treats (Chapter 1)
+
+*(Sprint 12: New subsection. Four Ch1 treats. One locked (Bamsemums), three TBD in Ch1 content sprint.)*
+
+| Filename | Type | Description | AI prompt |
+|---|---|---|---|
+| `treat-ch01-bamsemums.png` | Treat sprite | **Locked.** Small bag of Norwegian foam-and-chocolate bears (Bamsemums). The tutorial treat — the first collectible the player picks up. Placed by Henrik on the kitchen counter. ~`12×16px`. | Pixel art tiny bag of foam-and-chocolate gummy bears, primary colors (red, yellow, green, white), translucent twist-tied cellophane bag, ~12×16 pixels, hard pixel edges, cheerful and small, sits on a kitchen counter, warm amber collect-aura around it. |
+| `treat-ch01-cabin.png` | Treat sprite | **TBD — suggested Smørbukk** (Norwegian caramel toffee in a yellow wrapper). Cabin replay-reward treat, tucked in bedside drawer. Collectible only after player has learned `↓` in the kitchen. ~`10×14px`. | TBD per Ch1 content sprint. Suggested reference: a small individually-wrapped caramel toffee candy, yellow foil wrapper, hard pixel edges. |
+| `treat-ch01-cleaning-cart.png` | Treat sprite | **TBD — suggested Skillingsboller** (Bergen-style cinnamon bun wrapped in waxed paper, half-eaten). Tucked in the janitor's cleaning cart in the dark corridor. Collectable on a return pass after learning `↓` and float. ~`14×16px`. | TBD per Ch1 content sprint. Suggested reference: a round cinnamon bun in a curl of waxed paper, slightly squashed from the cart, hard pixel edges. |
+| `treat-ch01-observation-deck.png` | Treat sprite | **TBD.** A mood-appropriate treat on the observation deck — open-air, aurora overhead, contemplative. Could be a chocolate left by a stargazer, a packet of forgotten sweets, or a small wrapped Norwegian regional candy. ~`12×16px`. | TBD per Ch1 content sprint. |
 
 ---
 
@@ -351,14 +364,15 @@ Per the bible: between every two consecutive chapters, a brief 2–3 second cine
 ## Total piece count (target inventory)
 
 - **Cinematics:** 9 (Ch1) + 5 (Ch2) + 5 (Ch3) + 5 (Ch4) + 5 (Ch5) + 2 (ship-side, Ch6/7) + 3-5 (Ch6) + 3-5 (Ch7) + 7 (Ch8) = **~55 cinematics**
-- **Room backgrounds:** 6 (Ch1) + 3 (Ch2) + 4 (Ch3) + 3 (Ch4) + 3 (Ch5) + 2 (Ch6) + 2 (Ch7) + 2 (Ch8) = **~25 rooms**
+- **Room backgrounds:** 6 (Ch1, incl. observation deck) + 3 (Ch2) + 4 (Ch3) + 3 (Ch4) + 3 (Ch5) + 2 (Ch6) + 2 (Ch7) + 2 (Ch8) = **~25 rooms**
 - **Pip sprites:** 5 animation/pose variants = **~5 sprite sets**
 - **NPC sprites:** ~30 distinct characters across all chapters
 - **Echo-creatures:** ~8 distinct types
-- **UI elements:** ~7 ornaments and icons
+- **UI elements:** ~8 ornaments, icons, and sparkle types (incl. new collect aura)
+- **Treat sprites:** 4 (Ch1) + TBD per chapter = growing total
 - **Porthole transitions:** **7**
 
-**Grand total: roughly 130+ distinct art pieces** for the full 8-chapter game. Plan accordingly. Chapter 1 alone is ~30 pieces, which is what makes Stage 3 in the roadmap meaningful.
+**Grand total: roughly 135+ distinct art pieces** for the full 8-chapter game. Plan accordingly. Chapter 1 alone is ~30 pieces (+ 4 treat sprites), which is what makes Stage 3 in the roadmap meaningful.
 
 ---
 

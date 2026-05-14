@@ -85,6 +85,20 @@ For embedding on a recipe site, the final build can still concatenate to a singl
 - CSS handles letterboxing/aspect-ratio (`16:9`)
 - A film-grain CSS overlay sits on top of everything
 
+### Scaling strategy and what we deliberately do not do
+
+**Letterbox-only, capped at 3× internal resolution.** The `#game` element is sized by CSS to the largest 16:9 box that fits inside the viewport, with a hard cap at 1440×810 (3× internal resolution of 480×270). It never scales beyond that. On smaller displays the aspect-ratio math wins; on larger displays the cap wins.
+
+**No DPR scaling.** We do not multiply by `devicePixelRatio`. The canvas renders at 480×270 physical pixels regardless of display DPI. Chunky pixels are the aesthetic; sub-pixel softening would fight it.
+
+**`image-rendering: pixelated`.** CSS ensures the pixel art scales with hard edges, no interpolation. Firefox requires `crisp-edges` as an alias.
+
+**Decorative padding-fx surround.** Whenever padding is visible — fullscreen on a display larger than 1440×810, or windowed at an off-aspect-ratio size — a `#padding-fx` layer renders behind `#game` with: extended film grain matching the game's grain pattern (same SVG noise, same opacity, same `grain-shift` animation), ~40 cold-white twinkling stars at fixed positions, and ~20 warm-amber drifting fireflies with occasional glow pulses. This is the project's standard surround treatment for all padding states. Stars sit at fixed positions and twinkle; fireflies drift via compounded sine motion and pulse occasionally. Fireflies are softly culled when they drift over the game area.
+
+**Unified viewport vignette.** The vignette darkens the outer edges of the *full viewport*, not just the game area, so the boundary between game and padding reads as one continuous darkening rather than a hard seam. Both `#grain` (inside `#game`) and `#padding-fx` use the same radial-gradient: `ellipse 100vw 100vh` centered at the viewport center, `transparent 30%` to `rgba(0,0,0,0.85) 100%`. Because the gradient is identical on both sides of the game/padding boundary, no seam is visible.
+
+**F-key fullscreen toggle.** Pressing F calls `#game-wrap.requestFullscreen()`. Pressing F again or Escape exits fullscreen. The fullscreen hint in the controls strip updates accordingly. The hint is omitted during dialogue and cinematics to avoid cluttering context-specific keys. M key toggles music at any time (undocumented quality-of-life shortcut). The music toggle button lives inside `#game-wrap` so it remains visible in fullscreen.
+
 ### Game Loop
 Standard `requestAnimationFrame` loop. Each frame:
 1. Calculate `dt` since last frame

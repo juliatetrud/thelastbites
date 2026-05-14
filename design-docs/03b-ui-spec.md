@@ -42,13 +42,16 @@ A persistent context-sensitive hint at the bottom of the screen. The player's an
 
 Each context defines its own hint string. Keys shown in arrow glyphs (`←` `→` `↑` `↓`) or as words (`SPACE`, `ESC`). Action verb after, spaced with `   ` (three spaces):
 
-- **Room mode, pre-float:** `← →  MOVE     ↑  LOOK     ESC  JOURNAL`
-- **Room mode, post-float:** `← →  MOVE     ↑  LOOK     SPACE  FLOAT     ESC  JOURNAL`
-- **Atmospheric dialogue (no choices):** `SPACE  CONTINUE`
-- **Interactive dialogue (with choices):** `↑↓  CHOOSE     SPACE  SELECT`
-- **Cinematic:** `SPACE  CONTINUE`
-- **Wordless traversal:** `← →  MOVE     SPACE  FLOAT` (no LOOK or JOURNAL — nothing to inspect)
-- **Journal open:** `← →  TURN PAGE     ESC  CLOSE`
+*(Sprint 12: `TAB` opens the notebook; `ESC` is for pause. `↓ COLLECT` added. `← BACK` added to dialogue strips. "Journal" renamed "notebook" throughout.)*
+
+- **Room mode, pre-float:** `← →  MOVE     ↑  LOOK     ↓  COLLECT     TAB  NOTEBOOK     ESC  PAUSE`
+- **Room mode, pre-float, near collectible:** `← →  MOVE     ↑  LOOK     ↓  COLLECT [TREAT NAME]     TAB  NOTEBOOK     ESC  PAUSE` *(name shown in warm amber)*
+- **Room mode, post-float:** `← →  MOVE     ↑  LOOK     ↓  COLLECT     SPACE  FLOAT     TAB  NOTEBOOK     ESC  PAUSE`
+- **Atmospheric dialogue (no choices):** `←  BACK     SPACE  CONTINUE`
+- **Interactive dialogue (with choices):** `←  BACK     ↑↓  CHOOSE     SPACE  SELECT`
+- **Cinematic:** `SPACE  CONTINUE     ESC  SKIP`
+- **Wordless traversal:** `← →  MOVE     SPACE  FLOAT` (no LOOK or NOTEBOOK — nothing to inspect)
+- **Notebook open:** `← →  TURN PAGE     TAB  CLOSE`
 - **Pause menu:** `↑↓  CHOOSE     SPACE  SELECT     ESC  RESUME`
 - **Title screen:** `↑↓  CHOOSE     SPACE  SELECT`
 
@@ -56,7 +59,7 @@ Each context defines its own hint string. Keys shown in arrow glyphs (`←` `→
 
 - Updates instantly when context changes (no transition)
 - Hidden during cinematics for the first 800ms after fade-in (so the cinematic lands before the chrome reappears)
-- Hidden entirely during the death sequence and game-over screen
+- Hidden entirely during the blink-back sequence
 
 ---
 
@@ -148,9 +151,11 @@ Hovering a choice selects it. Clicking selects-and-confirms. Mouse selection ove
 
 ---
 
-## 3. The Strength Indicator
+## 3. The Strength Indicator (Stomach Meter)
 
-The chewing-boy stomach meter. Persistent in screen corner during gameplay; hidden during cinematics, the title screen, and the journal.
+*(Sprint 12: This section is now explicitly the **stomach** — Pip's hunger, not abstract HP. Drained only by world hazards. Refilled by treats and chef meals. At zero: blink-back, not death. See `02-game-design.md` §"Strength (the stomach model)" for the complete rules.)*
+
+The chewing-boy stomach meter. Persistent in screen corner during gameplay; hidden during cinematics, the title screen, and the notebook.
 
 ### Position and sizing
 
@@ -194,66 +199,39 @@ Mapped to strength value (0–100):
 
 ### Animations
 
-- **Eating** (strength gained): a small amber blob travels from the mouth down to the stomach over `600ms`, then stomach fill animates up to new level over `400ms ease-out`. Trigger from `gainStrength()` calls.
-- **Hit** (strength lost): stomach fill animates down over `400ms ease-in`, accompanied by a single horizontal shake of the whole indicator (`±2px`, 200ms).
+- **Eating** (strength gained): triggered by `↓` collect of a treat. Two chained animations: (1) the treat sprite tweens from Pip's position to the notebook icon in the HUD corner over ~`0.6s`; (2) a separate amber pulse travels from the notebook icon down into the stomach pouch, and the stomach fill animates up to new level over `400ms ease-out`. *(Sprint 12: was triggered from generic `gainStrength()` calls; now scoped to treat pickup.)*
+- **Hit** (strength lost): stomach fill animates down over `400ms ease-in`, accompanied by a single horizontal shake of the whole indicator (`±2px`, 200ms). Triggered only by world hazards — *never by wrong puzzle choices.*
 - **Chewing**: idle 2-frame loop, 600ms per frame. Pauses during eating/hit animations.
 
 ### Hiding
 
 - Hidden during cinematics — fade out over `0.4s` at cinematic fade-in start, fade in over `0.4s` at cinematic fade-out end
 - Hidden during title screen and chapter cards
-- Hidden when journal is open
-- Hidden during death sequence
+- Hidden when notebook is open
+- Hidden during blink-back sequence
 
 ---
 
-## 4. The Lives Display
+## 4. The Lives Display — RETIRED
 
-**This is a fresh decision — flag for the log if you approve.**
+*(Sprint 12: The three-lives display is retired. The game's failure mode is now blink-back (see Section "Blink-back" below). There is one continuous Pip, who gets gently returned to the last room threshold when his stomach is empty. No lives counter. The faint-imprint "leaving" gesture from the icon is visually recycled into the blink-back fade animation.)*
 
-Three lives per chapter. The display is a small row of three Pip-icons next to the strength indicator. Each life is a tiny ghost-silhouette.
-
-### Position and sizing
-
-- Immediately right of the strength indicator
-- Vertically centered against the strength indicator
-- Each life icon: ~`12×16px`
-- Horizontal gap between icons: `4px`
-
-### Visual
-
-- Each icon: a tiny version of Pip's silhouette (placeholder = small white ghost shape with soft glow)
-- Active life: full opacity (`0.85`), soft cool glow
-- Spent life: opacity `0.15`, no glow — like a faint imprint
-- No counter numerals — the three icons *are* the count
-
-### Animation on death
-
-When a life is lost:
-- The rightmost active icon flickers (3 quick opacity pulses over `400ms`)
-- Then fades to spent state over `0.6s`
-- A faint glow trails downward from the icon over `1s` (a small "leaving" gesture)
-
-### Refilling
-
-Lives refill to 3 at the start of each chapter. No mid-chapter refill mechanic.
-
-### Hiding
-
-Same hide rules as the strength indicator (cinematics, title, journal, death sequence).
+*The art asset `ui-pip-icon-life.png` in the art asset list is also retired. The HUD in gameplay mode shows only: strength indicator (top-left) + controls strip (bottom). Nothing else.*
 
 ---
 
-## 5. The Journal Screen
+## 5. The Notebook Screen
 
-Triggered by `ESC` during gameplay (when no dialogue is active). Full-screen overlay. The thematic object of the game; should feel like opening a real book.
+*(Sprint 12: Renamed from "Journal Screen". Triggered by `TAB`, not `ESC`. Three sections now: Recipes, Memories, Items. "Journal" → "Notebook" throughout.)*
+
+Triggered by `TAB` during gameplay (when no dialogue is active). Full-screen overlay. The thematic object of the game; should feel like opening a real book.
 
 ### Entry behavior
 
-- Triggered by `ESC` or by clicking a journal icon (TBD whether a persistent icon exists)
-- Game pauses (strength indicator, lives, controls strip all hide)
-- Journal fades in over `0.6s`
-- Background: the game world dims to 20% brightness behind the journal
+- Triggered by `TAB` or by clicking a notebook icon (TBD whether a persistent icon exists in the HUD)
+- Game pauses (strength indicator, controls strip all hide)
+- Notebook fades in over `0.6s`
+- Background: the game world dims to 20% brightness behind the notebook
 - A subtle paper-rustle SFX plays on open (deferred — see `03-art-and-aesthetic.md` sound section)
 
 ### Layout
@@ -315,24 +293,39 @@ From Chapter 5 onward, an additional page surfaces at the back of the journal: a
 - Grid layout: small thumbnail + chapter number for each memory
 - Currently-paired memories show a faint connecting line between left and right
 
+### Third page — Items
+
+*(Sprint 12: New section. Accessed by paging right past Memories.)*
+
+A growing record of every treat Pip has eaten and every useful item he has pocketed. Grid of small pixel-art icons, each ~`16×16px`, Register A (same pixel grid as Pip's gameplay sprite). Below each icon: a one-line annotation in Pip's handwriting (`Cormorant Garamond` italic, small).
+
+- **Treats (eaten):** displayed at full opacity. Annotation reads like a memory — *"Bamsemums — from Henrik, in the kitchen."*
+- **Useful items (unused):** displayed at full opacity. Annotation reads like inventory — *"A candle — from Henrik."*
+- **Useful items (already used):** displayed at `40%` opacity with a faint strikethrough.
+
+When a dialogue scene allows an item to be used, the relevant item glows softly in the notebook icon corner of the HUD. The item also appears as a dialogue choice in the scene — the notebook display is the *record*; dialogue choices are the *interaction*.
+
 ### Exiting
 
-- `ESC` closes journal, fades back to game over `0.4s`
+- `TAB` closes notebook, fades back to game over `0.4s`
+- `ESC` from inside notebook opens the pause menu
 - Game state resumes exactly where it was
 
-### Controls strip during journal
+### Controls strip during notebook
 
-`← →  TURN PAGE     ESC  CLOSE`
+`← →  TURN PAGE     TAB  CLOSE     ESC  PAUSE`
 
 ---
 
 ## 6. The Pause / Menu Screen
 
-**Refinement: `ESC` opens the journal directly, not a pause menu.** This matches the docs' existing decision (`ESC` = Pause / journal).
+*(Sprint 12: `TAB` now opens the notebook, not `ESC`. `ESC` is reserved for the pause menu. The earlier refinement below is superseded.)*
 
-For a more traditional pause menu, we use a different gesture. Proposal: **`ESC` opens journal; pressing `ESC` *again* from inside the journal opens the menu**. This keeps the journal as the primary affordance while still surfacing the menu.
+~~**Refinement: `ESC` opens the journal directly, not a pause menu.**~~ *(Retired — see Sprint 12 TAB/ESC remap.)*
 
-Alternative: a small pause icon in the journal's corner that opens the menu. Designer call; defaulting to the double-ESC pattern below.
+The current key map: `TAB` opens the notebook; `ESC` opens the pause menu directly. From inside the notebook, `ESC` opens the pause menu (the notebook stacks below the pause overlay).
+
+Alternative: a small pause icon in the notebook's corner that opens the menu. Designer call; defaulting to the layered pattern above.
 
 ### Layout
 
@@ -450,65 +443,56 @@ Three stacked lines, centered:
 
 ---
 
-## 9. The Death Sequence
+## 9. Blink-Back (replaces Death Sequence and Lives)
 
-When Pip dies (strength reaches 0, fright trigger, etc.).
+*(Sprint 12: The three-lives death sequence and puddle-ghost game-over are retired and replaced by blink-back. No lives lost. No terminal fail state. One continuous Pip, gently returned.)*
 
-### Sequence
+### When it triggers
 
-1. **Hit beat** (the moment of death): screen punches white at `0.3` opacity for `100ms`, then drops to black
-2. **Pip flickers**: 3 rapid opacity pulses over `600ms` (0.8 → 0.1 → 0.8 → 0.1 → 0.8 → 0)
-3. **Soft fade-out**: the whole screen fades to black over `1.2s`
-4. **Pause on black**: `1.5s` of silence on a fully black screen — a beat for the loss
-5. **Respawn**: scene fades back in at the most recent checkpoint over `1.5s`; Pip materializes with the same fade
-6. **Life icon updates**: the rightmost active life icon goes through its loss animation during steps 2–3
-
-### Strength on respawn
-
-Refills to full on respawn.
-
-### Controls strip during sequence
-
-Hidden entirely. Returns when respawn fade-in completes.
-
----
-
-## 10. The Game-Over Screen (Puddle-Ghost)
-
-Triggered on the third death in a chapter.
+Stomach reaches 0. No other trigger — wrong puzzle choices do not cause blink-back.
 
 ### Sequence
 
-1. The death sequence plays as normal through step 4 (`1.5s` on black)
-2. Then: a single cinematic-style image fades in over `2s` — Pip melted to a small luminous puddle on the floor of wherever he last stood
-3. Narration types out below the image, in the dialogue box's narration style but centered and without a panel:
+1. **Pip fades**: sprite fades over `1.2s` to nearly transparent. A faint cool-blue glow trails softly downward (quiet, not dramatic).
+2. **Brief black pause**: `0.4s` on black.
+3. **Respawn**: Pip reappears at the *last room threshold he crossed* (the doorway or edge where he entered the current room). Stomach restored to `60/100` (baseline — Pip is recovering, not refreshed).
+4. **Narration appears**: a single italic narration line in the dialogue box, centered, no panel, no speaker tag: *"The ship lets him back in."* (Exact wording is content, not spec — can be refined at implementation.)
+5. **Narration fades**: over `2s`. Player has control.
 
-> *Even ghosts can lose their way.*
-> *Pip will need to gather himself again.*
+### Tone
 
-4. After narration completes, two centered choices fade in:
+Quiet. Not punitive. No flash. No shake. No fail audio cue. Pip gets put back. He keeps going.
 
-   1. `Restart from last checkpoint`
-   2. `Restart chapter`
+### Controls strip during blink-back
 
-### Visual
-
-- Full-screen black
-- Puddle-Pip image: centered, ~`30%` of viewport height
-- Soft cool glow around the puddle (the same `var(--spirit-pip)` glow Pip normally has)
-- Subtle drifting sparkles around the puddle — he hasn't fully gone
-
-### Controls strip
-
-`↑↓  CHOOSE     SPACE  SELECT`
-
-### After choice
-
-Standard fade to chosen checkpoint or chapter start.
+Hidden entirely. Returns when respawn narration fades.
 
 ---
 
-## 11. Mobile Tap Layer (Placeholder Decision)
+## 10. The Collectible Sparkle Convention
+
+*(Sprint 12: New section. Inserted here to sit alongside the game's visual vocabulary decisions.)*
+
+Inspectable objects and collectibles use two visually distinct sparkle modes so the player learns by sight which verb applies:
+
+- **Inspect sparkle (cool shimmer):** the existing sparkle behavior. A small drifting upward sparkle in `var(--warm-pool-amber)` at standard intensity. Gentle, dartlike, upward motion. Used for all `↑ INSPECT` targets.
+- **Collect aura (warm hum):** a softer, broader, *pulsing* aura. Larger radius than the inspect sparkle. Slower pulse (1.2s cycle). Saturated warm amber — no drift, no dart — just present and steady, like something breathing. Used for all `↓ COLLECT` targets (treats and useful items).
+
+The visual vocabulary should read distinctly even at small sizes: a player glancing at a room should be able to tell at a glance which objects to inspect and which to pocket without consciously thinking about it.
+
+The breadcrumb aura (elevated-intensity sparkle used for story-critical objects, e.g. the mirror after the grandparents cinematic) remains distinct from both: it uses the standard inspect shimmer elevated to a higher baseline (~0.45 + pulse), not the collect-aura's warm-hum character. A breadcrumb is an invitation to inspect; the collect aura is an invitation to pocket.
+
+---
+
+## 11. The Game-Over Screen — RETIRED
+
+*(Sprint 12: The puddle-ghost game-over has been retired. With blink-back as the universal failure mode (see Section 9), no terminal game-over state exists for stomach loss. Players can quit from the pause menu if they want to stop playing. The game itself never tells them they have failed.)*
+
+*The three-lives terminal trigger (third death in a chapter) no longer exists. The puddle-ghost image (`cin-puddle-ghost.png`) and its associated art note are also retired. The one-continuous-Pip model replaces it.*
+
+---
+
+## 12. Mobile Tap Layer (Placeholder Decision)
 
 Deferred to a later sprint, but locking the *approach* now so future implementation has direction:
 
@@ -517,7 +501,7 @@ Deferred to a later sprint, but locking the *approach* now so future implementat
 - **Tap-and-hold center:** floats (when float is unlocked).
 - **Tap on a sparkle-highlighted object:** inspects (equivalent to `↑`).
 - **Tap on a dialogue choice:** selects and confirms it.
-- **Tap on the strength indicator area:** opens the journal (equivalent to `ESC`).
+- **Tap on the strength indicator area:** opens the notebook (equivalent to `TAB`).
 - **Swipe down anywhere:** opens the pause menu.
 
 These map naturally onto the keyboard scheme and don't require dedicated UI chrome. The controls strip is hidden on touch devices (gestures replace the need for it; a brief tutorial overlay on first session covers discovery).

@@ -13,7 +13,7 @@ A chapter plays roughly like this (Chapter 2 onward — Chapter 1 is its own spe
 3. **Encounter the monster.** A folkloric spirit blocks the path to the chef. The encounter is a *cleverness puzzle*, not combat — Pip outwits, appeases, or feeds the monster. The monster relents and gives up a clue (a name, a direction, an ingredient, a stolen memory, a fragment of the chef's story — varies per chapter).
 4. **Use the clue to find the chef.** The monster has been an unwilling guide.
 5. **Solve the chef puzzle.** Text-driven — riddle, memory match, ingredient logic, or story completion. The chef demonstrates that Pip understands her dish before sharing the recipe.
-6. **Earn the recipe.** A new entry is added to Pip's journal: a recipe component (boosts strength) and a memory component (boosts empathy). On the website, this unlocks a real recipe.
+6. **Earn the recipe.** A new entry is added to Pip's notebook: a recipe component (boosts strength) and a memory component (boosts empathy). On the website, this unlocks a real recipe.
 7. **Cinematic transition** back to the ship, set up the next port.
 
 Total chapter playtime target: **15–30 minutes.** Short enough to play in a sitting, long enough to feel meaningful.
@@ -57,14 +57,19 @@ The game switches between three modes seamlessly:
 
 Designed to be playable with one hand on the keyboard. Mobile-friendly tap controls to be added later.
 
+*(Sprint 12: `↓` collect verb added; `TAB` opens the notebook; `ESC` is for pause. "Journal" renamed "notebook" throughout.)*
+
 | Key | Action |
 |---|---|
 | ← → (or A/D) | Move |
 | Space (or Enter) | Float (when held, in room mode) / Confirm choice in dialogue / Advance cinematic |
 | ↑ (or W) | Inspect / interact |
-| ↑ ↓ | Navigate choices in dialogue / pages in journal |
+| ↓ | Collect (pocket the nearest warm-humming collectible; squat animation when nothing nearby) |
+| ↑ ↓ | Navigate choices in dialogue / pages in notebook |
+| ← | Back one line in dialogue |
 | 1–4 | Select choice in dialogue directly |
-| Esc | Open journal (from gameplay) / Open pause menu (from journal) / Close pause menu |
+| TAB | Open notebook |
+| ESC | Pause menu |
 
 Context-sensitive key bindings are *always* shown in a persistent controls strip at the bottom of the screen (see `03b-ui-spec.md` §1). Whenever the meaning of a key changes — space-bar floats in room mode but selects in dialogue, etc. — the strip updates to reflect the current context.
 
@@ -113,50 +118,91 @@ Wrong choices in a puzzle never kill or set back the player. The chef gives a hi
 
 Pip has two stats. Both grow across the game; both matter.
 
-### Strength (the chewing-boy stomach meter)
+### Strength (the stomach model)
 
-Strength is what keeps Pip *here*. It's his appetite, his presence in the world. Every chapter's recipe restores and grows it. Every echo-creature, snail-slime trail, or moment of fright drains it.
+*(Sprint 12: Stomach model and blink-back failure mode replace the former lives system. The chewing-boy visual stays; the underlying model is now "Pip is hungry, not HP-tracked.")*
 
-**Visual:** a small chewing-boy face in the corner of the screen, with food traveling down his throat to a stomach meter that fills and drains. Pixel-art, ornate, on-tone. Persistent during gameplay; hidden during cinematics.
+Strength is Pip's stomach. He is a hungry ghost-boy. His hunger — his appetite for the world — is what keeps him *here*. Without it, he fades back to a familiar threshold and gathers himself again.
 
-**What drains it:**
+**Visual:** a small chewing-boy face in the corner of the screen, with food traveling down his throat to a stomach meter that fills and drains. Pixel-art, ornate, on-tone. Persistent during gameplay; hidden during cinematics. See `03b-ui-spec.md` Section 3 for dimensions and animation states.
+
+**What drains it (world hazards only):**
 - Bumping into echo-creatures during traversal
 - Stepping in snail-slime trails (slow, sympathetic drain)
 - Being startled by environmental hazards
 - A monster lashing out during a cleverness puzzle (occasional, light)
 
 **What does NOT drain it:**
-- Wrong puzzle choices (puzzles never punish)
+- **Wrong puzzle choices** — puzzles *never* punish. Wrong choices reveal information. Strength and puzzle failure are fully decoupled.
 - Time spent exploring
 - Talking to NPCs
 
 **What restores it:**
-- Eating food during a chapter (offered by chefs, found in environments, gifted by appeased monsters in shared-meal beats)
-- Completing a chapter (full restoration at chapter end)
+- **Eating treats** (`↓` collect → auto-eat → stomach refills by the treat's value)
+- **Chef meals** at chapter end (full restoration)
+- **Blink-back** respawn restores stomach to baseline (60/100)
+
+**Failure mode — blink-back:** When stomach reaches 0, Pip fades over 1.2s, a brief black pause (0.4s), then reappears at the *last room threshold he crossed*, stomach restored to 60/100. A single italic narration line appears and fades after 2s. No life lost. No chapter restart. The ship is kind. See `03b-ui-spec.md` Section "Blink-back" for full visual sequence.
 
 ### Empathy (memory inventory)
 
 Empathy is what Pip *carries inside*. It grows as he collects memories — both the meal memories he earns from chefs and the monster memories he earns from each encounter. The bible's line *empathy strengthens his powers* is canon: empathy is the stat that makes memory-gifting (Chapter 5+) work.
 
-**Visual:** a journal page count, or a small filled-jars-on-a-shelf indicator. Less visible than strength during normal gameplay — surfaced when the journal is opened, when memory-gifting is performed, and at the climax.
+**Visual:** a notebook page count, or a small filled-jars-on-a-shelf indicator. Less visible than strength during normal gameplay — surfaced when the notebook is opened, when memory-gifting is performed, and at the climax.
 
 **How it grows:**
-- Each chapter from Ch2 onward yields one journal entry containing both a recipe component and a memory component (paired meal + monster memory)
+- Each chapter from Ch2 onward yields one notebook entry containing both a recipe component and a memory component (paired meal + monster memory)
 - Quietly, in scenes where Pip witnesses something tender (Erik's birthday in Ch6, Iris's reunion in Ch5, etc.)
 
 **What it does:**
 - Strengthens memory-gifting from Chapter 5 onward
 - At the climax in Greenpoint, empathy is the resource Pip spends to override the shadow's painful memories with joyful ones
 
-### Lives and death
+### Lives system — retired
 
-Pip has **3 lives per chapter**. Death happens only from environmental drain — strength reaching zero. Wrong puzzle choices, getting lost, taking too long: none of these kill him.
+*(Sprint 12: The three-lives system is retired. The game has one continuous Pip; blink-back is the failure mode. See the Strength section above and `03b-ui-spec.md` for details. The puddle-ghost game-over is also retired — with blink-back as the universal failure mode, no terminal game-over state exists for stomach loss.)*
 
-When strength hits zero, Pip flickers, becomes very translucent, drifts to a stop, and fades out softly. He respawns at the most recent **checkpoint** — beginning of chapter, chef encounter, or end of chapter. One life is consumed.
+---
 
-**Three deaths in a single chapter** = the **puddle-ghost game-over.** Pip's form collapses into a gentle puddle of light on the floor. The player restarts from the beginning of the chapter or from the chapter midpoint, depending on how far they got.
+## The Collect Verb
 
-The puddle-ghost moment is *gentle*, not gruesome. It's tonally consistent with the rest of the game. A small sad puddle, a soft pause, a return to a checkpoint.
+*(Sprint 12: `↓` is now the collect verb. Built-in, not discovered. Taught diegetically at the first collectible.)*
+
+`↓` collects the nearest warm-humming collectible — a treat, a useful item, or any object marked with the warm-pulsing collect aura (see "Two visual vocabularies" below). When nothing collectible is nearby, `↓` makes Pip squat in place — a small visible animation that gives the player visible "I tried" feedback and acts as a gentle brake action.
+
+**Pickup behavior:** Pressing `↓` near a collectible plays the pickup tween (the treat or item moves from Pip's position toward the notebook icon in the HUD corner, ~0.6s). For treats: consumed on pickup, stomach refills, the treat is recorded in the notebook's Items section with a one-line annotation. For useful items: pocketed, not consumed, recorded in the notebook's Items section, usable contextually in dialogue choices.
+
+**Teaching the verb:** The verb is taught *diegetically* at the first collectible encounter in Ch1 (the Bamsemums on Henrik's kitchen counter). The inspect text for the treat includes inline instruction (*"He could pocket this. ↓ to collect."*). No floating tutorial UI.
+
+### Two visual vocabularies
+
+Inspectable objects and collectibles use two visually distinct sparkle modes:
+
+- **Inspect sparkle** (cool shimmer): the existing drifting warm-amber sparkle. Used for all `↑ INSPECT` targets.
+- **Collect aura** (warm hum): a softer, broader, *pulsing* aura. Larger radius. Slower pulse (~1.2s cycle). Saturated warm amber, no drift — present and steady. Used for all `↓ COLLECT` targets.
+
+The player should be able to tell which objects to inspect and which to pocket without thinking.
+
+### Useful items vs. treats
+
+**Treats** (food items): consumed on `↓` pickup. Refill stomach. Recorded in notebook Items section as a small pixel-art icon with a journal-style annotation. Treated as consumables.
+
+**Useful items** (non-food objects — matches, candles, Iris's switchblade, etc.): pocketed on `↓` pickup. Not consumed. Do *not* refill stomach. Recorded in notebook Items section. Become available as a fourth dialogue choice when contextually relevant (e.g. *"4. Use the matches"*). Already-used items appear greyed-out in the notebook.
+
+---
+
+## Treats: gifts the ship left out for him
+
+*(Sprint 12: Treats system locked.)*
+
+Treats are small, hidden, on-theme food items scattered through each chapter. Per-region cuisine — Norwegian candies in Ch1, Estonian confections in Ch2, etc.
+
+- **Quantity:** 3–6 per chapter from Ch2 onward. Ch1 has 4 (fewer, because the collect verb is taught mid-chapter — earlier placements are replay rewards).
+- **Distribution:** Beginning-to-end through each chapter. At least one early-chapter treat for replay value. Ch1 is the exception: the cabin treat is a replay reward because the player hasn't yet learned `↓`.
+- **Discovery locations:** Drawers, behind objects, on balconies, in cleaning carts, on observation decks. Some require later-earned abilities to reach.
+- **Pickup:** `↓`. Auto-consume. Stomach refill. Notebook record. Two animations chained: pickup tween, then eating tween.
+- **Scarcity is the rule.** Treats should feel like *gifts*, not coins. If they're cheap, they stop mattering.
+- **Tone constraint:** Treats are *never* placed where collecting them would feel emotionally wrong for Pip to take from. The grandparents' cabin contains no treat in Ch1. This is the standing case-law for tone-vs-placement decisions across the whole game.
 
 ---
 
@@ -299,37 +345,42 @@ The chef tells a story with a missing word that Pip has to provide based on what
 
 ---
 
-## The Recipe Journal
+## The Notebook
 
-Pip's in-game inventory and progression tracker. It's the **bridge between the game and the website**, and it becomes the **weapon at the climax**. The journal is the thematic object of the game — food, memory, and feeling unified in one artifact.
+*(Sprint 12: "Journal" renamed "notebook" throughout. Henrik gives Pip an empty notebook in Ch1; Pip fills it. The notebook now has three sections.)*
+
+Pip's in-game record and progression tracker. It's the **bridge between the game and the website**, and it becomes the **weapon at the climax**. The notebook is the thematic object of the game — food, memory, and feeling unified in one artifact.
 
 ### What's in it
 
-From Chapter 2 onward, each chapter produces **one journal entry** containing:
+The notebook has **three sections**:
 
-- **The recipe component.** What Pip tasted. Boosts the strength stat. Unlocks the corresponding real recipe on the website.
-- **The memory component.** A pair of memories — one from the monster encounter (the "monster moment"), one from the chef encounter (the "meal moment"). Boosts the empathy stat. Stored for use in memory-combat and at the final-chapter climax.
+1. **Recipes (left page).** Per chapter. What Pip tasted. Boosts the strength stat. Unlocks the corresponding real recipe on the website.
+
+2. **Memories (right page).** Per chapter. A pair of memories — one from the monster encounter (the "monster moment"), one from the chef encounter (the "meal moment"). Boosts the empathy stat. Stored for the final-chapter climax.
+
+3. **Items (third section, accessed by paging right).** A growing record of every treat Pip has eaten and every useful item he has pocketed. Treats appear at full opacity with a one-line annotation (*"Bamsemums — from Henrik, in the kitchen"*). Useful items appear similarly. Used items appear at 40% opacity with a faint strikethrough.
 
 Chapter 1's entry is unusual — the recipe is lefse and gravlaks, the memory is the doubled first-taste cinematic (gravlaks → Henrik with grandfather; lefse → Henrik with young Erik). It's a single chapter producing two memory layers.
 
 ### In the game
 
-- Accessed by pressing Esc during gameplay (or via tap on the strength indicator on mobile)
+- Accessed by pressing `TAB` during gameplay (Sprint 12: was `ESC`)
 - Shows completed chapters as filled-in pages with sketched recipes and tagged memories
 - Shows current chapter as a partially-filled page
 - Shows locked future chapters as blank pages
-- From Chapter 5 onward, the paired-memory inventory becomes prominent in the UI — both monster moments and meal moments visible
+- From Chapter 5 onward, the paired-memory inventory becomes prominent in the UI
 - Full layout and behavior locked in `03b-ui-spec.md` §5
 
 ### On the website
 
 - Each completed chapter unlocks a real recipe page
-- The journal could appear in the website nav as "Pip's Journal" or "The Last Bites Cookbook"
+- The notebook could appear in the website nav as "Pip's Notebook" or "The Last Bites Cookbook"
 - Recipes get added as Julia adds them — so the game and the cookbook grow together
 
-### The climactic use of the journal
+### The climactic use of the notebook
 
-In the final chapter (Greenpoint), the shadow shows Pip painful memories from his journey — each one drawn from the "monster moments" he survived. Pip overrides each with the corresponding "meal moment" from the same chapter, in **reverse chronological order**. The journal is no longer just a record. It is the inventory of what he has to spend. Every recipe he collected was secretly armor for this moment.
+In the final chapter (Greenpoint), the shadow shows Pip painful memories from his journey — each one drawn from the "monster moments" he survived. Pip overrides each with the corresponding "meal moment" from the same chapter, in **reverse chronological order**. The notebook is no longer just a record. It is the inventory of what he has to spend. Every recipe he collected was secretly armor for this moment.
 
 ---
 
@@ -366,7 +417,7 @@ Between chapters, Pip returns to the ship (*The Mnemosyne*). The ship is the per
 - New rooms unlock as Pip gains abilities or plot triggers happen
 - Henrik is always in the kitchen, ready to talk
 - Pätu the cat lives somewhere on the ship, encountered occasionally
-- The journal is always accessible
+- The notebook is always accessible (press `TAB`)
 - A world map shows visited ports and the next destination
 
 **This is where slow-burn storytelling lives.** A passenger you saw in Chapter 2 has a different conversation in Chapter 4 because their husband has died. The captain's logbook gains new entries. A locked door from Chapter 1 finally opens in Chapter 6.
@@ -377,7 +428,7 @@ Between chapters, Pip returns to the ship (*The Mnemosyne*). The ship is the per
 
 ## Saving and Continuity
 
-The game saves to localStorage in the browser. When a player returns, they pick up where they left off. The journal persists. Their abilities persist. Their port history persists. Their **paired memory inventory** persists from Chapter 5 onward. Their two stats (strength, empathy) persist.
+The game saves to localStorage in the browser. When a player returns, they pick up where they left off. The notebook persists. Their abilities persist. Their port history persists. Their **paired memory inventory** persists from Chapter 5 onward. Their two stats (strength, empathy) persist.
 
 **Save points:** Auto-save when entering a new room, auto-save when completing a puzzle, auto-save when unlocking a recipe, auto-save when reaching a checkpoint, auto-save when adding to the paired-memory inventory.
 

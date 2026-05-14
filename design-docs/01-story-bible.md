@@ -177,6 +177,18 @@ A standard for how ghosts occupy space in the game's pixel-art visuals and in th
 
 ---
 
+## The Ghost-World: Neutral Planes
+
+### Neutral planes
+
+The ghost-world doesn't wake the newly-dead in their own beds. That would be too cruel — too jarring to confront one's own body before one knows what's happened. Instead, ghosts wake in *neutral planes*: spaces of habit, transit, or shared use. A hallway. A sidewalk. A kitchen at three in the morning. Spaces that belong to no single person.
+
+Pip wakes in the hallway of the *RMS Mnemosyne*. He has, as far as he can tell, always woken in this hallway. He doesn't remember waking up anywhere else. The ghost-world is being kind to him; it has not yet asked him to remember.
+
+Every chapter's opening uses a neutral plane appropriate to the place. The hallway is Chapter 1's. Each chapter following has its own.
+
+---
+
 ## The Setting: The Mnemosyne (the ship)
 
 A massive world-cruising ocean liner named **The Mnemosyne** *(Nem-OSS-uh-nee)*. Not a specific real ship — fictional, with the bones of a Hurtigruten-style coastal ferry but the scale of a global cruise. It's a constant presence: when Pip isn't ashore, he's aboard.

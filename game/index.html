@@ -81,12 +81,15 @@
   }
 
   /* 16:9 letterboxed game container.
-     Matches the three-doors-demo.html pattern from prototype/. */
+     Matches the three-doors-demo.html pattern from prototype/.
+     Capped at 1440×810 (3× internal resolution) — never scales beyond that.
+     z-index: 1 keeps it above #padding-fx (z-index: 0). */
   #game {
-    width:  min(100vw, calc(100vh * 16 / 9));
-    height: min(100vh, calc(100vw * 9  / 16));
+    width:  min(100vw, calc(100vh * 16 / 9), 1440px);
+    height: min(100vh, calc(100vw * 9  / 16), 810px);
     position: relative;
     overflow: hidden;
+    z-index: 1;
   }
 
   /* The canvas: internal resolution set via width/height attrs (480×270).
@@ -109,9 +112,13 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    /* Vignette: transparent center → dark edges */
-    background-image: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.85) 100%);
-    mix-blend-mode: multiply;
+    /* Vignette: viewport-sized ellipse centered at the viewport center.
+       Using 100vw / 100vh as explicit ellipse radii means the 100% stop falls
+       at the viewport edges, so the gradient ramps identically at both the
+       game/padding boundary and at the outer viewport edges — no seam.
+       (#grain is centered in #game which is centered in the viewport, so
+       "50% 50%" of #grain == viewport center.) */
+    background-image: radial-gradient(ellipse 100vw 100vh at 50% 50%, transparent 15%, rgba(0, 0, 0, 1.0) 100%);
     z-index: 50;
   }
   #grain::after {
@@ -127,6 +134,48 @@
   @keyframes grain-shift {
     0%, 100% { transform: translate(0, 0); }
     50%       { transform: translate(-3px, 2px); }
+  }
+
+  /* ============================================================
+     PADDING-FX — decorative surround rendered behind #game.
+     Visible only when #game doesn't fill the full wrap area:
+     fullscreen on large displays, or windowed at off-aspect-ratio.
+     Contains #padding-grain (extended film grain) and
+     #padding-lights (stars + fireflies canvas).
+     ============================================================ */
+  #padding-fx {
+    position: absolute;
+    inset: 0;
+    /* Same viewport-centered ellipse as #grain — so the darkening ramps
+       identically on both sides of the game/padding boundary, eliminating
+       the seam. Transparent center is fine: #game-wrap background is #000
+       so the transparent areas read as black regardless. */
+    background: radial-gradient(ellipse 100vw 100vh at 50% 50%, transparent 15%, rgba(0, 0, 0, 1.0) 100%);
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  #padding-grain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  /* No vignette on the padding grain — that's intentionally bound to the
+     game area. Match only the fractalNoise grain and its animation exactly
+     so the texture reads as continuous across the seam. */
+  #padding-grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.78 0 0 0 0 0.6 0 0 0 0.18 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    opacity: 0.45;
+    mix-blend-mode: overlay;
+    animation: grain-shift 0.4s steps(2) infinite;
+  }
+  #padding-lights {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
   }
 
   /* ============================================================
@@ -258,7 +307,7 @@
      Mouse-only — keyboard stays reserved for gameplay.
      ============================================================ */
   #music-toggle {
-    position: fixed;
+    position: absolute;
     top: 16px;
     right: 16px;
     width: 32px;
@@ -319,11 +368,12 @@
 <audio id="bg-music-a" loop preload="auto"></audio>
 <audio id="bg-music-b" loop preload="auto"></audio>
 
-<!-- Music toggle: outside the canvas, top-right margin.
-     State: default on (no .muted class). Persisted in localStorage. -->
-<button id="music-toggle" type="button" title="Music on (click to mute)" aria-label="Music on (click to mute)">♪</button>
-
 <div id="game-wrap">
+  <!-- Decorative padding surround: sits behind #game, fills the wrap. -->
+  <div id="padding-fx">
+    <div id="padding-grain"></div>
+    <canvas id="padding-lights"></canvas>
+  </div>
   <div id="game">
     <!-- The game canvas: 480×270 internal resolution, scaled by CSS -->
     <canvas id="canvas" width="480" height="270"></canvas>
@@ -348,6 +398,11 @@
          See 03b-ui-spec.md §1. Managed by setControlsStrip(). -->
     <div id="controls-strip"></div>
   </div>
+
+  <!-- Music toggle: inside #game-wrap so it appears in fullscreen context.
+       position: absolute keeps it at viewport top-right in both windowed and
+       fullscreen modes. Keyboard binding: M key (see handleKeyAction). -->
+  <button id="music-toggle" type="button" title="Music on (click to mute)" aria-label="Music on (click to mute)">♪</button>
 </div>
 
 <script>
@@ -433,6 +488,52 @@ const pip = {
 };
 
 /* ================================================================
+   CHAPTER / SCENE STATE
+   Tracks story-gated flags for Sprint 10.7+.
+   cabinState.bedRevealed — false until Sprint 11 bed-reveal cinematic
+   chapterState.openingPlayed — gates the hallway materialization sequence
+   ================================================================ */
+
+const cabinState = {
+  bedRevealed: false,   // set true by Sprint 11 bed-reveal cinematic
+};
+
+const chapterState = {
+  openingPlayed: false, // true once the materialization/yawn/narration sequence completes
+};
+
+/* ================================================================
+   OPENING SEQUENCE STATE
+   Controls the hallway materialization + yawn + narration that plays
+   once per hard game load at the start of Chapter 1.
+   States: 'materializing' → 'narrating' → 'complete'
+   ================================================================ */
+
+const openingSeq = {
+  state:         'materializing', // 'materializing' | 'narrating' | 'complete'
+  elapsed:       0,               // seconds since sequence began
+  MATERIALIZE_T: 1.5,             // total materialization duration
+  YAWN_PEAK_T:   0.6,             // yawn peak at this fraction through materialization
+  YAWN_END_T:    1.0,             // yawn ends at this fraction through materialization
+
+  /* Pixel reveal mask — built lazily when Pip is first drawn */
+  _maskBuilt:    false,
+  revealOrder:   [],              // flat array of pixel indices, shuffled
+
+  /* Yawn accessors — computed from elapsed */
+  get yawnT() {
+    // yawn: 0→1→0 over [0, YAWN_END_T] of MATERIALIZE_T
+    const yawnDur = this.YAWN_END_T * this.MATERIALIZE_T;
+    const t = Math.min(this.elapsed, yawnDur) / yawnDur;
+    if (t <= 0.5) return t * 2;            // open: 0→1
+    return 2 - t * 2;                      // close: 1→0
+  },
+  get isYawning() {
+    return this.state === 'materializing' && this.elapsed < (this.YAWN_END_T * this.MATERIALIZE_T);
+  },
+};
+
+/* ================================================================
    CABIN OBJECTS
    Inspectable objects in the cabin room. Each has:
      id        — identifier string
@@ -509,18 +610,32 @@ const cabinObjects = [
     },
   },
 
-  /* ---- Bed ---- atmospheric, 1 line */
+  /* ---- Bed ---- state-gated dialogue (Sprint 10.7)
+     Pre-reveal: lump is visible, Pip doesn't want to investigate.
+     Post-reveal: after Sprint 11 bed-reveal cinematic (cabinState.bedRevealed). */
   {
     id: 'bed',
     x: 720,
     sparkleY: 165,
-    node: {
-      id: 'bed-inspect',
-      lines: [
-        { speaker: null, text: 'Pip peeks inside. The bed is rumpled. Someone slept here recently. There\u2019s a small shape under the covers, but Pip doesn\u2019t look any closer.', italic: false },
-      ],
-      choices: null,
-      onEnd: null,
+    get node() {
+      if (cabinState.bedRevealed) {
+        return {
+          id: 'bed-post-reveal',
+          lines: [
+            { speaker: null, text: 'Hmm, my old bed.', italic: true },
+          ],
+          choices: null,
+          onEnd: null,
+        };
+      }
+      return {
+        id: 'bed-pre-reveal',
+        lines: [
+          { speaker: null, text: 'I wonder what that lump is. Maybe I don\u2019t want to know.', italic: true },
+        ],
+        choices: null,
+        onEnd: null,
+      };
     },
   },
 ];
@@ -580,6 +695,37 @@ const hallwayObjects = [
         { speaker: null, text: 'How could that be? Pip wonders.', italic: true },
       ],
       choices: null, onEnd: null,
+    },
+  },
+
+  /* ---- Cabin door (Pip's cabin — Sprint 10.7) ----
+     Cabin 646. Pip recognizes the door as his own.
+     Pressing ↑ near it transitions to the cabin room. */
+  {
+    id: 'hallway-cabin-door',
+    x: 480,
+    sparkleY: 110,
+    node: {
+      id: 'cabin-door-inspect',
+      lines: [
+        { speaker: null, text: 'Cabin 646. Pip\u2019s cabin. The door is closed but unlocked.', italic: false },
+      ],
+      choices: [
+        {
+          id: 'enter-cabin',
+          text: 'Go in.',
+          onSelect() {
+            closeDialogue();
+            setTimeout(() => startTransition('cabin', 'fromLeft'), 310);
+          },
+        },
+        {
+          id: 'not-now-cabin',
+          text: 'Not now.',
+          onSelect() { closeDialogue(); },
+        },
+      ],
+      onEnd: null,
     },
   },
 
@@ -744,6 +890,7 @@ const rooms = {
   cabin: {
     width:    ROOM_W,                      // 960
     pipMaxX:  ROOM_W - PIP_HALF_W,         // 952 — right wall
+    pipMinX:  PIP_HALF_W,                  //   8 — left wall (can't exit left)
     objects:  cabinObjects,
     draw:     drawCabin,                   // defined below (hoisted)
     pipEntryX: {
@@ -754,6 +901,7 @@ const rooms = {
   hallway: {
     width:    HALL_W,                      // 1440
     pipMaxX:  1312,                        // 1320 − PIP_HALF_W — stops before dark zone
+    pipMinX:  PIP_HALF_W + 4,             //   16 — left wall (Sprint 10.7: visible wall added)
     objects:  hallwayObjects,
     draw:     drawHallway,                 // defined below (hoisted)
     pipEntryX: {
@@ -764,6 +912,7 @@ const rooms = {
   grandparents: {
     width:    720,
     pipMaxX:  720 - PIP_HALF_W,            // 712 — right wall
+    pipMinX:  PIP_HALF_W,                  //   8 — left wall
     objects:  grandparentsObjects,
     draw:     drawGrandparents,            // defined below (hoisted)
     pipEntryX: {
@@ -773,7 +922,20 @@ const rooms = {
   },
 };
 
-let currentRoom = 'cabin';
+/* Sprint 10.7: game starts in the hallway (neutral plane), not the cabin.
+   Pip spawns at the leftmost playable x. */
+let currentRoom = 'hallway';
+
+/* Set Pip's initial position to leftmost hallway position.
+   pip.x was initially set to ROOM_W/2 in the pip object definition — override here. */
+pip.x = rooms.hallway.pipMinX + 4;
+
+/* Arm the passenger for the opening sequence.
+   Normally the passenger fires on first hallwayEntered flag set by startTransition().
+   Since the game now starts in the hallway, set the flag here. The passenger timer
+   will fire when it's updated in updatePassenger() — but we want it to wait until
+   the opening sequence finishes. See updatePassenger() for the gate. */
+passenger.hallwayEntered = true;
 
 /* ================================================================
    DIALOGUE STATE
@@ -896,6 +1058,12 @@ const passenger = {
 const URL_PARAMS = new URLSearchParams(window.location.search);
 const DEV_MODE   = URL_PARAMS.get('dev') === '1';
 
+/* ================================================================
+   FULLSCREEN STATE
+   ================================================================ */
+
+let fullscreenActive = false;
+
 if (DEV_MODE) {
   pip.float.unlocked = true;
   console.log('[dev mode] float unlocked');
@@ -931,6 +1099,12 @@ document.addEventListener('keyup', (e) => {
 /* One-shot key actions — dialogue navigation, inspect trigger.
    Movement is handled via keysHeld in update() (held, not one-shot). */
 function handleKeyAction(code) {
+  // M — music toggle. Works at all times: gameplay, dialogue, cinematics.
+  if (code === 'KeyM') {
+    toggleMusic();
+    return;
+  }
+
   // Suppress all key actions during room transitions
   if (transition.active) return;
 
@@ -973,7 +1147,11 @@ function handleKeyAction(code) {
   // ---- Room mode ----
   if (!dialogue.active) {
     if (code === 'ArrowUp' || code === 'KeyW') {
-      tryInspect();
+      // Block inspect during opening sequence (Sprint 10.7)
+      if (openingSeq.state === 'complete') tryInspect();
+    }
+    if (code === 'KeyF') {
+      toggleFullscreen();
     }
     /* ESC → journal. Journal not built yet.
        Hint is forward-compatible scaffolding; pressing Esc does nothing this sprint. */
@@ -1008,6 +1186,9 @@ function loop(timestamp) {
    ================================================================ */
 
 function update(dt) {
+  // Opening sequence update (Sprint 10.7) — runs before anything else
+  updateOpeningSequence(dt);
+
   // Blink and float gravity always run — Pip is alive even during transitions
   updateBlink(dt);
   updateFloat(dt);
@@ -1026,8 +1207,8 @@ function update(dt) {
     }
   }
 
-  // Movement gated by dialogue, room transitions, and cinematic hold
-  if (!dialogue.active && !transition.active && !cinematic.active) {
+  // Movement gated by dialogue, room transitions, cinematic hold, AND opening sequence
+  if (!dialogue.active && !transition.active && !cinematic.active && openingSeq.state === 'complete') {
     const left  = movingLeft();
     const right = movingRight();
 
@@ -1041,14 +1222,15 @@ function update(dt) {
     }
     // When stationary, facing retains its last value.
 
-    // Clamp Pip to current room bounds
-    pip.x = Math.max(PIP_HALF_W, Math.min(rooms[currentRoom].pipMaxX, pip.x));
+    // Clamp Pip to current room bounds (uses per-room pipMinX from Sprint 10.7)
+    const roomMin = rooms[currentRoom].pipMinX !== undefined ? rooms[currentRoom].pipMinX : PIP_HALF_W;
+    pip.x = Math.max(roomMin, Math.min(rooms[currentRoom].pipMaxX, pip.x));
 
     // Room edge triggers — walk into the edge to change rooms
-    if (currentRoom === 'cabin' && pip.x >= rooms.cabin.width - PIP_HALF_W - 1) {
-      startTransition('hallway', 'fromLeft');
-    } else if (currentRoom === 'hallway' && pip.x <= PIP_HALF_W + 1) {
-      startTransition('cabin', 'fromRight');
+    // Sprint 10.7: cabin exits via left wall (door at x=120) back to hallway at cabin door position (480)
+    if (currentRoom === 'cabin' && pip.x <= rooms.cabin.pipMinX + 1) {
+      // Exit cabin through the door — return to hallway at the cabin door position
+      startTransition('hallway', 'fromRight', 464);   // just left of cabin door at hallway x=480
     } else if (currentRoom === 'grandparents' && pip.x <= PIP_HALF_W + 1) {
       // Return to hallway at the grandparents' door position
       startTransition('hallway', 'fromRight', 1164);
@@ -1145,6 +1327,44 @@ function updateBlink(dt) {
 }
 
 /* ================================================================
+   OPENING SEQUENCE (Sprint 10.7)
+   Materialization + yawn + narration. Runs once per hard game load.
+   Gates player input until 'complete'.
+   ================================================================ */
+
+function updateOpeningSequence(dt) {
+  if (openingSeq.state === 'complete') return;
+
+  if (openingSeq.state === 'materializing') {
+    openingSeq.elapsed += dt;
+
+    if (openingSeq.elapsed >= openingSeq.MATERIALIZE_T) {
+      // Materialization done — transition to narrating
+      openingSeq.state   = 'narrating';
+      openingSeq.elapsed = 0;
+
+      // Show opening narration after a brief pause
+      setTimeout(() => {
+        showDialogue({
+          id: 'opening-narration',
+          lines: [
+            { speaker: null, text: 'Pip yawns. He doesn\u2019t remember falling asleep, but that\u2019s not unusual. The hallway hums softly around him.', italic: false },
+          ],
+          choices: null,
+          onEnd() {
+            openingSeq.state           = 'complete';
+            chapterState.openingPlayed = true;
+            // Arm the passenger timer now that opening is done
+            passenger.firstEntryTimer  = 1.5;
+            setRoomStrip();
+          },
+        });
+      }, 200);
+    }
+  }
+}
+
+/* ================================================================
    CONTROLS STRIP
    ================================================================ */
 
@@ -1166,9 +1386,13 @@ function setControlsStrip(context) {
 }
 
 /* Pick 'room' or 'room-floatable' based on pip.float.unlocked.
-   Call this anywhere room-mode strip should be shown (kick-off, closeDialogue). */
+   Appends the fullscreen hint. Call anywhere room-mode strip should be shown. */
 function setRoomStrip() {
-  setControlsStrip(pip.float.unlocked ? 'room-floatable' : 'room');
+  const base = STRIP_STRINGS[pip.float.unlocked ? 'room-floatable' : 'room'] || '';
+  const fsHint = fullscreenActive ? '     F · EXIT FULLSCREEN' : '     F · FULLSCREEN';
+  const raw = base + fsHint;
+  document.getElementById('controls-strip').innerHTML =
+    raw.replace(/ {3,}/g, '<span style="display:inline-block;width:2.2em"></span>');
 }
 
 /* ================================================================
@@ -1413,15 +1637,120 @@ function render(now) {
     drawCinematicScene(cinematic.name, now);
   } else {
     rooms[currentRoom].draw(camX, now);
-    drawObjectAura(camX, now);
-    drawPip(pip.x - camX, pip.y - pip.float.altitude, now);
 
-    // Passenger drawn after Pip — renders in front when positions overlap,
-    // visually conveying "through Pip" (the no-one-can-see-me rule).
-    if (currentRoom === 'hallway' && passenger.active) {
-      drawPassenger(passenger.x - camX, FLOOR_Y, now);
+    // During materialization, draw Pip using a pixel-reveal mask.
+    // After materialization, draw normally.
+    if (openingSeq.state === 'materializing') {
+      drawObjectAura(camX, now);
+      drawPipMaterializing(pip.x - camX, pip.y - pip.float.altitude, now);
+    } else {
+      drawObjectAura(camX, now);
+      drawPip(pip.x - camX, pip.y - pip.float.altitude, now);
+
+      // Passenger drawn after Pip — renders in front when positions overlap,
+      // visually conveying "through Pip" (the no-one-can-see-me rule).
+      if (currentRoom === 'hallway' && passenger.active) {
+        drawPassenger(passenger.x - camX, FLOOR_Y, now);
+      }
     }
   }
+}
+
+/* ----------------------------------------------------------------
+   MATERIALIZING PIP (Sprint 10.7)
+   Draws Pip at partial opacity during the opening materialization sequence.
+   Uses a simple alpha-ramp for the pixel-by-pixel effect: starts nearly
+   transparent with random pixel-level noise, builds to full opacity.
+   Also applies the yawn animation (mouth open, eyes narrow).
+   ---------------------------------------------------------------- */
+
+function drawPipMaterializing(screenX, groundY, now) {
+  const progress = Math.min(1, openingSeq.elapsed / openingSeq.MATERIALIZE_T);
+
+  // Draw Pip to an offscreen canvas, then composite with a pixel-mask effect
+  // For simplicity: use canvas alpha + a random-pixel overlay for the "sprinkle" feel
+  const cx   = Math.round(screenX);
+  const foot = Math.round(groundY + Math.sin(now / 600) * 2);
+
+  ctx.save();
+  ctx.translate(cx, foot);
+  if (pip.body.facing === 'left') ctx.scale(-1, 1);
+
+  // Apply overall alpha ramp (0→0.85 over MATERIALIZE_T)
+  ctx.globalAlpha = progress * 0.85;
+
+  // Apply yawn modifications before drawing
+  const savedOpenness  = pip.eyes.openness;
+  const savedMouth     = { ...pip.mouth };
+  const yawnT = openingSeq.isYawning ? openingSeq.yawnT : 0;
+
+  if (yawnT > 0) {
+    // Eyes narrow during yawn: openness → slit
+    pip.eyes.openness = Math.max(0.1, 1 - yawnT * 0.9);
+  }
+
+  drawPipBody();
+  drawPipEyes();
+
+  // Yawn mouth: open wide at peak
+  if (yawnT > 0) {
+    drawPipMouthYawn(yawnT);
+  } else {
+    drawPipMouth();
+  }
+
+  // Restore
+  pip.eyes.openness = savedOpenness;
+  Object.assign(pip.mouth, savedMouth);
+
+  // Pixel-sprinkle overlay: random dark pixels that "reveal" as progress increases
+  // Creates a dithering dissolve effect on top of the fading alpha
+  if (progress < 0.95) {
+    const spriteW = 26, spriteH = 42;
+    const left = -spriteW / 2, top = -spriteH;
+    const pixelCount = spriteW * spriteH;
+    const hiddenRatio = 1 - progress;
+
+    // Draw dark "hidden" pixels randomly across the sprite area
+    ctx.globalAlpha = hiddenRatio * 0.6;
+    ctx.fillStyle   = '#080e20';   // room background color
+    // Use a seeded-ish pattern for stability (based on position, not random each frame)
+    for (let i = 0; i < pixelCount * hiddenRatio * 0.8; i++) {
+      // Use a deterministic but scattered pattern
+      const seed  = (i * 1664525 + 1013904223) & 0xffffffff;
+      const px    = left + ((seed & 0xff) % spriteW);
+      const py    = top  + (((seed >> 8) & 0xff) % spriteH);
+      ctx.fillRect(px, py, 1, 1);
+    }
+  }
+
+  ctx.restore();
+}
+
+/* Yawn mouth draw — replaces neutral dot with open oval */
+function drawPipMouthYawn(yawnT) {
+  const headCY = -PIP_H + 12;   /* −28 */
+  const m      = pip.mouth;
+
+  // Open mouth: oval shape, 4×3px at peak, tapers at start/end
+  const openW = Math.round(yawnT * 4);
+  const openH = Math.round(yawnT * 3);
+  if (openW < 2 || openH < 2) {
+    // Too small — draw the regular dot
+    ctx.globalAlpha = 0.65;
+    ctx.fillStyle   = '#1a1428';
+    ctx.fillRect(Math.round(m.offsetX), headCY + 8 + Math.round(m.offsetY), 2, 2);
+    return;
+  }
+
+  ctx.globalAlpha = 0.75;
+  ctx.fillStyle   = '#1a1428';
+  // Draw mouth oval centered at mouth position
+  const mx = Math.round(m.offsetX);
+  const my = headCY + 8 + Math.round(m.offsetY);
+  ctx.beginPath();
+  ctx.ellipse(mx + 1, my + 1, openW / 2, openH / 2, 0, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 /* ================================================================
@@ -1794,6 +2123,37 @@ function drawCabin(camX, now) {
     ctx.fillRect(bedSX + 2, bedGY + 3, bedGW - 14, 10);
     ctx.fillStyle = '#404470';
     ctx.fillRect(bedSX + 6, bedGY + 3, 28, 8);
+
+    // Lump-in-bed overlay (Sprint 10.7) — visible until Sprint 11 bed-reveal
+    // A soft body-shaped bump under the covers. Implied, not detailed.
+    if (!cabinState.bedRevealed) {
+      // Lump: long bump along bed length, slightly larger at head end
+      // Head end is at bedSX+bedGW-10 (headboard side)
+      const lumpX    = bedSX + 6;
+      const lumpY    = bedGY + 1;
+      const lumpW    = bedGW - 22;   // slightly shorter than bed
+      const lumpH    = 10;           // peak height
+
+      // Darken-shadow tint under lump
+      ctx.fillStyle   = 'rgba(20, 18, 48, 0.45)';
+      ctx.beginPath();
+      ctx.moveTo(lumpX, lumpY + lumpH);
+      ctx.quadraticCurveTo(lumpX + lumpW * 0.3, lumpY - 2, lumpX + lumpW * 0.85, lumpY + 2);
+      ctx.lineTo(lumpX + lumpW, lumpY + lumpH);
+      ctx.closePath();
+      ctx.fill();
+
+      // Lump body — faint darker tint suggesting bulk under covers
+      ctx.fillStyle   = 'rgba(50, 46, 88, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(lumpX, lumpY + lumpH);
+      // Slight shoulder rise near head end
+      ctx.quadraticCurveTo(lumpX + lumpW * 0.15, lumpY - 4, lumpX + lumpW * 0.35, lumpY - 2);
+      ctx.quadraticCurveTo(lumpX + lumpW * 0.55, lumpY - 3, lumpX + lumpW * 0.75, lumpY + 1);
+      ctx.quadraticCurveTo(lumpX + lumpW * 0.90, lumpY + 3, lumpX + lumpW, lumpY + lumpH);
+      ctx.closePath();
+      ctx.fill();
+    }
   }
 
   // Door — game-world x=120 (hallway door; Pip phases through at the GP door)
@@ -2066,8 +2426,10 @@ function startTransition(toRoom, entryEdge, entryX) {
 function updatePassenger(dt) {
   if (currentRoom !== 'hallway') return;
 
-  // Count down the first-entry spawn timer
-  if (!passenger.triggered && passenger.hallwayEntered && passenger.firstEntryTimer > 0) {
+  // Count down the first-entry spawn timer.
+  // Sprint 10.7: gate passenger spawn on opening sequence being complete.
+  if (!passenger.triggered && passenger.hallwayEntered && passenger.firstEntryTimer > 0
+      && openingSeq.state === 'complete') {
     passenger.firstEntryTimer -= dt;
     if (passenger.firstEntryTimer <= 0) {
       // Spawn just off the right edge of the visible canvas
@@ -2524,11 +2886,35 @@ function drawHallway(camX, now) {
     drawSconce(sx, fixtureY, { flicker: gx === 810, intensity: 0.7, now });
   }
 
+  // Left wall (Sprint 10.7) — visible end-cap at game-world x=0.
+  // Shows the hallway has a real terminus; player can see they can't go further left.
+  const leftWallSX = Math.round(0 - camX);
+  if (leftWallSX > -20 && leftWallSX < W + 20) {
+    const lwW = 20;
+    // Wall end-cap fill
+    ctx.fillStyle = '#0e1428';
+    ctx.fillRect(leftWallSX - lwW, 0, lwW, FLOOR_Y);
+    // Wall cap edge — a dark vertical line
+    ctx.strokeStyle = 'rgba(50,65,110,0.65)';
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(leftWallSX, 0);
+    ctx.lineTo(leftWallSX, FLOOR_Y);
+    ctx.stroke();
+    // Rivet strip on the cap face
+    drawShipPanel(leftWallSX - lwW, panelTop, lwW, panelH, {
+      strokeColor: 'rgba(50,70,120,0.30)',
+      rivetColor:  'rgba(60,80,130,0.50)',
+    });
+  }
+
   // Doors — six total; grandparents' door (1180) has warm glow
+  // Sprint 10.7: door at 480 is Pip's cabin door (Cabin 646)
   for (const gx of [80, 280, 480, 700, 920, 1180]) {
     const sx = Math.round(gx - camX);
     if (sx > W + doorW || sx < -doorW) continue;
-    drawDoor(sx, doorTop, { w: doorW, h: doorH, warm: gx === 1180 });
+    // Cabin door (480) gets a faint warm hint — it's Pip's room
+    drawDoor(sx, doorTop, { w: doorW, h: doorH, warm: gx === 1180 || gx === 480 });
   }
 
   // Far-right dark zone (game-world x 1320–1440)
@@ -2988,12 +3374,199 @@ function initMusic() {
 }
 
 /* ================================================================
+   FULLSCREEN
+   ================================================================ */
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.getElementById('game-wrap').requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  fullscreenActive = !!document.fullscreenElement;
+  if (!dialogue.active && !cinematic.active) {
+    setRoomStrip();
+  }
+  resizePaddingLights();
+});
+
+/* ================================================================
+   PADDING-FX LIGHTS — stars and fireflies in the decorative surround
+   ================================================================ */
+
+/* Simple seeded LCG PRNG — same pattern as pocong patch init. */
+function makePadLCG(seed) {
+  let s = seed >>> 0;
+  return () => { s = ((s * 1664525 + 1013904223) | 0) >>> 0; return s / 0x100000000; };
+}
+
+/* Stars — 40 fixed-position cold-white pinpricks that twinkle. */
+const PAD_STAR_COUNT = 40;
+let padStars = null;
+
+function initPadStars() {
+  const rng = makePadLCG(0xdeadbeef);
+  padStars = Array.from({ length: PAD_STAR_COUNT }, () => ({
+    fx:            rng(),                           // fractional x [0, 1]
+    fy:            rng(),                           // fractional y [0, 1]
+    twinklePeriod: 3 + rng() * 4,                  // 3–7 seconds
+    twinklePhase:  rng() * Math.PI * 2,
+  }));
+}
+
+/* Fireflies — 7 warm-amber drifters with compound sine motion. */
+const PAD_FF_COUNT = 20;
+let padFireflies  = null;
+
+function initPadFireflies(cw, ch) {
+  const rng = makePadLCG(0xc0ffee42);
+  padFireflies = Array.from({ length: PAD_FF_COUNT }, () => {
+    const pi  = 4 + rng() * 4;   // pulse interval (4–8 s)
+    return {
+      /* Base position — the compound sines oscillate around this. */
+      x: rng() * cw,
+      y: rng() * ch,
+      /* Two independent X oscillators: slow large sweep + fast small wobble */
+      ox1: { amp: 25 + rng() * 30, period: 5 + rng() * 7, phase: rng() * Math.PI * 2 },
+      ox2: { amp: 8  + rng() * 14, period: 2 + rng() * 3, phase: rng() * Math.PI * 2 },
+      /* Two independent Y oscillators */
+      oy1: { amp: 25 + rng() * 30, period: 5 + rng() * 7, phase: rng() * Math.PI * 2 },
+      oy2: { amp: 8  + rng() * 14, period: 2 + rng() * 3, phase: rng() * Math.PI * 2 },
+      /* Glow pulse */
+      pulseInterval:  pi,
+      pulseTimer:     rng() * pi,  // stagger so they don't pulse in sync
+      pulseActive:    false,
+      pulseAge:       0,
+      pulseDuration:  0.4 + rng() * 0.4,
+    };
+  });
+}
+
+function isPaddingVisible() {
+  const wrap = document.getElementById('game-wrap');
+  const game = document.getElementById('game');
+  if (!wrap || !game) return false;
+  const wr = wrap.getBoundingClientRect();
+  const gr = game.getBoundingClientRect();
+  return (gr.width < wr.width - 1) || (gr.height < wr.height - 1);
+}
+
+function resizePaddingLights() {
+  const el = document.getElementById('padding-lights');
+  if (!el) return;
+  el.width  = window.innerWidth;
+  el.height = window.innerHeight;
+  /* Reinit firefly base positions so they distribute across the new canvas size. */
+  padFireflies = null;
+}
+
+let padLightsLastT = null;
+
+function padLightsLoop(timestamp) {
+  requestAnimationFrame(padLightsLoop);
+
+  if (!isPaddingVisible()) {
+    padLightsLastT = null;
+    return;
+  }
+
+  if (!padStars) initPadStars();
+
+  const lightCanvas = document.getElementById('padding-lights');
+  if (!lightCanvas) return;
+  const lctx = lightCanvas.getContext('2d');
+  const cw = lightCanvas.width;
+  const ch = lightCanvas.height;
+
+  if (!padFireflies) initPadFireflies(cw, ch);
+
+  const t  = timestamp / 1000;
+  const dt = padLightsLastT !== null ? Math.min(t - padLightsLastT, 0.1) : 0;
+  padLightsLastT = t;
+
+  lctx.clearRect(0, 0, cw, ch);
+
+  /* Game rect for firefly culling — in viewport coordinates.
+     #padding-lights fills the viewport so canvas coords = viewport coords. */
+  const gameEl = document.getElementById('game');
+  const gr = gameEl ? gameEl.getBoundingClientRect() : null;
+
+  /* ---- Stars ---- */
+  padStars.forEach(s => {
+    const sx = s.fx * cw;
+    const sy = s.fy * ch;
+    const alpha = 0.3 + 0.6 * (0.5 + 0.5 * Math.sin(t * (Math.PI * 2 / s.twinklePeriod) + s.twinklePhase));
+    lctx.fillStyle = `rgba(232,232,240,${alpha.toFixed(3)})`;
+    lctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
+  });
+
+  /* ---- Fireflies ---- */
+  padFireflies.forEach(f => {
+    /* Advance pulse timer */
+    if (!f.pulseActive) {
+      f.pulseTimer -= dt;
+      if (f.pulseTimer <= 0) {
+        f.pulseActive = true;
+        f.pulseAge    = 0;
+      }
+    } else {
+      f.pulseAge += dt;
+      if (f.pulseAge >= f.pulseDuration) {
+        f.pulseActive = false;
+        f.pulseTimer  = f.pulseInterval;
+      }
+    }
+
+    /* Compound sine position */
+    const fx = f.x
+      + Math.sin(t * (Math.PI * 2 / f.ox1.period) + f.ox1.phase) * f.ox1.amp
+      + Math.sin(t * (Math.PI * 2 / f.ox2.period) + f.ox2.phase) * f.ox2.amp;
+    const fy = f.y
+      + Math.sin(t * (Math.PI * 2 / f.oy1.period) + f.oy1.phase) * f.oy1.amp
+      + Math.sin(t * (Math.PI * 2 / f.oy2.period) + f.oy2.phase) * f.oy2.amp;
+
+    /* Soft cull: skip drawing while over game area */
+    if (gr && fx >= gr.left && fx <= gr.right && fy >= gr.top && fy <= gr.bottom) return;
+    /* Skip if drifted out of canvas bounds */
+    if (fx < 0 || fx > cw || fy < 0 || fy > ch) return;
+
+    /* Glow alpha: base + pulse envelope */
+    let glowAlpha = 0.12;
+    if (f.pulseActive) {
+      const envelope = Math.sin((f.pulseAge / f.pulseDuration) * Math.PI);
+      glowAlpha = 0.12 + envelope * 0.35;
+    }
+
+    /* Glow */
+    const glowR = 7;
+    const grd = lctx.createRadialGradient(fx, fy, 0, fx, fy, glowR);
+    grd.addColorStop(0, `rgba(255,200,104,${glowAlpha.toFixed(3)})`);
+    grd.addColorStop(1, 'rgba(255,200,104,0)');
+    lctx.fillStyle = grd;
+    lctx.fillRect(fx - glowR, fy - glowR, glowR * 2, glowR * 2);
+
+    /* Core 2px dot */
+    const coreAlpha = Math.min(1, 0.7 + glowAlpha);
+    lctx.fillStyle = `rgba(255,200,104,${coreAlpha.toFixed(3)})`;
+    lctx.fillRect(Math.round(fx) - 1, Math.round(fy) - 1, 2, 2);
+  });
+}
+
+/* ================================================================
    KICK OFF
    ================================================================ */
 
 initMusic();
-setRoomStrip();
+// Sprint 10.7: opening sequence starts in 'materializing' state — clear the controls strip
+// until the narration fires (which sets it via setControlsStrip / setRoomStrip).
+setControlsStrip('');
+resizePaddingLights();
+window.addEventListener('resize', resizePaddingLights);
 requestAnimationFrame(loop);
+requestAnimationFrame(padLightsLoop);
 
 </script>
 </body>

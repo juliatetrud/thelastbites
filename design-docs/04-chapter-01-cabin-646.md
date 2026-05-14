@@ -5,6 +5,8 @@ The opening chapter. Establishes Pip, the world, the mechanics, the emotional st
 **Estimated playtime:** 15-20 minutes
 **Cinematics needed:** 9 (see art doc — note the doubled first-taste scene)
 **Rooms needed:** 5 (Cabin 646, Hallway, Grandparents' Cabin, Radio Room or Stairwell, Kitchen)
+
+*(Sprint 10.7 note: Pip now starts in the Hallway, not Cabin 646. The cabin is entered from the hallway. See Beat 1 rewrite below.)*
 **Recipe unlocked:** Norwegian lefse and gravlaks (with Norwegian pickles) — **Erik's favorite meal**, served by Henrik because the player doesn't know yet that Henrik had a son
 
 ---
@@ -17,58 +19,68 @@ Pip wakes in his cabin not knowing he's dead. Through the mirror, the truth land
 
 ## Beat-by-Beat
 
-### Beat 1: TITLE & WAKEUP (cinematic + transition)
-**Mode:** Cinematic 1 (WAKEUP)
+### Beat 1: WAKING IN THE HALLWAY (Sprint 10.7 rewrite)
+**Mode:** Room — Hallway (starting room)
 
-The title screen fades. Black. The hum of engines. The slow rock of the sea.
+*(Replaces the former cabin-start opening. Pip now materializes in the hallway, not the cabin.)*
 
-Narration appears as text:
-> *The hum of engines vibrates with the slow rock of the sea.*
-> *Pip opens his eyes with a yawn, still aboard the Mnemosyne.*
-> *(If you don't speak ancient Greek, Mnemosyne is pronounced Nem-OSS-uh-nee. Yes, it's a mouthful.)*
+**Neutral plane.** The ghost-world is gentle by design. Newly-dead spirits don't wake where their body sleeps — that would be too jarring. They wake in neutral planes: spaces of habit, transit, or shared use. The hallway of *The Mnemosyne* is Pip's neutral plane. He wakes here because something in the ghost-world is being kind to him. (See `01-story-bible.md` § Neutral planes.)
 
-Two slits of pale light open in the darkness — Pip's eyes. The cinematic dissolves into the room.
+**Opening sequence (Sprint 10.7 implementation):**
 
-**Note on the parenthetical:** This is the game's tone signature. The narrator is on the player's side, food-aware, gently self-aware. Future narration aims at this register.
+Pip materializes pixel-by-pixel into the leftmost end of the ship's hallway, mid-yawn. His sprite appears progressively over ~1.5 seconds — pixels revealing like a slow coming-into-focus. During the materialization, his mouth is wide open and his eyes are narrowed to slits: the yawn. He does not perceive the materialization as unusual. By the time the yawn finishes, he is fully materialized and idle.
+
+After the yawn completes, a dialogue box appears with opening narration:
+
+> *Pip yawns. He doesn't remember falling asleep, but that's not unusual. The hallway hums softly around him.*
+
+Player presses Space to dismiss. Player control begins.
+
+**Left wall:** Pip cannot move further left than his start position. The hallway has a visible left wall. Movement is right-only at game start until Pip naturally walks past the start zone.
+
+*(See Sprint 10.7 spec for materialization + yawn technical details. The sequence plays once per hard game load — refreshing the browser replays it.)*
 
 ---
 
-### Beat 2: WAKING IN THE CABIN (gameplay introduction)
+### Beat 2: WAKING IN THE CABIN (first cabin visit — now entered from hallway)
 **Mode:** Room — Cabin 646
 
-Pip materializes (fades in) standing at the foot of his bed. The lamp sways. Dust motes drift through warm light.
+*(The cabin is now a destination Pip enters from the hallway, not the starting room. The hallway is the home base; the cabin door in the hallway leads here.)*
 
-**Player gains control.** First text appears:
-> PIP: *I had the strangest dream…*
-> *[ ← → to walk. ↑ near things to look closer. ]*
+**Cabin door in the hallway (Sprint 10.7):** The cabin door is labeled Cabin 646. Inspection text:
+> *Cabin 646. Pip's cabin. The door is closed but unlocked.*
 
-A hint appears at the top of the screen: *"Try the mirror first."*
+Pressing `↑` near the door transitions into the cabin.
 
-The cabin contains four inspectable objects:
-- **Bed** (where Pip's body still lies, but he can't see it from this angle yet — it's covered)
-- **Nightstand** (Grandpa's reading glasses, half-finished glass of water)
-- **Porthole** (showing distant Norwegian coast)
-- **Mirror** (the trigger object)
-- **Cabin door** (the exit, locked until story progresses)
+**Lump-in-bed (Sprint 10.7):** From this sprint onward, the bed contains a **lump under the covers** — a soft shape suggesting a small body. A long bump along the bed's length, slightly larger toward where a head would be. No facial features, hair, or limbs are drawn. The lump is implied, not displayed.
 
-Players can inspect any of these in any order, but the hint guides them to the mirror.
+The lump carries the standard warm-amber aura (baseline ~0.15, not breadcrumb-elevated). This is ambient dread, not a directive. Pip can choose not to investigate.
 
-**Inspect text — Bed:**
-> *The bed is rumpled. Someone slept here recently. There's a small shape under the covers but you don't want to look closer.*
-> PIP: *…why don't I want to look?*
+**Inspect text — Bed (pre-reveal, Sprint 10.7):**
+> *I wonder what that lump is. Maybe I don't want to know.*
+*(Italic — Pip's interior thought.)*
 
-**Inspect text — Nightstand:**
-> *A glass of water, half-finished. A pair of reading glasses — Dziadek's.*
-> PIP: *He must have sat with me. All night, maybe.*
+**Inspect text — Bed (post-reveal, Sprint 11):**
+*(After the bed-reveal cinematic plays, gated on `cabinState.bedRevealed === true`):*
+> *Hmm, my old bed.*
+*(Italic — Pip's interior thought.)*
+
+**Other cabin inspectables (unchanged):**
+- **Porthole** (showing distant Norwegian coast) — unchanged
+- **Door** (the three-choice man-talking dialogue) — unchanged
 
 **Inspect text — Porthole:**
-> *Through the porthole, dark water and the lights of a far shore. Norway, the brochure had said. The first stop.*
-> PIP: *I never even got to see it.*
+> *Through the porthole, dark water sparkles and dances in the lights of a far shore. Norway, the brochure had said. The first stop.*
+> PIP: *"I never even got to see it."*
+
+*(Mirror moment is Beat 3 / Sprint 11, entered as a return to the cabin Pip has already been in.)*
 
 ---
 
-### Beat 3: THE MIRROR (inciting incident)
+### Beat 3: THE MIRROR (inciting incident — a return to the cabin)
 **Mode:** Cinematic 2 (MIRROR)
+
+*(Sprint 10.7 note: this is now a *return* to Cabin 646 — Pip has already been in the cabin earlier in the chapter. The dread has been building since he first saw the lump in the bed. The mirror gives him no choice but to confront what he has been walking past.)*
 
 Pip approaches the mirror. The screen transitions to the close-up cinematic. The melting face.
 

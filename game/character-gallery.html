@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Last Bites — Character Gallery</title>
+
+<!--
+  THE LAST BITES — Character Gallery
+  Sprint 09: Character visual identity, gallery scaffold, pilot batch
+
+  All characters at canonical Scale Anchor: door = 32×110 px.
+  Pilot batch of 6 fully designed: Pip, Pätu, Henrik, Babcia, Erik, Pocong.
+  Remaining characters shown as labeled placeholder slots.
+
+  Standalone reference page — does not affect game/index.html.
+  No build step. Vanilla JS. ImageRendering: pixelated.
+
+  See design-docs/08-character-reference-sheets.md for locked color
+  signatures, silhouette tells, and movement registers.
+-->
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0a0e1a;
+  --bg-mid:   #0e1428;
+  --text:     #c8a878;
+  --text-dim: #7a6848;
+  --accent:   #ffc868;
+  --border:   #2a3060;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Special Elite', monospace;
+  min-height: 100%;
+}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+#header {
+  padding: 24px 32px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-mid);
+}
+
+#header h1 {
+  font-size: 18px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+#header p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+/* Background toggle */
+#bg-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.bg-btn {
+  font-family: 'Special Elite', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.bg-btn:hover { color: var(--text); border-color: var(--text-dim); }
+.bg-btn.active { color: var(--accent); border-color: var(--accent); }
+
+/* Sticky nav */
+#gallery-nav {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#gallery-nav::-webkit-scrollbar { display: none; }
+
+#gallery-nav a {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 10px 16px;
+  border-top: 1px solid transparent;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+#gallery-nav a:hover { color: var(--text); border-top-color: var(--text-dim); }
+
+#sticky-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-mid);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── GALLERY ─────────────────────────────────────────────── */
+#gallery-main {
+  padding: 24px 32px 64px;
+}
+
+.gallery-section {
+  margin-bottom: 48px;
+}
+
+.section-header {
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+}
+.section-header span {
+  color: var(--accent);
+}
+
+.gallery-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* ── CELL ─────────────────────────────────────────────────── */
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.cell canvas {
+  display: block;
+  /* 150×170 internal → 2x CSS = 300×340 visual */
+  width: 300px;
+  height: 340px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 1px solid var(--border);
+}
+
+.cell-info {
+  width: 300px;
+  text-align: center;
+}
+
+.cell-name {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.cell-sig {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+}
+
+.cell-frac {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: #4a3828;
+  margin-bottom: 6px;
+}
+
+.speak-btn {
+  font-family: 'Special Elite', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 4px 14px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.speak-btn:hover { color: var(--text); border-color: var(--text-dim); }
+.speak-btn.speaking { color: var(--accent); border-color: var(--accent); }
+.speak-btn:disabled { opacity: 0.25; cursor: default; pointer-events: none; }
+
+/* Placeholder cell — slightly different styling */
+.cell.placeholder canvas { opacity: 0.7; }
+.cell.placeholder .cell-name { color: var(--text-dim); }
+</style>
+</head>
+
+<body>
+
+<div id="header">
+  <h1>The Last Bites — Character Gallery</h1>
+  <p>All characters at canonical Scale Anchor (door = 110 px).
+     Pilot batch of 6 designed. All others are labeled placeholder slots.</p>
+
+  <div id="bg-toggle">
+    <button class="bg-btn active" data-bg="dark">Moonlit Blue</button>
+    <button class="bg-btn" data-bg="warm">Warm Amber</button>
+    <button class="bg-btn" data-bg="neutral">Neutral</button>
+  </div>
+</div>
+
+<div id="sticky-nav">
+  <nav id="gallery-nav">
+    <a href="#sec-pip">Pip</a>
+    <a href="#sec-cats">The Cats</a>
+    <a href="#sec-greenpoint">Greenpoint</a>
+    <a href="#sec-ship">The Ship</a>
+    <a href="#sec-chefs">Chefs</a>
+    <a href="#sec-ghosts">Ghost-children</a>
+    <a href="#sec-monsters">Monsters</a>
+    <a href="#sec-echoes">Echo-creatures</a>
+  </nav>
+</div>
+
+<div id="gallery-main">
+
+  <div id="sec-pip" class="gallery-section">
+    <div class="section-header"><span>Pip</span></div>
+    <div class="gallery-row" id="row-pip"></div>
+  </div>
+
+  <div id="sec-cats" class="gallery-section">
+    <div class="section-header"><span>The Cats</span></div>
+    <div class="gallery-row" id="row-cats"></div>
+  </div>
+
+  <div id="sec-greenpoint" class="gallery-section">
+    <div class="section-header"><span>Greenpoint Family</span></div>
+    <div class="gallery-row" id="row-greenpoint"></div>
+  </div>
+
+  <div id="sec-ship" class="gallery-section">
+    <div class="section-header"><span>The Ship</span></div>
+    <div class="gallery-row" id="row-ship"></div>
+  </div>
+
+  <div id="sec-chefs" class="gallery-section">
+    <div class="section-header"><span>Chefs by Chapter</span></div>
+    <div class="gallery-row" id="row-chefs"></div>
+  </div>
+
+  <div id="sec-ghosts" class="gallery-section">
+    <div class="section-header"><span>Ghost-children</span></div>
+    <div class="gallery-row" id="row-ghosts"></div>
+  </div>
+
+  <div id="sec-monsters" class="gallery-section">
+    <div class="section-header"><span>Monsters</span></div>
+    <div class="gallery-row" id="row-monsters"></div>
+  </div>
+
+  <div id="sec-echoes" class="gallery-section">
+    <div class="section-header"><span>Echo-creatures</span></div>
+    <div class="gallery-row" id="row-echoes"></div>
+  </div>
+
+</div>
+
+<script>
+/* =============================================================
+   PALETTE — locked tokens from 03-art-and-aesthetic.md
+   ============================================================= */
+const C = {
+  // Background — moonlit blue
+  bgDeep:       '#0e1a3a',
+  bgBase:       '#1c2858',
+  bgShadow:     '#5a4878',
+  floor:        '#1a2848',
+  floorEdge:    '#0a1428',
+  // Warm amber region
+  warmBgDeep:   '#2a1408',
+  warmBgBase:   '#5a2c18',
+  warmFloor:    '#3a1c0a',
+  // Neutral gray
+  neutralDeep:  '#1a1a1a',
+  neutralBase:  '#2a2a2a',
+  neutralFloor: '#1a1a1a',
+  // Pip
+  pipBody:      '#f0f8ff',
+  pipBodyDeep:  '#c8d8ff',
+  pipEye:       '#1a1428',
+  pipBlush:     '#ff9888',
+  pipGlow:      '#a8c0ff',
+  // Pätu
+  catLight:     '#7a8298',
+  catMid:       '#5a6278',
+  catDark:      '#2a2f3a',
+  catBelly:     '#8a92a8',
+  catEye:       '#ffd84a',
+  catEyeBright: '#ffe88a',
+  catNose:      '#6a3a3a',
+  catMouth:     '#1a0808',
+  catEarInner:  '#8a4a4a',
+  // Henrik
+  hCoat:        '#f4eee0',
+  hApron:       '#e8d8b0',
+  hBeard:       '#aaaaa0',
+  hSkin:        '#d0b898',
+  hPipe:        '#3a2018',
+  hEmber:       '#a07040',
+  // Babcia
+  bKerchief:    '#8a2a2a',
+  bCoat:        '#2a1f28',
+  bCream:       '#e8d8b0',
+  bBrown:       '#5a3820',
+  bSkin:        '#d0b090',
+  // Erik
+  eHalo:        '#ffd8a8',
+  eHair:        '#3a2818',
+  eSweater:     '#5a4438',
+  eTrousers:    '#3a2818',
+  eSkin:        '#d0b890',
+  // Pocong
+  pShroud:      '#f4eee0',
+  pKnot:        '#b8a888',
+  // Door outline
+  doorOutline:  'rgba(100, 130, 200, 0.3)',
+  doorKnob:     'rgba(180, 160, 100, 0.35)',
+  // Dark eye / mouth
+  dark:         '#1a1428',
+};
+
+/* =============================================================
+   BACKGROUND STATE
+   ============================================================= */
+let currentBg = 'dark';
+
+function getBgColors() {
+  if (currentBg === 'warm') {
+    return { deep: C.warmBgDeep, base: C.warmBgBase, floor: C.warmFloor };
+  } else if (currentBg === 'neutral') {
+    return { deep: C.neutralDeep, base: C.neutralBase, floor: C.neutralFloor };
+  }
+  return { deep: C.bgDeep, base: C.bgBase, floor: C.floor };
+}
+
+/* =============================================================
+   DRAWING PRIMITIVES
+   ============================================================= */
+function rect(ctx, x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.round(x), Math.round(y), w, h);
+}
+
+function px(ctx, x, y, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+}
+
+/* =============================================================
+   CELL BACKGROUND
+   Canvas internal: 150×170 px
+   Floor: y=145, leaving 25px below for shadow/glow
+   Door: x=12–44 (32px wide), y=35–145 (110px tall)
+   Character center: cx=105
+   ============================================================= */
+const CANVAS_W = 150;
+const CANVAS_H = 170;
+const FLOOR_Y  = 145;
+const DOOR_X   = 12;
+const DOOR_Y   = 35;    // top of door
+const DOOR_W   = 32;
+const DOOR_H   = 110;
+const CHAR_CX  = 105;
+
+function drawCellBackground(ctx) {
+  const bg = getBgColors();
+  const grad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+  grad.addColorStop(0, bg.deep);
+  grad.addColorStop(0.6, bg.base);
+  grad.addColorStop(1, bg.floor);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  // floor line
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(0, FLOOR_Y, CANVAS_W, 1);
+}
+
+function drawDoorOutline(ctx) {
+  // Faint door silhouette on the left side
+  ctx.strokeStyle = C.doorOutline;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(DOOR_X + 0.5, DOOR_Y + 0.5, DOOR_W, DOOR_H);
+  // Doorknob
+  ctx.fillStyle = C.doorKnob;
+  ctx.fillRect(DOOR_X + DOOR_W - 5, FLOOR_Y - DOOR_H/2 - 1, 2, 2);
+  // Light frame detail — top of door arch suggestion
+  ctx.strokeStyle = 'rgba(80, 110, 180, 0.18)';
+  ctx.strokeRect(DOOR_X + 2.5, DOOR_Y + 2.5, DOOR_W - 4, DOOR_H - 4);
+}
+
+/* =============================================================
+   MOUTH ANIMATION
+   phase: 0=closed, 1=small-open, 2=open, 3=small-open
+   ~150ms per frame → phase = floor(t * 6.67) % 4
+   ============================================================= */
+function drawMouth(ctx, cx, y, t, speaking, dark) {
+  const col = dark ? '#1a0808' : C.dark;
+  if (!speaking) {
+    rect(ctx, cx - 1, y, 2, 1, col);
+    return;
+  }
+  const phase = Math.floor((t % 0.6) * 6.67) % 4;
+  if (phase === 0) {
+    // closed
+    rect(ctx, cx - 1, y, 2, 1, col);
+  } else if (phase === 1 || phase === 3) {
+    // small-open: two corner pixels
+    px(ctx, cx - 1, y, col);
+    px(ctx, cx + 1, y, col);
+    rect(ctx, cx - 1, y + 1, 3, 1, col);
+  } else {
+    // open
+    rect(ctx, cx - 1, y, 3, 1, col);
+    rect(ctx, cx - 1, y + 2, 3, 1, col);
+    px(ctx, cx - 2, y + 1, col);
+    px(ctx, cx + 2, y + 1, col);
+  }
+}
+
+/* =============================================================
+   FLOOR GLOW HELPER
+   ============================================================= */
+function drawFloorGlow(ctx, cx, floor, radius, color, alpha) {
+  const g = ctx.createRadialGradient(cx, floor, 0, cx, floor, radius);
+  g.addColorStop(0, color.replace(')', `, ${alpha})`).replace('rgb(', 'rgba(').replace('#', 'rgba(').replace(/rgba\(([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2}),/, (m, r, g2, b) => `rgba(${parseInt(r,16)},${parseInt(g2,16)},${parseInt(b,16)},`));
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(cx - radius, floor - radius/2, radius*2, radius);
+}
+
+/* simpler floor glow */
+function floorGlow(ctx, cx, floor, r, hexColor, a) {
+  const n = parseInt(hexColor.slice(1), 16);
+  const rv = (n >> 16) & 255, gv = (n >> 8) & 255, bv = n & 255;
+  const g = ctx.createRadialGradient(cx, floor, 0, cx, floor, r);
+  g.addColorStop(0, `rgba(${rv},${gv},${bv},${a})`);
+  g.addColorStop(1, `rgba(${rv},${gv},${bv},0)`);
+  ctx.fillStyle = g;
+  ctx.fillRect(cx - r, floor - 4, r*2, r/2 + 4);
+}
+
+/* =============================================================
+   ① PIP — scaled from 24px reference to 36px (~0.33 door)
+   Origin: (cx, floor) where cx = horizontal center of sprite
+   ============================================================= */
+function drawPip(ctx, cx, floor, t, speaking) {
+  const bob = Math.round(Math.sin(t * 1.8) * (speaking ? 1.5 : 1.0));
+  const scale = 1.5; // 24px * 1.5 = 36px
+
+  // Cool glow on floor
+  floorGlow(ctx, cx, floor, 18, '#a8c0ff', 0.5);
+
+  // Draw at 1.5x scale
+  ctx.save();
+  // Origin: bottom-center. Original drawPip has origin at bottom-left.
+  // Original sprite is 16px wide (body x+1 to x+15), so half-width = 8.
+  ctx.translate(cx - 8 * scale, floor - 24 * scale - bob);
+  ctx.scale(scale, scale);
+
+  // Soft halo
+  const halo = ctx.createRadialGradient(8, 12, 0, 8, 12, 16);
+  halo.addColorStop(0, 'rgba(240,248,255,0.25)');
+  halo.addColorStop(1, 'rgba(240,248,255,0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(-8, -4, 32, 32);
+
+  // Body rows (0–22 rows tall, from baseY=0)
+  const b = C.pipBody, bd = C.pipBodyDeep;
+  // Head (rows 0–8)
+  rect(ctx, 4, 0,  8, 1, b);
+  rect(ctx, 3, 1, 10, 1, b);
+  rect(ctx, 2, 2, 12, 1, b);
+  rect(ctx, 1, 3, 14, 1, b);
+  rect(ctx, 1, 4, 14, 1, b);
+  rect(ctx, 1, 5, 14, 1, b);
+  rect(ctx, 1, 6, 14, 1, b);
+  rect(ctx, 1, 7, 14, 1, b);
+  rect(ctx, 1, 8, 14, 1, b);
+  // Body (rows 9–20)
+  for (let r2 = 9; r2 <= 20; r2++) rect(ctx, 1, r2, 14, 1, b);
+  // Waves (rows 21–22)
+  rect(ctx, 1, 21, 4, 1, b); rect(ctx, 6, 21, 4, 1, b); rect(ctx, 11, 21, 4, 1, b);
+  rect(ctx, 1, 22, 3, 1, b); rect(ctx, 7, 22, 2, 1, b); rect(ctx, 12, 22, 3, 1, b);
+
+  // Subtle deep shadow on body side
+  rect(ctx, 1, 9, 2, 11, bd);
+
+  // Eyes
+  rect(ctx, 4, 7, 2, 2, C.pipEye);
+  rect(ctx, 10, 7, 2, 2, C.pipEye);
+  // Blush
+  rect(ctx, 3, 10, 2, 1, C.pipBlush);
+  rect(ctx, 11, 10, 2, 1, C.pipBlush);
+  // Mouth (local coords, in unscaled space)
+  if (!speaking) {
+    rect(ctx, 7, 10, 2, 1, C.pipEye);
+  } else {
+    const phase = Math.floor((t % 0.6) * 6.67) % 4;
+    if (phase === 0) {
+      rect(ctx, 7, 10, 2, 1, C.pipEye);
+    } else if (phase === 1 || phase === 3) {
+      px(ctx, 7, 10, C.pipEye);
+      px(ctx, 9, 10, C.pipEye);
+      rect(ctx, 7, 11, 3, 1, C.pipEye);
+    } else {
+      rect(ctx, 7, 10, 3, 1, C.pipEye);
+      rect(ctx, 7, 12, 3, 1, C.pipEye);
+      px(ctx, 6, 11, C.pipEye);
+      px(ctx, 10, 11, C.pipEye);
+    }
+  }
+
+  ctx.restore();
+}
+
+/* =============================================================
+   ② PÄTU — sitting, ported from patu-animation-test.html
+   22px tall, ~30px wide. Origin: bottom-left of bounding box.
+   Tail flick, ear twitch. No speak animation (Pätu doesn't speak).
+   ============================================================= */
+function drawPatu(ctx, cx, floor, t) {
+  // Place origin so Pätu is centered horizontally
+  const x = cx - 15; // half of ~30px width
+  const y = floor;
+  const baseY = y - 22;
+
+  // Tail flick: every 3.5s, a brief flicker
+  const tailFlick = (t % 3.5) < 0.25;
+  // Ear twitch: every 4s
+  const earTwitch = (t % 4.0) < 0.15 ? -1 : 0;
+
+  // Shadow
+  const sg = ctx.createRadialGradient(x + 14, y - 1, 0, x + 14, y - 1, 12);
+  sg.addColorStop(0, 'rgba(0,0,0,0.35)');
+  sg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sg;
+  ctx.fillRect(x + 2, y - 3, 24, 6);
+
+  // Tail (drawn first, behind body)
+  const tc = tailFlick ? C.catLight : C.catMid;
+  rect(ctx, x+2, baseY+16, 1, 1, tc);
+  rect(ctx, x+2, baseY+17, 2, 1, tc);
+  rect(ctx, x+3, baseY+18, 3, 1, tc);
+  rect(ctx, x+5, baseY+19, 4, 1, tc);
+  rect(ctx, x+8, baseY+20, 5, 1, tc);
+  px(ctx, x+2, baseY+16, C.catDark); // tip
+
+  // Body
+  rect(ctx, x+12, baseY+8,  8, 1, C.catMid);
+  rect(ctx, x+11, baseY+9,  10, 1, C.catMid);
+  rect(ctx, x+10, baseY+10, 12, 1, C.catMid);
+  rect(ctx, x+9,  baseY+11, 13, 1, C.catMid);
+  rect(ctx, x+8,  baseY+12, 14, 1, C.catMid);
+  rect(ctx, x+8,  baseY+13, 14, 1, C.catMid);
+  rect(ctx, x+7,  baseY+14, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+15, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+16, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+17, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+18, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+19, 15, 1, C.catMid);
+  // Paws
+  rect(ctx, x+9,  baseY+20, 3, 1, C.catMid);
+  rect(ctx, x+14, baseY+20, 3, 1, C.catMid);
+  rect(ctx, x+9,  baseY+21, 3, 1, C.catDark);
+  rect(ctx, x+14, baseY+21, 3, 1, C.catDark);
+  // Belly
+  rect(ctx, x+11, baseY+17, 6, 1, C.catBelly);
+  rect(ctx, x+11, baseY+18, 6, 1, C.catBelly);
+  // Tabby stripes
+  rect(ctx, x+11, baseY+11, 4, 1, C.catDark);
+  rect(ctx, x+17, baseY+11, 3, 1, C.catDark);
+  rect(ctx, x+10, baseY+14, 3, 1, C.catDark);
+  rect(ctx, x+16, baseY+14, 4, 1, C.catDark);
+
+  // Head
+  const et = earTwitch;
+  rect(ctx, x+8,  baseY+0+et, 1, 1, C.catMid);
+  rect(ctx, x+14, baseY+0+et, 1, 1, C.catMid);
+  rect(ctx, x+7,  baseY+1+et, 2, 1, C.catMid);
+  rect(ctx, x+14, baseY+1+et, 2, 1, C.catMid);
+  rect(ctx, x+7,  baseY+2, 3, 1, C.catMid);
+  rect(ctx, x+13, baseY+2, 3, 1, C.catMid);
+  px(ctx, x+8, baseY+2, C.catEarInner);
+  px(ctx, x+14, baseY+2, C.catEarInner);
+  rect(ctx, x+7,  baseY+3, 9, 1, C.catMid);
+  rect(ctx, x+6,  baseY+4, 11, 1, C.catMid);
+  rect(ctx, x+6,  baseY+5, 11, 1, C.catMid);
+  rect(ctx, x+6,  baseY+6, 11, 1, C.catMid);
+  rect(ctx, x+7,  baseY+7, 9, 1, C.catMid);
+  rect(ctx, x+8,  baseY+8, 5, 1, C.catMid);
+  // M stripe
+  px(ctx, x+8,  baseY+3, C.catDark);
+  px(ctx, x+11, baseY+3, C.catDark);
+  px(ctx, x+14, baseY+3, C.catDark);
+  // Eyes
+  rect(ctx, x+8,  baseY+5, 2, 2, C.catEye);
+  rect(ctx, x+13, baseY+5, 2, 2, C.catEye);
+  px(ctx, x+8,  baseY+5, C.catMouth);
+  px(ctx, x+14, baseY+5, C.catMouth);
+  px(ctx, x+9,  baseY+5, C.catEyeBright);
+  px(ctx, x+13, baseY+5, C.catEyeBright);
+  // Nose
+  px(ctx, x+11, baseY+7, C.catNose);
+  // Mouth
+  px(ctx, x+11, baseY+8, C.catMouth);
+}
+
+/* =============================================================
+   ③ HENRIK — ~66px tall, new design
+   White coat, amber-cream apron, gray beard, pipe, stoop.
+   ============================================================= */
+function drawHenrik(ctx, cx, floor, t, speaking) {
+  // Nod when speaking: slow sine every ~2.5s
+  const nodOffset = speaking ? Math.round(Math.sin(t * 2.5) * 0.8) : 0;
+  // Shoulder shift: brief 1px raise every ~5s (not while speaking)
+  const shoulderShift = (!speaking && (t % 5.0) < 0.18) ? -1 : 0;
+
+  floorGlow(ctx, cx, floor, 18, '#ffc868', 0.12);
+
+  // Feet / shoes
+  rect(ctx, cx-8, floor-4, 7, 4, '#2a1f28');
+  rect(ctx, cx+2, floor-4, 7, 4, '#2a1f28');
+
+  // Trouser legs
+  rect(ctx, cx-7, floor-20, 5, 16, '#3a3228');
+  rect(ctx, cx+2, floor-20, 5, 16, '#3a3228');
+
+  // Coat body
+  rect(ctx, cx-9, floor-52, 19, 32, C.hCoat);
+
+  // Apron (front center, amber-cream)
+  rect(ctx, cx-3, floor-50, 8, 30, C.hApron);
+
+  // Apron tie strings at waist
+  rect(ctx, cx-7, floor-22, 4, 1, C.hApron);
+  rect(ctx, cx+5, floor-22, 4, 1, C.hApron);
+
+  // Left arm (coat, loose)
+  rect(ctx, cx-13, floor-50, 4, 26, C.hCoat);
+  rect(ctx, cx-13, floor-24, 5, 4, '#d0c8a0'); // left hand cuff
+
+  // Right arm (slightly out — pipe side)
+  rect(ctx, cx+9, floor-46, 5, 22, C.hCoat);
+  rect(ctx, cx+9, floor-26, 5, 4, '#d0c8a0'); // right hand cuff
+
+  // Pipe (right hand)
+  rect(ctx, cx+14, floor-27, 9, 2, C.hPipe);  // stem horizontal
+  rect(ctx, cx+21, floor-30, 3, 4, C.hPipe);  // bowl
+  px(ctx, cx+22, floor-29, C.hEmber);          // ember
+  px(ctx, cx+22, floor-28, '#c88848');          // glow
+
+  // Pipe smoke
+  const sp = (t * 0.8) % 1;
+  const sAlpha = 0.4 - sp * 0.35;
+  ctx.fillStyle = `rgba(205,190,155,${sAlpha})`;
+  ctx.fillRect(cx+22, floor - 31 - Math.floor(sp * 5), 1, 1);
+  if (sp > 0.3) {
+    ctx.fillStyle = 'rgba(205,190,155,0.22)';
+    ctx.fillRect(cx+23, floor-35, 1, 1);
+  }
+  if (sp > 0.65) {
+    ctx.fillStyle = 'rgba(205,190,155,0.12)';
+    ctx.fillRect(cx+22, floor-38, 1, 1);
+  }
+
+  // Shoulders
+  rect(ctx, cx-10, floor-54+shoulderShift, 21, 4, C.hCoat);
+
+  // Neck
+  rect(ctx, cx+1, floor-57, 4, 3, C.hSkin);
+
+  // Head: stooped — head center at cx+3, top at floor-66
+  const hx = cx + 3;
+  const ht = floor - 66 + nodOffset;
+
+  rect(ctx, hx-4, ht+0, 8,  2, C.hSkin);  // head top
+  rect(ctx, hx-5, ht+2, 11, 4, C.hSkin);  // forehead/widest
+  rect(ctx, hx-5, ht+6, 11, 3, C.hSkin);  // mid face
+  rect(ctx, hx-4, ht+9, 9,  2, C.hSkin);  // jaw
+
+  // Beard covers lower face rows
+  rect(ctx, hx-4, ht+7, 9,  5, C.hBeard);
+
+  // Eyes (slightly weary, lower + angled — 1px asymmetry)
+  rect(ctx, hx-3, ht+4, 2, 2, '#2a1f28');
+  rect(ctx, hx+2, ht+4, 2, 2, '#2a1f28');
+  // Heavy brow suggestion
+  px(ctx, hx-3, ht+3, '#8a8078');
+  px(ctx, hx+2, ht+3, '#8a8078');
+
+  // Mouth (in beard area)
+  drawMouth(ctx, hx, ht+9, t, speaking, true);
+}
+
+/* =============================================================
+   ④ BABCIA — ~60px tall, new design
+   Red kerchief, dark coat, quilted squares, hands clasp/unclasp.
+   ============================================================= */
+function drawBabcia(ctx, cx, floor, t, speaking) {
+  const sway = Math.sin(t * 1.4) * 0.5;
+  const swayX = Math.round(sway);
+  // Hands cycle: clasped for ~half of each 2.5s
+  const handsClosed = ((t % 2.5) / 2.5) < 0.5;
+  // Head-bob down when speaking
+  const headBob = speaking ? Math.round(Math.sin(t * 2.8) * 0.7) : 0;
+
+  floorGlow(ctx, cx, floor, 17, '#8a2a2a', 0.15);
+
+  // Feet (small, slippers)
+  rect(ctx, cx-8+swayX, floor-3, 7, 3, '#4a3828');
+  rect(ctx, cx+1+swayX, floor-3, 7, 3, '#4a3828');
+
+  // Full coat (wide, soft outline) — the shape reads as "small stout woman"
+  rect(ctx, cx-11+swayX, floor-55, 23, 52, C.bCoat);
+
+  // Quilted-square grid on coat (3×2 cream then brown)
+  // top row cream
+  rect(ctx, cx-8+swayX, floor-47, 5, 5, C.bCream);
+  rect(ctx, cx-1+swayX, floor-47, 5, 5, C.bCream);
+  // second row cream
+  rect(ctx, cx-8+swayX, floor-39, 5, 5, C.bCream);
+  rect(ctx, cx-1+swayX, floor-39, 5, 5, C.bCream);
+  // bottom row brown
+  rect(ctx, cx-8+swayX, floor-31, 5, 4, C.bBrown);
+  rect(ctx, cx-1+swayX, floor-31, 5, 4, C.bBrown);
+  // quilt seam lines (dark)
+  rect(ctx, cx-9+swayX, floor-47, 1, 20, '#1a1620');
+  rect(ctx, cx-4+swayX, floor-47, 1, 20, '#1a1620');
+  rect(ctx, cx+4+swayX, floor-47, 1, 20, '#1a1620');
+
+  // Hands at apron level
+  if (handsClosed) {
+    rect(ctx, cx-3+swayX, floor-19, 6, 4, C.bSkin);  // clasped together
+  } else {
+    rect(ctx, cx-6+swayX, floor-19, 4, 4, C.bSkin);  // apart
+    rect(ctx, cx+2+swayX, floor-19, 4, 4, C.bSkin);
+  }
+
+  // Neck stub
+  rect(ctx, cx-2+swayX, floor-57, 4, 2, C.bSkin);
+
+  // Head — slightly forward, below the kerchief
+  const hx = cx + swayX;
+  const ht = floor - 60 + headBob;
+
+  rect(ctx, hx-4, ht+2, 9, 4, C.bSkin);   // face
+  rect(ctx, hx-3, ht+6, 7, 2, C.bSkin);   // chin
+
+  // Eyes (downcast — positioned lower, narrower)
+  rect(ctx, hx-3, ht+4, 2, 1, '#2a1f28');
+  rect(ctx, hx+1, ht+4, 2, 1, '#2a1f28');
+
+  // Mouth
+  drawMouth(ctx, hx, ht+7, t, speaking, true);
+
+  // KERCHIEF — the silhouette tell; drawn over head to read clearly
+  // Triangle dome — widens at base, ties fall at sides
+  rect(ctx, hx-5, ht-4, 11, 2, C.bKerchief);  // brim row
+  rect(ctx, hx-4, ht-6, 9,  2, C.bKerchief);  // one up
+  rect(ctx, hx-3, ht-8, 7,  2, C.bKerchief);  // narrowing
+  rect(ctx, hx-2, ht-10, 5, 2, C.bKerchief);  // near peak
+  rect(ctx, hx-1, ht-12, 3, 2, C.bKerchief);  // very top
+  // Kerchief sides falling to shoulders
+  rect(ctx, hx-6, ht-4, 2, 8, C.bKerchief);   // left fall
+  rect(ctx, hx+4, ht-4, 2, 8, C.bKerchief);   // right fall
+}
+
+/* =============================================================
+   ⑤ ERIK (GHOST FORM) — ~44px tall, new design
+   Translucent (α=0.7), warm-amber halo, visible human boy form.
+   Fast small bounce; bigger bounce when speaking.
+   ============================================================= */
+function drawErik(ctx, cx, floor, t, speaking) {
+  const bounceAmp = speaking ? 2.5 : 1.5;
+  const bounceY = Math.round(Math.sin(t * 3.8) * bounceAmp);
+  const alpha = 0.7;
+
+  // Warm-amber halo (spirit color)
+  const n = parseInt(C.eHalo.slice(1), 16);
+  const hr = (n >> 16)&255, hg2 = (n >> 8)&255, hb = n&255;
+  const hg = ctx.createRadialGradient(cx, floor-22+bounceY, 0, cx, floor-22+bounceY, 22);
+  hg.addColorStop(0, `rgba(${hr},${hg2},${hb},${alpha*0.45})`);
+  hg.addColorStop(1, `rgba(${hr},${hg2},${hb},0)`);
+  ctx.fillStyle = hg;
+  ctx.fillRect(cx-22, floor-44+bounceY, 44, 44);
+
+  // Translucent rendering
+  ctx.globalAlpha = alpha;
+
+  const by = floor + bounceY; // base y (foot level, bounced)
+
+  // Feet / shoes
+  rect(ctx, cx-5, by-3, 4, 3, C.eTrousers);
+  rect(ctx, cx+1, by-3, 4, 3, C.eTrousers);
+
+  // Legs (dark trousers)
+  rect(ctx, cx-5, by-16, 4, 13, C.eTrousers);
+  rect(ctx, cx+1, by-16, 4, 13, C.eTrousers);
+
+  // Body (sweater, warm-rust)
+  rect(ctx, cx-6, by-34, 13, 18, C.eSweater);
+  // Collar hint
+  rect(ctx, cx-2, by-35, 5, 1, C.eSkin);
+
+  // Arms (slightly out — expressive)
+  rect(ctx, cx-10, by-33, 4, 15, C.eSweater);
+  rect(ctx, cx+6,  by-33, 4, 15, C.eSweater);
+
+  // Head (~8×9 px)
+  const ht = by - 44;
+  rect(ctx, cx-4, ht,   8, 2, C.eSkin);  // top
+  rect(ctx, cx-5, ht+2, 10, 3, C.eSkin); // forehead
+  rect(ctx, cx-5, ht+5, 10, 3, C.eSkin); // mid
+  rect(ctx, cx-4, ht+8, 8,  2, C.eSkin); // chin
+
+  // Hair (dark cluster at crown — the key tell)
+  rect(ctx, cx-4, ht,   8, 2, C.eHair);  // hair top
+  rect(ctx, cx-5, ht+2, 2, 1, C.eHair);  // side hair
+  rect(ctx, cx+3, ht+2, 2, 1, C.eHair);
+
+  // Eyes (wide open, delighted)
+  rect(ctx, cx-3, ht+3, 2, 2, C.eHair);
+  rect(ctx, cx+1, ht+3, 2, 2, C.eHair);
+  // eye shine
+  px(ctx, cx-2, ht+3, '#c8d8c8');
+  px(ctx, cx+2, ht+3, '#c8d8c8');
+
+  // Mouth (slightly open in idle — delighted; mouth cycle when speaking)
+  if (!speaking) {
+    rect(ctx, cx-1, ht+7, 3, 1, '#3a1818'); // slightly open
+  } else {
+    // mouth cycle (local coords)
+    const phase = Math.floor((t % 0.6) * 6.67) % 4;
+    if (phase === 0) {
+      rect(ctx, cx-1, ht+7, 2, 1, '#3a1818');
+    } else if (phase === 1 || phase === 3) {
+      px(ctx, cx-1, ht+7, '#3a1818');
+      px(ctx, cx+1, ht+7, '#3a1818');
+      rect(ctx, cx-1, ht+8, 3, 1, '#3a1818');
+    } else {
+      rect(ctx, cx-1, ht+7, 3, 1, '#3a1818');
+      rect(ctx, cx-1, ht+9, 3, 1, '#3a1818');
+      px(ctx, cx-2, ht+8, '#3a1818');
+      px(ctx, cx+2, ht+8, '#3a1818');
+    }
+  }
+
+  ctx.globalAlpha = 1.0;
+}
+
+/* =============================================================
+   ⑥ POCONG — ~80px tall, new design
+   White capsule, three knots at base, closed eyes, hops.
+   ============================================================= */
+function drawPocong(ctx, cx, floor, t, speaking) {
+  // Hop animation: quick vertical jump every ~3.8s
+  const hopCycle = (t % 3.8) / 3.8;
+  const hopY = hopCycle < 0.12
+    ? -Math.round(Math.sin((hopCycle / 0.12) * Math.PI) * 3)
+    : 0;
+
+  // Eye flicker: open briefly every ~4.5s
+  const eyePhase = (t * 0.22) % 1;
+  const eyesOpen = eyePhase > 0.96;
+
+  // Shroud shimmer when speaking
+  const shimmer = speaking ? 0.12 + Math.sin(t * 9) * 0.08 : 0;
+
+  const by = floor + hopY; // base (floor) with hop offset
+
+  // Shadow on floor
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.fillRect(cx-8, floor-2, 16, 3);
+
+  // Shroud capsule body
+  // The shroud narrows at very top and tapers at base above the knots
+  rect(ctx, cx-3, by-80, 6,  2,  C.pShroud);  // very tip
+  rect(ctx, cx-5, by-78, 10, 2,  C.pShroud);  // upper cap
+  rect(ctx, cx-6, by-76, 12, 56, C.pShroud);  // main body
+  rect(ctx, cx-5, by-20, 10, 2,  C.pShroud);  // taper start
+  rect(ctx, cx-4, by-18, 8,  4,  C.pShroud);  // taper
+  rect(ctx, cx-3, by-14, 6,  6,  C.pShroud);  // lowest body
+  rect(ctx, cx-2, by-8,  4,  8,  C.pShroud);  // very bottom stub
+
+  // Three knot lines (horizontal, near base)
+  rect(ctx, cx-5, by-10, 10, 1, C.pKnot); // top knot
+  rect(ctx, cx-5, by-7,  10, 1, C.pKnot); // mid knot
+  rect(ctx, cx-5, by-4,  10, 1, C.pKnot); // bottom knot
+
+  // Face area: upper portion of shroud (~y=by-72 to by-62)
+  if (eyesOpen) {
+    // Eyes flutter open briefly
+    rect(ctx, cx-4, by-72, 4, 2, '#1a1428'); // left eye open
+    rect(ctx, cx+1, by-72, 4, 2, '#1a1428'); // right eye open
+  } else {
+    // Closed eyes: faint dark line (barely visible through shroud)
+    rect(ctx, cx-4, by-72, 4, 1, '#c0b090'); // left closed
+    rect(ctx, cx+1, by-72, 4, 1, '#c0b090'); // right closed
+  }
+
+  // Shroud shimmer (speaking) — edge alpha pulse
+  if (shimmer > 0.02) {
+    ctx.fillStyle = `rgba(255,253,240,${shimmer})`;
+    ctx.fillRect(cx-7, by-76, 1, 60); // left edge shimmer
+    ctx.fillRect(cx+6, by-76, 1, 60); // right edge shimmer
+    // Faint mouth line when speaking
+    if (speaking) {
+      ctx.fillStyle = 'rgba(60,30,20,0.35)';
+      ctx.fillRect(cx-2, by-65, 4, 1);
+    }
+  }
+}
+
+/* =============================================================
+   PLACEHOLDER CELL RENDERER
+   Shows character name, silhouette tells, color sig, door-fraction.
+   ============================================================= */
+function drawPlaceholder(ctx, name, tells, colorLabel, frac) {
+  drawCellBackground(ctx);
+  drawDoorOutline(ctx);
+
+  // Faint bounding box at canonical scale
+  const h = Math.round(parseFloat(frac) * DOOR_H);
+  const w = Math.max(10, Math.round(h * 0.45));
+  const boxX = CHAR_CX - w/2;
+  const boxY = FLOOR_Y - h;
+  ctx.strokeStyle = 'rgba(100, 110, 160, 0.22)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 2]);
+  ctx.strokeRect(boxX + 0.5, boxY + 0.5, w, h);
+  ctx.setLineDash([]);
+
+  // Door-fraction label inside box
+  ctx.fillStyle = 'rgba(90, 100, 160, 0.6)';
+  ctx.font = '7px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(frac, CHAR_CX, boxY + h/2 + 3);
+
+  // Character name in upper portion
+  ctx.fillStyle = 'rgba(150, 130, 90, 0.75)';
+  ctx.font = '8px "Special Elite", monospace';
+  ctx.fillText(name.toUpperCase(), CHAR_CX, boxY + 12);
+
+  // Color label in lower portion
+  if (colorLabel) {
+    ctx.fillStyle = 'rgba(120, 100, 70, 0.55)';
+    ctx.font = '7px "Special Elite", monospace';
+    // wrap at ~12 chars
+    const words = colorLabel.split(' ');
+    let line = '', lineY = boxY + h - 18;
+    words.forEach((w2, i) => {
+      if ((line + w2).length > 14) {
+        ctx.fillText(line.trim(), CHAR_CX, lineY);
+        line = w2 + ' ';
+        lineY += 9;
+      } else {
+        line += w2 + ' ';
+      }
+      if (i === words.length - 1) ctx.fillText(line.trim(), CHAR_CX, lineY);
+    });
+  }
+
+  ctx.textAlign = 'left';
+}
+
+/* =============================================================
+   CHARACTER DATA
+   designed: true  → full draw function
+   designed: false → placeholder
+   frac: door-fraction string shown on placeholder (numeric for box height)
+   ============================================================= */
+const CHARACTERS = [
+
+  // ── PIP ────────────────────────────────────────────────────
+  {
+    id: 'pip', name: 'Pip', section: 'pip', designed: true,
+    colorSig: 'cool-white', fracLabel: '0.35–0.40',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawPip(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
+  },
+
+  // ── CATS ───────────────────────────────────────────────────
+  {
+    id: 'patu', name: 'Pätu', section: 'cats', designed: true,
+    colorSig: 'gray tabby / yellow eyes', fracLabel: '0.18–0.22',
+    drawFn: (ctx, t, _speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawPatu(ctx, CHAR_CX, FLOOR_Y, t);
+    },
+    canSpeak: false,
+  },
+
+  // ── GREENPOINT ─────────────────────────────────────────────
+  {
+    id: 'babcia', name: 'Babcia', section: 'greenpoint', designed: true,
+    colorSig: 'kerchief-red / quilted coat', fracLabel: '0.55–0.65',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawBabcia(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
+  },
+  {
+    id: 'dziadek', name: 'Dziadek', section: 'greenpoint', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'wool deep-blue / flat cap',
+    tells: 'flat cap, deep-blue wool, patch squares',
+  },
+  {
+    id: 'pips-mother', name: "Pip's Mother", section: 'greenpoint', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'warm knit / blonde',
+    tells: 'blonde hair, warm casual knit',
+  },
+  {
+    id: 'pips-father', name: "Pip's Father", section: 'greenpoint', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'wool sweater / olive skin',
+    tells: 'broad-shouldered, wool sweater, olive skin',
+  },
+
+  // ── THE SHIP ───────────────────────────────────────────────
+  {
+    id: 'janitor', name: 'Janitor', section: 'ship', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'crew uniform slate',
+    tells: 'uniform, brass name-tag glint',
+  },
+  {
+    id: 'passenger', name: 'Passenger', section: 'ship', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'evening-wear black / white shirt',
+    tells: 'formal collar, white shirt-front',
+  },
+
+  // ── CHEFS ──────────────────────────────────────────────────
+  {
+    id: 'henrik', name: 'Henrik', section: 'chefs', designed: true,
+    colorSig: 'amber-cream apron', fracLabel: '0.55–0.65',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawHenrik(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
+  },
+  {
+    id: 'leida', name: 'Leida (Ch2)', section: 'chefs', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'cream apron / Estonian-blue headscarf',
+    tells: 'elder, bent slightly forward, headscarf',
+  },
+  {
+    id: 'muhittin', name: 'Muhittin (Ch4)', section: 'chefs', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'warm-rust sweater',
+    tells: 'young adult, rust sweater, cream apron',
+  },
+  {
+    id: 'omer', name: 'Omer (Ch4)', section: 'chefs', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'tennis-casual whites',
+    tells: 'athletic, whites, relaxed',
+  },
+  {
+    id: 'brian', name: 'Brian (Ch4)', section: 'chefs', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'tennis-casual / blue accent',
+    tells: 'similar to Omer, blue detail',
+  },
+  {
+    id: 'sandy-family', name: "Sandy's Family (Ch3)", section: 'chefs', designed: false,
+    frac: 0.55, fracLabel: 'group',
+    colorSig: 'warm-amber kitchen palette',
+    tells: 'warm kitchen group, multiple figures',
+  },
+  {
+    id: 'johannes', name: 'Johannes (Ch5)', section: 'chefs', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'brown / apron / beard',
+    tells: 'heavy-set adult, beard, apron, jolly stance',
+  },
+  {
+    id: 'tirta', name: 'Tirta (Ch6)', section: 'chefs', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'warung apron / warm-clay',
+    tells: 'compact adult, apron, clay-warm',
+  },
+  {
+    id: 'joana', name: 'Joana (Ch7)', section: 'chefs', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'forest-green accent',
+    tells: 'lean adult, sun-dark skin, forest green',
+  },
+  {
+    id: 'beatriz', name: 'Beatriz (Ch7)', section: 'chefs', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'faded cotton / apron',
+    tells: 'shorter adult, faded cotton dress',
+  },
+
+  // ── GHOST-CHILDREN ─────────────────────────────────────────
+  {
+    id: 'erik', name: 'Erik (ghost)', section: 'ghosts', designed: true,
+    colorSig: 'warm-amber glow / dark hair', fracLabel: '~0.40',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawErik(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
+  },
+  {
+    id: 'sandy-ghost', name: 'Sandy (ghost, Ch3)', section: 'ghosts', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'warm-amber translucent',
+    tells: 'adult male ghost, casual rumpled, self-possessed',
+  },
+  {
+    id: 'iris', name: 'Iris (Ch5)', section: 'ghosts', designed: false,
+    frac: 0.38, fracLabel: '0.35–0.40',
+    colorSig: 'sea-green-blue translucent',
+    tells: 'Edwardian collar, pale hair, girl-height',
+  },
+
+  // ── MONSTERS ──────────────────────────────────────────────
+  {
+    id: 'pocong', name: 'Pocong (Ch6)', section: 'monsters', designed: true,
+    colorSig: 'all-white shroud', fracLabel: '~0.73',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawPocong(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
+  },
+  {
+    id: 'haldjas', name: 'Haldjas (Ch2)', section: 'monsters', designed: false,
+    frac: 0.40, fracLabel: 'particle',
+    colorSig: 'warm gold-amber sparkles',
+    tells: 'particle cluster, no humanoid form, drifting amber sparks',
+  },
+  {
+    id: 'karakoncolos', name: 'Karakoncolos (Ch4)', section: 'monsters', designed: false,
+    frac: 0.70, fracLabel: '0.65–0.75',
+    colorSig: 'dark-furred / eye-glow [OPEN]',
+    tells: 'very large stooped hairy shape, frost-cloud, eerie still',
+  },
+  {
+    id: 'mamlambo', name: 'Mamlambo (Ch5)', section: 'monsters', designed: false,
+    frac: 0.65, fracLabel: 'serpent',
+    colorSig: 'blood-iron eye/coil',
+    tells: 'massive serpent, eye above porthole, blood-iron glow',
+  },
+  {
+    id: 'boitata', name: 'Boitatá (Ch7)', section: 'monsters', designed: false,
+    frac: 0.65, fracLabel: 'serpent',
+    colorSig: 'fire-amber / lantern-eyes',
+    tells: 'fire-serpent, coiled, fire-flicker body',
+  },
+  {
+    id: 'black-shuck', name: 'Black Shuck (Ch3)', section: 'monsters', designed: false,
+    frac: 0.40, fracLabel: 'low / wide',
+    colorSig: 'black-on-black / amber eyes',
+    tells: 'giant ghost-dog, low-to-ground, glowing amber eyes',
+  },
+  {
+    id: 'capuchin', name: 'Capuchin', section: 'monsters', designed: false,
+    frac: 0.25, fracLabel: '0.20–0.30',
+    colorSig: 'brown / white face patch',
+    tells: 'small monkey, white face/chest, perches high',
+  },
+
+  // ── ECHO-CREATURES ─────────────────────────────────────────
+  {
+    id: 'echo-fish-cod', name: 'Echo-fish (cod)', section: 'echoes', designed: false,
+    frac: 0.28, fracLabel: '0.25–0.30',
+    colorSig: 'warm-amber translucent',
+    tells: 'elongated fish, drifts mid-air',
+  },
+  {
+    id: 'echo-fish-haddock', name: 'Echo-fish (haddock)', section: 'echoes', designed: false,
+    frac: 0.28, fracLabel: '0.25–0.30',
+    colorSig: 'warm-amber translucent',
+    tells: 'elongated fish, drifts mid-air',
+  },
+  {
+    id: 'echo-fish-plaice', name: 'Echo-fish (plaice)', section: 'echoes', designed: false,
+    frac: 0.28, fracLabel: '0.25–0.30',
+    colorSig: 'warm-amber translucent',
+    tells: 'flat broad fish, drifts mid-air',
+  },
+  {
+    id: 'echo-deer', name: 'Echo-deer', section: 'echoes', designed: false,
+    frac: 0.38, fracLabel: '0.35–0.40',
+    colorSig: 'warm-amber translucent',
+    tells: 'full deer silhouette, crosses streets',
+  },
+  {
+    id: 'echo-cats', name: 'Echo-cats', section: 'echoes', designed: false,
+    frac: 0.21, fracLabel: '0.20–0.22',
+    colorSig: 'warm-amber translucent',
+    tells: 'cat silhouette, alley scenes',
+  },
+  {
+    id: 'ambient-vermin', name: 'Ambient vermin', section: 'echoes', designed: false,
+    frac: 0.10, fracLabel: '0.06–0.14',
+    colorSig: 'warm-amber very low alpha',
+    tells: 'tiny; spiders/mice/cockroaches at floor level',
+  },
+];
+
+/* =============================================================
+   CELL STATES
+   Per-cell: { canvas, ctx, char, speaking, t }
+   ============================================================= */
+const cells = [];
+
+function buildCell(char) {
+  // Create cell container
+  const cell = document.createElement('div');
+  cell.className = 'cell' + (char.designed ? '' : ' placeholder');
+  cell.id = 'cell-' + char.id;
+
+  // Canvas
+  const canvas = document.createElement('canvas');
+  canvas.width  = CANVAS_W;
+  canvas.height = CANVAS_H;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  cell.appendChild(canvas);
+
+  // Info
+  const info = document.createElement('div');
+  info.className = 'cell-info';
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'cell-name';
+  nameEl.textContent = char.name;
+  info.appendChild(nameEl);
+
+  const sigEl = document.createElement('div');
+  sigEl.className = 'cell-sig';
+  sigEl.textContent = char.colorSig;
+  info.appendChild(sigEl);
+
+  const fracEl = document.createElement('div');
+  fracEl.className = 'cell-frac';
+  fracEl.textContent = 'door-fraction ' + char.fracLabel;
+  info.appendChild(fracEl);
+
+  cell.appendChild(info);
+
+  // Speak button
+  if (char.designed) {
+    const btn = document.createElement('button');
+    btn.className = 'speak-btn';
+    if (char.canSpeak) {
+      btn.textContent = 'SPEAK ▶';
+      btn.addEventListener('click', () => {
+        state.speaking = !state.speaking;
+        btn.textContent = state.speaking ? 'SPEAK ■' : 'SPEAK ▶';
+        btn.classList.toggle('speaking', state.speaking);
+      });
+    } else {
+      btn.textContent = '— no dialogue —';
+      btn.disabled = true;
+    }
+    cell.appendChild(btn);
+  } else {
+    const btn = document.createElement('button');
+    btn.className = 'speak-btn';
+    btn.textContent = '— to be designed —';
+    btn.disabled = true;
+    cell.appendChild(btn);
+  }
+
+  // Per-cell state
+  const state = { speaking: false };
+
+  // Mount to section
+  const row = document.getElementById('row-' + char.section);
+  if (row) row.appendChild(cell);
+
+  return { canvas, ctx, char, state };
+}
+
+/* Build all cells */
+CHARACTERS.forEach(char => {
+  cells.push(buildCell(char));
+});
+
+/* =============================================================
+   RENDER LOOP
+   ============================================================= */
+let startTime = null;
+
+function render(ts) {
+  if (!startTime) startTime = ts;
+  const t = (ts - startTime) / 1000; // seconds
+
+  cells.forEach(({ canvas, ctx, char, state }) => {
+    if (char.designed) {
+      char.drawFn(ctx, t, state.speaking);
+      drawDoorOutline(ctx); // always on top of characters
+    } else {
+      drawPlaceholder(
+        ctx,
+        char.name,
+        char.tells || '',
+        char.colorSig || '',
+        char.frac || 0.55
+      );
+    }
+  });
+
+  requestAnimationFrame(render);
+}
+
+requestAnimationFrame(render);
+
+/* =============================================================
+   BACKGROUND TOGGLE
+   ============================================================= */
+document.querySelectorAll('.bg-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentBg = btn.dataset.bg;
+    document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

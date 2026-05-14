@@ -94,6 +94,8 @@ When commissioning art, specify the register:
 - **"Cinematic, Register B, memory, the lefse beat (6b)"** — gets you a painterly 480×270 image of *the boy Pip used to be*, with hair and apron, in Babcia's kitchen long ago
 - Without the register tag, an artist looking at the bible's "Owlboy / Hob's Barrow" references will produce Register B work even when Register A was wanted. This was an undocumented hazard in the original brief.
 
+*For locked per-character color signatures, silhouette tells, and movement registers, see [`08-character-reference-sheets.md` § Character visual identity](08-character-reference-sheets.md). For the visual gallery (every character drawn at canonical scale with idle and speaking animation), see [`game/character-gallery.html`](../game/character-gallery.html).*
+
 ---
 
 ## Resolution

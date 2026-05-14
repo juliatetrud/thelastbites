@@ -103,6 +103,8 @@ Rows marked **[PROPOSED]** are sized by the author of this doc using the Scale A
 
 *All dimensions are Register A (gameplay sprite). Cinematic figures use the same canonical scale as gameplay figures; cinematic closeness is achieved via camera zoom, not inflated character sizes. See `03-art-and-aesthetic.md` §Visual Registers and §Interactable object affordances.*
 
+*For the live visual reference — each character drawn at canonical scale with idle and speaking animation — see [`game/character-gallery.html`](../game/character-gallery.html). That gallery is the visual source-of-truth for character appearance; the table below is the numeric source-of-truth.*
+
 | Component | Door-fraction | Pixel dims (480×270) | Chapter(s) | Notes |
 |---|---|---|---|---|
 | Pip (ghost form, gameplay) | 0.35–0.40 H | 38–44 px tall | All | Canonical. `game/index.html` impl: `PIP_H = 40`. |

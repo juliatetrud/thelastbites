@@ -195,7 +195,7 @@ A running record of every sprint that has shipped, in order. Every future sprint
 | 08 | Component scale reference | 2026-05-14 | `09-component-scale-reference.md` and `game/scale-reference.html` with 12 flagged discrepancies. |
 | 08.5 | Scale reconciliation | 2026-05-14 | In-game sprite bumps (Pip, Babcia, Dziadek, Passenger); sparkle indicator redesigned as always-on aura; cinematic scale spec replaced with camera-zoom convention; 9 of 12 discrepancies resolved. |
 | 09.5 | Doc patch | 2026-05-14 | Echo-creature exception tier locked; italics convention documented; Sprint History established; remaining 3 discrepancies resolved. |
-| 09 | Character visual identity | — | (specced, not started) |
+| 09 | Character visual identity | 2026-05-14 | Character visual identity section locked in `08-character-reference-sheets.md`; pilot batch of 6 designed into `game/character-gallery.html`. |
 | 10 | Fullscreen padding | — | (specced, not started) |
 | 11 | Mirror beat | — | (specced, not started) |
 
@@ -350,6 +350,7 @@ A running list of locked decisions so they don't re-litigate.
 | 2026-05-14 | **Visible echo-creature exception tier locked.** Echo-fish (0.25–0.30 H, 28–33 px), echo-deer (0.35–0.40 H, ~40–44 px), and echo-cats (0.20–0.22 H, ~22–24 px) are formalized as a "visible echo-creature" exception to the standard echo-creature vermin band (0.06–0.14 H). Documented in `03-art-and-aesthetic.md` Scale Anchor table and `art-asset-list.md` echo-creature prompts. Closes Sprint 08 Discrepancies #9, #10, #11. |
 | 2026-05-14 | **Italics convention locked.** Roman = third-person narration. Italics = Pip's first-person interior thought (first-person voice, not third). Quoted = spoken dialogue with attribution. The earlier open question (whether italics should shift to third-person) is resolved: italics stay in Pip's first-person voice; the third-person/first-person split tracks the narrator/character split. Documented in `01-story-bible.md` Narrative Voice section with a worked example. |
 | 2026-05-14 | **Sprint History section established in doc 06.** Going forward, every sprint adds a row to the Sprint History table as part of its doc-hygiene work. This is the canonical record of what has shipped — the Decisions Log records *what was decided*, the Sprint History records *what was built*. |
+| 2026-05-14 | **Character visual identity locked.** Color signatures, silhouette tells, and per-character movement registers codified for the full named cast in `08-character-reference-sheets.md` § Character visual identity. The signatures extend the project's spirit-color logic (Pip cool-white, Iris sea-green-blue, etc.) to human characters: Henrik amber-cream, Babcia kerchief-red, Dziadek wool-deep-blue, Sandy warm-amber-with-brown-hair, Erik warm-amber translucent, etc. Movement registers locked per-character: each speaking character has a personal body/gesture flavor on top of universal mouth animation. Pilot batch of six characters (Pip, Pätu, Henrik, Babcia, Erik, Pocong) designed into `game/character-gallery.html` as the visual surface for ongoing cast design. Subsequent character sprints add to this gallery. The project's house style is anchored in Pip and Pätu as in-house references; no external aesthetic dominates. |
 
 ---
 

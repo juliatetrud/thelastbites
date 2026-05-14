@@ -108,7 +108,9 @@ Rows marked **[PROPOSED]** are sized by the author of this doc using the Scale A
 | Component | Door-fraction | Pixel dims (480×270) | Chapter(s) | Notes |
 |---|---|---|---|---|
 | Pip (ghost form, gameplay) | 0.35–0.40 H | 38–44 px tall | All | Canonical. `game/index.html` impl: `PIP_H = 40`. |
-| Adult NPC (representative) | 0.55–0.65 H | 60–72 px tall | All adult characters | Canonical. Henrik, Leida, Muhittin, Johannes, Tirta, Joana, Beatriz, Brian, Passenger, Janitor all in this band. |
+| Adult NPC (representative) | 0.55–0.65 H | 60–72 px tall | All adult characters | Canonical. Henrik body, Leida, Muhittin, Johannes, Tirta, Joana, Beatriz, Brian, Passenger, Janitor all in this band. |
+| Henrik (body only) | 0.65 H | 72 px | Ch1+ | Body at top of Adult NPC band. |
+| Henrik (total with chef's toque) | ~0.78 H | ~86 px | Ch1+ | Body 72 px + toque 14 px = 86 px total. Body within Adult NPC band; total figure with chef's toque exceeds the band — Henrik is authoritative-via-hat, not tall-via-body. |
 | Sandy (tall adult, Ch3) | 0.65–0.70 H | 72–77 px tall | Ch3 | Sandy is noticeably taller than other adults. Brown hair, beer belly, Scottish. |
 | Babcia (gameplay, seated) | ~0.55 H (lower end of Adult NPC band) | ~60 px | Ch1 grandparents room | Visibly shorter than Dziadek/Henrik. Seated figure reads ~0.55 H from top of bun to lap bottom. Impl updated Sprint 08.5. |
 | Dziadek (gameplay, standing) | 0.60–0.65 H | 66–72 px | Ch1 grandparents room | Standard Adult NPC. Impl updated Sprint 08.5. |

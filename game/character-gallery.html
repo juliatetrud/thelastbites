@@ -467,17 +467,18 @@ function floorGlow(ctx, cx, floor, r, hexColor, a) {
 }
 
 /* =============================================================
-   ① PIP — scaled from 24px reference to 36px (~0.33 door)
+   ① PIP — scaled from 24px reference to 40px (canonical 0.36 door)
+   Scale 1.6× matches PIP_H=40 in game/index.html (Sprint 08.5).
    Origin: (cx, floor) where cx = horizontal center of sprite
    ============================================================= */
 function drawPip(ctx, cx, floor, t, speaking) {
   const bob = Math.round(Math.sin(t * 1.8) * (speaking ? 1.5 : 1.0));
-  const scale = 1.5; // 24px * 1.5 = 36px
+  const scale = 1.6; // 24px * 1.6 = 38.4 → ~40px canonical
 
   // Cool glow on floor
   floorGlow(ctx, cx, floor, 18, '#a8c0ff', 0.5);
 
-  // Draw at 1.5x scale
+  // Draw at 1.6x scale
   ctx.save();
   // Origin: bottom-center. Original drawPip has origin at bottom-left.
   // Original sprite is 16px wide (body x+1 to x+15), so half-width = 8.
@@ -633,90 +634,88 @@ function drawPatu(ctx, cx, floor, t) {
 }
 
 /* =============================================================
-   ③ HENRIK — ~66px tall, new design
-   White coat, amber-cream apron, gray beard, pipe, stoop.
+   ③ HENRIK — 72 px body + 14 px toque = 86 px total
+   Near-black shirt + slacks, cream apron, white toque, pipe.
+   Sleek, fit, straight back. Sprint 09 polish.
    ============================================================= */
 function drawHenrik(ctx, cx, floor, t, speaking) {
-  // Nod when speaking: slow sine every ~2.5s
   const nodOffset = speaking ? Math.round(Math.sin(t * 2.5) * 0.8) : 0;
-  // Shoulder shift: brief 1px raise every ~5s (not while speaking)
-  const shoulderShift = (!speaking && (t % 5.0) < 0.18) ? -1 : 0;
 
   floorGlow(ctx, cx, floor, 18, '#ffc868', 0.12);
 
-  // Feet / shoes
-  rect(ctx, cx-8, floor-4, 7, 4, '#2a1f28');
-  rect(ctx, cx+2, floor-4, 7, 4, '#2a1f28');
+  // Shoes (near-black, 2px)
+  rect(ctx, cx-8, floor-2,  7, 2, '#1a1a24');
+  rect(ctx, cx+2, floor-2,  7, 2, '#1a1a24');
 
-  // Trouser legs
-  rect(ctx, cx-7, floor-20, 5, 16, '#3a3228');
-  rect(ctx, cx+2, floor-20, 5, 16, '#3a3228');
+  // Slacks (near-black, two columns)
+  rect(ctx, cx-7, floor-24, 5, 22, '#1a1a24');
+  rect(ctx, cx+2, floor-24, 5, 22, '#1a1a24');
 
-  // Coat body
-  rect(ctx, cx-9, floor-52, 19, 32, C.hCoat);
+  // Shirt body (near-black, torso + shoulders in one block)
+  rect(ctx, cx-10, floor-62, 21, 38, '#1a1a24');
 
-  // Apron (front center, amber-cream)
-  rect(ctx, cx-3, floor-50, 8, 30, C.hApron);
+  // Apron bib (cream, over chest)
+  rect(ctx, cx-4, floor-56, 10, 14, C.hApron);
+  // Apron skirt (cream, over waist)
+  rect(ctx, cx-6, floor-42, 14, 18, C.hApron);
+  // Apron waist tie strings
+  rect(ctx, cx-9, floor-42, 3, 1, C.hApron);
+  rect(ctx, cx+7, floor-42, 3, 1, C.hApron);
 
-  // Apron tie strings at waist
-  rect(ctx, cx-7, floor-22, 4, 1, C.hApron);
-  rect(ctx, cx+5, floor-22, 4, 1, C.hApron);
+  // Collar: small near-black V peeking above apron bib
+  px(ctx, cx,   floor-57, '#1a1a24');
+  px(ctx, cx-1, floor-58, '#1a1a24');
+  px(ctx, cx+1, floor-58, '#1a1a24');
 
-  // Left arm (coat, loose)
-  rect(ctx, cx-13, floor-50, 4, 26, C.hCoat);
-  rect(ctx, cx-13, floor-24, 5, 4, '#d0c8a0'); // left hand cuff
+  // Left sleeve (near-black), skin forearm
+  rect(ctx, cx-13, floor-56, 4, 18, '#1a1a24');
+  rect(ctx, cx-13, floor-38, 4, 12, C.hSkin);
 
-  // Right arm (slightly out — pipe side)
-  rect(ctx, cx+9, floor-46, 5, 22, C.hCoat);
-  rect(ctx, cx+9, floor-26, 5, 4, '#d0c8a0'); // right hand cuff
+  // Right sleeve (near-black), skin forearm for pipe grip
+  rect(ctx, cx+9,  floor-52, 5, 16, '#1a1a24');
+  rect(ctx, cx+10, floor-36, 4, 10, C.hSkin);
 
   // Pipe (right hand)
-  rect(ctx, cx+14, floor-27, 9, 2, C.hPipe);  // stem horizontal
-  rect(ctx, cx+21, floor-30, 3, 4, C.hPipe);  // bowl
-  px(ctx, cx+22, floor-29, C.hEmber);          // ember
-  px(ctx, cx+22, floor-28, '#c88848');          // glow
+  rect(ctx, cx+14, floor-28, 9, 2, C.hPipe);   // stem
+  rect(ctx, cx+21, floor-31, 3, 4, C.hPipe);   // bowl
+  px(ctx,  cx+22, floor-30, C.hEmber);          // ember
+  px(ctx,  cx+22, floor-29, '#c88848');          // glow
 
-  // Pipe smoke
+  // Pipe smoke (preserved animation)
   const sp = (t * 0.8) % 1;
   const sAlpha = 0.4 - sp * 0.35;
   ctx.fillStyle = `rgba(205,190,155,${sAlpha})`;
-  ctx.fillRect(cx+22, floor - 31 - Math.floor(sp * 5), 1, 1);
-  if (sp > 0.3) {
-    ctx.fillStyle = 'rgba(205,190,155,0.22)';
-    ctx.fillRect(cx+23, floor-35, 1, 1);
-  }
-  if (sp > 0.65) {
-    ctx.fillStyle = 'rgba(205,190,155,0.12)';
-    ctx.fillRect(cx+22, floor-38, 1, 1);
-  }
+  ctx.fillRect(cx+22, floor - 32 - Math.floor(sp * 5), 1, 1);
+  if (sp > 0.3)  { ctx.fillStyle = 'rgba(205,190,155,0.22)'; ctx.fillRect(cx+23, floor-36, 1, 1); }
+  if (sp > 0.65) { ctx.fillStyle = 'rgba(205,190,155,0.12)'; ctx.fillRect(cx+22, floor-39, 1, 1); }
 
-  // Shoulders
-  rect(ctx, cx-10, floor-54+shoulderShift, 21, 4, C.hCoat);
+  // Neck (skin)
+  rect(ctx, cx-2, floor-65, 5, 3, C.hSkin);
 
-  // Neck
-  rect(ctx, cx+1, floor-57, 4, 3, C.hSkin);
+  // Head (upright — centered at cx, no stoop)
+  const hx = cx;
+  const ht = floor - 72 + nodOffset;
 
-  // Head: stooped — head center at cx+3, top at floor-66
-  const hx = cx + 3;
-  const ht = floor - 66 + nodOffset;
-
-  rect(ctx, hx-4, ht+0, 8,  2, C.hSkin);  // head top
-  rect(ctx, hx-5, ht+2, 11, 4, C.hSkin);  // forehead/widest
+  rect(ctx, hx-4, ht,   9,  2, C.hSkin);  // head top
+  rect(ctx, hx-5, ht+2, 11, 4, C.hSkin);  // forehead
   rect(ctx, hx-5, ht+6, 11, 3, C.hSkin);  // mid face
-  rect(ctx, hx-4, ht+9, 9,  2, C.hSkin);  // jaw
 
-  // Beard covers lower face rows
-  rect(ctx, hx-4, ht+7, 9,  5, C.hBeard);
+  // Beard (gray, trimmed — lower half)
+  rect(ctx, hx-4, ht+5, 9, 5, C.hBeard);
 
-  // Eyes (slightly weary, lower + angled — 1px asymmetry)
-  rect(ctx, hx-3, ht+4, 2, 2, '#2a1f28');
-  rect(ctx, hx+2, ht+4, 2, 2, '#2a1f28');
-  // Heavy brow suggestion
-  px(ctx, hx-3, ht+3, '#8a8078');
-  px(ctx, hx+2, ht+3, '#8a8078');
+  // Eyes (kind, attentive)
+  rect(ctx, hx-3, ht+3, 2, 2, '#2a1f28');
+  rect(ctx, hx+2, ht+3, 2, 2, '#2a1f28');
+  px(ctx,  hx-3, ht+2, '#8a8078');
+  px(ctx,  hx+2, ht+2, '#8a8078');
 
   // Mouth (in beard area)
   drawMouth(ctx, hx, ht+9, t, speaking, true);
+
+  // Toque — tall white pillar (moves with head nod)
+  rect(ctx, hx-6, ht-2,  13, 2, '#d8d4c0');   // band (warm cream, 2px)
+  rect(ctx, hx-6, ht-12, 13, 10, '#f0f0e8');  // crown body (10px)
+  rect(ctx, hx-5, ht-14, 11, 2,  '#f0f0e8');  // dome tip, slightly narrower (2px)
 }
 
 /* =============================================================

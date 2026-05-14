@@ -21,7 +21,7 @@ Every named character has one primary color or color cluster that functions as t
 |---|---|---|
 | Pip | `#f0f8ff` cool-white | Locked. Ghost body color. |
 | Pätu | Gray-tabby (`#7a8298` light / `#5a6278` mid / `#2a2f3a` dark) with yellow eyes `#ffd84a` | Locked. |
-| Henrik present-day | **`#e8d8b0` amber-cream apron**, gray beard `#aaaaa0`, white chef's coat `#f4eee0` | Apron is the silhouette tell that reads at sprite scale. |
+| Henrik present-day | **`#e8d8b0` amber-cream apron** + near-black shirt/slacks `#1a1a24` + white chef's toque `#f0f0e8`, gray beard `#aaaaa0` | Tall white toque + cream apron against near-black silhouette. High contrast against moonlit-blue rooms. |
 | Babcia | **`#8a2a2a` kerchief-red** + quilted-square pattern in cream `#e8d8b0` and brown `#5a3820`; dark coat base `#2a1f28` | The kerchief is the silhouette tell. |
 | Dziadek | **`#2a3a5a` wool deep-blue** + dark-charcoal flat cap `#1a1f2a`; carries the same cream/red patch-squares visible on Babcia's coat | The patches carry her with him. |
 | Erik (ghost form) | **`#ffd8a8` warm-amber translucent** glow + dark-brown hair `#3a2818` + Norwegian working-family clothes (sweater `#5a4438`, trousers `#3a2818`) | At-peace warm. Alpha 0.7. |
@@ -59,7 +59,7 @@ One-line key tells per character. For full design notes see the individual chara
 |---|---|
 | Pip | Round bald ghost, three waves at base, no hair, no clothing |
 | Pätu | Small gray tabby — pointed ears, curled tail, yellow eyes |
-| Henrik | Tall adult, amber-cream apron band, pipe in right hand, stooped |
+| Henrik | Tall adult — tall white chef's toque on top, cream-white apron over near-black shirt and slacks, pipe in right hand, sleek and fit |
 | Babcia | Shorter adult, red kerchief dome on top, wide soft coat with small grid squares |
 | Dziadek | Adult male, flat cap, slightly taller than Babcia, narrower silhouette |
 | Erik (ghost) | Translucent boy with visible hair, small dark-hair cluster at crown |
@@ -247,9 +247,9 @@ Reference implementation: scripted passenger NPC in `game/index.html`, establish
 
 **Role:** The mentor. Head chef of the *Mnemosyne*. Hub character across all chapters.
 **Chapter:** Ch1 introduction; recurring hub across all chapters.
-**Door-fraction:** 0.55–0.65 (60–72 px).
-**Color signature:** Amber-cream apron `#e8d8b0`. See Table A.
-**Silhouette tell:** Tall adult, amber-cream apron band down the center, pipe in right hand, stooped — the stoop is load-bearing. Pipe-smoke drifts.
+**Door-fraction (body):** 0.65 H (72 px). **Total with toque:** ~0.78 H (~86 px). Body within Adult NPC band; tall white chef's toque pushes total figure above the band — Henrik is authoritative-via-hat, not tall-via-body.
+**Color signature:** Tall white chef's toque `#f0f0e8` + amber-cream apron `#e8d8b0` over near-black shirt + slacks `#1a1a24`. Gray beard `#aaaaa0`. See Table A.
+**Silhouette tell:** Tall white chef's toque (~14 px) pillared above the head. Cream-white apron over near-black button-up and slacks — high-contrast silhouette in moonlit-blue rooms. Pipe in right hand, smoke drifting. Sleek, fit, straight-backed; subtle head-incline at most.
 **Movement register:** See Table C.
 
 Norwegian. In his sixties. Has worked on cruise ships for thirty years. Lost his son Erik and his wife Henrietta in a boating accident — he was there, could not reach them. That is why he can see Pip.

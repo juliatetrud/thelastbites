@@ -354,6 +354,240 @@
     transition: opacity 0.2s ease;
     z-index: 45;
   }
+
+  /* ============================================================
+     SPRINT 13: STOMACH INDICATOR
+     Top-left corner HUD. The chewing-boy stomach meter.
+     See 03b-ui-spec.md §3 for full spec.
+     ============================================================ */
+  #stomach-indicator {
+    position: absolute;
+    top: 4%;
+    left: 5%;
+    width: 44px;
+    height: 56px;
+    pointer-events: none;
+    z-index: 60;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  #stomach-indicator.visible { opacity: 1; }
+  #stomach-canvas {
+    width: 44px;
+    height: 56px;
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* ============================================================
+     SPRINT 13: NOTEBOOK ICON
+     Top-right corner HUD. Destination for pickup tweens.
+     ============================================================ */
+  #notebook-icon {
+    position: absolute;
+    top: 4%;
+    right: 5%;
+    width: 28px;
+    height: 36px;
+    cursor: pointer;
+    z-index: 60;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  #notebook-icon.visible { opacity: 1; }
+  #notebook-icon-canvas {
+    width: 28px;
+    height: 36px;
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* Warm-pulse animation on pickup arrival */
+  @keyframes notebook-pulse {
+    0%   { filter: brightness(1) drop-shadow(0 0 0px rgba(255,200,104,0)); }
+    40%  { filter: brightness(1.6) drop-shadow(0 0 8px rgba(255,200,104,0.9)); }
+    100% { filter: brightness(1) drop-shadow(0 0 0px rgba(255,200,104,0)); }
+  }
+  #notebook-icon.pulse {
+    animation: notebook-pulse 0.5s ease-out forwards;
+  }
+
+  /* ============================================================
+     SPRINT 13: PICKUP TWEEN LAYER
+     Absolutely-positioned canvas that overlays the game for
+     item-tween animations (treat flying to notebook icon).
+     ============================================================ */
+  #tween-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 65;
+  }
+
+  /* ============================================================
+     SPRINT 13: BLINK-BACK OVERLAY
+     Fades in/out during blink-back sequence.
+     z-index: 75 — above dialogue.
+     ============================================================ */
+  #blink-back-overlay {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 75;
+    transition: opacity 0.3s ease;
+  }
+
+  /* Centered italic narration that appears after respawn */
+  #blink-back-text {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(14px, 2.1vw, 20px);
+    color: var(--text-narration);
+    text-align: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    z-index: 76;
+    text-shadow: 0 0 12px rgba(0,0,0,0.9);
+    white-space: nowrap;
+  }
+
+  /* ============================================================
+     SPRINT 13: NOTEBOOK SCREEN
+     Full-screen overlay opened with TAB.
+     Three pages: Recipes, Memories, Items.
+     See 03b-ui-spec.md §5.
+     ============================================================ */
+  #notebook-screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.8);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 80;
+  }
+  #notebook-screen.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* The open book spread */
+  #notebook-spread {
+    width: 86%;
+    max-width: 900px;
+    aspect-ratio: 16 / 10;
+    background: #e8dcc0;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.7);
+    display: flex;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Spine */
+  #notebook-spread::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #c8b898;
+    transform: translateX(-50%);
+  }
+
+  .notebook-page {
+    flex: 1;
+    padding: 6% 7%;
+    overflow: hidden;
+  }
+  .notebook-page-left  { border-right: 1px solid #c8b898; }
+  .notebook-page-right { padding-left: 8%; }
+
+  .notebook-page-title {
+    font-family: 'Special Elite', serif;
+    font-size: clamp(10px, 1.4vw, 14px);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #3a2410;
+    margin-bottom: 6%;
+  }
+
+  .notebook-items-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8%;
+  }
+
+  .notebook-item-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .notebook-item-icon {
+    width: 24px;
+    height: 24px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  .notebook-item-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(9px, 1.2vw, 12px);
+    color: #3a2410;
+    text-align: center;
+  }
+
+  .notebook-item-annotation {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(8px, 1vw, 10px);
+    color: #6a4820;
+    text-align: center;
+  }
+
+  .notebook-empty-note {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(11px, 1.5vw, 15px);
+    color: #8a7858;
+    text-align: center;
+    margin-top: 30%;
+  }
+
+  .notebook-page-nav {
+    position: absolute;
+    bottom: 4%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .notebook-page-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #c8b898;
+    transition: background 0.2s ease;
+  }
+  .notebook-page-dot.active { background: #3a2410; }
+
+  /* Controls strip during notebook */
+  /* (Reuses existing #controls-strip positioning; setControlsStrip handles content) */
 </style>
 </head>
 <body>
@@ -392,6 +626,44 @@
       <div id="dialogue-speaker"></div>
       <div id="dialogue-text"></div>
       <div id="dialogue-choices"></div>
+    </div>
+
+    <!-- Sprint 13: Stomach indicator — top-left HUD.
+         Canvas-drawn procedural placeholder. See 03b-ui-spec.md §3. -->
+    <div id="stomach-indicator">
+      <canvas id="stomach-canvas" width="44" height="56"></canvas>
+    </div>
+
+    <!-- Sprint 13: Notebook icon — top-right HUD.
+         Pickup tween destination; TAB shortcut. -->
+    <div id="notebook-icon" title="Notebook (TAB)">
+      <canvas id="notebook-icon-canvas" width="28" height="36"></canvas>
+    </div>
+
+    <!-- Sprint 13: Tween layer — for pickup animations flying to notebook icon -->
+    <canvas id="tween-layer" width="480" height="270"></canvas>
+
+    <!-- Sprint 13: Blink-back overlay + respawn narration text -->
+    <div id="blink-back-overlay"></div>
+    <div id="blink-back-text">The ship lets him back in.</div>
+
+    <!-- Sprint 13: Notebook screen — TAB opens this full-screen overlay -->
+    <div id="notebook-screen">
+      <div id="notebook-spread">
+        <div class="notebook-page notebook-page-left" id="notebook-page-left">
+          <div class="notebook-page-title" id="notebook-left-title">Recipes</div>
+          <div id="notebook-left-content" class="notebook-empty-note">Recipe unlocked after first meal.</div>
+        </div>
+        <div class="notebook-page notebook-page-right" id="notebook-page-right">
+          <div class="notebook-page-title" id="notebook-right-title">Memories</div>
+          <div id="notebook-right-content" class="notebook-empty-note">Memories collected here.</div>
+        </div>
+        <div class="notebook-page-nav" id="notebook-page-nav">
+          <div class="notebook-page-dot" data-page="0"></div>
+          <div class="notebook-page-dot" data-page="1"></div>
+          <div class="notebook-page-dot active" data-page="2"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Controls strip: persistent context-sensitive bottom hint.
@@ -439,6 +711,18 @@ const HALL_W = 1440;           // hallway width — 3× canvas width
 const canvas = document.getElementById('canvas');
 const ctx    = canvas.getContext('2d');
 
+/* Sprint 13: tween layer canvas (for pickup animations) */
+const tweenLayer = document.getElementById('tween-layer');
+const tweenCtx   = tweenLayer.getContext('2d');
+
+/* Sprint 13: stomach indicator canvas */
+const stomachCanvas = document.getElementById('stomach-canvas');
+const stomachCtx    = stomachCanvas.getContext('2d');
+
+/* Sprint 13: notebook icon canvas */
+const notebookIconCanvas = document.getElementById('notebook-icon-canvas');
+const notebookIconCtx    = notebookIconCanvas.getContext('2d');
+
 /* ================================================================
    GAME STATE
    ================================================================ */
@@ -485,6 +769,19 @@ const pip = {
     altitude: 0,
     vy:       0,
   },
+
+  /* Sprint 13: stomach state (the hunger meter, 03b-ui-spec.md §3).
+     Drained by world hazards only — never by puzzle failure.
+     Refilled by collecting treats (↓) and eating chef meals.
+     At 0: triggers blink-back (see triggerBlinkBack). */
+  stomach: {
+    value:    100,   // current level, 0–100
+    max:      100,   // max level
+    baseline: 60,    // restored-to value after blink-back
+  },
+
+  /* Sprint 13: squat animation when ↓ pressed with no collectible nearby */
+  squatTimer: 0,   // counts down from SQUAT_DURATION; >0 means squatting
 };
 
 /* ================================================================
@@ -526,6 +823,75 @@ const mirrorBeat = {
 const chapterState = {
   openingPlayed: false, // true once the materialization/yawn/narration sequence completes
 };
+
+/* ================================================================
+   SPRINT 13: STOMACH + BLINK-BACK CONSTANTS
+   ================================================================ */
+
+const SQUAT_DURATION = 0.25;   // seconds pip squats on empty ↓
+const BLINK_FADE_T   = 1.2;    // pip fades out over this time
+const BLINK_BLACK_T  = 0.4;    // holds on black
+const BLINK_RISE_T   = 1.0;    // pip fades back in
+const BLINK_TEXT_T   = 2.0;    // narration visible duration after respawn
+
+/* ================================================================
+   SPRINT 13: BLINK-BACK STATE
+   ================================================================ */
+
+const blinkBack = {
+  active:  false,
+  phase:   'idle',    // 'idle'|'fading'|'black'|'rising'|'narrating'
+  timer:   0,
+  pipAlpha: 1.0,
+};
+
+/* ================================================================
+   SPRINT 13: ACTIVE TWEENS
+   Array of in-progress pickup-tween animations.
+   Each tween: { sx, sy, ex, ey, t, duration, sprite, onComplete }
+   sx/sy = start canvas coords; ex/ey = end canvas coords;
+   t = elapsed seconds; duration = total seconds.
+   sprite = string key for drawTreatSprite()
+   ================================================================ */
+
+const activeTweens = [];
+
+/* ================================================================
+   SPRINT 13: NOTEBOOK STATE
+   ================================================================ */
+
+const notebook = {
+  open:     false,
+  page:     0,          // 0=Recipes, 1=Memories, 2=Items (set by openNotebook each time)
+  items:    [],         // collected treats/items: {id, name, annotation, kind, sprite}
+};
+
+/* ================================================================
+   SPRINT 13: COLLECTIBLES
+   Defined alongside each room's objects array. Collected items are
+   removed by marking collected:true on the object.
+   Shape: { id, x, type:'collectible', kind:'treat'|'item',
+            sprite, name, annotation, stomachValue, collected }
+   ================================================================ */
+
+/* --- DEBUG HALLWAY COLLECTIBLE ---
+   Temporary: a Bamsemums placed in the hallway for testing the collect
+   system before the kitchen room exists.
+   Remove or re-gate when the kitchen room is built (see sprint spec §c). */
+const hallwayCollectibles = [
+  {
+    id:           'debug-bamsemums',
+    x:            400,             // mid-hallway, accessible after opening sequence
+    type:         'collectible',
+    kind:         'treat',
+    sprite:       'bamsemums',
+    name:         'Bamsemums',
+    annotation:   'Bamsemums \u2014 from Henrik, in the kitchen.',
+    stomachValue: 25,
+    collected:    false,
+    tutorialNarrated: false,       // true once the proximity auto-narration has fired
+  },
+];
 
 /* ================================================================
    OPENING SEQUENCE STATE
@@ -987,36 +1353,39 @@ const grandparentsObjects = [
 
 const rooms = {
   cabin: {
-    width:    ROOM_W,                      // 960
-    pipMaxX:  ROOM_W - PIP_HALF_W,         // 952 — right wall
-    pipMinX:  PIP_HALF_W,                  //   8 — left wall (can't exit left)
-    objects:  cabinObjects,
-    draw:     drawCabin,                   // defined below (hoisted)
+    width:       ROOM_W,                      // 960
+    pipMaxX:     ROOM_W - PIP_HALF_W,         // 952 — right wall
+    pipMinX:     PIP_HALF_W,                  //   8 — left wall (can't exit left)
+    objects:     cabinObjects,
+    collectibles: [],                         // Sprint 13: no cabin collectibles yet
+    draw:        drawCabin,                   // defined below (hoisted)
     pipEntryX: {
-      fromLeft:  PIP_HALF_W + 8,           //  16 — entering from hallway side
-      fromRight: ROOM_W - PIP_HALF_W - 8,  // 944 — entering from initial start (unused currently)
+      fromLeft:  PIP_HALF_W + 8,              //  16 — entering from hallway side
+      fromRight: ROOM_W - PIP_HALF_W - 8,     // 944 — entering from initial start (unused currently)
     },
   },
   hallway: {
-    width:    HALL_W,                      // 1440
-    pipMaxX:  1312,                        // 1320 − PIP_HALF_W — stops before dark zone
-    pipMinX:  PIP_HALF_W + 4,             //   16 — left wall (Sprint 10.7: visible wall added)
-    objects:  hallwayObjects,
-    draw:     drawHallway,                 // defined below (hoisted)
+    width:       HALL_W,                      // 1440
+    pipMaxX:     1312,                        // 1320 − PIP_HALF_W — stops before dark zone
+    pipMinX:     PIP_HALF_W + 4,              //   16 — left wall (Sprint 10.7: visible wall added)
+    objects:     hallwayObjects,
+    collectibles: hallwayCollectibles,        // Sprint 13: debug Bamsemums for testing
+    draw:        drawHallway,                 // defined below (hoisted)
     pipEntryX: {
-      fromLeft:  PIP_HALF_W + 8,           //  16 — entering from left
-      fromRight: HALL_W - PIP_HALF_W - 8,  // 1424 — entering from right (future use)
+      fromLeft:  PIP_HALF_W + 8,              //  16 — entering from left
+      fromRight: HALL_W - PIP_HALF_W - 8,     // 1424 — entering from right (future use)
     },
   },
   grandparents: {
-    width:    720,
-    pipMaxX:  720 - PIP_HALF_W,            // 712 — right wall
-    pipMinX:  PIP_HALF_W,                  //   8 — left wall
-    objects:  grandparentsObjects,
-    draw:     drawGrandparents,            // defined below (hoisted)
+    width:       720,
+    pipMaxX:     720 - PIP_HALF_W,            // 712 — right wall
+    pipMinX:     PIP_HALF_W,                  //   8 — left wall
+    objects:     grandparentsObjects,
+    collectibles: [],                         // Sprint 13: no grandparents collectibles
+    draw:        drawGrandparents,            // defined below (hoisted)
     pipEntryX: {
-      fromLeft:  PIP_HALF_W + 8,           //  16 — entering from door
-      fromRight: 720 - PIP_HALF_W - 8,     // 704 — entering from right
+      fromLeft:  PIP_HALF_W + 8,              //  16 — entering from door
+      fromRight: 720 - PIP_HALF_W - 8,        // 704 — entering from right
     },
   },
 };
@@ -1183,13 +1552,14 @@ const keysHeld = Object.create(null);
 
 document.addEventListener('keydown', (e) => {
   keysHeld[e.code] = true;
-  // Prevent arrow keys / space from scrolling the page
+  // Prevent arrow keys / space / TAB from scrolling or focus-navigating the page
   if (
     e.code === 'ArrowLeft'  ||
     e.code === 'ArrowRight' ||
     e.code === 'ArrowUp'    ||
     e.code === 'ArrowDown'  ||
-    e.code === 'Space'
+    e.code === 'Space'      ||
+    e.code === 'Tab'
   ) {
     e.preventDefault();
   }
@@ -1257,17 +1627,47 @@ function handleKeyAction(code) {
   // During cinematic hold (dialogue closed but cinematic still active): block room input
   if (cinematic.active) return;
 
+  // ---- Notebook open mode ----
+  if (notebook.open) {
+    if (code === 'Tab') {
+      closeNotebook();
+    } else if (code === 'ArrowLeft') {
+      notebookTurnPage(-1);
+    } else if (code === 'ArrowRight') {
+      notebookTurnPage(1);
+    }
+    // ESC from notebook: reserved for pause menu (Sprint 05 TODO)
+    return;
+  }
+
   // ---- Room mode ----
   if (!dialogue.active) {
     if (code === 'ArrowUp' || code === 'KeyW') {
       // Block inspect during opening sequence (Sprint 10.7)
       if (openingSeq.state === 'complete') tryInspect();
     }
+    if (code === 'ArrowDown' || code === 'KeyS') {
+      // Sprint 13: ↓ COLLECT
+      if (openingSeq.state === 'complete' && !blinkBack.active && activeTweens.length === 0) {
+        tryCollect();
+      }
+    }
+    if (code === 'Tab') {
+      // Sprint 13: TAB opens notebook
+      if (openingSeq.state === 'complete' && !blinkBack.active) {
+        openNotebook();
+      }
+    }
     if (code === 'KeyF') {
       toggleFullscreen();
     }
-    /* ESC → journal. Journal not built yet.
-       Hint is forward-compatible scaffolding; pressing Esc does nothing this sprint. */
+    // ESC: reserved for pause menu (Sprint 05 TODO)
+    // TODO: ESC reserved for pause menu — Sprint 05
+
+    // Sprint 13: DEBUG — Shift+Minus drains stomach by 10 for testing blink-back
+    if (code === 'Minus' && (keysHeld['ShiftLeft'] || keysHeld['ShiftRight'])) {
+      loseStrength(10);
+    }
   }
 }
 
@@ -1355,6 +1755,45 @@ function update(dt) {
   }
 
   updatePassenger(dt);
+
+  // Sprint 13: squat timer decay
+  if (pip.squatTimer > 0) {
+    pip.squatTimer = Math.max(0, pip.squatTimer - dt);
+  }
+
+  // Sprint 13: blink-back update
+  updateBlinkBack(dt);
+
+  // Sprint 13: controls strip proximity update (only in room mode, not during tweens)
+  if (!dialogue.active && !cinematic.active && !notebook.open && !blinkBack.active && activeTweens.length === 0) {
+    updateRoomStripForProximity();
+  }
+
+  // Sprint 13: tutorial auto-narration for debug Bamsemums proximity
+  checkCollectibleTutorialNarration();
+}
+
+/* Sprint 13: fire one-time tutorial narration on first approach to a collectible */
+function checkCollectibleTutorialNarration() {
+  if (dialogue.active || cinematic.active || blinkBack.active || activeTweens.length > 0) return;
+  const room = rooms[currentRoom];
+  if (!room.collectibles) return;
+  for (const c of room.collectibles) {
+    if (!c.collected && !c.tutorialNarrated && Math.abs(pip.x - c.x) < 30) {
+      c.tutorialNarrated = true;
+      showDialogue({
+        id: `tutorial-collect-${c.id}`,
+        lines: [
+          { speaker: null, text: `A small bag of ${c.name}, foam-and-chocolate bears, sits on the counter.`, italic: false },
+          { speaker: null, text: "Henrik didn\u2019t say they were for him. They are.", italic: true },
+          { speaker: null, text: `He could pocket this. \u2193 to collect. He\u2019ll find it later in his notebook.`, italic: true },
+        ],
+        choices: null,
+        onEnd: null,
+      });
+      break;
+    }
+  }
 }
 
 /* ----------------------------------------------------------------
@@ -1574,6 +2013,8 @@ function updateOpeningSequence(dt) {
             // Arm the passenger timer now that opening is done
             passenger.firstEntryTimer  = 1.5;
             setRoomStrip();
+            // Sprint 13: show HUD once opening completes
+            showHUD();
           },
         });
       }, 200);
@@ -1586,11 +2027,13 @@ function updateOpeningSequence(dt) {
    ================================================================ */
 
 const STRIP_STRINGS = {
-  'room':                 '← →  MOVE     ↑  LOOK     ESC  JOURNAL',
-  'room-floatable':       '← →  MOVE     ↑  LOOK     SPACE  FLOAT     ESC  JOURNAL',
+  // Sprint 13: ↓ COLLECT added; TAB NOTEBOOK replaces ESC JOURNAL
+  'room':                 '← →  MOVE     ↑  LOOK     ↓  COLLECT     TAB  NOTEBOOK     ESC  PAUSE',
+  'room-floatable':       '← →  MOVE     ↑  LOOK     ↓  COLLECT     SPACE  FLOAT     TAB  NOTEBOOK     ESC  PAUSE',
   'atmospheric-dialogue': '←  BACK     SPACE  CONTINUE',
   'interactive-dialogue': '←  BACK     ↑↓  CHOOSE     SPACE  SELECT',
   'cinematic':            'SPACE  CONTINUE     ESC  SKIP',
+  'notebook':             '← →  TURN PAGE     TAB  CLOSE     ESC  PAUSE',
 };
 
 function setControlsStrip(context) {
@@ -1610,6 +2053,33 @@ function setRoomStrip() {
   const raw = base + fsHint;
   document.getElementById('controls-strip').innerHTML =
     raw.replace(/ {3,}/g, '<span style="display:inline-block;width:2.2em"></span>');
+}
+
+/* Sprint 13: update the controls strip for collectible proximity.
+   When Pip is near a collectible, replaces '↓  COLLECT' with
+   '↓  COLLECT [NAME]' in warm amber. Called from update() each frame. */
+function updateRoomStripForProximity() {
+  if (notebook.open || blinkBack.active || dialogue.active || cinematic.active) return;
+  const room = rooms[currentRoom];
+  if (!room.collectibles) return;
+  for (const c of room.collectibles) {
+    if (!c.collected && Math.abs(pip.x - c.x) < 18) {
+      // Near a collectible — inject the named version
+      const base = STRIP_STRINGS[pip.float.unlocked ? 'room-floatable' : 'room'] || '';
+      const fsHint = fullscreenActive ? '     F · EXIT FULLSCREEN' : '     F · FULLSCREEN';
+      const raw = base + fsHint;
+      // Replace the '↓  COLLECT' segment with the named version in amber
+      const named = raw.replace(
+        '↓  COLLECT',
+        `↓  COLLECT <span style="color:var(--warm-pool-amber)">${c.name.toUpperCase()}</span>`
+      );
+      document.getElementById('controls-strip').innerHTML =
+        named.replace(/ {3,}/g, '<span style="display:inline-block;width:2.2em"></span>');
+      return;
+    }
+  }
+  // Not near any collectible — set normal room strip
+  setRoomStrip();
 }
 
 /* ================================================================
@@ -1867,6 +2337,90 @@ function tryInspect() {
   }
 }
 
+/* ---- Sprint 13: Attempt to collect the nearest collectible (↓) ---- */
+function tryCollect() {
+  if (dialogue.active) return;
+  const room = rooms[currentRoom];
+  if (!room.collectibles) { pip.squatTimer = SQUAT_DURATION; return; }
+  for (const c of room.collectibles) {
+    if (!c.collected && Math.abs(pip.x - c.x) < 18) {
+      pickupCollectible(c);
+      return;
+    }
+  }
+  // Nothing nearby — squat animation
+  pip.squatTimer = SQUAT_DURATION;
+}
+
+/* ---- Sprint 13: Execute pickup of a collectible ---- */
+function pickupCollectible(c) {
+  c.collected = true;
+
+  // Add to notebook items
+  notebook.items.push({
+    id:         c.id,
+    name:       c.name,
+    annotation: c.annotation,
+    kind:       c.kind,
+    sprite:     c.sprite,
+  });
+  renderNotebookItems();
+
+  // Compute canvas positions for the tween
+  // Start: collectible world position → canvas position
+  const camX = getCameraX();
+  const sx = c.x - camX;
+  const sy = FLOOR_Y - 30;   // approximate sprite y on canvas
+
+  // End: notebook icon DOM position → canvas position
+  const notebookEl = document.getElementById('notebook-icon');
+  const gameEl     = document.getElementById('game');
+  const gameRect   = gameEl.getBoundingClientRect();
+  const nbRect     = notebookEl.getBoundingClientRect();
+  const scaleX     = W / gameRect.width;
+  const scaleY     = H / gameRect.height;
+  const ex = (nbRect.left + nbRect.width  / 2 - gameRect.left) * scaleX;
+  const ey = (nbRect.top  + nbRect.height / 2 - gameRect.top)  * scaleY;
+
+  // Enqueue the pickup tween
+  activeTweens.push({
+    sx, sy, ex, ey,
+    t: 0,
+    duration: 0.6,
+    sprite: c.sprite,
+    kind:   c.kind,
+    stomachValue: c.stomachValue || 0,
+    onComplete() {
+      // Pulse the notebook icon
+      const icon = document.getElementById('notebook-icon');
+      icon.classList.remove('pulse');
+      void icon.offsetWidth; // reflow to restart animation
+      icon.classList.add('pulse');
+      // If treat: chain stomach refill
+      if (c.kind === 'treat') {
+        gainStrength(c.stomachValue);
+      }
+    },
+  });
+
+  // Lock input during tween
+  setControlsStrip('');
+}
+
+/* ---- Sprint 13: Stomach strength functions ---- */
+function gainStrength(amount) {
+  pip.stomach.value = Math.min(pip.stomach.max, pip.stomach.value + amount);
+  renderStomachIndicator();
+}
+
+function loseStrength(amount) {
+  pip.stomach.value = Math.max(0, pip.stomach.value - amount);
+  renderStomachIndicator();
+  if (pip.stomach.value <= 0) {
+    triggerBlinkBack();
+  }
+}
+
 /* ---- Sync the dialogue DOM to current dialogue state ---- */
 function updateDialogueDOM() {
   const line = dialogue.node.lines[dialogue.lineIndex];
@@ -1891,6 +2445,10 @@ function getCameraX() {
 function render(now) {
   const camX = getCameraX();
 
+  // Sprint 13: compute dt for tween update (use last frame's now)
+  const dt = render._lastNow !== null ? Math.min((now - render._lastNow) / 1000, 0.1) : 0;
+  render._lastNow = now;
+
   ctx.clearRect(0, 0, W, H);
 
   if (cinematic.active) {
@@ -1899,6 +2457,9 @@ function render(now) {
   } else {
     rooms[currentRoom].draw(camX, now);
 
+    // Sprint 13: collect auras (warm hum) for collectibles in current room
+    drawCollectAuras(camX, now);
+
     // During materialization, draw Pip using a pixel-reveal mask.
     // After materialization, draw normally.
     if (openingSeq.state === 'materializing') {
@@ -1906,7 +2467,16 @@ function render(now) {
       drawPipMaterializing(pip.x - camX, pip.y - pip.float.altitude, now);
     } else {
       drawObjectAura(camX, now);
+
+      // Sprint 13: apply blink-back alpha to Pip
+      if (blinkBack.active && blinkBack.pipAlpha < 1.0) {
+        ctx.save();
+        ctx.globalAlpha = blinkBack.pipAlpha;
+      }
       drawPip(pip.x - camX, pip.y - pip.float.altitude, now);
+      if (blinkBack.active && blinkBack.pipAlpha < 1.0) {
+        ctx.restore();
+      }
 
       // Sprint 11: tear particles during panic glide
       if (mirrorBeat.tears.length > 0) {
@@ -1920,7 +2490,15 @@ function render(now) {
       }
     }
   }
+
+  // Sprint 13: update and draw pickup tweens on the tween layer
+  updateAndDrawTweens(dt, now);
+
+  // Sprint 13: render HUD canvases every frame (stomach + notebook icon)
+  renderStomachIndicator();
+  renderNotebookIcon();
 }
+render._lastNow = null;
 
 /* ----------------------------------------------------------------
    TEAR PARTICLES  (Sprint 11)
@@ -2675,6 +3253,14 @@ function drawPip(screenX, groundY, now) {
   ctx.translate(cx, foot);
   if (pip.body.facing === 'left') ctx.scale(-1, 1);
 
+  /* Sprint 13: squat animation — compress body vertically while squatTimer > 0 */
+  if (pip.squatTimer > 0) {
+    const squatFrac = pip.squatTimer / SQUAT_DURATION; // 1→0
+    const squatAmount = Math.sin(squatFrac * Math.PI); // 0→1→0
+    const scaleY = 1.0 - squatAmount * 0.25;           // squeeze to 75% at peak
+    ctx.scale(1, scaleY);
+  }
+
   drawPipBody();
   drawPipEyes();
   drawPipMouth();
@@ -2931,6 +3517,9 @@ function showCinematic(name, onEnd) {
   cinematic.isMemory  = false;   // Sprint 11: present-tense by default; set true for memory cinematics
   cinematic.played.add(name);
 
+  // Sprint 13: hide HUD during cinematics
+  hideHUD();
+
   // Sprint 11: reset per-cinematic draw timers
   if (name === 'mirror-realization') {
     mirrorCinState.elapsed = 0;
@@ -2990,6 +3579,9 @@ function startCinematicFadeOut() {
     // Restore overlay to standard room-transition speed
     overlay.style.transition = 'opacity 0.2s ease';
     overlay.style.opacity    = '0';
+
+    // Sprint 13: restore HUD after cinematic ends (if opening sequence already done)
+    if (openingSeq.state === 'complete') showHUD();
 
     if (onEnd) onEnd();
   }, 600);
@@ -4334,6 +4926,498 @@ function padLightsLoop(timestamp) {
     lctx.fillRect(Math.round(fx) - 1, Math.round(fy) - 1, 2, 2);
   });
 }
+
+/* ================================================================
+   SPRINT 13: COLLECT AURA
+   Warm pulsing aura for collectibles (↓ COLLECT targets).
+   Distinct from the cool inspect sparkle:
+     - broader radius (~12px vs 6px)
+     - slower pulse (1.2s cycle)
+     - saturated warm amber, no upward drift
+   ================================================================ */
+
+function drawCollectAura(ctx, x, y, proximity, now) {
+  // proximity: 0..1 (1 = at peak within 18px, 0 = 60px away)
+  if (proximity <= 0) return;
+
+  const pulse = 0.7 + 0.3 * Math.sin((now / 1000) * (2 * Math.PI / 1.2));
+  const alpha = proximity * pulse;
+
+  // Outer glow
+  const outerR = 12;
+  const gOuter = ctx.createRadialGradient(x, y, 0, x, y, outerR);
+  gOuter.addColorStop(0, `rgba(255,200,104,${(alpha * 0.55).toFixed(3)})`);
+  gOuter.addColorStop(1, 'rgba(255,200,104,0)');
+  ctx.fillStyle = gOuter;
+  ctx.fillRect(x - outerR, y - outerR, outerR * 2, outerR * 2);
+
+  // Inner core
+  const innerR = 6;
+  const gInner = ctx.createRadialGradient(x, y, 0, x, y, innerR);
+  gInner.addColorStop(0, `rgba(255,200,104,${(alpha * 0.9).toFixed(3)})`);
+  gInner.addColorStop(1, 'rgba(255,200,104,0)');
+  ctx.fillStyle = gInner;
+  ctx.fillRect(x - innerR, y - innerR, innerR * 2, innerR * 2);
+}
+
+/* Draw all collectibles' auras in the current room */
+function drawCollectAuras(camX, now) {
+  const room = rooms[currentRoom];
+  if (!room.collectibles) return;
+  for (const c of room.collectibles) {
+    if (c.collected) continue;
+    const cx = c.x - camX;
+    const cy = FLOOR_Y - 20;
+    const dist = Math.abs(pip.x - c.x);
+    // Scale: 1 at dist<18, 0 at dist>60
+    const proximity = dist < 60 ? Math.max(0, 1 - (dist - 18) / 42) : 0;
+    drawCollectAura(ctx, cx, cy, Math.min(1, proximity), now);
+    // Draw treat sprite placeholder
+    drawTreatSprite(ctx, c.sprite, cx, cy);
+  }
+}
+
+/* Procedural treat sprite placeholder.
+   Each treat key gets a simple colored shape until commissioned art arrives. */
+function drawTreatSprite(ctx, key, cx, cy) {
+  // Bamsemums: small colorful bag of gummy bears
+  if (key === 'bamsemums') {
+    // Bag outline
+    ctx.fillStyle = 'rgba(200,180,220,0.85)';
+    ctx.fillRect(cx - 5, cy - 10, 10, 14);
+    // Twist tie
+    ctx.fillStyle = '#a09080';
+    ctx.fillRect(cx - 2, cy - 12, 4, 2);
+    // Bears: red, yellow, green dots
+    const bears = [['#e83030', -2, 0], ['#f0c020', 1, -3], ['#30a030', 2, 2]];
+    for (const [col, dx, dy] of bears) {
+      ctx.fillStyle = col;
+      ctx.fillRect(cx + dx, cy + dy - 3, 2, 2);
+    }
+    return;
+  }
+  // Generic fallback: warm amber diamond
+  ctx.fillStyle = '#ffc868';
+  ctx.fillRect(cx, cy - 8, 3, 3);
+  ctx.fillRect(cx - 2, cy - 6, 7, 3);
+  ctx.fillRect(cx, cy - 4, 3, 3);
+}
+
+/* ================================================================
+   SPRINT 13: PICKUP TWEEN RENDERING
+   Called each frame; draws active tweens on the tween-layer canvas.
+   ================================================================ */
+
+function updateAndDrawTweens(dt, now) {
+  tweenCtx.clearRect(0, 0, W, H);
+  const hadTweens = activeTweens.length > 0;
+
+  for (let i = 0; i < activeTweens.length; i++) {
+    const tw = activeTweens[i];
+    tw.t += dt;
+    const progress = Math.min(1, tw.t / tw.duration);
+
+    // Ease-out curve with gentle arc
+    const ease = 1 - Math.pow(1 - progress, 2);
+    const tx = tw.sx + (tw.ex - tw.sx) * ease;
+    // Arc: slight upward bulge at midpoint
+    const arcLift = Math.sin(progress * Math.PI) * 20;
+    const ty = tw.sy + (tw.ey - tw.sy) * ease - arcLift;
+
+    // Draw the sprite at the tween position
+    drawTreatSprite(tweenCtx, tw.sprite, tx, ty);
+
+    if (progress >= 1 && !tw._completed) {
+      tw._completed = true;
+      if (tw.onComplete) tw.onComplete();
+    }
+  }
+
+  // Prune completed tweens
+  for (let i = activeTweens.length - 1; i >= 0; i--) {
+    if (activeTweens[i]._completed) activeTweens.splice(i, 1);
+  }
+
+  // Restore controls strip once all tweens done (only if we had tweens and now they're gone)
+  if (hadTweens && activeTweens.length === 0) {
+    if (!notebook.open && !blinkBack.active) setRoomStrip();
+  }
+}
+
+/* ================================================================
+   SPRINT 13: STOMACH INDICATOR RENDER
+   Procedural chewing-boy face + stomach pouch.
+   Five states: full (76-100), mid (51-75), low (26-50),
+                critical (1-25), dying (0).
+   ================================================================ */
+
+function renderStomachIndicator() {
+  const sc  = stomachCtx;
+  const v   = pip.stomach.value;
+  const max = pip.stomach.max;
+  const ratio = v / max;
+
+  sc.clearRect(0, 0, 44, 56);
+
+  // Frame: dark oval double-border
+  sc.fillStyle = 'rgba(8,6,12,0.92)';
+  sc.beginPath();
+  sc.ellipse(22, 28, 20, 26, 0, 0, Math.PI * 2);
+  sc.fill();
+  sc.strokeStyle = '#3a4068';
+  sc.lineWidth = 1;
+  sc.beginPath();
+  sc.ellipse(22, 28, 20, 26, 0, 0, Math.PI * 2);
+  sc.stroke();
+  sc.strokeStyle = 'rgba(140,160,200,0.22)';
+  sc.beginPath();
+  sc.ellipse(22, 28, 16, 22, 0, 0, Math.PI * 2);
+  sc.stroke();
+
+  // Face (top half of oval)
+  // Skin tone based on state
+  let skinCol = '#d4c8a8';
+  let faceGlow = '#f0f8ff';
+  if (v === 0) { skinCol = '#a8a898'; faceGlow = '#d0d4e0'; }
+  else if (v <= 25) { skinCol = '#c8bc9c'; }
+
+  sc.fillStyle = skinCol;
+  sc.beginPath();
+  sc.ellipse(22, 22, 10, 11, 0, 0, Math.PI * 2);
+  sc.fill();
+
+  // Soft glow
+  const fg = sc.createRadialGradient(22, 22, 0, 22, 22, 11);
+  fg.addColorStop(0, 'rgba(240,248,255,0.0)');
+  fg.addColorStop(1, 'rgba(240,248,255,0.12)');
+  sc.fillStyle = fg;
+  sc.beginPath();
+  sc.ellipse(22, 22, 10, 11, 0, 0, Math.PI * 2);
+  sc.fill();
+
+  // Eyes
+  const eyeY = 20;
+  if (v === 0) {
+    // Dying: closed eyes
+    sc.strokeStyle = '#6060a0';
+    sc.lineWidth = 1;
+    sc.beginPath(); sc.moveTo(18, eyeY); sc.lineTo(20, eyeY + 1); sc.stroke();
+    sc.beginPath(); sc.moveTo(24, eyeY); sc.lineTo(26, eyeY + 1); sc.stroke();
+  } else {
+    // Eyes: two dots, wider when critical/low
+    const eyeOpen = v <= 25 ? 2 : 1.5;
+    sc.fillStyle = '#303050';
+    sc.fillRect(18, eyeY - 1, 2, Math.ceil(eyeOpen));
+    sc.fillRect(24, eyeY - 1, 2, Math.ceil(eyeOpen));
+    // Whites
+    sc.fillStyle = 'rgba(240,248,255,0.5)';
+    sc.fillRect(18, eyeY - 2, 2, 1);
+    sc.fillRect(24, eyeY - 2, 2, 1);
+  }
+
+  // Mouth
+  if (v > 50) {
+    // Neutral/contented: small O or slight smile
+    sc.fillStyle = '#503030';
+    sc.fillRect(20, 26, 4, 2);
+  } else if (v > 25) {
+    // Slack
+    sc.fillStyle = '#503030';
+    sc.fillRect(19, 26, 5, 1);
+    sc.fillRect(20, 27, 3, 1);
+  } else {
+    // Small worried mouth
+    sc.fillStyle = '#503030';
+    sc.fillRect(20, 26, 3, 1);
+  }
+
+  // Stomach pouch (bottom half)
+  const pouchX = 14;
+  const pouchY = 35;
+  const pouchW = 16;
+  const pouchH = 12;
+
+  // Pouch background
+  sc.fillStyle = 'rgba(30,20,10,0.6)';
+  sc.beginPath();
+  sc.ellipse(22, pouchY + pouchH / 2, pouchW / 2, pouchH / 2, 0, 0, Math.PI * 2);
+  sc.fill();
+
+  // Fill level — clipped to pouch shape
+  if (ratio > 0) {
+    const fillH = Math.round(pouchH * ratio);
+    const fillY = pouchY + pouchH - fillH;
+
+    let fillCol = '#ffc868';
+    if (v <= 25) fillCol = '#a87830';
+    else if (v === 0) fillCol = '#8a7858';
+
+    sc.save();
+    sc.beginPath();
+    sc.ellipse(22, pouchY + pouchH / 2, pouchW / 2, pouchH / 2, 0, 0, Math.PI * 2);
+    sc.clip();
+
+    sc.fillStyle = fillCol;
+    sc.fillRect(pouchX, fillY, pouchW, fillH);
+    sc.restore();
+  }
+}
+
+/* ================================================================
+   SPRINT 13: NOTEBOOK ICON RENDER
+   Small procedural closed-book icon.
+   ================================================================ */
+
+function renderNotebookIcon() {
+  const ic = notebookIconCtx;
+  ic.clearRect(0, 0, 28, 36);
+
+  // Cover
+  ic.fillStyle = '#7a4c24';
+  ic.fillRect(3, 2, 22, 32);
+
+  // Spine
+  ic.fillStyle = '#5a3814';
+  ic.fillRect(3, 2, 4, 32);
+
+  // Brass corner accents
+  ic.fillStyle = '#c87830';
+  ic.fillRect(3, 2, 3, 3);
+  ic.fillRect(22, 2, 3, 3);
+  ic.fillRect(3, 31, 3, 3);
+  ic.fillRect(22, 31, 3, 3);
+
+  // Page edge
+  ic.fillStyle = '#e8dcc0';
+  ic.fillRect(7, 4, 17, 28);
+
+  // Faint lines on page
+  ic.fillStyle = 'rgba(100,80,40,0.2)';
+  for (let row = 0; row < 5; row++) {
+    ic.fillRect(9, 8 + row * 5, 13, 1);
+  }
+}
+
+/* ================================================================
+   SPRINT 13: NOTEBOOK SCREEN
+   ================================================================ */
+
+function openNotebook() {
+  notebook.open = true;
+  notebook.page = 2;   // default open to Items page (most relevant for current sprint)
+  renderNotebookPage();
+  updateNotebookPageDots();
+  document.getElementById('notebook-screen').classList.add('open');
+  document.getElementById('stomach-indicator').classList.remove('visible');
+  document.getElementById('notebook-icon').classList.remove('visible');
+  setControlsStrip('notebook');
+}
+
+function closeNotebook() {
+  notebook.open = false;
+  document.getElementById('notebook-screen').classList.remove('open');
+  document.getElementById('stomach-indicator').classList.add('visible');
+  document.getElementById('notebook-icon').classList.add('visible');
+  setRoomStrip();
+}
+
+function notebookTurnPage(dir) {
+  notebook.page = Math.max(0, Math.min(2, notebook.page + dir));
+  renderNotebookPage();
+  updateNotebookPageDots();
+}
+
+function updateNotebookPageDots() {
+  document.querySelectorAll('.notebook-page-dot').forEach(dot => {
+    const page = parseInt(dot.dataset.page, 10);
+    dot.classList.toggle('active', page === notebook.page);
+  });
+}
+
+function renderNotebookPage() {
+  const leftTitle  = document.getElementById('notebook-left-title');
+  const rightTitle = document.getElementById('notebook-right-title');
+  const leftCont   = document.getElementById('notebook-left-content');
+  const rightCont  = document.getElementById('notebook-right-content');
+
+  if (notebook.page === 0) {
+    leftTitle.textContent  = 'Recipes';
+    rightTitle.textContent = 'Memories';
+    leftCont.className     = 'notebook-empty-note';
+    leftCont.textContent   = 'Recipe unlocked after first meal.';
+    rightCont.className    = 'notebook-empty-note';
+    rightCont.textContent  = 'Memories collected here.';
+  } else if (notebook.page === 1) {
+    leftTitle.textContent  = 'Monster Moment';
+    rightTitle.textContent = 'Meal Moment';
+    leftCont.className     = 'notebook-empty-note';
+    leftCont.textContent   = 'No memory yet.';
+    rightCont.className    = 'notebook-empty-note';
+    rightCont.textContent  = 'No memory yet.';
+  } else {
+    // Items page
+    leftTitle.textContent  = 'Items';
+    rightTitle.textContent = '';
+    renderNotebookItems();
+  }
+}
+
+function renderNotebookItems() {
+  if (notebook.page !== 2) return;
+  const leftCont  = document.getElementById('notebook-left-content');
+  const rightCont = document.getElementById('notebook-right-content');
+  rightCont.textContent = '';
+  rightCont.className   = '';
+
+  if (notebook.items.length === 0) {
+    leftCont.className   = 'notebook-empty-note';
+    leftCont.textContent = 'Nothing yet.';
+    return;
+  }
+
+  // Build item grid
+  leftCont.className = 'notebook-items-grid';
+  leftCont.innerHTML = '';
+
+  for (const item of notebook.items) {
+    const card = document.createElement('div');
+    card.className = 'notebook-item-card';
+    if (item.kind === 'item' && item.used) card.style.opacity = '0.4';
+
+    // Icon: small inline canvas
+    const iconCanvas = document.createElement('canvas');
+    iconCanvas.width  = 16;
+    iconCanvas.height = 16;
+    iconCanvas.className = 'notebook-item-icon';
+    const ic = iconCanvas.getContext('2d');
+    ic.imageSmoothingEnabled = false;
+    drawTreatSprite(ic, item.sprite, 8, 12);
+    card.appendChild(iconCanvas);
+
+    const name = document.createElement('div');
+    name.className   = 'notebook-item-name';
+    name.textContent = item.name;
+    if (item.kind === 'item' && item.used) {
+      name.style.textDecoration = 'line-through';
+    }
+    card.appendChild(name);
+
+    const ann = document.createElement('div');
+    ann.className   = 'notebook-item-annotation';
+    ann.textContent = item.annotation;
+    card.appendChild(ann);
+
+    leftCont.appendChild(card);
+  }
+}
+
+/* ================================================================
+   SPRINT 13: BLINK-BACK
+   When stomach reaches 0: fade Pip, black screen, respawn.
+   See 03b-ui-spec.md §9 (Blink-back).
+   ================================================================ */
+
+function triggerBlinkBack() {
+  if (blinkBack.active) return;
+  blinkBack.active  = true;
+  blinkBack.phase   = 'fading';
+  blinkBack.timer   = 0;
+  blinkBack.pipAlpha = 1.0;
+
+  // Hide controls
+  setControlsStrip('');
+  // Hide HUD
+  document.getElementById('stomach-indicator').classList.remove('visible');
+  document.getElementById('notebook-icon').classList.remove('visible');
+}
+
+function updateBlinkBack(dt) {
+  if (!blinkBack.active) return;
+  blinkBack.timer += dt;
+
+  const overlay   = document.getElementById('blink-back-overlay');
+  const blinkText = document.getElementById('blink-back-text');
+
+  switch (blinkBack.phase) {
+    case 'fading':
+      blinkBack.pipAlpha = Math.max(0.05, 1 - blinkBack.timer / BLINK_FADE_T);
+      // Fade overlay in during last 0.3s of the fade
+      if (blinkBack.timer > BLINK_FADE_T - 0.3) {
+        const t = (blinkBack.timer - (BLINK_FADE_T - 0.3)) / 0.3;
+        overlay.style.opacity = Math.min(1, t).toFixed(3);
+      }
+      if (blinkBack.timer >= BLINK_FADE_T) {
+        blinkBack.phase = 'black';
+        blinkBack.timer = 0;
+        overlay.style.opacity = '1';
+      }
+      break;
+
+    case 'black':
+      if (blinkBack.timer >= BLINK_BLACK_T) {
+        // Respawn Pip
+        const room = rooms[currentRoom];
+        pip.x = room.pipEntryX ? room.pipEntryX.fromLeft : room.pipMinX + 8;
+        pip.stomach.value = pip.stomach.baseline;
+        blinkBack.pipAlpha = 0.05;
+        blinkBack.phase = 'rising';
+        blinkBack.timer = 0;
+        overlay.style.opacity = '0';
+        renderStomachIndicator();
+      }
+      break;
+
+    case 'rising':
+      blinkBack.pipAlpha = Math.min(0.85, 0.05 + (blinkBack.timer / BLINK_RISE_T) * 0.8);
+      if (blinkBack.timer >= BLINK_RISE_T) {
+        blinkBack.pipAlpha = 0.85;
+        blinkBack.phase = 'narrating';
+        blinkBack.timer = 0;
+        blinkText.style.opacity = '1';
+      }
+      break;
+
+    case 'narrating':
+      if (blinkBack.timer >= BLINK_TEXT_T) {
+        blinkText.style.opacity = '0';
+        blinkBack.phase  = 'idle';
+        blinkBack.active = false;
+        blinkBack.timer  = 0;
+        blinkBack.pipAlpha = 1.0;
+        // Restore HUD
+        document.getElementById('stomach-indicator').classList.add('visible');
+        document.getElementById('notebook-icon').classList.add('visible');
+        setRoomStrip();
+      }
+      break;
+  }
+}
+
+/* ================================================================
+   SPRINT 13: HUD VISIBILITY
+   Show/hide HUD based on game state (cinematic, notebook, etc.)
+   Called from within existing show/hide cinematic logic.
+   ================================================================ */
+
+function showHUD() {
+  document.getElementById('stomach-indicator').classList.add('visible');
+  document.getElementById('notebook-icon').classList.add('visible');
+}
+
+function hideHUD() {
+  document.getElementById('stomach-indicator').classList.remove('visible');
+  document.getElementById('notebook-icon').classList.remove('visible');
+}
+
+/* ================================================================
+   SPRINT 13: NOTEBOOK ICON CLICK
+   ================================================================ */
+
+document.getElementById('notebook-icon').addEventListener('click', () => {
+  if (!notebook.open && !blinkBack.active && !dialogue.active && !cinematic.active) {
+    openNotebook();
+  }
+});
 
 /* ================================================================
    KICK OFF

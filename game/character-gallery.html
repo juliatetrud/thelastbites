@@ -497,23 +497,91 @@ function drawGlowingEye(ctx, ex, ey, side) {
   rect(ctx, ex + 1, ey + 1, 2, 1, '#3a2818');
 }
 
-// Pocong's drifting gray mist aura — rendered behind his figure.
+/* =============================================================
+   POCONG SMOKE STATE — Sprint 09 polish r3
+   15 patches with persistent orbital state. Initialized once on
+   first render (deterministic seeded values); patches respawn
+   asynchronously as they expire.
+   ============================================================= */
+let pocongPatches = null;
+let pocongPrevT   = null;
+
+function initPocongPatches() {
+  const BASE_ω = (Math.PI * 2) / 7;   // ~1 full orbit per 7 s baseline
+  pocongPatches = Array.from({ length: 15 }, (_, i) => {
+    // LCG seeded by patch index — deterministic, same values every page load
+    let s = ((i + 1) * 1664525 + 1013904223) >>> 0;
+    const rng = () => { s = ((s * 1664525 + 1013904223) | 0) >>> 0; return s / 0x100000000; };
+    const lifetime = 6 + rng() * 4;         // [6, 10] s
+    return {
+      angle:        rng() * Math.PI * 2,
+      angularVel:   BASE_ω * (0.7 + rng() * 0.6),   // ±30% variance → orbit 5.4–10 s
+      baseRadius:   6  + rng() * 19,                 // [6, 25] px orbital radius
+      wobbleAmp:    2  + rng() * 2,                  // [2, 4] px radial wobble
+      wobblePeriod: 2  + rng() * 2,                  // [2, 4] s
+      wobblePhase:  rng() * Math.PI * 2,
+      yOffset:      -30 + rng() * 80,                // [-30, 50] px from body center
+      yDriftAmp:    8  + rng() * 4,                  // [8, 12] px vertical drift
+      yDriftPeriod: 4  + rng() * 2,                  // [4, 6] s
+      yDriftPhase:  rng() * Math.PI * 2,
+      patchRadius:  5  + rng() * 3,                  // [5, 8] px visual patch size
+      baseAlpha:    0.40 + rng() * 0.15,             // [0.40, 0.55] per patch
+      lifetime,
+      age:          rng() * lifetime,                // staggered so patches don't all respawn together
+    };
+  });
+}
+
+// Pocong's thick orbiting smoke — renders behind his shroud figure.
 function drawPocongMist(ctx, cx, by, t) {
-  for (let i = 0; i < 8; i++) {
-    const phase = i * 0.785;          // evenly spread 2π/8
-    const spd   = 0.25 + (i % 3) * 0.12;
-    const ox    = ((i * 37) % 60) - 30;         // deterministic x spread
-    const oy    = -(((i * 23) % 70) + 10);      // above floor
-    const gx    = cx + ox + Math.sin(t * spd + phase) * 8;
-    const gy    = by + oy + Math.cos(t * spd * 0.7 + phase) * 5;
-    const r     = 5 + (i % 3) * 2;
-    const alpha = 0.10 + (i % 3) * 0.025;
-    const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, r);
-    g.addColorStop(0, `rgba(100,100,118,${alpha})`);
-    g.addColorStop(1, 'rgba(100,100,118,0)');
+  if (!pocongPatches) initPocongPatches();
+
+  // dt — capped at 100 ms to guard against tab-backgrounding spikes
+  const dt = pocongPrevT !== null ? Math.min(t - pocongPrevT, 0.1) : 0;
+  pocongPrevT = t;
+
+  const centerX = cx;
+  const centerY = by - 40;   // ~mid-body vertically (body spans by to by-80)
+
+  pocongPatches.forEach(p => {
+    // Advance age; respawn asynchronously when expired
+    p.age += dt;
+    if (p.age > p.lifetime) {
+      p.age      = 0;
+      p.angle    = Math.random() * Math.PI * 2;
+      p.baseRadius = 6 + Math.random() * 19;
+      p.yOffset  = -30 + Math.random() * 80;
+      p.lifetime = 6 + Math.random() * 4;
+    }
+
+    // Advance orbital angle
+    p.angle += p.angularVel * dt;
+
+    // Current radius with radial wobble
+    const wobble = Math.sin(t * (Math.PI * 2 / p.wobblePeriod) + p.wobblePhase) * p.wobbleAmp;
+    const radius = Math.max(1, p.baseRadius + wobble);
+
+    // Current vertical position with slow drift
+    const yDrift = Math.sin(t * (Math.PI * 2 / p.yDriftPeriod) + p.yDriftPhase) * p.yDriftAmp;
+    const px2 = centerX + Math.cos(p.angle) * radius;
+    const py2 = centerY + p.yOffset + yDrift;
+
+    // Depth-based alpha: patches behind the shroud (cos < 0) dim by ~30 %
+    const depthMult = Math.cos(p.angle) < 0 ? 0.70 : 1.00;
+
+    // Lifetime fade-in (first 0.3 s) and fade-out (last 0.5 s)
+    const fadeIn  = Math.min(1.0, p.age / 0.3);
+    const fadeOut = Math.min(1.0, (p.lifetime - p.age) / 0.5);
+    const finalAlpha = p.baseAlpha * depthMult * Math.min(fadeIn, fadeOut);
+    if (finalAlpha < 0.01) return;
+
+    const r = p.patchRadius;
+    const g = ctx.createRadialGradient(px2, py2, 0, px2, py2, r);
+    g.addColorStop(0, `rgba(106,106,120,${finalAlpha.toFixed(3)})`);
+    g.addColorStop(1, 'rgba(58,58,68,0)');
     ctx.fillStyle = g;
-    ctx.fillRect(gx - r, gy - r, r * 2, r * 2);
-  }
+    ctx.fillRect(px2 - r, py2 - r, r * 2, r * 2);
+  });
 }
 
 /* =============================================================

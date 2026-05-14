@@ -162,6 +162,7 @@ These are unresolved decisions. They don't need to be answered now, but they wil
 
 ### Art
 
+- **Per-monster visual register beyond Pocong's smoke.** Pocong is locked at thick orbiting smoke. Karakoncolos, Black Shuck, Boitatá, and Mamlambo need their own distinct visual treatments — not smoke variants. Designed when each character is added to the gallery. Flagged 2026-05-14.
 - **Find the artist.** This is the big near-term blocker for visual polish.
 - **One artist or many?** Recommend one for consistency.
 - **Style guide for the artist beyond the existing doc?** Maybe paint a few reference frames in the target style to commission against.
@@ -198,6 +199,7 @@ A running record of every sprint that has shipped, in order. Every future sprint
 | 09 | Character visual identity | 2026-05-14 | Character visual identity section locked in `08-character-reference-sheets.md`; pilot batch of 6 designed into `game/character-gallery.html`. |
 | 09-polish | Henrik revision + Pip scale fix | 2026-05-14 | Henrik redesigned: tall toque, sleek-fit posture, black button-up + slacks, retained pipe. Gallery Pip bumped to canonical 40 px. |
 | 09-polish-r2 | Eye treatment rule + character refinements | 2026-05-14 | Canonical eye treatment locked; Babcia, Henrik, Pocong, Erik refined with new eye style and per-character notes; Babcia's crying overlay added; Pocong's gray mist aura added. |
+| 09-polish-r3 | Pocong thick orbiting smoke | 2026-05-14 | Pocong's mist upgraded from 8-patch ambient drift to 15-patch thick orbiting smoke. Full-threat visual register locked. Future monsters need distinct treatments, not smoke variants. |
 | 10 | Fullscreen padding | — | (specced, not started) |
 | 11 | Mirror beat | — | (specced, not started) |
 
@@ -357,6 +359,7 @@ A running list of locked decisions so they don't re-litigate.
 | 2026-05-14 | **Pip gallery scale corrected to match canonical.** Gallery was rendering Pip at 1.5× (36 px, 0.33 H); bumped to 1.6× (40 px, 0.36 H) to match canonical 0.35–0.40 H locked in doc 03 / Sprint 08.5. The gallery is the visual source-of-truth; it must match canonical or it lies to future sprints. |
 | 2026-05-14 | **Eye treatment canonical rule locked (Sprint 09 polish round 2).** Living and recently-deceased human characters render with ~2 px cream whites + darker pupils. Ghost-Pip is the exception (dark dots, no whites — his face is still forming). Ghost-children (Iris, Erik) render with the human treatment, translucent. Monsters get per-character treatments (Pocong: yellow whites + dark pupils + glow). Crying overlay (light-blue pool under eyes, slow drip, ~3.5 s cycle per eye) is composable on top of any character's standard eye treatment. Documented in `08-character-reference-sheets.md` § Eye treatment. |
 | 2026-05-14 | **Character visual refinements (Sprint 09 polish round 2).** Babcia: coat reads as a shaded coat with sleeve indication rather than quilted squares; hands raised to chest level; eyes updated to canonical human treatment; crying overlay added. Henrik: gray hair visible under toque (hairline + temples), eyes enlarged with whites + pupils, mustache (darker, replacing beard), 5 o'clock shadow, eyebrows, neck visible. Pocong: yellow glowing eyes (always on, angled menacing), angry eyebrows, drifting gray mist aura as his signature visual marker. Erik: eyes enlarged with cream whites + dark grey pupils for child-emphasis. All refinements live in `game/character-gallery.html`. |
+| 2026-05-14 | **Pocong mist treatment upgraded to thick orbiting smoke (Sprint 09 polish round 3).** 15 patches at alpha 0.40–0.55, all orbiting Pocong's vertical axis with radius variance, angular-velocity variance, radial wobble, depth-based alpha, patch lifetime/respawn, and vertical drift to prevent mechanical pinwheel feel. Reads as full-threat visual register. Cooperative resolution arc in Ch6 must do narrative work to reframe him. Future monsters (Karakoncolos, Black Shuck, Boitatá, Mamlambo) will need visually distinct registers — not thick-smoke variants. |
 
 ---
 

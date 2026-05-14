@@ -115,12 +115,11 @@ This is a "1 door-height" unit. Everything else is expressed as a fraction or mu
 | Element                     | Height (door-fraction) | Pixels @ 480×270 |
 |-----------------------------|------------------------|------------------|
 | Door (canonical)            | 1.00                   | 110              |
-| Adult NPC (Babcia, Dziadek, the passenger, Henrik, Iris, Helga the cat's human, etc.) | 0.55–0.65 | 60–72 |
+| Adult NPC (Babcia, Dziadek, the passenger, Henrik, Iris, etc.) | 0.55–0.65 | 60–72 |
 | Child / Pip-aged human (memory-Pip in cinematic) | 0.40–0.45 | 44–50 |
 | Pip (ghost form, gameplay sprite) | 0.30–0.35           | 32–38             |
 | Pätu (gray tabby cat)       | 0.20–0.25              | 22–28            |
 | Echo-creatures (spiders, mice, cockroaches) | 0.06–0.14   | 7–16             |
-| Helga (recurring cat NPC)   | 0.28–0.34              | 32–38            |
 | Furniture: bed              | 0.85–1.00 wide × 0.18–0.22 tall (frame) | 95–110 × 20–24 |
 | Furniture: nightstand       | 0.16–0.20 wide × 0.16–0.20 tall | 18–22 × 18–22 |
 | Furniture: chair            | 0.30–0.35 tall         | 33–38            |

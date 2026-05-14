@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Component Scale Reference — The Last Bites</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0c14;
+    color: #c8b890;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* ── Sticky nav ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #0e1020;
+    border-bottom: 1px solid #2a3060;
+    padding: 10px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    align-items: baseline;
+  }
+  nav h1 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e8d898;
+    letter-spacing: 0.12em;
+    margin-right: 8px;
+  }
+  nav span {
+    color: #5a6080;
+    font-size: 12px;
+  }
+  nav a {
+    color: #a8b8d8;
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    padding: 2px 6px;
+    border-radius: 2px;
+    border: 1px solid #2a3060;
+    transition: background 0.15s, color 0.15s;
+  }
+  nav a:hover { background: #1e2848; color: #e8d898; }
+
+  /* ── Sub-header ── */
+  .sub-header {
+    padding: 8px 20px;
+    background: #0a0c14;
+    border-bottom: 1px solid #1a1e30;
+    color: #6070a0;
+    font-size: 11px;
+    font-style: italic;
+  }
+
+  /* ── Main ── */
+  main { padding: 20px; max-width: 1400px; }
+
+  section {
+    margin-bottom: 40px;
+  }
+  section + section {
+    border-top: 1px solid #1e2438;
+    padding-top: 32px;
+  }
+
+  h2 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #d8c878;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .section-note {
+    color: #606888;
+    font-size: 11px;
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+
+  /* ── Grid of component cards ── */
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .card {
+    background: #0e1220;
+    border: 1px solid #1e2848;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .card canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  .label {
+    padding: 6px 8px;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.4;
+    color: #8898b8;
+    width: 140px;
+    border-top: 1px solid #1a2030;
+  }
+  .label strong {
+    display: block;
+    color: #c8b890;
+    font-size: 10.5px;
+    margin-bottom: 1px;
+  }
+  .label em {
+    color: #6878a0;
+    font-style: normal;
+    font-size: 9.5px;
+  }
+  .label .proposed {
+    display: inline-block;
+    color: #c89848;
+    font-size: 9px;
+    margin-top: 2px;
+  }
+
+  /* Discrepancy badge */
+  .card.discrepancy { border-color: #5a3020; }
+  .card.discrepancy .label { border-top-color: #5a3020; }
+  .card.discrepancy .label strong { color: #e8a070; }
+
+  /* Legend at bottom of page */
+  .legend {
+    margin-top: 40px;
+    padding: 16px 20px;
+    background: #0e1020;
+    border: 1px solid #1e2848;
+    border-radius: 3px;
+    font-size: 11px;
+    color: #606880;
+    line-height: 1.8;
+  }
+  .legend h3 { color: #a8b0c8; margin-bottom: 8px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <h1>Component Scale Reference</h1>
+  <span>All at 480×270 canonical scale beside 110 px door</span>
+  <a href="#architecture">Architecture</a>
+  <a href="#furniture">Furniture</a>
+  <a href="#fixtures">Fixtures</a>
+  <a href="#props">Props</a>
+  <a href="#characters">Characters</a>
+  <a href="#ui">UI</a>
+  <a href="#echo">Echo-creatures</a>
+</nav>
+<div class="sub-header">
+  Faint warm rectangle on the left of each cell = 110 px reference door (constant across every cell).
+  Component drawn at canonical scale on the right. Labels: name · door-fraction · pixel dims.
+  Orange border = discrepancy between this chart and current <code>game/index.html</code>.
+</div>
+
+<main>
+
+<!-- ================================================================
+     ARCHITECTURE
+     ================================================================ -->
+<section id="architecture">
+  <h2>Architecture</h2>
+  <p class="section-note">Structural room elements. Wall panels and floor bands are tiling fills; door is discrete.</p>
+  <div class="grid" id="grid-arch"></div>
+</section>
+
+<!-- ================================================================
+     FIXTURES
+     ================================================================ -->
+<section id="fixtures">
+  <h2>Fixtures</h2>
+  <p class="section-note">Wall-mounted elements. All share mounting height y ≈ 58 from room top (door-top height).</p>
+  <div class="grid" id="grid-fix"></div>
+</section>
+
+<!-- ================================================================
+     FURNITURE
+     ================================================================ -->
+<section id="furniture">
+  <h2>Furniture</h2>
+  <p class="section-note">Movable or scene-fixed objects.</p>
+  <div class="grid" id="grid-furn"></div>
+</section>
+
+<!-- ================================================================
+     PROPS
+     ================================================================ -->
+<section id="props">
+  <h2>Props (interactable)</h2>
+  <p class="section-note">Objects Pip can inspect, carry, or interact with.</p>
+  <div class="grid" id="grid-props"></div>
+</section>
+
+<!-- ================================================================
+     CHARACTERS
+     ================================================================ -->
+<section id="characters">
+  <h2>Characters</h2>
+  <p class="section-note">
+    All adult NPCs render in the 60–72 px band; specific characters vary in silhouette but scale is consistent.
+    Orange border = current implementation does not match canonical scale.
+  </p>
+  <div class="grid" id="grid-chars"></div>
+</section>
+
+<!-- ================================================================
+     UI
+     ================================================================ -->
+<section id="ui">
+  <h2>UI Elements</h2>
+  <p class="section-note">HTML overlays, not canvas-drawn. Shown at representative scale.</p>
+  <div class="grid" id="grid-ui"></div>
+</section>
+
+<!-- ================================================================
+     ECHO-CREATURES
+     ================================================================ -->
+<section id="echo">
+  <h2>Echo-creatures (per chapter)</h2>
+  <p class="section-note">
+    Canonical scale: 0.06–0.14 H (7–16 px). Entries marked [DISCREPANCY] exceed this in art-asset-list.md.
+  </p>
+  <div class="grid" id="grid-echo"></div>
+</section>
+
+<div class="legend">
+  <h3>How to read this chart</h3>
+  Each cell is a 140×140 px canvas. The faint warm-brown rectangle on the <strong>left</strong> is always the reference door: 32 px wide, 110 px tall. Its top edge is always at y=10; its bottom at y=120 (the floor line). The <strong>component</strong> is drawn to the right, with its floor at y=120. A dashed vertical line marks the door's full height for easy comparison.<br><br>
+  <strong style="color:#c89848">[PROPOSED]</strong> = scale set by this document; not yet confirmed by the lead designer.<br>
+  <strong style="color:#e8a070">Orange border</strong> = implementation in game/index.html differs from the canonical scale shown here.
+</div>
+
+</main>
+
+<script>
+'use strict';
+
+/* ================================================================
+   SHARED DRAWING INFRASTRUCTURE
+   ================================================================ */
+
+const CELL = 140;        // canvas size (square)
+const FLOOR_Y = 120;     // floor line within cell
+const DOOR_H  = 110;     // reference door height
+const DOOR_W  = 32;      // reference door width
+const DOOR_L  = 4;       // door left edge in cell
+const DOOR_T  = FLOOR_Y - DOOR_H;  // = 10
+
+/* Draw the reference door (faint, always left side) */
+function refDoor(ctx) {
+  ctx.globalAlpha = 0.28;
+  ctx.fillStyle = '#4a2e10';
+  ctx.fillRect(DOOR_L, DOOR_T, DOOR_W, DOOR_H);
+  ctx.strokeStyle = '#8a6028';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(DOOR_L, DOOR_T, DOOR_W, DOOR_H);
+  // Door inset panels
+  ctx.strokeStyle = 'rgba(120,90,30,0.3)';
+  ctx.strokeRect(DOOR_L+3, DOOR_T+3, DOOR_W-6, 38);
+  ctx.strokeRect(DOOR_L+3, DOOR_T+44, DOOR_W-6, DOOR_H-48);
+  ctx.globalAlpha = 1;
+  // Dashed height ruler
+  ctx.strokeStyle = 'rgba(160,130,60,0.3)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 3]);
+  ctx.beginPath();
+  ctx.moveTo(DOOR_L + DOOR_W + 3, DOOR_T);
+  ctx.lineTo(DOOR_L + DOOR_W + 3, FLOOR_Y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+/* Draw floor line */
+function floorLine(ctx) {
+  ctx.strokeStyle = 'rgba(80,90,120,0.45)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, FLOOR_Y);
+  ctx.lineTo(CELL, FLOOR_Y);
+  ctx.stroke();
+}
+
+/* Dark background */
+function bg(ctx) {
+  ctx.fillStyle = '#0b0e1c';
+  ctx.fillRect(0, 0, CELL, CELL);
+}
+
+/* Build one card and append to a grid div */
+function makeCard(gridId, id, drawFn, labelHtml, isDiscrepancy, isProposed) {
+  const grid = document.getElementById(gridId);
+  const card = document.createElement('div');
+  card.className = 'card' + (isDiscrepancy ? ' discrepancy' : '');
+
+  const cvs = document.createElement('canvas');
+  cvs.id = id;
+  cvs.width = CELL;
+  cvs.height = CELL;
+  card.appendChild(cvs);
+
+  const lbl = document.createElement('div');
+  lbl.className = 'label';
+  lbl.innerHTML = labelHtml + (isProposed ? '<span class="proposed">[PROPOSED]</span>' : '');
+  card.appendChild(lbl);
+
+  grid.appendChild(card);
+
+  const ctx = cvs.getContext('2d');
+  bg(ctx);
+  floorLine(ctx);
+  refDoor(ctx);
+  drawFn(ctx);
+}
+
+/* Shorthand: component x origin (left edge of component area) */
+const CX = DOOR_L + DOOR_W + 12;  // = 48. Component area: x=48 to x=138 (90px wide)
+const CW = CELL - CX - 2;          // ~90px component area width
+
+/* ================================================================
+   ARCHITECTURE
+   ================================================================ */
+
+// Door (canonical) — draw it full size in component area
+makeCard('grid-arch', 'c-door', ctx => {
+  ctx.fillStyle = '#0e1428';
+  ctx.fillRect(CX, DOOR_T, DOOR_W, DOOR_H);
+  ctx.strokeStyle = 'rgba(60,80,140,0.7)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(CX, DOOR_T, DOOR_W, DOOR_H);
+  ctx.strokeStyle = 'rgba(50,65,110,0.4)';
+  ctx.strokeRect(CX+3, DOOR_T+3, DOOR_W-6, 38);
+  ctx.strokeRect(CX+3, DOOR_T+44, DOOR_W-6, DOOR_H-48);
+  ctx.fillStyle = '#a08650';
+  ctx.fillRect(CX+DOOR_W-4, DOOR_T+55, 2, 5);
+  ctx.fillRect(CX+15, DOOR_T+22, 10, 3);
+  ctx.fillRect(CX, DOOR_T+DOOR_H-4, DOOR_W, 3);
+},
+`<strong>Door (canonical)</strong>1.00 H × 0.29 W<br><em>110 × 32 px · All chapters</em>`, false, false);
+
+// Wall panel (ship)
+makeCard('grid-arch', 'c-panel', ctx => {
+  const pH = 72, pW = 80;
+  const px = CX, py = FLOOR_Y - pH;
+  ctx.fillStyle = 'rgba(30,46,88,0.55)';
+  ctx.fillRect(px, py, pW, pH);
+  ctx.strokeStyle = 'rgba(55,75,130,0.5)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(px, py, pW, pH);
+  const m = 4;
+  ctx.fillStyle = 'rgba(65,85,140,0.55)';
+  [[px+m,py+m],[px+pW-m-2,py+m],[px+m,py+pH-m-2],[px+pW-m-2,py+pH-m-2]].forEach(([rx,ry])=>{
+    ctx.fillRect(rx, ry, 2, 2);
+  });
+  ctx.fillStyle = '#c8b060';
+  ctx.font = '7px monospace';
+  ctx.fillText('120×148 px', px+3, py+pH-3);
+},
+`<strong>Wall panel (ship, ×1)</strong>1.35 H × 1.09 W<br><em>148 × 120 px per tile</em>`, false, false);
+
+// Baseboard
+makeCard('grid-arch', 'c-base', ctx => {
+  const bH = 12;
+  ctx.fillStyle = 'rgba(22,35,62,0.85)';
+  ctx.fillRect(CX, FLOOR_Y-bH, CW, bH);
+  ctx.strokeStyle = 'rgba(70,55,95,0.55)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(CX, FLOOR_Y-bH); ctx.lineTo(CX+CW, FLOOR_Y-bH); ctx.stroke();
+  // height indicator
+  ctx.strokeStyle = 'rgba(140,100,60,0.5)';
+  ctx.setLineDash([2,2]);
+  ctx.beginPath(); ctx.moveTo(CX+CW+2, FLOOR_Y-bH); ctx.lineTo(CX+CW+2, FLOOR_Y); ctx.stroke();
+  ctx.setLineDash([]);
+},
+`<strong>Baseboard</strong>0.11 H<br><em>12 px × room-width</em>`, false, false);
+
+// Floor plank band
+makeCard('grid-arch', 'c-floor', ctx => {
+  const fH = 20;
+  ctx.fillStyle = '#1e2848';
+  ctx.fillRect(CX, FLOOR_Y, CW, fH);
+  ctx.strokeStyle = 'rgba(18,30,58,0.4)';
+  ctx.lineWidth = 1;
+  for (let x = CX+8; x < CX+CW; x += 18) {
+    ctx.beginPath(); ctx.moveTo(x, FLOOR_Y); ctx.lineTo(x, FLOOR_Y+fH); ctx.stroke();
+  }
+},
+`<strong>Floor plank band</strong>0.18 H<br><em>20 × room-width px</em>`, false, false);
+
+// Window (ship, grandparents room)
+makeCard('grid-arch', 'c-window', ctx => {
+  const wH = 58, wW = 38;
+  const wx = CX + 8, wy = FLOOR_Y - wH - 14;
+  ctx.fillStyle = '#1a2840';
+  ctx.fillRect(wx, wy, wW, wH);
+  ctx.strokeStyle = '#3a2c14';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(wx-2, wy-2, wW+4, wH+4);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(80,110,165,0.5)';
+  ctx.beginPath(); ctx.moveTo(wx+wW/2, wy); ctx.lineTo(wx+wW/2, wy+wH); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(wx, wy+wH/2); ctx.lineTo(wx+wW, wy+wH/2); ctx.stroke();
+  const mg = ctx.createRadialGradient(wx+wW/2, wy+wH*.38, 1, wx+wW/2, wy+wH*.38, 22);
+  mg.addColorStop(0,'rgba(180,210,240,0.12)'); mg.addColorStop(1,'rgba(100,150,200,0)');
+  ctx.fillStyle = mg; ctx.fillRect(wx, wy, wW, wH);
+},
+`<strong>Window (ship cabin)</strong>0.82 H × 0.53 W<br><em>90 × 58 px</em>`, false, false);
+
+// Stairs [PROPOSED]
+makeCard('grid-arch', 'c-stairs', ctx => {
+  const steps = 5, sH = 16, sW = 14;
+  const bx = CX+8, by = FLOOR_Y;
+  ctx.fillStyle = '#2a3058';
+  for (let i = 0; i < steps; i++) {
+    ctx.fillRect(bx + i*sW, by - (i+1)*sH, sW+(steps-i-1)*sW, sH);
+    ctx.strokeStyle = 'rgba(80,100,160,0.35)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx + i*sW, by - (i+1)*sH, sW+(steps-i-1)*sW, sH);
+  }
+  // rail
+  ctx.strokeStyle = 'rgba(140,120,60,0.5)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(bx + steps*sW, by - steps*sH);
+  ctx.lineTo(bx, by);
+  ctx.stroke();
+},
+`<strong>Stairs</strong>0.70–0.90 H<br><em>77–99 px total</em>`, false, true);
+
+
+/* ================================================================
+   FIXTURES
+   ================================================================ */
+
+// Porthole
+makeCard('grid-fix', 'c-porthole', ctx => {
+  const r = 17;
+  const px = CX + 28, py = FLOOR_Y - 75;
+  ctx.strokeStyle = 'rgba(50,35,15,0.8)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(px,py,r+2,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle = '#8a6c3c';
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle = '#0a1428';
+  ctx.beginPath(); ctx.arc(px,py,r-3,0,Math.PI*2); ctx.fill();
+  ctx.save();
+  ctx.beginPath(); ctx.arc(px,py,r-3,0,Math.PI*2); ctx.clip();
+  const wg = ctx.createRadialGradient(px,py+(r-3)*0.25,0,px,py,r-3);
+  wg.addColorStop(0,'rgba(40,70,110,0.28)'); wg.addColorStop(1,'rgba(10,20,40,0)');
+  ctx.fillStyle=wg; ctx.fill();
+  ctx.strokeStyle='rgba(80,105,155,0.35)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(px-(r-3),py); ctx.lineTo(px+(r-3),py);
+  ctx.moveTo(px,py-(r-3)); ctx.lineTo(px,py+(r-3)); ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle='rgba(185,155,85,0.45)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.arc(px,py,r-1,Math.PI,Math.PI*1.75); ctx.stroke();
+},
+`<strong>Porthole</strong>0.31–0.33 dia<br><em>∅ 34–36 px (r=17–18)</em>`, false, false);
+
+// Wall sconce (oil lamp)
+makeCard('grid-fix', 'c-sconce', ctx => {
+  const x = CX + 30, y = FLOOR_Y - 52;
+  ctx.fillStyle = '#a08664';
+  ctx.fillRect(x-4, y, 8, 16);
+  ctx.fillRect(x-7, y-6, 14, 6);
+  ctx.fillStyle = '#8a7050';
+  ctx.fillRect(x+2, y+14, 4, 4);
+  ctx.fillRect(x-6, y+16, 8, 2);
+  // globe
+  const gx=x, gy=y+9;
+  ctx.globalAlpha=0.7;
+  ctx.fillStyle='rgba(200,180,120,0.55)';
+  ctx.beginPath(); ctx.ellipse(gx,gy,4,5,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(180,160,100,0.7)';
+  ctx.fillRect(gx-2,gy-8,4,4);
+  // flame
+  ctx.globalAlpha=0.9;
+  ctx.fillStyle='rgba(255,160,40,0.9)';
+  ctx.beginPath();
+  ctx.moveTo(gx,gy-8);
+  ctx.bezierCurveTo(gx+2,gy-4,gx+2,gy,gx,gy+1);
+  ctx.bezierCurveTo(gx-2,gy,gx-2,gy-4,gx,gy-8);
+  ctx.fill();
+  ctx.globalAlpha=0.7;
+  ctx.fillStyle='rgba(255,230,120,1)';
+  ctx.beginPath();
+  ctx.moveTo(gx,gy-7);
+  ctx.bezierCurveTo(gx+1,gy-4,gx+1,gy-1,gx,gy);
+  ctx.bezierCurveTo(gx-1,gy-1,gx-1,gy-4,gx,gy-7);
+  ctx.fill();
+  // glow
+  ctx.globalAlpha=0.13;
+  const lg=ctx.createRadialGradient(x,y+8,0,x,y+8,22);
+  lg.addColorStop(0,'rgba(255,218,120,1)'); lg.addColorStop(1,'rgba(255,180,80,0)');
+  ctx.fillStyle=lg; ctx.fillRect(x-22,y-14,44,40);
+  ctx.globalAlpha=1;
+  // wall shadow suggest
+  ctx.fillStyle='rgba(0,0,0,0)';
+},
+`<strong>Wall sconce (oil lamp)</strong>~0.22 H assembly<br><em>~24 H × 14 W px</em>`, false, false);
+
+// Brass plaque
+makeCard('grid-fix', 'c-plaque', ctx => {
+  const px=CX+28, py=FLOOR_Y-45;
+  ctx.fillStyle='#a08650';
+  ctx.fillRect(px-5,py-2,10,4);
+  ctx.strokeStyle='rgba(80,60,20,0.7)'; ctx.lineWidth=0.5;
+  ctx.strokeRect(px-5,py-2,10,4);
+  ctx.font='5px monospace'; ctx.fillStyle='rgba(50,30,5,0.7)'; ctx.fillText('646',px-4,py+1);
+  // context: show it on a door corner
+  ctx.strokeStyle='rgba(60,80,140,0.35)'; ctx.lineWidth=1;
+  ctx.strokeRect(CX+10,FLOOR_Y-60,24,60);
+},
+`<strong>Brass plaque (room no.)</strong>—<br><em>10 × 4 px</em>`, false, false);
+
+// Door handle
+makeCard('grid-fix', 'c-handle', ctx => {
+  const px=CX+40, py=FLOOR_Y-30;
+  ctx.strokeStyle='rgba(60,80,140,0.35)'; ctx.lineWidth=1;
+  ctx.strokeRect(CX+15,FLOOR_Y-60,24,60);
+  ctx.fillStyle='#a08650';
+  ctx.fillRect(px-1, py-2, 2, 5);
+  ctx.beginPath(); ctx.arc(px,py-3,1.5,0,Math.PI*2); ctx.fill();
+},
+`<strong>Door handle (lever)</strong>—<br><em>~2 × 5 px + 1.5 r circle</em>`, false, false);
+
+// Kickplate
+makeCard('grid-fix', 'c-kick', ctx => {
+  const px=CX+12, py=FLOOR_Y-3;
+  ctx.strokeStyle='rgba(60,80,140,0.35)'; ctx.lineWidth=1;
+  ctx.strokeRect(CX+12, FLOOR_Y-60, DOOR_W, 60);
+  ctx.fillStyle='#a08650';
+  ctx.fillRect(px, py, DOOR_W, 3);
+  ctx.strokeStyle='rgba(80,60,20,0.4)'; ctx.lineWidth=0.5;
+  ctx.strokeRect(px, py, DOOR_W, 3);
+},
+`<strong>Kickplate</strong>—<br><em>32 × 3 px</em>`, false, false);
+
+// Hanging lamp
+makeCard('grid-fix', 'c-lamp', ctx => {
+  const lx = CX+28, lsy=FLOOR_Y-32;
+  ctx.fillStyle='#5a4828';
+  ctx.fillRect(lx-1, DOOR_T+10, 3, lsy-DOOR_T-10);
+  ctx.fillStyle='#c87828';
+  ctx.beginPath();
+  ctx.moveTo(lx-10,lsy+18); ctx.lineTo(lx+11,lsy+18);
+  ctx.lineTo(lx+7,lsy); ctx.lineTo(lx-6,lsy);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(255,200,80,0.50)';
+  ctx.beginPath();
+  ctx.moveTo(lx-8,lsy+16); ctx.lineTo(lx+9,lsy+16);
+  ctx.lineTo(lx+5,lsy+2); ctx.lineTo(lx-4,lsy+2);
+  ctx.closePath(); ctx.fill();
+  ctx.globalAlpha=0.14;
+  const lg=ctx.createRadialGradient(lx,lsy+10,0,lx,lsy+10,40);
+  lg.addColorStop(0,'rgba(255,210,90,1)'); lg.addColorStop(1,'rgba(255,170,50,0)');
+  ctx.fillStyle=lg; ctx.fillRect(lx-40,lsy-10,80,60);
+  ctx.globalAlpha=1;
+},
+`<strong>Hanging lamp (bedside)</strong>~0.18 H<br><em>~21 W × 18 H (shade)</em>`, false, false);
+
+// Candle [PROPOSED]
+makeCard('grid-fix', 'c-candle', ctx => {
+  const cx=CX+28, cy=FLOOR_Y;
+  ctx.fillStyle='#e8d8a8';
+  ctx.fillRect(cx-3,cy-20,7,20);
+  ctx.strokeStyle='rgba(180,140,60,0.5)'; ctx.lineWidth=0.5;
+  ctx.strokeRect(cx-3,cy-20,7,20);
+  // wick
+  ctx.strokeStyle='#4a3018'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(cx,cy-20); ctx.lineTo(cx,cy-24); ctx.stroke();
+  // flame
+  ctx.fillStyle='rgba(255,160,40,0.9)';
+  ctx.beginPath();
+  ctx.moveTo(cx,cy-30); ctx.bezierCurveTo(cx+2,cy-26,cx+2,cy-23,cx,cy-22);
+  ctx.bezierCurveTo(cx-2,cy-23,cx-2,cy-26,cx,cy-30); ctx.fill();
+  ctx.fillStyle='rgba(255,240,140,0.9)';
+  ctx.beginPath();
+  ctx.moveTo(cx,cy-29); ctx.bezierCurveTo(cx+1,cy-26,cx+1,cy-24,cx,cy-23);
+  ctx.bezierCurveTo(cx-1,cy-24,cx-1,cy-26,cx,cy-29); ctx.fill();
+  ctx.globalAlpha=0.12;
+  const cg=ctx.createRadialGradient(cx,cy-26,0,cx,cy-26,18);
+  cg.addColorStop(0,'rgba(255,210,90,1)'); cg.addColorStop(1,'rgba(255,170,50,0)');
+  ctx.fillStyle=cg; ctx.fillRect(cx-18,cy-38,36,28); ctx.globalAlpha=1;
+},
+`<strong>Candle (Pip's, Ch1)</strong>0.18 H<br><em>~7 × 20 px</em>`, false, true);
+
+
+/* ================================================================
+   FURNITURE
+   ================================================================ */
+
+// Bed (cabin)
+makeCard('grid-furn', 'c-bed-cabin', ctx => {
+  const bW=80, bH=22, bx=CX+4, by=FLOOR_Y-bH;
+  ctx.fillStyle='#2a2448'; ctx.fillRect(bx+bW-8,by-12,8,bH+12);
+  ctx.strokeStyle='rgba(60,70,140,0.5)'; ctx.lineWidth=1;
+  ctx.strokeRect(bx+bW-8,by-12,8,bH+12);
+  ctx.fillStyle='#1e2040'; ctx.fillRect(bx,by,bW,bH);
+  ctx.strokeStyle='rgba(60,70,140,0.4)'; ctx.strokeRect(bx,by,bW,bH);
+  ctx.fillStyle='#363c66'; ctx.fillRect(bx+2,by+3,bW-10,8);
+  ctx.fillStyle='#404470'; ctx.fillRect(bx+6,by+3,22,6);
+},
+`<strong>Bed (cabin, Pip's)</strong>0.91 W × 0.20 H<br><em>100 × 22 px frame</em>`, false, false);
+
+// Bed (grandparents room — wide)
+makeCard('grid-furn', 'c-bed-gp', ctx => {
+  const bW=88, bH=22, bx=CX, by=FLOOR_Y-bH;
+  ctx.fillStyle='#3a2e1a'; ctx.fillRect(bx+bW-8,by-12,8,bH+12);
+  ctx.strokeStyle='rgba(120,90,40,0.5)'; ctx.lineWidth=1;
+  ctx.strokeRect(bx+bW-8,by-12,8,bH+12);
+  ctx.fillStyle='#302618'; ctx.fillRect(bx,by,bW,bH);
+  ctx.strokeStyle='rgba(120,90,40,0.4)'; ctx.strokeRect(bx,by,bW,bH);
+  ctx.fillStyle='#5a4428'; ctx.fillRect(bx+2,by+2,bW-10,7);
+  ctx.fillStyle='#685030'; ctx.fillRect(bx+6,by+2,22,5);
+  ctx.font='6px monospace'; ctx.fillStyle='rgba(200,150,60,0.5)';
+  ctx.fillText('158 px', bx+2, by-2);
+},
+`<strong>Bed (grandparents room)</strong>1.44 W × 0.20 H<br><em>158 × 22 px — oversize vs spec</em>`, false, false);
+
+// Nightstand
+makeCard('grid-furn', 'c-ns', ctx => {
+  const nx=CX+30, nW=20, nH=18, ny=FLOOR_Y-nH;
+  ctx.fillStyle='#2e2414'; ctx.fillRect(nx,ny,nW,nH);
+  ctx.strokeStyle='rgba(120,90,40,0.55)'; ctx.lineWidth=1;
+  ctx.strokeRect(nx,ny,nW,nH);
+  // photo frame on top
+  ctx.fillStyle='#4a3a1e'; ctx.fillRect(nx+3,ny-11,14,11);
+  ctx.strokeStyle='rgba(155,120,68,0.8)'; ctx.strokeRect(nx+3,ny-11,14,11);
+  ctx.fillStyle='#d4a868'; ctx.fillRect(nx+5,ny-9,10,8);
+  ctx.fillStyle='#1a1408';
+  ctx.beginPath(); ctx.arc(nx+10,ny-6,2,0,Math.PI*2); ctx.fill();
+  ctx.fillRect(nx+8,ny-3,4,3);
+},
+`<strong>Nightstand</strong>0.18 W × 0.16 H<br><em>20 × 18 px</em>`, false, false);
+
+// Suitcase (open)
+makeCard('grid-furn', 'c-suit', ctx => {
+  const scX=CX+8, scW=54, scH=13, scY=FLOOR_Y-scH;
+  ctx.fillStyle='#3e3018'; ctx.fillRect(scX,scY,scW,scH);
+  ctx.strokeStyle='rgba(130,100,48,0.6)'; ctx.lineWidth=1;
+  ctx.strokeRect(scX,scY,scW,scH);
+  ctx.fillStyle='#382818';
+  ctx.beginPath();
+  ctx.moveTo(scX,scY); ctx.lineTo(scX+scW,scY);
+  ctx.lineTo(scX+scW-4,scY-14); ctx.lineTo(scX+4,scY-14);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(130,100,48,0.45)'; ctx.stroke();
+  ctx.fillStyle='rgba(85,110,155,0.38)';
+  ctx.fillRect(scX+3,scY+3,scW-6,4);
+  ctx.fillStyle='#7a6038';
+  ctx.fillRect(scX+scW/2-2,scY-1,4,2);
+},
+`<strong>Suitcase (open)</strong>0.49 W × 0.12 H<br><em>54 × 13 px body</em>`, false, false);
+
+// Chair [PROPOSED]
+makeCard('grid-furn', 'c-chair', ctx => {
+  const ch=36, cW=24, cx2=CX+20, cy=FLOOR_Y;
+  ctx.fillStyle='#3a2814';
+  // seat
+  ctx.fillRect(cx2,cy-14,cW,6);
+  // back
+  ctx.fillRect(cx2+cW-6,cy-ch,6,ch-8);
+  // legs
+  ctx.fillRect(cx2+1,cy-8,4,8);
+  ctx.fillRect(cx2+cW-5,cy-8,4,8);
+  ctx.strokeStyle='rgba(100,70,30,0.5)'; ctx.lineWidth=1;
+  ctx.strokeRect(cx2,cy-14,cW,6);
+  ctx.strokeRect(cx2+cW-6,cy-ch,6,ch-8);
+},
+`<strong>Chair</strong>0.30–0.35 H<br><em>33–38 px tall</em>`, false, true);
+
+// Long pine table [PROPOSED]
+makeCard('grid-furn', 'c-table', ctx => {
+  const tW=80, tH=8, tx=CX+4, ty=FLOOR_Y-30;
+  ctx.fillStyle='#5a4020';
+  ctx.fillRect(tx,ty,tW,tH);
+  ctx.strokeStyle='rgba(140,100,40,0.5)'; ctx.lineWidth=1;
+  ctx.strokeRect(tx,ty,tW,tH);
+  // legs
+  ctx.fillStyle='#4a3418';
+  ctx.fillRect(tx+3,ty+tH,4,22);
+  ctx.fillRect(tx+tW-7,ty+tH,4,22);
+  ctx.strokeStyle='rgba(120,80,30,0.4)';
+  ctx.strokeRect(tx+3,ty+tH,4,22);
+  ctx.strokeRect(tx+tW-7,ty+tH,4,22);
+},
+`<strong>Long pine table (Leida)</strong>0.55–0.65 W × 0.25–0.30 H<br><em>~60–72 × 28–33 px</em>`, false, true);
+
+// Wood stove [PROPOSED]
+makeCard('grid-furn', 'c-stove', ctx => {
+  const sW=36, sH=50, sx=CX+18, sy=FLOOR_Y-sH;
+  ctx.fillStyle='#2a2028'; ctx.fillRect(sx,sy,sW,sH);
+  ctx.strokeStyle='rgba(80,60,40,0.6)'; ctx.lineWidth=1;
+  ctx.strokeRect(sx,sy,sW,sH);
+  // fire door
+  ctx.fillStyle='#181018'; ctx.fillRect(sx+4,sy+24,12,12);
+  ctx.strokeStyle='rgba(180,80,20,0.4)'; ctx.strokeRect(sx+4,sy+24,12,12);
+  // chimney pipe
+  ctx.fillStyle='#1e1a20'; ctx.fillRect(sx+12,sy-20,8,20);
+  ctx.strokeStyle='rgba(80,60,40,0.5)'; ctx.strokeRect(sx+12,sy-20,8,20);
+  // glow from firebox
+  ctx.globalAlpha=0.18;
+  const fg=ctx.createRadialGradient(sx+10,sy+30,1,sx+10,sy+30,16);
+  fg.addColorStop(0,'rgba(255,120,20,1)'); fg.addColorStop(1,'rgba(255,80,0,0)');
+  ctx.fillStyle=fg; ctx.fillRect(sx,sy+18,20,24); ctx.globalAlpha=1;
+},
+`<strong>Wood stove (Leida's)</strong>0.45–0.55 H<br><em>~50–60 × 36 px</em>`, false, true);
+
+// Potjie [PROPOSED]
+makeCard('grid-furn', 'c-potjie', ctx => {
+  const px2=CX+24, py=FLOOR_Y;
+  ctx.fillStyle='#1a1218';
+  // legs
+  ctx.fillRect(px2-14,py-12,4,12);
+  ctx.fillRect(px2-2,py-14,4,14);
+  ctx.fillRect(px2+10,py-12,4,12);
+  // pot belly
+  ctx.beginPath();
+  ctx.ellipse(px2,py-28,18,16,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(80,60,40,0.5)'; ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.ellipse(px2,py-28,18,16,0,0,Math.PI*2); ctx.stroke();
+  // lid
+  ctx.fillStyle='#222028'; ctx.fillRect(px2-16,py-46,32,4);
+  ctx.beginPath(); ctx.arc(px2,py-46,3,0,Math.PI*2); ctx.fill();
+  // fire glow
+  ctx.globalAlpha=0.22;
+  const pg=ctx.createRadialGradient(px2,py-4,1,px2,py-4,18);
+  pg.addColorStop(0,'rgba(255,140,30,1)'); pg.addColorStop(1,'rgba(255,80,0,0)');
+  ctx.fillStyle=pg; ctx.fillRect(px2-18,py-12,36,12); ctx.globalAlpha=1;
+},
+`<strong>Potjie (cast-iron, 3 legs)</strong>0.35–0.45 H<br><em>~38–50 px total</em>`, false, true);
+
+
+/* ================================================================
+   PROPS
+   ================================================================ */
+
+// Photograph (framed)
+makeCard('grid-props', 'c-photo', ctx => {
+  const px2=CX+28, py=FLOOR_Y-40;
+  ctx.fillStyle='#3a2a10'; ctx.fillRect(px2-8,py,16,12);
+  ctx.strokeStyle='rgba(150,110,50,0.8)'; ctx.lineWidth=1;
+  ctx.strokeRect(px2-8,py,16,12);
+  ctx.fillStyle='#c8a060'; ctx.fillRect(px2-6,py+1,12,9);
+  ctx.fillStyle='#1a1408';
+  ctx.beginPath(); ctx.arc(px2,py+4,2.5,0,Math.PI*2); ctx.fill();
+  ctx.fillRect(px2-3,py+7,6,3);
+},
+`<strong>Photograph (framed)</strong>~0.13 W × 0.10 H<br><em>16 × 12 px frame</em>`, false, false);
+
+// Radio
+makeCard('grid-props', 'c-radio', ctx => {
+  const rx=CX+20, ry=FLOOR_Y-18;
+  ctx.fillStyle='#2a2030'; ctx.fillRect(rx,ry,28,18);
+  ctx.strokeStyle='rgba(80,70,100,0.6)'; ctx.lineWidth=1;
+  ctx.strokeRect(rx,ry,28,18);
+  // speaker grille
+  ctx.strokeStyle='rgba(60,55,80,0.5)';
+  for(let i=0;i<4;i++) ctx.strokeRect(rx+2,ry+2+i*3,12,2);
+  // dial
+  ctx.fillStyle='#3a2820';
+  ctx.beginPath(); ctx.arc(rx+20,ry+9,4,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(160,120,60,0.6)';
+  ctx.beginPath(); ctx.arc(rx+20,ry+9,4,0,Math.PI*2); ctx.stroke();
+},
+`<strong>Radio (table-top)</strong>0.25 W × 0.16 H<br><em>~28 × 18 px</em>`, false, true);
+
+// Cast-iron pan
+makeCard('grid-props', 'c-pan', ctx => {
+  const px2=CX+10, py=FLOOR_Y-24;
+  ctx.fillStyle='#1a1218';
+  ctx.beginPath(); ctx.ellipse(px2+20,py+4,18,7,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(80,60,40,0.5)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.ellipse(px2+20,py+4,18,7,0,0,Math.PI*2); ctx.stroke();
+  // handle
+  ctx.fillStyle='#181018'; ctx.fillRect(px2,py+1,12,6);
+  ctx.strokeStyle='rgba(80,60,40,0.5)'; ctx.strokeRect(px2,py+1,12,6);
+},
+`<strong>Cast-iron pan (Leida's)</strong>0.08 H × 0.30 W<br><em>~9 × 33 px</em>`, false, true);
+
+// Matchbox
+makeCard('grid-props', 'c-matches', ctx => {
+  const mx=CX+24, my=FLOOR_Y-10;
+  ctx.fillStyle='#c8a850'; ctx.fillRect(mx,my,18,10);
+  ctx.strokeStyle='rgba(80,60,20,0.6)'; ctx.lineWidth=1;
+  ctx.strokeRect(mx,my,18,10);
+  ctx.fillStyle='rgba(200,60,20,0.6)'; ctx.fillRect(mx+1,my+1,16,3);
+  ctx.fillStyle='#e8d890'; ctx.fillRect(mx+2,my+5,14,4);
+},
+`<strong>Matchbox</strong>0.09 H × 0.16 W<br><em>~10 × 18 px</em>`, false, true);
+
+// Switchblade (closed)
+makeCard('grid-props', 'c-blade', ctx => {
+  const bx=CX+18, by=FLOOR_Y-16;
+  ctx.fillStyle='#d8c8b8'; ctx.fillRect(bx,by,20,6);
+  ctx.strokeStyle='rgba(120,100,70,0.7)'; ctx.lineWidth=1;
+  ctx.strokeRect(bx,by,20,6);
+  ctx.fillStyle='#1a1818'; ctx.fillRect(bx+14,by,6,6);
+  ctx.fillStyle='rgba(255,255,255,0.15)';
+  ctx.fillRect(bx+1,by+1,14,2);
+},
+`<strong>Switchblade (closed, Iris's)</strong>0.05 H × 0.18 W<br><em>~6 × 20 px</em>`, false, true);
+
+// Small wooden box (coffin-scale)
+makeCard('grid-props', 'c-box', ctx => {
+  const bx=CX+16, bW=28, bH=16, by=FLOOR_Y-bH;
+  ctx.fillStyle='#4a3018'; ctx.fillRect(bx,by,bW,bH);
+  ctx.strokeStyle='rgba(130,90,30,0.6)'; ctx.lineWidth=1;
+  ctx.strokeRect(bx,by,bW,bH);
+  // coffin taper
+  ctx.fillStyle='rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.moveTo(bx,by); ctx.lineTo(bx+4,by+4); ctx.lineTo(bx,by+bH); ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(bx+bW,by); ctx.lineTo(bx+bW-4,by+4); ctx.lineTo(bx+bW,by+bH); ctx.closePath(); ctx.fill();
+  // clasp
+  ctx.fillStyle='#8a6830'; ctx.fillRect(bx+bW/2-2,by-1,4,2);
+},
+`<strong>Small wooden box</strong>0.15 H × 0.26 W<br><em>~16 × 28 px</em>`, false, true);
+
+// Banana leaf bundle
+makeCard('grid-props', 'c-banana', ctx => {
+  const lx=CX+8, ly=FLOOR_Y-20;
+  // several overlapping leaves
+  const greens=['#2a5020','#345a28','#3a6030'];
+  for(let i=0;i<3;i++){
+    ctx.fillStyle=greens[i];
+    ctx.save(); ctx.translate(lx+i*4,ly+i*2);
+    ctx.beginPath();
+    ctx.ellipse(20,0,36,8,-0.25+i*0.15,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  // tie string
+  ctx.strokeStyle='rgba(160,120,50,0.7)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(lx+18,ly); ctx.lineTo(lx+22,ly+16); ctx.stroke();
+  ctx.beginPath(); ctx.arc(lx+20,ly+8,3,0,Math.PI*2);
+  ctx.strokeStyle='rgba(160,120,50,0.5)'; ctx.stroke();
+},
+`<strong>Banana leaf bundle</strong>0.14 H × 0.22 W<br><em>~15 × 24 px</em>`, false, true);
+
+// Recipe journal
+makeCard('grid-props', 'c-journal', ctx => {
+  const jx=CX+25, jy=FLOOR_Y-24;
+  ctx.fillStyle='#4a3820'; ctx.fillRect(jx,jy,20,24);
+  ctx.strokeStyle='rgba(130,95,40,0.6)'; ctx.lineWidth=1;
+  ctx.strokeRect(jx,jy,20,24);
+  // spine
+  ctx.fillStyle='#382a14'; ctx.fillRect(jx,jy,3,24);
+  // lines
+  ctx.strokeStyle='rgba(180,140,60,0.3)';
+  for(let i=0;i<4;i++) ctx.strokeRect(jx+5,jy+5+i*4,12,2);
+},
+`<strong>Recipe journal (Pip's)</strong>0.22 H × 0.18 W<br><em>~24 × 20 px</em>`, false, true);
+
+
+/* ================================================================
+   CHARACTERS
+   ================================================================ */
+
+// Pip (current — DISCREPANCY)
+makeCard('grid-chars', 'c-pip', ctx => {
+  const cx=CX+30, foot=FLOOR_Y;
+  const PIP_H=24;
+  ctx.save(); ctx.translate(cx, foot);
+  // body
+  ctx.shadowColor='rgba(240,248,255,0.85)'; ctx.shadowBlur=5;
+  ctx.globalAlpha=0.85; ctx.fillStyle='#dce8ff';
+  ctx.beginPath();
+  ctx.arc(0,-PIP_H+7,7,Math.PI,0);
+  ctx.lineTo(7,-6);
+  ctx.quadraticCurveTo(4.67,0,2.33,-6);
+  ctx.quadraticCurveTo(0,0,-2.33,-6);
+  ctx.quadraticCurveTo(-4.67,0,-7,-6);
+  ctx.closePath(); ctx.fill();
+  ctx.shadowBlur=0;
+  // apron
+  ctx.globalAlpha=0.28; ctx.fillStyle='#d4c89a';
+  ctx.fillRect(-5,-PIP_H+14,10,5);
+  // eyes
+  ctx.globalAlpha=0.92; ctx.fillStyle='#1a1428';
+  ctx.fillRect(-3,-PIP_H+6,2,2); ctx.fillRect(2,-PIP_H+6,2,2);
+  // underglow
+  ctx.globalAlpha=0.12;
+  const ug=ctx.createRadialGradient(0,1,0,0,1,10);
+  ug.addColorStop(0,'#c0d8ff'); ug.addColorStop(1,'rgba(180,210,255,0)');
+  ctx.fillStyle=ug;
+  ctx.beginPath(); ctx.ellipse(0,1,10,3,0,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1; ctx.restore();
+  // label: current vs canonical
+  ctx.fillStyle='rgba(220,100,60,0.7)'; ctx.font='7px monospace';
+  ctx.fillText('current 24px', CX+4, FLOOR_Y-27);
+  ctx.strokeStyle='rgba(220,100,60,0.5)'; ctx.lineWidth=1; ctx.setLineDash([2,2]);
+  ctx.beginPath(); ctx.moveTo(CX+4,FLOOR_Y-36); ctx.lineTo(CX+58,FLOOR_Y-36); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(100,180,100,0.6)';
+  ctx.fillText('target 34px', CX+4, FLOOR_Y-39);
+  ctx.strokeStyle='rgba(100,180,100,0.4)'; ctx.setLineDash([2,2]);
+  ctx.beginPath(); ctx.moveTo(CX+4,FLOOR_Y-FLOOR_Y+FLOOR_Y-34-1); ctx.lineTo(CX+58,FLOOR_Y-34-1); ctx.stroke();
+  ctx.setLineDash([]);
+},
+`<strong>Pip (ghost form)</strong>current: 0.22 H (24 px)<br>canonical: 0.30–0.35 H (32–38 px)`, true, false);
+
+// Adult NPC representative (canonical, not yet implemented)
+makeCard('grid-chars', 'c-adult', ctx => {
+  const cx=CX+25, foot=FLOOR_Y, H=66;
+  ctx.fillStyle='#2a2038'; ctx.globalAlpha=0.88;
+  ctx.fillRect(cx-5,foot-H,10,H*0.08); // hat
+  ctx.fillRect(cx-7,foot-H+8,14,2); // brim
+  ctx.fillRect(cx-4,foot-H+10,9,8); // head
+  ctx.fillRect(cx-2,foot-H+18,4,3); // neck
+  ctx.fillRect(cx-8,foot-H+21,16,3); // shoulders
+  ctx.fillRect(cx-6,foot-H+24,12,16); // coat body
+  ctx.fillRect(cx-9,foot-H+21,3,18); // left arm
+  ctx.fillRect(cx+6,foot-H+21,3,18); // right arm
+  ctx.fillRect(cx-5,foot-H+40,3,12); ctx.fillRect(cx+2,foot-H+40,3,12); // legs
+  ctx.fillRect(cx-7,foot-H+52,5,H-52); ctx.fillRect(cx+2,foot-H+52,5,H-52); // shoes + feet
+  ctx.globalAlpha=1;
+  // dim label for "not yet implemented"
+  ctx.fillStyle='rgba(140,140,160,0.5)'; ctx.font='7px monospace';
+  ctx.fillText('canonical 66px', CX+4, foot-H-3);
+},
+`<strong>Adult NPC (canonical)</strong>0.55–0.65 H<br><em>60–72 px · Not yet impl.</em>`, false, false);
+
+// Sandy (tall adult)
+makeCard('grid-chars', 'c-sandy', ctx => {
+  const cx=CX+25, foot=FLOOR_Y, H=75;
+  ctx.fillStyle='#2a2838'; ctx.globalAlpha=0.88;
+  ctx.fillRect(cx-5,foot-H,10,8); // head
+  ctx.fillRect(cx-7,foot-H+8,14,2);
+  ctx.fillRect(cx-5,foot-H+10,10,8);
+  ctx.fillRect(cx-2,foot-H+18,5,3);
+  ctx.fillRect(cx-10,foot-H+21,20,3);
+  ctx.fillRect(cx-8,foot-H+24,16,18); // wider torso (beer belly)
+  ctx.fillRect(cx-11,foot-H+21,3,20);
+  ctx.fillRect(cx+8,foot-H+21,3,20);
+  ctx.fillRect(cx-6,foot-H+42,4,14); ctx.fillRect(cx+2,foot-H+42,4,14);
+  ctx.fillRect(cx-8,foot-H+56,6,H-56); ctx.fillRect(cx+2,foot-H+56,6,H-56);
+  ctx.globalAlpha=1;
+  ctx.fillStyle='rgba(180,150,80,0.5)'; ctx.font='7px monospace';
+  ctx.fillText('Sandy ~75px', CX+4, foot-H-3);
+},
+`<strong>Sandy (tall adult, Ch3)</strong>0.65–0.70 H<br><em>72–77 px · Not yet impl.</em>`, false, false);
+
+// Child NPC (canonical)
+makeCard('grid-chars', 'c-child', ctx => {
+  const cx=CX+26, foot=FLOOR_Y, H=48;
+  ctx.fillStyle='#2a1e38'; ctx.globalAlpha=0.88;
+  ctx.fillRect(cx-5,foot-H,10,8);
+  ctx.fillRect(cx-2,foot-H+8,4,3);
+  ctx.fillRect(cx-6,foot-H+11,12,2);
+  ctx.fillRect(cx-5,foot-H+13,10,14);
+  ctx.fillRect(cx-7,foot-H+11,3,16); ctx.fillRect(cx+4,foot-H+11,3,16);
+  ctx.fillRect(cx-4,foot-H+27,3,10); ctx.fillRect(cx+1,foot-H+27,3,10);
+  ctx.fillRect(cx-5,foot-H+37,4,H-37); ctx.fillRect(cx+1,foot-H+37,4,H-37);
+  ctx.globalAlpha=1;
+},
+`<strong>Child NPC (canonical)</strong>0.40–0.45 H<br><em>44–50 px · Not yet impl.</em>`, false, false);
+
+// Babcia gameplay (DISCREPANCY)
+makeCard('grid-chars', 'c-babcia-gp', ctx => {
+  const cx=CX+28, groundY=FLOOR_Y;
+  ctx.save(); ctx.translate(cx, groundY);
+  ctx.fillStyle='#2a2030'; ctx.globalAlpha=0.9;
+  ctx.beginPath(); ctx.arc(3,-22,3,0,Math.PI*2); ctx.fill();
+  ctx.fillRect(-4,-20,8,7);
+  ctx.fillRect(-7,-13,14,8);
+  ctx.fillRect(-9,-5,18,5);
+  ctx.fillRect(-3,-13,6,3);
+  ctx.globalAlpha=1; ctx.restore();
+  ctx.fillStyle='rgba(220,100,60,0.7)'; ctx.font='7px monospace';
+  ctx.fillText('~25px actual', CX+4, FLOOR_Y-27);
+},
+`<strong>Babcia (gameplay, seated)</strong>current: 0.23 H (~25 px)<br>canonical: ≥ 0.40 H`, true, false);
+
+// Dziadek gameplay (DISCREPANCY)
+makeCard('grid-chars', 'c-dziadek-gp', ctx => {
+  const cx=CX+28, groundY=FLOOR_Y;
+  ctx.save(); ctx.translate(cx, groundY); ctx.scale(-1,1);
+  ctx.fillStyle='#2a2030'; ctx.globalAlpha=0.9;
+  ctx.fillRect(-5,-30,11,3); ctx.fillRect(-4,-27,8,2);
+  ctx.fillRect(-4,-25,8,7); ctx.fillRect(-2,-18,4,2);
+  ctx.fillRect(-7,-16,14,10); ctx.fillRect(-5,-6,10,3);
+  ctx.fillRect(-4,-3,3,3); ctx.fillRect(1,-3,3,3);
+  ctx.fillRect(-5,0,4,1); ctx.fillRect(1,0,4,1);
+  ctx.globalAlpha=1; ctx.restore();
+  ctx.fillStyle='rgba(220,100,60,0.7)'; ctx.font='7px monospace';
+  ctx.fillText('~31px actual', CX+4, FLOOR_Y-33);
+},
+`<strong>Dziadek (gameplay)</strong>current: 0.28 H (~31 px)<br>canonical: 0.55–0.65 H`, true, false);
+
+// Passenger (DISCREPANCY)
+makeCard('grid-chars', 'c-passenger', ctx => {
+  const cx=CX+28, foot=FLOOR_Y;
+  ctx.save(); ctx.translate(cx, foot); ctx.scale(-1,1);
+  ctx.fillStyle='#2a2438'; ctx.globalAlpha=0.96;
+  ctx.fillRect(-3,-28,7,5); ctx.fillRect(-6,-23,12,2);
+  ctx.fillRect(-3,-21,6,6); ctx.fillRect(-2,-15,4,2);
+  ctx.fillRect(-4,-13,9,6); ctx.fillRect(-3,-7,7,3);
+  ctx.fillRect(-3,-4,2,3); ctx.fillRect(1,-4,2,3);
+  ctx.fillRect(-4,-1,3,1); ctx.fillRect(1,-1,3,1);
+  ctx.globalAlpha=1; ctx.restore();
+  ctx.fillStyle='rgba(220,100,60,0.7)'; ctx.font='7px monospace';
+  ctx.fillText('~28px actual', CX+4, FLOOR_Y-30);
+},
+`<strong>Passenger (scripted walk)</strong>current: 0.25 H (28 px)<br>canonical: 0.55–0.65 H`, true, false);
+
+// Pätu (canonical, not yet impl)
+makeCard('grid-chars', 'c-patu', ctx => {
+  const cx=CX+28, foot=FLOOR_Y, H=25;
+  ctx.fillStyle='#4a4840'; ctx.globalAlpha=0.9;
+  // body
+  ctx.beginPath(); ctx.ellipse(cx,foot-H/2,10,H/2,0,0,Math.PI*2); ctx.fill();
+  // head
+  ctx.beginPath(); ctx.arc(cx+8,foot-H-2,7,0,Math.PI*2); ctx.fill();
+  // ears
+  ctx.beginPath();
+  ctx.moveTo(cx+6,foot-H-8); ctx.lineTo(cx+3,foot-H-14); ctx.lineTo(cx+9,foot-H-9);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx+11,foot-H-8); ctx.lineTo(cx+14,foot-H-14); ctx.lineTo(cx+16,foot-H-7);
+  ctx.closePath(); ctx.fill();
+  // tail
+  ctx.strokeStyle='#4a4840'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(cx-10,foot-H/2); ctx.quadraticCurveTo(cx-20,foot-H-5,cx-15,foot-H+4);
+  ctx.stroke();
+  // eyes
+  ctx.globalAlpha=0.9; ctx.fillStyle='#f8e870';
+  ctx.beginPath(); ctx.arc(cx+6,foot-H-2,1.5,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+11,foot-H-2,1.5,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
+},
+`<strong>Pätu (gray tabby)</strong>0.20–0.25 H<br><em>22–28 px · Not yet impl.</em>`, false, false);
+
+// Capuchin [PROPOSED]
+makeCard('grid-chars', 'c-capuchin', ctx => {
+  const cx=CX+28, foot=FLOOR_Y, H=20;
+  ctx.fillStyle='#3a2820'; ctx.globalAlpha=0.9;
+  // body
+  ctx.beginPath(); ctx.ellipse(cx,foot-H/2,7,H/2,0,0,Math.PI*2); ctx.fill();
+  // head
+  ctx.beginPath(); ctx.arc(cx,foot-H-5,6,0,Math.PI*2); ctx.fill();
+  // white face cap
+  ctx.fillStyle='#d8c8a0';
+  ctx.beginPath(); ctx.arc(cx,foot-H-5,4,0,Math.PI,-1); ctx.fill();
+  ctx.fillStyle='#3a2820';
+  ctx.beginPath(); ctx.arc(cx-2,foot-H-6,1,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+2,foot-H-6,1,0,Math.PI*2); ctx.fill();
+  // tail
+  ctx.strokeStyle='#3a2820'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(cx-7,foot-H/2); ctx.quadraticCurveTo(cx-16,foot-H/2+5,cx-14,foot-H+2);
+  ctx.stroke();
+  ctx.globalAlpha=1;
+},
+`<strong>Capuchin monkey (Ch7)</strong>0.15–0.20 H<br><em>16–22 px · Not yet impl.</em>`, false, true);
+
+// Pocong [PROPOSED]
+makeCard('grid-chars', 'c-pocong', ctx => {
+  const cx=CX+26, foot=FLOOR_Y, H=65;
+  ctx.fillStyle='#e8e8e0'; ctx.globalAlpha=0.88;
+  // main shroud
+  ctx.fillRect(cx-10,foot-H,20,H-10);
+  // tied feet — bunched knot
+  ctx.fillStyle='#c8c8bc';
+  ctx.beginPath(); ctx.ellipse(cx,foot-8,10,8,0,0,Math.PI*2); ctx.fill();
+  // knot ties
+  ctx.strokeStyle='rgba(180,170,150,0.7)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(cx-12,foot-8); ctx.lineTo(cx+12,foot-8); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-12,foot-18); ctx.lineTo(cx+12,foot-18); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-12,foot-28); ctx.lineTo(cx+12,foot-28); ctx.stroke();
+  // face (closed eyes)
+  ctx.fillStyle='rgba(40,30,30,0.4)';
+  ctx.fillRect(cx-5,foot-H+14,10,3); // eyes closed = horizontal lines
+  ctx.globalAlpha=1;
+},
+`<strong>Pocong (Ch6)</strong>0.50–0.65 H<br><em>55–72 px · Not yet impl.</em>`, false, true);
+
+// Iris ghost child [PROPOSED]
+makeCard('grid-chars', 'c-iris', ctx => {
+  const cx=CX+26, foot=FLOOR_Y, H=48;
+  ctx.fillStyle='#e8ecf4'; ctx.globalAlpha=0.75;
+  // dress (somewhat translucent)
+  ctx.fillRect(cx-9,foot-H+16,18,H-16); // skirt
+  ctx.fillRect(cx-7,foot-H,14,18); // torso + head area
+  ctx.fillStyle='#d0d4e0'; ctx.globalAlpha=0.85;
+  ctx.beginPath(); ctx.arc(cx,foot-H+7,6,0,Math.PI*2); ctx.fill(); // head
+  // hair ribbon
+  ctx.fillStyle='rgba(80,60,120,0.5)';
+  ctx.fillRect(cx-8,foot-H-2,16,3);
+  // pinafore
+  ctx.fillStyle='rgba(255,255,255,0.4)';
+  ctx.fillRect(cx-6,foot-H+13,12,12);
+  // eyes
+  ctx.fillStyle='rgba(40,40,60,0.7)';
+  ctx.fillRect(cx-3,foot-H+5,2,2); ctx.fillRect(cx+1,foot-H+5,2,2);
+  ctx.globalAlpha=1;
+},
+`<strong>Iris (Edwardian ghost, Ch5)</strong>0.40–0.45 H<br><em>44–50 px · Not yet impl.</em>`, false, true);
+
+// Black Shuck [PROPOSED]
+makeCard('grid-chars', 'c-shuck', ctx => {
+  const cx=CX+28, foot=FLOOR_Y, H=38;
+  ctx.fillStyle='#0e0c12'; ctx.globalAlpha=0.9;
+  // body
+  ctx.beginPath(); ctx.ellipse(cx,foot-H/2,18,H/2,0,0,Math.PI*2); ctx.fill();
+  // head
+  ctx.beginPath(); ctx.arc(cx+16,foot-H*0.8,8,0,Math.PI*2); ctx.fill();
+  // ears
+  ctx.beginPath();
+  ctx.moveTo(cx+13,foot-H*0.8-7); ctx.lineTo(cx+10,foot-H-6); ctx.lineTo(cx+16,foot-H*0.8-5);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx+19,foot-H*0.8-7); ctx.lineTo(cx+22,foot-H-4); ctx.lineTo(cx+25,foot-H*0.8-4);
+  ctx.closePath(); ctx.fill();
+  // eyes (glowing)
+  ctx.fillStyle='rgba(200,200,255,0.9)';
+  ctx.beginPath(); ctx.arc(cx+14,foot-H*0.8-1,1.5,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+19,foot-H*0.8-1,1.5,0,Math.PI*2); ctx.fill();
+  // legs
+  ctx.fillStyle='#0e0c12'; ctx.globalAlpha=0.9;
+  for(let i=0;i<4;i++) ctx.fillRect(cx-14+i*10,foot-12,4,12);
+  // tail
+  ctx.strokeStyle='#0e0c12'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(cx-16,foot-H*0.4); ctx.quadraticCurveTo(cx-28,foot-H,cx-22,foot-H/2);
+  ctx.stroke();
+  ctx.globalAlpha=1;
+},
+`<strong>Black Shuck (Ch3)</strong>0.30–0.40 H<br><em>33–44 px · Not yet impl.</em>`, false, true);
+
+// Haldjas (sparkle cluster)
+makeCard('grid-chars', 'c-haldjas', ctx => {
+  const cx=CX+35, cy=FLOOR_Y-50;
+  // sparkle swarm
+  const motes=[
+    {ox:0,oy:0},{ox:8,oy:-12},{ox:-6,oy:-8},{ox:12,oy:4},
+    {ox:-10,oy:6},{ox:4,oy:-18},{ox:-2,oy:14},{ox:16,oy:-6},
+    {ox:-14,oy:-2},{ox:6,oy:10},{ox:-8,oy:16},{ox:18,oy:8}
+  ];
+  motes.forEach((m,i)=>{
+    const alpha = 0.4 + (i%3)*0.2;
+    ctx.globalAlpha=alpha;
+    ctx.fillStyle='#f8d850';
+    ctx.beginPath(); ctx.arc(cx+m.ox,cy+m.oy,1.5,0,Math.PI*2); ctx.fill();
+    if(i<5){
+      ctx.globalAlpha=alpha*0.3;
+      ctx.fillStyle='rgba(255,210,80,0.5)';
+      ctx.beginPath(); ctx.arc(cx+m.ox,cy+m.oy,4,0,Math.PI*2); ctx.fill();
+    }
+  });
+  ctx.globalAlpha=1;
+  // rough humanoid suggestion (very faint)
+  ctx.fillStyle='rgba(255,220,100,0.08)';
+  ctx.beginPath(); ctx.ellipse(cx+2,cy+4,10,18,0,0,Math.PI*2); ctx.fill();
+},
+`<strong>Haldjas (Ch2)</strong>particle cluster<br><em>~40 px swarm area</em>`, false, false);
+
+
+/* ================================================================
+   UI ELEMENTS
+   ================================================================ */
+
+// Dialogue box (scaled representation)
+makeCard('grid-ui', 'c-diag', ctx => {
+  const dw=100, dh=36, dx=CX-4, dy=FLOOR_Y-dh-4;
+  ctx.fillStyle='rgba(8,6,12,0.92)';
+  ctx.fillRect(dx,dy,dw,dh);
+  ctx.strokeStyle='#3a4068'; ctx.lineWidth=1;
+  ctx.strokeRect(dx,dy,dw,dh);
+  ctx.strokeStyle='rgba(140,160,200,0.22)';
+  ctx.strokeRect(dx+3,dy+3,dw-6,dh-6);
+  ctx.fillStyle='rgba(240,200,152,0.5)'; ctx.font='6px monospace';
+  ctx.fillText('PIP', dx+5, dy+11);
+  ctx.fillStyle='rgba(255,244,216,0.55)';
+  ctx.fillText('"I\'m right here."', dx+5, dy+21);
+  ctx.fillStyle='rgba(200,168,120,0.4)';
+  ctx.fillText('SPACE — advance', dx+28, dy+31);
+},
+`<strong>Dialogue box (HTML overlay)</strong>76% canvas width ~365 px<br><em>CSS-positioned; not canvas-drawn</em>`, false, false);
+
+// Sparkle indicator
+makeCard('grid-ui', 'c-sparkle', ctx => {
+  const sx=CX+40, sy=FLOOR_Y-50;
+  ctx.save();
+  ctx.shadowColor='rgba(255,200,104,0.9)'; ctx.shadowBlur=8;
+  ctx.fillStyle='#ffc868'; ctx.globalAlpha=0.9;
+  ctx.beginPath(); ctx.arc(sx,sy,2.5,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+},
+`<strong>Sparkle indicator</strong>~5 px dot + 8 px glow<br><em>Canvas-drawn; proximity trigger</em>`, false, false);
+
+// Controls strip
+makeCard('grid-ui', 'c-strip', ctx => {
+  ctx.fillStyle='rgba(8,6,12,0.6)';
+  ctx.fillRect(CX-4, FLOOR_Y+6, 96, 12);
+  ctx.fillStyle='rgba(138,120,88,0.6)'; ctx.font='6px monospace';
+  ctx.fillText('← →  MOVE   SPACE  INSPECT', CX-2, FLOOR_Y+14);
+},
+`<strong>Controls strip (HTML overlay)</strong>full canvas width<br><em>~12-14 px text; bottom of screen</em>`, false, false);
+
+// Journal UI (not yet implemented)
+makeCard('grid-ui', 'c-journal-ui', ctx => {
+  const jx=CX-4, jy=DOOR_T, jW=92, jH=FLOOR_Y-DOOR_T;
+  ctx.fillStyle='rgba(8,6,12,0.88)'; ctx.fillRect(jx,jy,jW,jH);
+  ctx.strokeStyle='#3a4068'; ctx.lineWidth=1; ctx.strokeRect(jx,jy,jW,jH);
+  // recipe cards
+  for(let i=0;i<3;i++){
+    ctx.fillStyle=`rgba(${50+i*20},${40+i*10},${20+i*8},0.7)`;
+    ctx.fillRect(jx+4+i*28,jy+6,24,22);
+    ctx.strokeStyle='rgba(140,100,40,0.3)'; ctx.strokeRect(jx+4+i*28,jy+6,24,22);
+  }
+  ctx.fillStyle='rgba(200,180,140,0.35)'; ctx.font='6px monospace';
+  ctx.fillText('JOURNAL (not impl.)', jx+4, jy+jH-4);
+},
+`<strong>Journal (full-screen UI)</strong>480 × 270 (full canvas)<br><em>Not yet implemented</em>`, false, false);
+
+
+/* ================================================================
+   ECHO-CREATURES
+   ================================================================ */
+
+function drawTinyCreature(ctx, x, y, w, h, style) {
+  // simple tiny silhouette
+  if(style==='mouse'){
+    ctx.fillStyle='rgba(180,180,200,0.5)';
+    ctx.beginPath(); ctx.ellipse(x,y-h/3,w/2,h/3,0,0,Math.PI*2); ctx.fill(); // body
+    ctx.beginPath(); ctx.arc(x+w/2,y-h*0.6,h/3,0,Math.PI*2); ctx.fill(); // head
+    ctx.strokeStyle='rgba(160,160,180,0.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x-w/2,y-h/3); ctx.quadraticCurveTo(x-w,y-h/2,x-w/2-2,y-h/3+2); ctx.stroke(); // tail
+    ctx.fillStyle='rgba(180,180,200,0.6)'; ctx.fillRect(x+w/2+3,y-h+2,2,3); ctx.fillRect(x+w/2+6,y-h+2,2,3); // ears
+  } else if(style==='spider'){
+    ctx.fillStyle='rgba(160,140,180,0.5)';
+    ctx.beginPath(); ctx.arc(x,y-h/2,w/2,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(140,120,160,0.4)'; ctx.lineWidth=0.8;
+    for(let i=-2;i<=2;i+=1){ if(i!==0){ ctx.beginPath(); ctx.moveTo(x,y-h/2); ctx.lineTo(x+i*4,y-h+2); ctx.stroke(); } }
+  } else if(style==='bat'){
+    ctx.fillStyle='rgba(140,120,160,0.5)';
+    ctx.beginPath(); ctx.arc(x,y-h/2,3,0,Math.PI*2); ctx.fill(); // body
+    ctx.beginPath(); ctx.moveTo(x-w/2,y-h); ctx.lineTo(x,y-h/2+2); ctx.lineTo(x+w/2,y-h); ctx.closePath(); ctx.fill();
+  } else if(style==='rat'){
+    ctx.fillStyle='rgba(160,140,120,0.5)';
+    ctx.beginPath(); ctx.ellipse(x,y-h/3,w/2,h/3,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x+w/2,y-h*0.7,h/3,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(140,120,100,0.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x-w/2,y-h/3); ctx.quadraticCurveTo(x-w-4,y,x-w,y-h/3+4); ctx.stroke();
+  } else {
+    ctx.fillStyle='rgba(160,160,180,0.5)';
+    ctx.fillRect(x-w/2,y-h,w,h);
+  }
+}
+
+// Echo-mice (in-spec)
+makeCard('grid-echo', 'c-emouse', ctx => {
+  drawTinyCreature(ctx, CX+30, FLOOR_Y, 10, 12, 'mouse');
+},
+`<strong>Echo-mice (Ch2)</strong>0.11 H · 12 px<br><em>art-asset-list: ~12 px ✓</em>`, false, false);
+
+// Echo-spiders (in-spec)
+makeCard('grid-echo', 'c-espider', ctx => {
+  drawTinyCreature(ctx, CX+30, FLOOR_Y-5, 8, 10, 'spider');
+},
+`<strong>Echo-spiders</strong>0.09 H · 10 px<br><em>art-asset-list: ~10 px ✓</em>`, false, false);
+
+// Echo-bats (near-spec)
+makeCard('grid-echo', 'c-ebat', ctx => {
+  drawTinyCreature(ctx, CX+30, FLOOR_Y-50, 18, 12, 'bat');
+},
+`<strong>Echo-bats</strong>0.16 H (wingspan) · 18 px<br><em>art-asset-list: ~18 px wingspan</em>`, false, false);
+
+// Echo-rats (in-spec)
+makeCard('grid-echo', 'c-erat', ctx => {
+  drawTinyCreature(ctx, CX+30, FLOOR_Y, 14, 16, 'rat');
+},
+`<strong>Echo-rats (Ch5)</strong>0.15 H · 16 px<br><em>art-asset-list: ~16 px ✓</em>`, false, false);
+
+// Echo-fish (DISCREPANCY: art-asset-list says 28-32px vs 7-16 canonical)
+makeCard('grid-echo', 'c-efish', ctx => {
+  const fx=CX+22, fy=FLOOR_Y-50;
+  ctx.fillStyle='rgba(120,180,220,0.4)';
+  ctx.beginPath(); ctx.ellipse(fx+12,fy,14,7,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(fx,fy); ctx.lineTo(fx-6,fy-5); ctx.lineTo(fx-6,fy+5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(180,220,255,0.25)';
+  ctx.beginPath(); ctx.ellipse(fx+14,fy-1,6,3,0.2,0,Math.PI*2); ctx.fill();
+  // discrepancy annotation
+  ctx.fillStyle='rgba(220,100,60,0.7)'; ctx.font='7px monospace';
+  ctx.fillText('asset-list:28px', CX+2, FLOOR_Y-12);
+  ctx.fillText('canonical:7-16', CX+2, FLOOR_Y-4);
+},
+`<strong>Echo-fish</strong>canonical: 0.06–0.14 H (7–16 px)<br>art-asset-list: ~28–32 px`, true, false);
+
+// Echo-deer (DISCREPANCY: art-asset-list says 44px vs 7-16 canonical)
+makeCard('grid-echo', 'c-edeer', ctx => {
+  const dx=CX+24, dy=FLOOR_Y;
+  // Draw at canonical (tiny, 12px) to show what spec says
+  ctx.fillStyle='rgba(180,160,140,0.4)';
+  ctx.beginPath(); ctx.ellipse(dx,dy-6,7,5,0,0,Math.PI*2); ctx.fill(); // body
+  ctx.beginPath(); ctx.arc(dx+6,dy-10,3,0,Math.PI*2); ctx.fill(); // head
+  for(let i=0;i<4;i++) ctx.fillRect(dx-6+i*4,dy-2,2,3); // legs
+  ctx.strokeStyle='rgba(160,140,120,0.35)'; ctx.lineWidth=0.7;
+  ctx.moveTo(dx+4,dy-12); ctx.lineTo(dx+3,dy-16); // antler stub L
+  ctx.moveTo(dx+7,dy-12); ctx.lineTo(dx+8,dy-16); // antler stub R
+  ctx.stroke();
+  ctx.fillStyle='rgba(220,100,60,0.7)'; ctx.font='7px monospace';
+  ctx.fillText('asset-list:44px', CX+2, FLOOR_Y-22);
+  ctx.fillText('canonical:7-16', CX+2, FLOOR_Y-14);
+  ctx.fillText('drawn at 12px', CX+2, FLOOR_Y-6);
+},
+`<strong>Echo-deer</strong>canonical: 0.06–0.14 H (7–16 px)<br>art-asset-list: ~44 × 40 px`, true, false);
+
+// Echo-cats (DISCREPANCY: art-asset-list says 24px vs 7-16 canonical)
+makeCard('grid-echo', 'c-ecat', ctx => {
+  const ecx=CX+28, ecy=FLOOR_Y;
+  // draw at 12px (canonical max)
+  ctx.fillStyle='rgba(160,160,180,0.4)';
+  ctx.beginPath(); ctx.ellipse(ecx,ecy-6,8,5,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(ecx+7,ecy-10,4,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(150,150,170,0.3)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(ecx-8,ecy-6); ctx.quadraticCurveTo(ecx-18,ecy-10,ecx-14,ecy-3); ctx.stroke();
+  ctx.fillStyle='rgba(220,100,60,0.7)'; ctx.font='7px monospace';
+  ctx.fillText('asset-list:24px', CX+2, FLOOR_Y-26);
+  ctx.fillText('canonical:7-16', CX+2, FLOOR_Y-18);
+  ctx.fillText('drawn at 12px', CX+2, FLOOR_Y-10);
+},
+`<strong>Echo-cats (Ch4)</strong>canonical: 0.06–0.14 H (7–16 px)<br>art-asset-list: ~24 px`, true, false);
+
+// Echo-tarsiers [PROPOSED]
+makeCard('grid-echo', 'c-etarsier', ctx => {
+  const tx=CX+32, ty=FLOOR_Y-5;
+  ctx.fillStyle='rgba(160,140,120,0.45)';
+  ctx.beginPath(); ctx.arc(tx,ty-6,4,0,Math.PI*2); ctx.fill(); // head
+  ctx.beginPath(); ctx.ellipse(tx,ty-2,3,3,0,0,Math.PI*2); ctx.fill(); // body
+  // huge eyes
+  ctx.fillStyle='rgba(240,220,180,0.7)';
+  ctx.beginPath(); ctx.arc(tx-2,ty-7,2,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(tx+2,ty-7,2,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(40,20,10,0.8)';
+  ctx.beginPath(); ctx.arc(tx-2,ty-7,1,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(tx+2,ty-7,1,0,Math.PI*2); ctx.fill();
+},
+`<strong>Echo-tarsiers (Ch6)</strong>0.07–0.09 H · 8–10 px<br><em>Huge reflective eyes</em>`, false, true);
+
+// Mosquitoes [PROPOSED]
+makeCard('grid-echo', 'c-mosquito', ctx => {
+  const dots=[{x:CX+28,y:FLOOR_Y-40},{x:CX+38,y:FLOOR_Y-52},{x:CX+48,y:FLOOR_Y-35},{x:CX+33,y:FLOOR_Y-60},{x:CX+55,y:FLOOR_Y-46}];
+  dots.forEach(d=>{
+    ctx.fillStyle='rgba(160,140,120,0.45)';
+    ctx.beginPath(); ctx.arc(d.x,d.y,1.5,0,Math.PI*2); ctx.fill();
+    // wings
+    ctx.strokeStyle='rgba(180,160,140,0.3)'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.moveTo(d.x-3,d.y-1); ctx.lineTo(d.x-6,d.y-4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(d.x+3,d.y-1); ctx.lineTo(d.x+6,d.y-4); ctx.stroke();
+  });
+},
+`<strong>Mosquitoes (Ch7–Ch8)</strong>0.04 H · ~4–5 px each<br><em>Appear in slow clouds</em>`, false, true);
+
+</script>
+</body>
+</html>

@@ -97,6 +97,8 @@ Pixel rendering uses `image-rendering: pixelated`. No anti-aliasing. No sub-pixe
 
 ## Scale Anchor
 
+*For the full per-component catalogue and visual silhouette chart, see [`09-component-scale-reference.md`](09-component-scale-reference.md) and [`game/scale-reference.html`](../game/scale-reference.html).*
+
 The **door** is the canonical scale reference for the entire game. Every other object — Pip, NPCs, Pätu, furniture, fixtures, props — is defined in proportion to door height, not to each other and not to Pip.
 
 This is a structural choice. Pip can change (different ghost states, taste-memory shimmer, future redesigns). Adults vary across chapters. Furniture is room-specific. The door is the one element that exists in nearly every space, has known real-world proportions, and is built by humans for human bodies. Anchoring scale to it gives us a constitution every visual element answers to.

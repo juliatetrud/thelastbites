@@ -467,6 +467,61 @@ function floorGlow(ctx, cx, floor, r, hexColor, a) {
 }
 
 /* =============================================================
+   EYE HELPERS — canonical rule (Sprint 09 polish round 2)
+   Human characters: ~2px cream whites + dark pupil.
+   Ghost-Pip stays as dark dots (exception — still forming).
+   Monsters: per-character (Pocong gets glowing yellow below).
+   ============================================================= */
+
+// Standard human eye: cream whites rect + centered dark pupil.
+// x, y: top-left of the white area. w, h: white dimensions.
+function drawHumanEye(ctx, x, y, w, h, whiteColor, pupilColor) {
+  rect(ctx, x, y, w, h, whiteColor);
+  rect(ctx, x + Math.floor(w / 2), y + Math.floor(h / 2), 1, 1, pupilColor);
+}
+
+// Pocong's glowing yellow eye.
+// ex, ey: top-left corner of the 4×2 eye area.
+// side: 'L' = outer edge on left; 'R' = outer edge on right.
+function drawGlowingEye(ctx, ex, ey, side) {
+  const midX = ex + 2, midY = ey + 1;
+  const g = ctx.createRadialGradient(midX, midY, 0, midX, midY, 6);
+  g.addColorStop(0, 'rgba(255,216,56,0.40)');
+  g.addColorStop(1, 'rgba(255,216,56,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(ex - 4, ey - 3, 12, 9);
+  // Trapezoid whites: bottom row full (4px), top row outer 2px only — menacing slant
+  rect(ctx, ex,                         ey + 1, 4, 1, '#ffd838');
+  rect(ctx, side === 'L' ? ex : ex + 2, ey,     2, 1, '#ffd838');
+  // Dark pupil
+  rect(ctx, ex + 1, ey + 1, 2, 1, '#3a2818');
+}
+
+// Pocong's drifting gray mist aura — rendered behind his figure.
+function drawPocongMist(ctx, cx, by, t) {
+  for (let i = 0; i < 8; i++) {
+    const phase = i * 0.785;          // evenly spread 2π/8
+    const spd   = 0.25 + (i % 3) * 0.12;
+    const ox    = ((i * 37) % 60) - 30;         // deterministic x spread
+    const oy    = -(((i * 23) % 70) + 10);      // above floor
+    const gx    = cx + ox + Math.sin(t * spd + phase) * 8;
+    const gy    = by + oy + Math.cos(t * spd * 0.7 + phase) * 5;
+    const r     = 5 + (i % 3) * 2;
+    const alpha = 0.10 + (i % 3) * 0.025;
+    const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, r);
+    g.addColorStop(0, `rgba(100,100,118,${alpha})`);
+    g.addColorStop(1, 'rgba(100,100,118,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(gx - r, gy - r, r * 2, r * 2);
+  }
+}
+
+/* =============================================================
+   BABCIA CRYING STATE (dev-accessible toggle, Sprint 09-polish-r2)
+   ============================================================= */
+let babciaCrying = false;
+
+/* =============================================================
    ① PIP — scaled from 24px reference to 40px (canonical 0.36 door)
    Scale 1.6× matches PIP_H=40 in game/index.html (Sprint 08.5).
    Origin: (cx, floor) where cx = horizontal center of sprite
@@ -689,8 +744,11 @@ function drawHenrik(ctx, cx, floor, t, speaking) {
   if (sp > 0.3)  { ctx.fillStyle = 'rgba(205,190,155,0.22)'; ctx.fillRect(cx+23, floor-36, 1, 1); }
   if (sp > 0.65) { ctx.fillStyle = 'rgba(205,190,155,0.12)'; ctx.fillRect(cx+22, floor-39, 1, 1); }
 
-  // Neck (skin)
-  rect(ctx, cx-2, floor-65, 5, 3, C.hSkin);
+  // Shirt body — neck will be drawn over this to stay visible
+  // (shirt drawn first here so neck skin overwrites it at collar)
+
+  // Neck (drawn after shirt so 3px of skin shows between head and collar)
+  rect(ctx, cx-2, floor-68, 5, 9, C.hSkin);
 
   // Head (upright — centered at cx, no stoop)
   const hx = cx;
@@ -700,34 +758,48 @@ function drawHenrik(ctx, cx, floor, t, speaking) {
   rect(ctx, hx-5, ht+2, 11, 4, C.hSkin);  // forehead
   rect(ctx, hx-5, ht+6, 11, 3, C.hSkin);  // mid face
 
-  // Beard (gray, trimmed — lower half)
-  rect(ctx, hx-4, ht+5, 9, 5, C.hBeard);
+  // Gray hair — hairline peek at top of head (under toque band)
+  rect(ctx, hx-4, ht, 9, 1, '#8a8898');   // hairline strip
+  // Temple slivers on each side
+  rect(ctx, hx-5, ht+1, 2, 3, '#8a8898');  // left temple
+  rect(ctx, hx+3, ht+1, 2, 3, '#8a8898');  // right temple
 
-  // Eyes (kind, attentive)
-  rect(ctx, hx-3, ht+3, 2, 2, '#2a1f28');
-  rect(ctx, hx+2, ht+3, 2, 2, '#2a1f28');
-  px(ctx,  hx-3, ht+2, '#8a8078');
-  px(ctx,  hx+2, ht+2, '#8a8078');
+  // 5 o'clock shadow — subtle low-alpha stubble on cheeks and chin
+  rect(ctx, hx-4, ht+5, 2, 4, 'rgba(100,100,108,0.28)');  // left cheek
+  rect(ctx, hx+2, ht+5, 2, 4, 'rgba(100,100,108,0.28)');  // right cheek
+  rect(ctx, hx-3, ht+7, 7, 2, 'rgba(100,100,108,0.18)');  // chin
 
-  // Mouth (in beard area)
+  // Mustache (darker gray, upper lip — replaces full beard)
+  rect(ctx, hx-3, ht+7, 7, 2, '#3a3a40');
+
+  // Eyes — canonical human treatment, slightly enlarged (3×2)
+  drawHumanEye(ctx, hx-3, ht+3, 3, 2, '#e8e0d0', '#3a3040');  // left
+  drawHumanEye(ctx, hx+1, ht+3, 3, 2, '#e8e0d0', '#3a3040');  // right
+
+  // Eyebrows (dark grey, level — "kind older man")
+  rect(ctx, hx-3, ht+2, 3, 1, '#4a4a50');  // left brow
+  rect(ctx, hx+1, ht+2, 3, 1, '#4a4a50');  // right brow
+
+  // Mouth
   drawMouth(ctx, hx, ht+9, t, speaking, true);
 
   // Toque — tall white pillar (moves with head nod)
   rect(ctx, hx-6, ht-2,  13, 2, '#d8d4c0');   // band (warm cream, 2px)
+  // Gray hairline peek at bottom of band (hair showing between band and head)
+  rect(ctx, hx-4, ht-1, 9, 1, '#8a8898');
   rect(ctx, hx-6, ht-12, 13, 10, '#f0f0e8');  // crown body (10px)
   rect(ctx, hx-5, ht-14, 11, 2,  '#f0f0e8');  // dome tip, slightly narrower (2px)
 }
 
 /* =============================================================
-   ④ BABCIA — ~60px tall, new design
-   Red kerchief, dark coat, quilted squares, hands clasp/unclasp.
+   ④ BABCIA — ~60px tall, Sprint 09-polish-r2
+   Red kerchief, shaded coat with sleeve indication, hands raised
+   to chest level, canonical human eyes, crying overlay (dev).
    ============================================================= */
 function drawBabcia(ctx, cx, floor, t, speaking) {
   const sway = Math.sin(t * 1.4) * 0.5;
   const swayX = Math.round(sway);
-  // Hands cycle: clasped for ~half of each 2.5s
   const handsClosed = ((t % 2.5) / 2.5) < 0.5;
-  // Head-bob down when speaking
   const headBob = speaking ? Math.round(Math.sin(t * 2.8) * 0.7) : 0;
 
   floorGlow(ctx, cx, floor, 17, '#8a2a2a', 0.15);
@@ -736,30 +808,24 @@ function drawBabcia(ctx, cx, floor, t, speaking) {
   rect(ctx, cx-8+swayX, floor-3, 7, 3, '#4a3828');
   rect(ctx, cx+1+swayX, floor-3, 7, 3, '#4a3828');
 
-  // Full coat (wide, soft outline) — the shape reads as "small stout woman"
+  // Full coat — dark base, reads as a coat not a quilt
   rect(ctx, cx-11+swayX, floor-55, 23, 52, C.bCoat);
 
-  // Quilted-square grid on coat (3×2 cream then brown)
-  // top row cream
-  rect(ctx, cx-8+swayX, floor-47, 5, 5, C.bCream);
-  rect(ctx, cx-1+swayX, floor-47, 5, 5, C.bCream);
-  // second row cream
-  rect(ctx, cx-8+swayX, floor-39, 5, 5, C.bCream);
-  rect(ctx, cx-1+swayX, floor-39, 5, 5, C.bCream);
-  // bottom row brown
-  rect(ctx, cx-8+swayX, floor-31, 5, 4, C.bBrown);
-  rect(ctx, cx-1+swayX, floor-31, 5, 4, C.bBrown);
-  // quilt seam lines (dark)
-  rect(ctx, cx-9+swayX, floor-47, 1, 20, '#1a1620');
-  rect(ctx, cx-4+swayX, floor-47, 1, 20, '#1a1620');
-  rect(ctx, cx+4+swayX, floor-47, 1, 20, '#1a1620');
+  // Coat structure: faint vertical shading bands on front
+  rect(ctx, cx-1+swayX, floor-50, 1, 32, '#332838');   // center front seam
+  rect(ctx, cx-6+swayX, floor-50, 1, 32, '#332838');   // left panel line
+  rect(ctx, cx+6+swayX, floor-50, 1, 32, '#332838');   // right panel line
 
-  // Hands at apron level
+  // Sleeve join: faint horizontal break at shoulder
+  rect(ctx, cx-11+swayX, floor-53, 4, 1, '#332838');   // left sleeve join
+  rect(ctx, cx+8+swayX,  floor-53, 4, 1, '#332838');   // right sleeve join
+
+  // Hands at chest/upper-stomach level (raised from lap)
   if (handsClosed) {
-    rect(ctx, cx-3+swayX, floor-19, 6, 4, C.bSkin);  // clasped together
+    rect(ctx, cx-3+swayX, floor-34, 6, 4, C.bSkin);  // clasped together
   } else {
-    rect(ctx, cx-6+swayX, floor-19, 4, 4, C.bSkin);  // apart
-    rect(ctx, cx+2+swayX, floor-19, 4, 4, C.bSkin);
+    rect(ctx, cx-6+swayX, floor-34, 4, 4, C.bSkin);  // apart
+    rect(ctx, cx+2+swayX, floor-34, 4, 4, C.bSkin);
   }
 
   // Neck stub
@@ -772,21 +838,55 @@ function drawBabcia(ctx, cx, floor, t, speaking) {
   rect(ctx, hx-4, ht+2, 9, 4, C.bSkin);   // face
   rect(ctx, hx-3, ht+6, 7, 2, C.bSkin);   // chin
 
-  // Eyes (downcast — positioned lower, narrower)
-  rect(ctx, hx-3, ht+4, 2, 1, '#2a1f28');
-  rect(ctx, hx+1, ht+4, 2, 1, '#2a1f28');
+  // Eyes — canonical human treatment (cream whites + dark pupils)
+  drawHumanEye(ctx, hx-3, ht+3, 2, 2, '#e8e0d0', '#2a1f28');  // left
+  drawHumanEye(ctx, hx+1, ht+3, 2, 2, '#e8e0d0', '#2a1f28');  // right
+
+  // Crying overlay (opt-in state — babciaCrying global)
+  if (babciaCrying) {
+    const drawTear = (eyeX, eyeY, offset) => {
+      const cycle = ((t + offset) % 3.5) / 3.5;
+      if (cycle < 0.28) return;
+      const eyeBottom = eyeY + 2;
+      if (cycle < 0.57) {
+        // Pool forming
+        const grow = (cycle - 0.28) / 0.29;
+        ctx.fillStyle = `rgba(168,200,232,${0.55 * grow})`;
+        ctx.fillRect(eyeX, eyeBottom, 2, Math.ceil(grow * 2));
+      } else if (cycle < 0.86) {
+        // Pool + drip trail
+        ctx.fillStyle = 'rgba(168,200,232,0.55)';
+        ctx.fillRect(eyeX, eyeBottom, 2, 2);
+        const drip = (cycle - 0.57) / 0.29;
+        const dLen = Math.ceil(drip * 3);
+        for (let d = 0; d < dLen; d++) {
+          ctx.fillStyle = `rgba(168,200,232,${Math.max(0, 0.40 - d * 0.12)})`;
+          ctx.fillRect(eyeX + (d % 2 === 0 ? 0 : 1), eyeBottom + 2 + d, 1, 1);
+        }
+      } else {
+        // Fade out
+        const fade = 1 - (cycle - 0.86) / 0.14;
+        ctx.fillStyle = `rgba(168,200,232,${0.55 * fade})`;
+        ctx.fillRect(eyeX, eyeBottom, 2, 2);
+        for (let d = 0; d < 3; d++) {
+          ctx.fillStyle = `rgba(168,200,232,${Math.max(0, (0.40 - d * 0.12) * fade)})`;
+          ctx.fillRect(eyeX + (d % 2 === 0 ? 0 : 1), eyeBottom + 2 + d, 1, 1);
+        }
+      }
+    };
+    drawTear(hx - 3, ht + 3, 0);     // left tear
+    drawTear(hx + 1, ht + 3, 1.3);   // right tear (offset so they're out of sync)
+  }
 
   // Mouth
   drawMouth(ctx, hx, ht+7, t, speaking, true);
 
   // KERCHIEF — the silhouette tell; drawn over head to read clearly
-  // Triangle dome — widens at base, ties fall at sides
   rect(ctx, hx-5, ht-4, 11, 2, C.bKerchief);  // brim row
   rect(ctx, hx-4, ht-6, 9,  2, C.bKerchief);  // one up
   rect(ctx, hx-3, ht-8, 7,  2, C.bKerchief);  // narrowing
   rect(ctx, hx-2, ht-10, 5, 2, C.bKerchief);  // near peak
   rect(ctx, hx-1, ht-12, 3, 2, C.bKerchief);  // very top
-  // Kerchief sides falling to shoulders
   rect(ctx, hx-6, ht-4, 2, 8, C.bKerchief);   // left fall
   rect(ctx, hx+4, ht-4, 2, 8, C.bKerchief);   // right fall
 }
@@ -844,12 +944,12 @@ function drawErik(ctx, cx, floor, t, speaking) {
   rect(ctx, cx-5, ht+2, 2, 1, C.eHair);  // side hair
   rect(ctx, cx+3, ht+2, 2, 1, C.eHair);
 
-  // Eyes (wide open, delighted)
-  rect(ctx, cx-3, ht+3, 2, 2, C.eHair);
-  rect(ctx, cx+1, ht+3, 2, 2, C.eHair);
-  // eye shine
-  px(ctx, cx-2, ht+3, '#c8d8c8');
-  px(ctx, cx+2, ht+3, '#c8d8c8');
+  // Eyes — canonical human treatment, slightly larger for child-emphasis (3×3)
+  drawHumanEye(ctx, cx-4, ht+3, 3, 3, '#f0e8d8', '#2a2030');  // left
+  drawHumanEye(ctx, cx+1, ht+3, 3, 3, '#f0e8d8', '#2a2030');  // right
+  // Eye shine (liveliness — delighted child)
+  px(ctx, cx-4, ht+3, '#ffffff');
+  px(ctx, cx+1, ht+3, '#ffffff');
 
   // Mouth (slightly open in idle — delighted; mouth cycle when speaking)
   if (!speaking) {
@@ -875,61 +975,54 @@ function drawErik(ctx, cx, floor, t, speaking) {
 }
 
 /* =============================================================
-   ⑥ POCONG — ~80px tall, new design
-   White capsule, three knots at base, closed eyes, hops.
+   ⑥ POCONG — ~80px tall, Sprint 09-polish-r2
+   White capsule, three knots at base, always-open glowing yellow
+   eyes (menacing angle), angry eyebrows, drifting gray mist aura.
    ============================================================= */
 function drawPocong(ctx, cx, floor, t, speaking) {
-  // Hop animation: quick vertical jump every ~3.8s
   const hopCycle = (t % 3.8) / 3.8;
   const hopY = hopCycle < 0.12
     ? -Math.round(Math.sin((hopCycle / 0.12) * Math.PI) * 3)
     : 0;
-
-  // Eye flicker: open briefly every ~4.5s
-  const eyePhase = (t * 0.22) % 1;
-  const eyesOpen = eyePhase > 0.96;
-
-  // Shroud shimmer when speaking
   const shimmer = speaking ? 0.12 + Math.sin(t * 9) * 0.08 : 0;
+  const by = floor + hopY;
 
-  const by = floor + hopY; // base (floor) with hop offset
+  // Drifting gray mist aura (rendered behind figure)
+  drawPocongMist(ctx, cx, by, t);
 
   // Shadow on floor
   ctx.fillStyle = 'rgba(0,0,0,0.2)';
   ctx.fillRect(cx-8, floor-2, 16, 3);
 
   // Shroud capsule body
-  // The shroud narrows at very top and tapers at base above the knots
-  rect(ctx, cx-3, by-80, 6,  2,  C.pShroud);  // very tip
-  rect(ctx, cx-5, by-78, 10, 2,  C.pShroud);  // upper cap
-  rect(ctx, cx-6, by-76, 12, 56, C.pShroud);  // main body
-  rect(ctx, cx-5, by-20, 10, 2,  C.pShroud);  // taper start
-  rect(ctx, cx-4, by-18, 8,  4,  C.pShroud);  // taper
-  rect(ctx, cx-3, by-14, 6,  6,  C.pShroud);  // lowest body
-  rect(ctx, cx-2, by-8,  4,  8,  C.pShroud);  // very bottom stub
+  rect(ctx, cx-3, by-80, 6,  2,  C.pShroud);
+  rect(ctx, cx-5, by-78, 10, 2,  C.pShroud);
+  rect(ctx, cx-6, by-76, 12, 56, C.pShroud);
+  rect(ctx, cx-5, by-20, 10, 2,  C.pShroud);
+  rect(ctx, cx-4, by-18, 8,  4,  C.pShroud);
+  rect(ctx, cx-3, by-14, 6,  6,  C.pShroud);
+  rect(ctx, cx-2, by-8,  4,  8,  C.pShroud);
 
-  // Three knot lines (horizontal, near base)
-  rect(ctx, cx-5, by-10, 10, 1, C.pKnot); // top knot
-  rect(ctx, cx-5, by-7,  10, 1, C.pKnot); // mid knot
-  rect(ctx, cx-5, by-4,  10, 1, C.pKnot); // bottom knot
+  // Three knot lines
+  rect(ctx, cx-5, by-10, 10, 1, C.pKnot);
+  rect(ctx, cx-5, by-7,  10, 1, C.pKnot);
+  rect(ctx, cx-5, by-4,  10, 1, C.pKnot);
 
-  // Face area: upper portion of shroud (~y=by-72 to by-62)
-  if (eyesOpen) {
-    // Eyes flutter open briefly
-    rect(ctx, cx-4, by-72, 4, 2, '#1a1428'); // left eye open
-    rect(ctx, cx+1, by-72, 4, 2, '#1a1428'); // right eye open
-  } else {
-    // Closed eyes: faint dark line (barely visible through shroud)
-    rect(ctx, cx-4, by-72, 4, 1, '#c0b090'); // left closed
-    rect(ctx, cx+1, by-72, 4, 1, '#c0b090'); // right closed
-  }
+  // Angry eyebrows (angled inward-down toward center — menacing)
+  rect(ctx, cx-5, by-76, 2, 1, '#2a2030');  // left outer
+  rect(ctx, cx-3, by-75, 2, 1, '#2a2030');  // left inner (1px lower)
+  rect(ctx, cx+1, by-75, 2, 1, '#2a2030');  // right inner (1px lower)
+  rect(ctx, cx+3, by-76, 2, 1, '#2a2030');  // right outer
+
+  // Always-open glowing yellow eyes (trapezoid, inner corner angled down)
+  drawGlowingEye(ctx, cx-5, by-73, 'L');   // left eye
+  drawGlowingEye(ctx, cx+1, by-73, 'R');   // right eye
 
   // Shroud shimmer (speaking) — edge alpha pulse
   if (shimmer > 0.02) {
     ctx.fillStyle = `rgba(255,253,240,${shimmer})`;
-    ctx.fillRect(cx-7, by-76, 1, 60); // left edge shimmer
-    ctx.fillRect(cx+6, by-76, 1, 60); // right edge shimmer
-    // Faint mouth line when speaking
+    ctx.fillRect(cx-7, by-76, 1, 60);
+    ctx.fillRect(cx+6, by-76, 1, 60);
     if (speaking) {
       ctx.fillStyle = 'rgba(60,30,20,0.35)';
       ctx.fillRect(cx-2, by-65, 4, 1);
@@ -1024,7 +1117,7 @@ const CHARACTERS = [
   // ── GREENPOINT ─────────────────────────────────────────────
   {
     id: 'babcia', name: 'Babcia', section: 'greenpoint', designed: true,
-    colorSig: 'kerchief-red / quilted coat', fracLabel: '0.55–0.65',
+    colorSig: 'kerchief-red / shaded dark coat', fracLabel: '0.55–0.65',
     drawFn: (ctx, t, speaking) => {
       drawCellBackground(ctx);
       drawDoorOutline(ctx);
@@ -1350,6 +1443,23 @@ function render(ts) {
 }
 
 requestAnimationFrame(render);
+
+/* =============================================================
+   BABCIA CRYING DEV-TOGGLE
+   ============================================================= */
+(function () {
+  const babciaCell = document.getElementById('cell-babcia');
+  if (!babciaCell) return;
+  const btn = document.createElement('button');
+  btn.className = 'speak-btn';
+  btn.textContent = 'CRYING ▶';
+  btn.addEventListener('click', () => {
+    babciaCrying = !babciaCrying;
+    btn.textContent = babciaCrying ? 'CRYING ■' : 'CRYING ▶';
+    btn.classList.toggle('speaking', babciaCrying);
+  });
+  babciaCell.appendChild(btn);
+})();
 
 /* =============================================================
    BACKGROUND TOGGLE

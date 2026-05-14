@@ -9,6 +9,20 @@ Cross-references:
 
 ---
 
+## Eye treatment (canonical rule)
+
+*Locked Sprint 09 polish round 2. Applies to all characters in the gallery and any future character art.*
+
+| Character type | Eye treatment |
+|---|---|
+| **Living and recently-deceased human characters** | ~2 px cream whites (`#e8e0d0` or warm variant) with a 1 px darker pupil centered within. Eye size scales slightly per character — adults (Henrik, Babcia) get 2–3 px wide × 2 px tall; children (Erik) get a touch more emphasis for sympathy (~3 px wide × 3 px tall). |
+| **Ghost-Pip** | Small dark dots only — **no whites**. Exception by design. His face is still forming; he is new to the ghost-world. Do not apply the canonical treatment to Pip. |
+| **Ghost-children (Iris, Erik)** | Standard human eye treatment, applied at their translucent alpha. They appear as their living selves did. Erik gets warm-cream whites (`#f0e8d8`) over his warm-amber translucent body. |
+| **Monsters and folkloric beings** | Per-character treatment chosen to express their nature. **Pocong:** yellow whites (`#ffd838`) + dark pupils + soft yellow glow halo. Future entries (Karakoncolos, Black Shuck, Boitatá, Mamlambo, Haldjas) designed individually at their commission sprint. |
+| **Crying overlay (any character)** | Light-blue pool (`rgba(168,200,232,~0.55)`) under the eyes on cheeks; a single-pixel drip-line trails down 2–3 px, fading at bottom. Cycle ~3.5 s per eye; two eyes slightly out of sync. Composable on top of the standard eye treatment. Available for any character; **Babcia is the first user**. |
+
+---
+
 ## Character visual identity
 
 *Added Sprint 09. Codifies color signatures, silhouette tells, and movement registers for the full named cast.*
@@ -169,7 +183,9 @@ Pätu is alive. She sits, crouches, perches, naps. The contrast between her free
 **Chapter:** Brief appearance Ch1 (leaves with Pip's body). Glimpsed in flashes across the game. Final chapter.
 **Door-fraction:** 0.55–0.65 (60–72 px).
 **Color signature:** Kerchief-red `#8a2a2a`. See Table A.
-**Silhouette tell:** Red kerchief dome on top. Wide soft coat with visible cream and brown quilted-square grid. Soft round outline — shorter than Henrik. Hands at apron level.
+**Silhouette tell:** Red kerchief dome on top. Wide soft dark coat with sleeve indication (faint vertical shading bands on front, horizontal break at shoulders) — reads as a coat, not a quilt. Soft round outline — shorter than Henrik. Hands raised to chest/upper-stomach level.
+**Eyes:** Canonical human treatment — small cream whites with dark pupils.
+**Crying overlay:** Available (dev-toggleable in gallery). Light-blue tear pools form under her eyes, drip slowly, cycle ~3.5 s per eye, two eyes slightly out of sync.
 **Movement register:** See Table C.
 
 Her full name is Marta. Pip called her Babcia. Polish immigrant grandmother, raised Pip in Greenpoint after his parents died. Her love language was food — pierogis at Christmas, golabki on Sundays. She saved for years to take Pip on the cruise. She is mourning him throughout the entire game.
@@ -248,8 +264,10 @@ Reference implementation: scripted passenger NPC in `game/index.html`, establish
 **Role:** The mentor. Head chef of the *Mnemosyne*. Hub character across all chapters.
 **Chapter:** Ch1 introduction; recurring hub across all chapters.
 **Door-fraction (body):** 0.65 H (72 px). **Total with toque:** ~0.78 H (~86 px). Body within Adult NPC band; tall white chef's toque pushes total figure above the band — Henrik is authoritative-via-hat, not tall-via-body.
-**Color signature:** Tall white chef's toque `#f0f0e8` + amber-cream apron `#e8d8b0` over near-black shirt + slacks `#1a1a24`. Gray beard `#aaaaa0`. See Table A.
-**Silhouette tell:** Tall white chef's toque (~14 px) pillared above the head. Cream-white apron over near-black button-up and slacks — high-contrast silhouette in moonlit-blue rooms. Pipe in right hand, smoke drifting. Sleek, fit, straight-backed; subtle head-incline at most.
+**Color signature:** Tall white chef's toque `#f0f0e8` + amber-cream apron `#e8d8b0` over near-black shirt + slacks `#1a1a24`. Gray hair `#8a8898`. See Table A.
+**Silhouette tell:** Tall white chef's toque (~14 px) pillared above the head. Gray hairline peek at toque band + gray temple slivers frame the face. Cream-white apron over near-black button-up and slacks — high-contrast silhouette in moonlit-blue rooms. Pipe in right hand, smoke drifting. Sleek, fit, straight-backed; subtle head-incline at most.
+**Eyes:** Canonical human treatment — cream whites (3 px wide × 2 px tall) with dark grey pupils. Eyebrows: dark grey lines above eyes.
+**Facial detail:** Darker mustache (`#3a3a40`) on upper lip. Low-alpha 5 o'clock shadow on cheeks and chin (subtle stubble texture). Visible neck skin strip (~3 px) between head and collar.
 **Movement register:** See Table C.
 
 Norwegian. In his sixties. Has worked on cruise ships for thirty years. Lost his son Erik and his wife Henrietta in a boating accident — he was there, could not reach them. That is why he can see Pip.
@@ -371,6 +389,7 @@ Older, jolly, chaotic — sings while he cooks, talks to himself and the cat. Ca
 **Door-fraction:** ~0.40 (~44 px).
 **Color signature:** Warm-amber halo `#ffd8a8`, dark hair `#3a2818`, sweater `#5a4438`. See Table A.
 **Silhouette tell:** Translucent boy-form (not a ghost-blob — human shape with visible hair and clothes). Small dark-hair cluster at crown. Warm glow around the body.
+**Eyes:** Canonical human treatment, slightly larger for child-emphasis — warm cream whites (`#f0e8d8`, 3 px wide × 3 px tall) with dark grey pupils. Slightly larger than adult eyes (~50% more eye area than Henrik's) to read as a child. White shine pixel for liveliness.
 **Movement register:** See Table C. Fast small bounce; delighted bigger bounce when speaking.
 
 Erik moved on long ago. He returns on his birthday because love reaches across. He's warm-spooky — he was at peace before Pip even arrived. He's excited to be seen. His visual register is deliberately warmer than Pip's (warm-amber vs. cool-white) — they are the same kind of being, but they died very differently and have had very different afterlives.
@@ -413,8 +432,11 @@ She gives Pip the **memory-gifting** ability: receive a memory through her fathe
 **Chapter:** Ch6.
 **Door-fraction:** ~0.73–0.80 (~80–88 px). Taller than the adults.
 **Color signature:** All-white shroud `#f4eee0`. See Table A.
-**Silhouette tell:** Tall narrow white capsule. Three horizontal knot-lines at the base. Closed eyes (flicker open briefly every 4–5 sec). Cannot walk — hops.
-**Movement register:** See Table C. Hops every 3–4 sec; shroud edges shimmer when speaking.
+**Silhouette tell:** Tall narrow white capsule. Three horizontal knot-lines at the base. Always-open glowing yellow eyes (angled inward at top for menacing expression). Drifting gray mist aura surrounds him. Cannot walk — hops.
+**Eyes:** Yellow whites (`#ffd838`) + dark pupils + soft yellow glow halo (~6 px radius, low alpha). Trapezoid shape: bottom row wider than top — the inner top corner angles downward toward center, creating an inherent angry/glaring expression. Always open (replaces prior "closed → flicker" animation).
+**Eyebrows:** Dark grey angular lines (`#2a2030`) angled inward-down toward center — reinforce the menacing expression.
+**Mist aura:** Drifting gray mist (`rgba(100,100,118,~0.10–0.15)`) in 8 patches swirling slowly around the figure. Pocong's signature visual marker — distinct from Sprint 11 memory mist (which is white/blue). The gray treatment marks him as a threat-class entity.
+**Movement register:** See Table C. Hops every 3–4 sec; shroud edges shimmer when speaking. Old "closed eyes → flicker open" animation removed.
 
 An Indonesian folkloric entity — a corpse-shroud. The Indonesian cultural context shapes the design (the knots at the base are the burial knot). Gentle-horror reading per project tone — the encounter resolves cooperatively or through cleverness, not combat.
 

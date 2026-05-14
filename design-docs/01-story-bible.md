@@ -508,9 +508,25 @@ When in doubt about how to phrase narration anywhere in the game, return here. *
 
 4. **Spoken dialogue uses quotes and attribution.** PIP's spoken lines: "Babcia, what's wrong?" Pip asks. Or: "Hello!" Pip says, his stomach turning. Quotes around the speech, attribution after, optional narration tail.
 
-5. **Italics still = interior thought.** But interior thoughts are also full sentences, often with attribution: *How could that be? Pip wonders.* Italic with "Pip wonders" or "Pip thinks" trailing.
+5. **Italics = Pip's first-person interior thought.** Interior thoughts are in Pip's own voice — first person, not third. Full sentences, often with attribution trailing. *I should say something. I should say her name.* Or: *How could that be? Pip wonders.* The first-person voice inside the italics is what distinguishes it from narration. The narrator watches Pip; the italics *are* Pip.
 
-6. **Roman = narration.** Description of what's there or what's happening — outside Pip's head. Most lines are roman. Italic is for direct interior voice only.
+6. **Roman = third-person narration.** Description of what's there or what's happening — outside Pip's head, in the narrator's voice. Most lines are roman. Italic is for direct interior voice only. *Babcia is on the bed. Her hands are folded around her red face.*
+
+### The three-register worked example
+
+All three modes in one short passage, using the grandparents' cabin scene:
+
+> Babcia is on the bed. Her hands are folded around her red face.
+>
+> *She doesn't know I'm here. Pip thinks. She can't hear me.*
+>
+> "Babciu," Pip says. "Babciu, jestem tutaj."
+>
+> She does not look up.
+
+- **Roman** = what the narrator observes. Third person, present tense, outside Pip's head.
+- **Italics** = what Pip thinks, in his own first-person voice, with attribution trailing.
+- **Quoted** = what Pip says aloud, with attribution and optional narration tail.
 
 7. **Sensation has texture.** "Dark water sparkles and dances" rather than "dark water." "A sob breaks through the air" rather than "crying continues." The narration earns its emotional moments through specific physical detail.
 

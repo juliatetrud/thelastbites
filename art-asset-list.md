@@ -198,10 +198,10 @@ Sandy, Caitlin, Robert, Archie, Max, Gus, Bibi, Edie, Michel, Michel's wife, the
 
 | Filename | Type | Description | AI prompt |
 |---|---|---|---|
-| `echo-fish-cod.png` | Echo-creature | Atlantic cod, translucent warm-amber, drift in schools. | Pixel art ghost-fish sprite, Atlantic cod silhouette, ~30 pixels long, translucent warm-amber `#ffc868`, hard pixel edges, drifting pose. |
-| `echo-fish-haddock.png` | Echo-creature | Haddock variant. | Pixel art ghost-fish sprite, haddock silhouette, ~28 pixels long, translucent warm-amber, hard pixel edges. |
-| `echo-fish-plaice.png` | Echo-creature | Plaice variant — flat fish. | Pixel art ghost-fish sprite, plaice silhouette flat fish shape, ~32 pixels long, translucent warm-amber, hard pixel edges. |
-| `echo-deer.png` | Echo-creature | Echo-deer crossing Bevois Street. | Pixel art ghost-deer sprite, ~44×40 pixels, translucent warm-amber with cooler edges, walking pose, hard pixel edges. |
+| `echo-fish-cod.png` | Echo-creature | Atlantic cod, translucent warm-amber, drift in schools. | Pixel art ghost-fish sprite, Atlantic cod silhouette, ~28–33 pixels long (door-fraction 0.25–0.30, visible echo-creature tier), translucent warm-amber `#ffc868`, hard pixel edges, drifting pose. |
+| `echo-fish-haddock.png` | Echo-creature | Haddock variant. | Pixel art ghost-fish sprite, haddock silhouette, ~28–33 pixels long (door-fraction 0.25–0.30, visible echo-creature tier), translucent warm-amber, hard pixel edges. |
+| `echo-fish-plaice.png` | Echo-creature | Plaice variant — flat fish. | Pixel art ghost-fish sprite, plaice silhouette flat fish shape, ~28–33 pixels long (door-fraction 0.25–0.30, visible echo-creature tier), translucent warm-amber, hard pixel edges. |
+| `echo-deer.png` | Echo-creature | Echo-deer crossing Bevois Street. | Pixel art ghost-deer sprite, ~40–44 pixels tall (door-fraction 0.35–0.40, visible echo-creature tier), translucent warm-amber with cooler edges, walking pose, hard pixel edges. |
 
 ---
 
@@ -238,7 +238,7 @@ Sandy, Caitlin, Robert, Archie, Max, Gus, Bibi, Edie, Michel, Michel's wife, the
 
 | Filename | Type | Description | AI prompt |
 |---|---|---|---|
-| `echo-cat.png` | Echo-creature | Stray Istanbul cats in ghost form. Translucent warm-amber. Pätu was one of these once (implied). | Pixel art ghost-cat sprite, ~24 pixels, translucent warm-amber, multiple poses (sitting, walking, sleeping), various coat patterns suggested, hard pixel edges. |
+| `echo-cat.png` | Echo-creature | Stray Istanbul cats in ghost form. Translucent warm-amber. Pätu was one of these once (implied). | Pixel art ghost-cat sprite, ~22–24 pixels tall (door-fraction 0.20–0.22, visible echo-creature tier), translucent warm-amber, multiple poses (sitting, walking, sleeping), various coat patterns suggested, hard pixel edges. |
 
 ---
 

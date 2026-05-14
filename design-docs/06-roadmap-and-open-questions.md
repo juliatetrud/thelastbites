@@ -141,6 +141,7 @@ These are unresolved decisions. They don't need to be answered now, but they wil
 - **What specifically does each monster give up?** Working list of clue types: a name, a direction, an ingredient, a stolen memory, a piece of the chef's story. Each chapter chooses one. Decide per chapter.
 - ~~**The strength indicator visual.**~~ **Resolved 2026-05-13** — locked in `03b-ui-spec.md` §3.
 - **Spider-bump vs. snail-slime drain rates.** Different hazard types should *feel* different — sharp for instant hazards, slow for emotional/seeping hazards. Spec when each chapter's traversal is designed.
+- **Back-key in dialogue choice screens.** Pressing left arrow during a dialogue choice should back up to the previous line / dialogue node, in case the player accidentally advanced past something or wants to re-read. Small follow-up sprint. Flagged 2026-05-14.
 - **Should chapters have collectibles?** Optional ingredient pickups, journal stickers, etc.?
 - **How do players replay chapters?** Should they be able to? For lore-hunting. *(Partial: chapter-select from title screen now defined for completed chapters — see `03b-ui-spec.md` §7. Full replay-with-state-restore semantics still TBD.)*
 - **The paired-memory inventory mechanic.** From Ch5 onward, each chapter contributes one "monster moment" + one "meal moment" to the climactic inventory. *(Partial: the journal's back pages surface this inventory from Ch5 onward — see `03b-ui-spec.md` §5. The *interaction model* during the climax is still open below.)*
@@ -172,6 +173,31 @@ These are unresolved decisions. They don't need to be answered now, but they wil
 - **Composer?** Sparse, instrumental, evocative. Think Jon Brion, Mica Levi, or a folk-music composer per region.
 - **Voice acting?** Probably not — it's a reading game. But maybe Henrik gets a single muttered "Så" in Norwegian as a flavor moment.
 - **Reserved sound effects** — squeeze-and-pop (Iris's emergence) and TV-static-with-whispers (the shadow). Don't reuse for anything else.
+
+---
+
+## Sprint History
+
+A running record of every sprint that has shipped, in order. Every future sprint adds a row here as part of its doc-hygiene work. This is the canonical answer to "what has been built?" — the Decisions Log records what was decided; this records what was built.
+
+| Sprint | Name | Shipped | One-line summary |
+|---|---|---|---|
+| 01 | Foundation scaffold | 2026-05-13 | 480×270 canvas, game loop, input, letterbox, placeholder Pip in empty room. |
+| 01.5 | Pip sprite rig | 2026-05-13 | Three-layer procedural Pip (body, eyes, mouth) with idle, walk, blink, look-at, direction-flip. |
+| 02 | Dialogue system | 2026-05-13 | Dialogue box, typewriter, choices, controls strip, porthole inspectable. |
+| 02.5 | Dialogue zone and float | 2026-05-13 | Bottom UI zone locked; float capability (space-bar, 75 px ceiling); dev flag (`?dev=1`). |
+| 03 | Hallway and passenger | 2026-05-13 | Multi-room architecture; hallway room with scripted passenger walk-through. |
+| 04 | Grandparents' cabin | 2026-05-13 | Grandparents' cabin room + cinematic system; door phase-through trigger. |
+| 04-H | Helga→Pätu rename | 2026-05-13 | Propagated canonical Pätu name and retired the bad-ghost-detector-beat framing across all docs and code. |
+| 05 | Music and italics | 2026-05-13 | Music system (four tracks, crossfade, toggle); italics audit across all chapter 1 dialogue. |
+| 06 | Visual primitives and polish | 2026-05-13 | Shared canvas-draw primitive library; contrast lift; hallway boat-flavor kit (portholes, riveted panels, brass fittings). |
+| 07 | Chapter 1 content patch | 2026-05-13 | Voice rules reconciliation across all Ch1 narration; doc-09 component catalogue; scale-reference chart. |
+| 08 | Component scale reference | 2026-05-14 | `09-component-scale-reference.md` and `game/scale-reference.html` with 12 flagged discrepancies. |
+| 08.5 | Scale reconciliation | 2026-05-14 | In-game sprite bumps (Pip, Babcia, Dziadek, Passenger); sparkle indicator redesigned as always-on aura; cinematic scale spec replaced with camera-zoom convention; 9 of 12 discrepancies resolved. |
+| 09.5 | Doc patch | 2026-05-14 | Echo-creature exception tier locked; italics convention documented; Sprint History established; remaining 3 discrepancies resolved. |
+| 09 | Character visual identity | — | (specced, not started) |
+| 10 | Fullscreen padding | — | (specced, not started) |
+| 11 | Mirror beat | — | (specced, not started) |
 
 ---
 
@@ -316,11 +342,14 @@ A running list of locked decisions so they don't re-litigate.
 | 2026-05-13 | **Hallway boat-flavor kit (Sprint 06): portholes between doors, riveted ship panels replacing flat parallax lines, brass door fittings (plaque/handle/kickplate), floor planks.** Three portholes at game-world x=350/650/1000. Establishes the Mnemosyne's visual identity. Future ship corridors (kitchen approach, dining halls, etc.) reuse the same kit. |
 | 2026-05-13 | **Cinematic base palette is slightly warmer and lighter than corresponding room palette.** Wall gradient lifted further than room (~`#3a2818` top vs room `#322414`). Lamp halo radius expanded (145 → 180). Convention: a cinematic of a space is an emotionally-saturated rendering of the same space, not a stylistically-disconnected one. Applied retroactively to grandparents' cinematic; reused for all future cinematics. |
 | 2026-05-13 | **Scale anchored to the door (Sprint 06 follow-up).** Canonical door is 32×110 pixels at 480×270 internal canvas. Every other element's size is expressed as a door-fraction (Pip ~0.30–0.35, adults ~0.55–0.65, Pätu ~0.20–0.25, etc.). Documented in `03-art-and-aesthetic.md` under the "Scale Anchor" section. Existing assets (Sprint 03 passenger, Sprint 04 Babcia/Dziadek, cabin/hallway doors, hallway sconces/portholes) will be reconciled to this scale in upcoming NPC-scale fix. Future chapters define new NPCs by ratio, not by pixel count. |
-| 2026-05-13 | **Narrative voice locked.** Third-person, active, present-tense throughout. Pip is always referred to by name or as "he" — never "you." Full sentences, no phrase fragments. Spoken dialogue uses quotes with attribution ("Pip says," "Pip asks"). Italics = interior thought with optional attribution ("How could that be? Pip wonders."). Roman = narration. Documented in 01-story-bible.md Narrative Voice section. Existing Chapter 1 narration will be reconciled to this voice in an upcoming content-patch sprint. All future chapters write to this voice. Open question still pending: do Pip's italic interior thoughts stay first-person ("the bear Babcia gave me") or shift to third-person ("Babcia gave him")? — decision needed before content patch. |
+| 2026-05-13 | **Narrative voice locked.** Third-person, active, present-tense throughout. Pip is always referred to by name or as "he" — never "you." Full sentences, no phrase fragments. Spoken dialogue uses quotes with attribution ("Pip says," "Pip asks"). Italics = interior thought with optional attribution ("How could that be? Pip wonders."). Roman = narration. Documented in 01-story-bible.md Narrative Voice section. Existing Chapter 1 narration reconciled to this voice in Sprint 07. *(The first-person vs. third-person question for interior thoughts was resolved 2026-05-14: italics stay first-person — see Decisions Log entry 2026-05-14.)* |
 | 2026-05-13 | **Component scale reference created.** `09-component-scale-reference.md` and `scale-reference.html` catalogue every recurring component in the game by door-fraction. Extends the Scale Anchor table in `03-art-and-aesthetic.md`. Any new component added to the game is added here first; the visual chart is the sanity-check before any procedural drawing function is written. Discrepancies between canonical scale and current implementation are flagged at the bottom of doc 09 for follow-up. |
 | 2026-05-13 | **Scale anchor adjustments (Sprint 08.5).** Per user review of `game/scale-reference.html`: Pip bumped slightly (0.35–0.40 door-heights, 38–44 px); Babcia and Dziadek confirmed at Adult NPC band with Babcia at lower end (~0.55, ~60 px) and Dziadek at standard 0.60–0.65 (66–72 px); Pätu reduced slightly (0.18–0.22, 20–24 px); Iris reduced to ~0.35–0.40 (38–44 px, still in Child band but smaller); Pocong bumped to 0.70–0.85 (77–94 px); Black Shuck bumped to 0.40–0.50 (44–55 px); Haldjas sparkle cluster bumped to 0.50–0.65 spread. Adults, children, Sandy, capuchin, echo-creatures unchanged. In-game sprites in `game/index.html` reconciled to new canonical values. |
 | 2026-05-13 | **Cinematic scale unified with gameplay scale.** The prior allowance (cinematic figures could draw larger, 0.75–0.90 door-heights) is retired. New convention: cinematic figures use the *same* canonical scale as gameplay figures. Cinematic closeness is achieved via procedural camera-zoom on the canonical-scale room (scale a sub-region of the 480×270 frame to fill the canvas), not by redrawing characters at inflated size. Bespoke cinematic compositions (memories of other spaces, dock farewell, etc.) respect canonical inter-character ratios but may not include the canonical door reference. Closes Sprint 08 Discrepancies #5 and #6 without touching the cinematic implementations. Documented in `03-art-and-aesthetic.md` Scale Anchor section. |
 | 2026-05-13 | **Sparkle indicator redesigned.** Interactable objects now carry a faint always-on warm-amber aura (using locked palette tokens `--warm-pool-amber` and `--warm-pool-glow`) that ramps up as Pip approaches. Tight 30 px radius: aura grows from baseline intensity ~0.15 to full intensity at object center. Within 18 px (interaction range), the existing sparkle cycle continues on top of the bright aura. The brightness increase and distance-driven affordance replace the prior on-when-touching behavior. Documented in `09-component-scale-reference.md` UI section and `03-art-and-aesthetic.md`. |
+| 2026-05-14 | **Visible echo-creature exception tier locked.** Echo-fish (0.25–0.30 H, 28–33 px), echo-deer (0.35–0.40 H, ~40–44 px), and echo-cats (0.20–0.22 H, ~22–24 px) are formalized as a "visible echo-creature" exception to the standard echo-creature vermin band (0.06–0.14 H). Documented in `03-art-and-aesthetic.md` Scale Anchor table and `art-asset-list.md` echo-creature prompts. Closes Sprint 08 Discrepancies #9, #10, #11. |
+| 2026-05-14 | **Italics convention locked.** Roman = third-person narration. Italics = Pip's first-person interior thought (first-person voice, not third). Quoted = spoken dialogue with attribution. The earlier open question (whether italics should shift to third-person) is resolved: italics stay in Pip's first-person voice; the third-person/first-person split tracks the narrator/character split. Documented in `01-story-bible.md` Narrative Voice section with a worked example. |
+| 2026-05-14 | **Sprint History section established in doc 06.** Going forward, every sprint adds a row to the Sprint History table as part of its doc-hygiene work. This is the canonical record of what has shipped — the Decisions Log records *what was decided*, the Sprint History records *what was built*. |
 
 ---
 

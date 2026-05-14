@@ -132,6 +132,7 @@ This is a "1 door-height" unit. Everything else is expressed as a fraction or mu
 | Child / Pip-aged human (memory-Pip in cinematic; Iris ghost-child) | 0.35–0.45 | 38–50 |
 | Pip (ghost form, gameplay sprite) | 0.35–0.40           | 38–44             |
 | Pätu (gray tabby cat)       | 0.18–0.22              | 20–24            |
+| Visible echo-creature (echo-fish, echo-deer, echo-cats) | 0.20–0.40 (varies) | 22–44 |
 | Echo-creatures (spiders, mice, cockroaches) | 0.06–0.14   | 7–16             |
 | Furniture: bed              | 0.85–1.00 wide × 0.18–0.22 tall (frame) | 95–110 × 20–24 |
 | Furniture: nightstand       | 0.16–0.20 wide × 0.16–0.20 tall | 18–22 × 18–22 |
@@ -139,6 +140,8 @@ This is a "1 door-height" unit. Everything else is expressed as a fraction or mu
 | Wall fixtures (sconces, oil lamps, portholes) | mounted at door-top height (~y=58 from top of room) | — |
 | Porthole diameter           | 0.30–0.34              | 33–38            |
 | Suitcase                    | 0.45–0.55 wide × 0.12–0.16 tall | 50–60 × 13–18 |
+
+Most echo-creatures (spiders, mice, cockroaches, etc.) are ambient texture: tiny vermin at 0.06–0.14 door-heights that skitter at floor level. A small number of echo-creatures are *visible* — they're recognizable as the animal they were and play a deliberate role in the player's experience: echo-fish drift in mid-air through certain rooms, echo-deer cross streets during traversal, echo-cats are recognizable cats in alley scenes. These render larger, in the 0.20–0.40 band, and are flagged in `08-character-reference-sheets.md` per chapter.
 
 ### Why these ratios
 

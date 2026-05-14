@@ -145,7 +145,7 @@ Rows marked **[PROPOSED]** are sized by the author of this doc using the Scale A
 
 ## Echo-creatures (per chapter)
 
-*Echo-creatures are the ship's spectral vermin — the residue of encounters across its history. They appear in wordless traversal sections. The canonical scale is 0.06–0.14 H (7–16 px); several entries in `art-asset-list.md` exceed this range — see Discrepancies below.*
+*Echo-creatures are the ship's spectral vermin — the residue of encounters across its history. They appear in wordless traversal sections. The canonical scale for ambient vermin is 0.06–0.14 H (7–16 px). A second tier — **visible echo-creatures** — covers echo-fish, echo-deer, and echo-cats, which render larger (0.20–0.40 H) because they play a deliberate role in the player's experience rather than serving as background texture.*
 
 | Component | Door-fraction | Pixel dims | Chapter(s) | Notes |
 |---|---|---|---|---|
@@ -153,9 +153,9 @@ Rows marked **[PROPOSED]** are sized by the author of this doc using the Scale A
 | Echo-mice | 0.11 H | ~12 px | Ch2 lower decks (traversal) | `art-asset-list.md`: ~12 px. Within spec. |
 | Echo-bats | 0.16 H (wingspan) | ~18 px wingspan | Ch2–Ch3 various | `art-asset-list.md`: ~18 px wingspan. Wingspan is wider than height — body height may be ~10 px. Near top of range when wingspan is used as the measure. |
 | Echo-rats | 0.15 H | ~16 px | Ch5 lower deck | `art-asset-list.md`: ~16 px. At top of spec range. |
-| Echo-fish | 0.06–0.14 H (canonical) | 7–16 px (canonical) | Ship lower decks | `art-asset-list.md`: ~28–32 px — **DISCREPANCY vs canonical 0.06–0.14 H (7–16 px).** See Discrepancies below. |
-| Echo-deer | 0.06–0.14 H (canonical) | 7–16 px (canonical) | Various | `art-asset-list.md`: ~44 × 40 px — **DISCREPANCY vs canonical 0.06–0.14 H (7–16 px).** |
-| Echo-cats | 0.06–0.14 H (canonical) | 7–16 px (canonical) | Ch4 alley (Ch4 outline) | `art-asset-list.md`: ~24 px — **DISCREPANCY vs canonical 0.06–0.14 H (7–16 px).** |
+| Echo-fish | 0.25–0.30 H | 28–33 px | Ship lower decks | Visible echo-creature exception (Sprint 09.5). Drift in mid-air, not floor-level vermin. |
+| Echo-deer | 0.35–0.40 H | ~40–44 px | Various | Visible echo-creature exception (Sprint 09.5). Cross streets visibly during traversal. |
+| Echo-cats | 0.20–0.22 H | ~22–24 px | Ch4 alley (Ch4 outline) | Visible echo-creature exception (Sprint 09.5). Recognizable cats in alley scenes. |
 | Echo-tarsiers | 0.07–0.09 H | ~8–10 px | Ch6 lower deck | [PROPOSED] Pygmy tarsiers. Tiny body, enormous eyes. Cling to pipes and beams. |
 | Mosquitoes | 0.04 H | ~4–5 px | Ch7 Brazil, Ch8 Greenpoint | [PROPOSED] Barely visible individual dots; appear in slow-drifting clouds. |
 | Urban vermin (cockroaches, bedbugs) | 0.04–0.06 H | ~4–7 px | Ch8 Greenpoint | [PROPOSED] City-specific echo-creatures for the final chapter streets. |
@@ -164,7 +164,7 @@ Rows marked **[PROPOSED]** are sized by the author of this doc using the Scale A
 
 ## Discrepancies — resolution status
 
-*Sprint 08 surfaced 12 discrepancies. Sprint 08.5 resolved 9; 3 remain open as proposals awaiting user confirmation.*
+*Sprint 08 surfaced 12 discrepancies. All 12 now resolved (Sprints 08.5 and 09.5).*
 
 ### Discrepancies: `game/index.html` vs canonical scale
 
@@ -194,20 +194,14 @@ Rows marked **[PROPOSED]** are sized by the author of this doc using the Scale A
 **8. Pip sprite in `art-asset-list.md` — RESOLVED Sprint 08.5**
 - Updated Pip sprite prompt entries to specify 38–44 px (door-fraction 0.35–0.40).
 
-**9. Echo-fish — PROPOSAL PENDING USER CONFIRMATION**
-- Canonical echo-creature: 0.06–0.14 H (7–16 px). `art-asset-list.md`: ~28–32 px.
-- *Proposed exception:* Echo-fish render larger than other echo-creatures because they drift visibly in mid-air rather than skittering at floor level. Proposed door-fraction: 0.25–0.30 H (28–33 px). Kept at asset-list size pending confirmation.
-- **Awaiting user yes/no before closing.**
+**9. Echo-fish — RESOLVED Sprint 09.5**
+- Echo-fish locked at 0.25–0.30 H (28–33 px) as a visible echo-creature exception. They drift visibly in mid-air rather than skittering at floor level. See `03-art-and-aesthetic.md` Scale Anchor table.
 
-**10. Echo-deer — PROPOSAL PENDING USER CONFIRMATION**
-- Canonical echo-creature: 0.06–0.14 H (7–16 px). `art-asset-list.md`: ~44 × 40 px.
-- *Proposed exception:* Echo-deer are larger because they're visibly crossing streets in traversal sections, not background skitter. Same "visible echo-creature" exception group as fish. Proposed door-fraction: 0.35–0.40 H (~40–44 px). Kept at asset-list size pending confirmation.
-- **Awaiting user yes/no before closing.**
+**10. Echo-deer — RESOLVED Sprint 09.5**
+- Echo-deer locked at 0.35–0.40 H (~40–44 px) as a visible echo-creature exception. They visibly cross streets during traversal sections. See `03-art-and-aesthetic.md` Scale Anchor table.
 
-**11. Echo-cats — PROPOSAL PENDING USER CONFIRMATION**
-- Canonical echo-creature: 0.06–0.14 H (7–16 px). `art-asset-list.md`: ~24 px.
-- *Proposed exception:* Echo-cats (Ch4 alley) are visibly recognizable cats, not background vermin. Same "visible echo-creature" exception group. Proposed door-fraction: 0.20–0.22 H (~22–24 px). Kept at asset-list size pending confirmation.
-- **Awaiting user yes/no before closing.**
+**11. Echo-cats — RESOLVED Sprint 09.5**
+- Echo-cats locked at 0.20–0.22 H (~22–24 px) as a visible echo-creature exception. They are recognizable cats in alley scenes, not background vermin. See `03-art-and-aesthetic.md` Scale Anchor table.
 
 ### Discrepancy: doc 03 vs doc 08 (Iris)
 

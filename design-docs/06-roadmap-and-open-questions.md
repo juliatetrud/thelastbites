@@ -208,6 +208,7 @@ A running record of every sprint that has shipped, in order. Every future sprint
 | 12 | Doc patch — collect verb and stomach | 2026-05-14 | Collect verb, stomach model, treat taxonomy, key remap (`↓` collect / `TAB` notebook), observation deck added to Ch1 structure. Doc-only sprint; no code changes. |
 | 13 | Collect verb and stomach implementation | 2026-05-14 | `↓` collect verb, stomach meter (chewing-boy HUD), blink-back death sequence, pickup tween, notebook Items section. Debug Bamsemums placed in hallway for system testing. |
 | 14 | Cabin gating + doctor exit | 2026-05-16 | Cabin door gated until grandparents' plays; new "Listen at the door" choice with doctor's voice; doctor-exit cinematic on first cabin entry. Bed/mirror/panic-glide deferred to Henrik kitchen sprint. |
+| 14.5 | Gallery audit + chapter tags | 2026-05-16 | Capuchin reclassified to Echo Creatures; inline chapter tags added to every character cell; classification audit against chapter outlines completed. |
 
 ---
 
@@ -382,6 +383,7 @@ A running list of locked decisions so they don't re-litigate.
 | 2026-05-16 | **Hosting resolved.** Game deployed on GitHub Pages at https://juliatetrud.github.io/thelastbites/, with a root `index.html` meta-refresh redirect to `game/index.html`. Separate domain from the recipe site; no CDN. Closes the "Hosting?" open question from the Technical section. |
 | 2026-05-16 | **Cabin 646 gating locked (Sprint 14).** Pip's cabin is closed off until the grandparents' cinematic has played. Before grandparents': the cabin door offers "Listen at the door" (which overhears the doctor's voice saying *"…there was nothing more we could do. I'm so sorry."*) and "Not now." There is no "Go in" option. After grandparents': "Go in" appears. The first entry plays a brief cinematic of the doctor exiting through a far door. The "Listen at the door" choice persists indefinitely. This is the canonical Beat 4 ordering — Pip's realization that he is dead is *earned* by grief witnessed and door overheard, not stumbled into immediately. |
 | 2026-05-16 | **Bed/mirror reframing and panic-glide extension deferred to Henrik kitchen sprint.** The Sprint 11 bed-reveal cinematic and panic-glide-to-hallway will be reworked when the kitchen room exists. The new shape: after the mirror cinematic, the player walks to the bed and *initiates* the sheet-lifting (Pip's action, not a passive cinematic). The panic glide then chains through the hallway and into the kitchen, ending at Henrik. Until the kitchen ships, the current implementation stands. |
+| 2026-05-16 | **Character gallery audited and chapter-tagged (Sprint 14.5).** Every character cell now displays inline chapter tags (e.g., "Henrik (Ch 1, 4–8)", "Babcia (Ch 1, 8)"). Capuchin moved from Monsters to Echo Creatures (it is a ghost-animal guide in Ch7's Brazil forest, not a folkloric threat). The audit checked all classifications against chapter outlines and the character reference doc; the gallery is now the canonical reference for who appears in which chapter. |
 
 ---
 

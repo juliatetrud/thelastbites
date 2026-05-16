@@ -175,6 +175,13 @@ html, body {
   margin-bottom: 2px;
 }
 
+.chapter-tag {
+  color: var(--text-dim);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: none;
+}
+
 .cell-sig {
   font-family: 'Cormorant Garamond', serif;
   font-size: 11px;
@@ -1160,7 +1167,7 @@ const CHARACTERS = [
 
   // ── PIP ────────────────────────────────────────────────────
   {
-    id: 'pip', name: 'Pip', section: 'pip', designed: true,
+    id: 'pip', name: 'Pip', chapterTag: 'Ch 1–8', section: 'pip', designed: true,
     colorSig: 'cool-white', fracLabel: '0.35–0.40',
     drawFn: (ctx, t, speaking) => {
       drawCellBackground(ctx);
@@ -1172,7 +1179,7 @@ const CHARACTERS = [
 
   // ── CATS ───────────────────────────────────────────────────
   {
-    id: 'patu', name: 'Pätu', section: 'cats', designed: true,
+    id: 'patu', name: 'Pätu', chapterTag: 'Ch 2–8', section: 'cats', designed: true,
     colorSig: 'gray tabby / yellow eyes', fracLabel: '0.18–0.22',
     drawFn: (ctx, t, _speaking) => {
       drawCellBackground(ctx);
@@ -1184,7 +1191,7 @@ const CHARACTERS = [
 
   // ── GREENPOINT ─────────────────────────────────────────────
   {
-    id: 'babcia', name: 'Babcia', section: 'greenpoint', designed: true,
+    id: 'babcia', name: 'Babcia', chapterTag: 'Ch 1, 8', section: 'greenpoint', designed: true,
     colorSig: 'kerchief-red / shaded dark coat', fracLabel: '0.55–0.65',
     drawFn: (ctx, t, speaking) => {
       drawCellBackground(ctx);
@@ -1194,19 +1201,19 @@ const CHARACTERS = [
     canSpeak: true,
   },
   {
-    id: 'dziadek', name: 'Dziadek', section: 'greenpoint', designed: false,
+    id: 'dziadek', name: 'Dziadek', chapterTag: 'Ch 1, 8', section: 'greenpoint', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'wool deep-blue / flat cap',
     tells: 'flat cap, deep-blue wool, patch squares',
   },
   {
-    id: 'pips-mother', name: "Pip's Mother", section: 'greenpoint', designed: false,
+    id: 'pips-mother', name: "Pip's Mother", chapterTag: 'Ch 8', section: 'greenpoint', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'warm knit / blonde',
     tells: 'blonde hair, warm casual knit',
   },
   {
-    id: 'pips-father', name: "Pip's Father", section: 'greenpoint', designed: false,
+    id: 'pips-father', name: "Pip's Father", chapterTag: 'Ch 8', section: 'greenpoint', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'wool sweater / olive skin',
     tells: 'broad-shouldered, wool sweater, olive skin',
@@ -1214,13 +1221,13 @@ const CHARACTERS = [
 
   // ── THE SHIP ───────────────────────────────────────────────
   {
-    id: 'janitor', name: 'Janitor', section: 'ship', designed: false,
+    id: 'janitor', name: 'Janitor', chapterTag: 'Ch 1', section: 'ship', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'crew uniform slate',
     tells: 'uniform, brass name-tag glint',
   },
   {
-    id: 'passenger', name: 'Passenger', section: 'ship', designed: false,
+    id: 'passenger', name: 'Passenger', chapterTag: 'Ch 1', section: 'ship', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'evening-wear black / white shirt',
     tells: 'formal collar, white shirt-front',
@@ -1228,7 +1235,7 @@ const CHARACTERS = [
 
   // ── CHEFS ──────────────────────────────────────────────────
   {
-    id: 'henrik', name: 'Henrik', section: 'chefs', designed: true,
+    id: 'henrik', name: 'Henrik', chapterTag: 'Ch 1, 4–8', section: 'chefs', designed: true,
     colorSig: 'amber-cream apron', fracLabel: '0.55–0.65',
     drawFn: (ctx, t, speaking) => {
       drawCellBackground(ctx);
@@ -1238,55 +1245,55 @@ const CHARACTERS = [
     canSpeak: true,
   },
   {
-    id: 'leida', name: 'Leida (Ch2)', section: 'chefs', designed: false,
+    id: 'leida', name: 'Leida', chapterTag: 'Ch 2', section: 'chefs', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'cream apron / Estonian-blue headscarf',
     tells: 'elder, bent slightly forward, headscarf',
   },
   {
-    id: 'muhittin', name: 'Muhittin (Ch4)', section: 'chefs', designed: false,
+    id: 'muhittin', name: 'Muhittin', chapterTag: 'Ch 4', section: 'chefs', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'warm-rust sweater',
     tells: 'young adult, rust sweater, cream apron',
   },
   {
-    id: 'omer', name: 'Omer (Ch4)', section: 'chefs', designed: false,
+    id: 'omer', name: 'Omer', chapterTag: 'Ch 4', section: 'chefs', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'tennis-casual whites',
     tells: 'athletic, whites, relaxed',
   },
   {
-    id: 'brian', name: 'Brian (Ch4)', section: 'chefs', designed: false,
+    id: 'brian', name: 'Brian', chapterTag: 'Ch 4', section: 'chefs', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'tennis-casual / blue accent',
     tells: 'similar to Omer, blue detail',
   },
   {
-    id: 'sandy-family', name: "Sandy's Family (Ch3)", section: 'chefs', designed: false,
+    id: 'sandy-family', name: "Sandy's Family", chapterTag: 'Ch 3', section: 'chefs', designed: false,
     frac: 0.55, fracLabel: 'group',
     colorSig: 'warm-amber kitchen palette',
     tells: 'warm kitchen group, multiple figures',
   },
   {
-    id: 'johannes', name: 'Johannes (Ch5)', section: 'chefs', designed: false,
+    id: 'johannes', name: 'Johannes', chapterTag: 'Ch 5', section: 'chefs', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'brown / apron / beard',
     tells: 'heavy-set adult, beard, apron, jolly stance',
   },
   {
-    id: 'tirta', name: 'Tirta (Ch6)', section: 'chefs', designed: false,
+    id: 'tirta', name: 'Tirta', chapterTag: 'Ch 6', section: 'chefs', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'warung apron / warm-clay',
     tells: 'compact adult, apron, clay-warm',
   },
   {
-    id: 'joana', name: 'Joana (Ch7)', section: 'chefs', designed: false,
+    id: 'joana', name: 'Joana', chapterTag: 'Ch 7', section: 'chefs', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'forest-green accent',
     tells: 'lean adult, sun-dark skin, forest green',
   },
   {
-    id: 'beatriz', name: 'Beatriz (Ch7)', section: 'chefs', designed: false,
+    id: 'beatriz', name: 'Beatriz', chapterTag: 'Ch 7', section: 'chefs', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'faded cotton / apron',
     tells: 'shorter adult, faded cotton dress',
@@ -1294,7 +1301,7 @@ const CHARACTERS = [
 
   // ── GHOST-CHILDREN ─────────────────────────────────────────
   {
-    id: 'erik', name: 'Erik (ghost)', section: 'ghosts', designed: true,
+    id: 'erik', name: 'Erik', chapterTag: 'ghost, Ch 7–8', section: 'ghosts', designed: true,
     colorSig: 'warm-amber glow / dark hair', fracLabel: '~0.40',
     drawFn: (ctx, t, speaking) => {
       drawCellBackground(ctx);
@@ -1304,13 +1311,13 @@ const CHARACTERS = [
     canSpeak: true,
   },
   {
-    id: 'sandy-ghost', name: 'Sandy (ghost, Ch3)', section: 'ghosts', designed: false,
+    id: 'sandy-ghost', name: 'Sandy', chapterTag: 'ghost, Ch 3', section: 'ghosts', designed: false,
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'warm-amber translucent',
     tells: 'adult male ghost, casual rumpled, self-possessed',
   },
   {
-    id: 'iris', name: 'Iris (Ch5)', section: 'ghosts', designed: false,
+    id: 'iris', name: 'Iris', chapterTag: 'Ch 5', section: 'ghosts', designed: false,
     frac: 0.38, fracLabel: '0.35–0.40',
     colorSig: 'sea-green-blue translucent',
     tells: 'Edwardian collar, pale hair, girl-height',
@@ -1318,7 +1325,7 @@ const CHARACTERS = [
 
   // ── MONSTERS ──────────────────────────────────────────────
   {
-    id: 'pocong', name: 'Pocong (Ch6)', section: 'monsters', designed: true,
+    id: 'pocong', name: 'Pocong', chapterTag: 'Ch 6', section: 'monsters', designed: true,
     colorSig: 'all-white shroud', fracLabel: '~0.73',
     drawFn: (ctx, t, speaking) => {
       drawCellBackground(ctx);
@@ -1328,37 +1335,37 @@ const CHARACTERS = [
     canSpeak: true,
   },
   {
-    id: 'haldjas', name: 'Haldjas (Ch2)', section: 'monsters', designed: false,
+    id: 'haldjas', name: 'Haldjas', chapterTag: 'Ch 2', section: 'monsters', designed: false,
     frac: 0.40, fracLabel: 'particle',
     colorSig: 'warm gold-amber sparkles',
     tells: 'particle cluster, no humanoid form, drifting amber sparks',
   },
   {
-    id: 'karakoncolos', name: 'Karakoncolos (Ch4)', section: 'monsters', designed: false,
+    id: 'karakoncolos', name: 'Karakoncolos', chapterTag: 'Ch 4', section: 'monsters', designed: false,
     frac: 0.70, fracLabel: '0.65–0.75',
     colorSig: 'dark-furred / eye-glow [OPEN]',
     tells: 'very large stooped hairy shape, frost-cloud, eerie still',
   },
   {
-    id: 'mamlambo', name: 'Mamlambo (Ch5)', section: 'monsters', designed: false,
+    id: 'mamlambo', name: 'Mamlambo', chapterTag: 'Ch 5', section: 'monsters', designed: false,
     frac: 0.65, fracLabel: 'serpent',
     colorSig: 'blood-iron eye/coil',
     tells: 'massive serpent, eye above porthole, blood-iron glow',
   },
   {
-    id: 'boitata', name: 'Boitatá (Ch7)', section: 'monsters', designed: false,
+    id: 'boitata', name: 'Boitatá', chapterTag: 'Ch 7', section: 'monsters', designed: false,
     frac: 0.65, fracLabel: 'serpent',
     colorSig: 'fire-amber / lantern-eyes',
     tells: 'fire-serpent, coiled, fire-flicker body',
   },
   {
-    id: 'black-shuck', name: 'Black Shuck (Ch3)', section: 'monsters', designed: false,
+    id: 'black-shuck', name: 'Black Shuck', chapterTag: 'Ch 3', section: 'monsters', designed: false,
     frac: 0.40, fracLabel: 'low / wide',
     colorSig: 'black-on-black / amber eyes',
     tells: 'giant ghost-dog, low-to-ground, glowing amber eyes',
   },
   {
-    id: 'capuchin', name: 'Capuchin', section: 'monsters', designed: false,
+    id: 'capuchin', name: 'Capuchin', chapterTag: 'Ch 7', section: 'echoes', designed: false,
     frac: 0.25, fracLabel: '0.20–0.30',
     colorSig: 'brown / white face patch',
     tells: 'small monkey, white face/chest, perches high',
@@ -1366,37 +1373,37 @@ const CHARACTERS = [
 
   // ── ECHO-CREATURES ─────────────────────────────────────────
   {
-    id: 'echo-fish-cod', name: 'Echo-fish (cod)', section: 'echoes', designed: false,
+    id: 'echo-fish-cod', name: 'Echo-fish (cod)', chapterTag: 'Ch 3', section: 'echoes', designed: false,
     frac: 0.28, fracLabel: '0.25–0.30',
     colorSig: 'warm-amber translucent',
     tells: 'elongated fish, drifts mid-air',
   },
   {
-    id: 'echo-fish-haddock', name: 'Echo-fish (haddock)', section: 'echoes', designed: false,
+    id: 'echo-fish-haddock', name: 'Echo-fish (haddock)', chapterTag: 'Ch 3', section: 'echoes', designed: false,
     frac: 0.28, fracLabel: '0.25–0.30',
     colorSig: 'warm-amber translucent',
     tells: 'elongated fish, drifts mid-air',
   },
   {
-    id: 'echo-fish-plaice', name: 'Echo-fish (plaice)', section: 'echoes', designed: false,
+    id: 'echo-fish-plaice', name: 'Echo-fish (plaice)', chapterTag: 'Ch 3', section: 'echoes', designed: false,
     frac: 0.28, fracLabel: '0.25–0.30',
     colorSig: 'warm-amber translucent',
     tells: 'flat broad fish, drifts mid-air',
   },
   {
-    id: 'echo-deer', name: 'Echo-deer', section: 'echoes', designed: false,
+    id: 'echo-deer', name: 'Echo-deer', chapterTag: 'Ch 3', section: 'echoes', designed: false,
     frac: 0.38, fracLabel: '0.35–0.40',
     colorSig: 'warm-amber translucent',
     tells: 'full deer silhouette, crosses streets',
   },
   {
-    id: 'echo-cats', name: 'Echo-cats', section: 'echoes', designed: false,
+    id: 'echo-cats', name: 'Echo-cats', chapterTag: 'Ch 4', section: 'echoes', designed: false,
     frac: 0.21, fracLabel: '0.20–0.22',
     colorSig: 'warm-amber translucent',
     tells: 'cat silhouette, alley scenes',
   },
   {
-    id: 'ambient-vermin', name: 'Ambient vermin', section: 'echoes', designed: false,
+    id: 'ambient-vermin', name: 'Ambient vermin', chapterTag: 'Ch 2, 5, 7–8', section: 'echoes', designed: false,
     frac: 0.10, fracLabel: '0.06–0.14',
     colorSig: 'warm-amber very low alpha',
     tells: 'tiny; spiders/mice/cockroaches at floor level',
@@ -1429,7 +1436,7 @@ function buildCell(char) {
 
   const nameEl = document.createElement('div');
   nameEl.className = 'cell-name';
-  nameEl.textContent = char.name;
+  nameEl.innerHTML = char.name + (char.chapterTag ? ' <span class="chapter-tag">(' + char.chapterTag + ')</span>' : '');
   info.appendChild(nameEl);
 
   const sigEl = document.createElement('div');

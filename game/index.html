@@ -888,10 +888,19 @@
   }
   body.mobile-portrait #dialogue-box::before { display: none; }
 
-  /* In portrait with dialogue active: hide movement controls so they don't
-     compete with the dialogue. Notebook/pause icons stay accessible (top-right). */
-  body.mobile-portrait.dialogue-active #touch-dpad,
-  body.mobile-portrait.dialogue-active #touch-action { display: none; }
+  /* Portrait: controls always visible. Opacity reflects current input mode.
+     No layout shift — buttons are stable furniture, not modal UI. */
+  body.mobile-portrait #touch-dpad,
+  body.mobile-portrait #touch-action {
+    transition: opacity 0.18s ease;
+  }
+  /* Atmospheric dialogue (SPACE-to-continue): D-pad ghosts; action stays bright.
+     pointer-events:none prevents accidental arrow-key dispatch during narration. */
+  body.mobile-portrait.dialogue-atmospheric #touch-dpad {
+    opacity: 0.25;
+    pointer-events: none;
+  }
+  /* Choice menu: D-pad at full opacity (↑↓ navigation); no rule needed (default 1). */
 
   /* Portrait: game-wrap stacks vertically */
   body.mobile-portrait #game-wrap {
@@ -2627,6 +2636,12 @@ const STRIP_STRINGS = {
   'pause':                '↑↓  CHOOSE | SPACE  SELECT | ESC  RESUME',
 };
 
+function updateActionButtonIcon() {
+  const btn = document.getElementById('touch-action');
+  if (!btn) return;
+  btn.textContent = (dialogue.active || cinematic.active) ? '▶' : '●';
+}
+
 function setControlsStrip(context) {
   const raw = STRIP_STRINGS[context] || '';
   // Replace multi-space group separators (3+ spaces) with a fixed-width gap so
@@ -2634,6 +2649,7 @@ function setControlsStrip(context) {
   // Single/double spaces within a group (key  label) are left as-is.
   document.getElementById('controls-strip').innerHTML =
     raw.replace(/ {3,}/g, '<span style="display:inline-block;width:2.2em"></span>');
+  updateActionButtonIcon();
 }
 
 /* Pick 'room' or 'room-floatable' based on pip.float.unlocked.
@@ -2644,6 +2660,7 @@ function setRoomStrip() {
   const raw = base + fsHint;
   document.getElementById('controls-strip').innerHTML =
     raw.replace(/ {3,}/g, '<span style="display:inline-block;width:2.2em"></span>');
+  updateActionButtonIcon();
 }
 
 /* Sprint 13: update the controls strip for collectible proximity.
@@ -2716,9 +2733,10 @@ function showDialogue(node) {
   textEl.textContent = '';
   textEl.classList.toggle('italic', !!line.italic);
 
-  // Show box
+  // Show box; start in atmospheric mode (choices only appear after last narration line)
   document.getElementById('dialogue-box').classList.add('active');
-  document.body.classList.add('dialogue-active');
+  document.body.classList.remove('dialogue-atmospheric', 'dialogue-choice');
+  document.body.classList.add('dialogue-atmospheric');
   setControlsStrip('atmospheric-dialogue');
 }
 
@@ -2728,7 +2746,7 @@ function closeDialogue() {
   dialogue.closing = true;
 
   document.getElementById('dialogue-box').classList.remove('active');
-  document.body.classList.remove('dialogue-active');
+  document.body.classList.remove('dialogue-atmospheric', 'dialogue-choice');
 
   dialogue._closeTimer = setTimeout(() => {
     dialogue._closeTimer = null;
@@ -2833,6 +2851,8 @@ function stepDialogueBack() {
     choicesEl.innerHTML = '';
     choicesEl.style.display = 'none';
     dialogue.showingChoices = false;
+    document.body.classList.remove('dialogue-choice');
+    document.body.classList.add('dialogue-atmospheric');
     setControlsStrip('atmospheric-dialogue');
     // Now we're back at the last narration line — show it in full
     _renderDialogueLineImmediate();
@@ -2868,6 +2888,8 @@ function showChoices() {
   if (dialogue.showingChoices) return;
   dialogue.showingChoices = true;
   dialogue.selectedChoice = 0;
+  document.body.classList.remove('dialogue-atmospheric');
+  document.body.classList.add('dialogue-choice');
 
   const choicesEl = document.getElementById('dialogue-choices');
   choicesEl.innerHTML = '';
@@ -4206,7 +4228,7 @@ function skipCinematic() {
   // Force-close dialogue immediately (no 300ms fade delay)
   if (dialogue.active || dialogue.closing) {
     document.getElementById('dialogue-box').classList.remove('active');
-    document.body.classList.remove('dialogue-active');
+    document.body.classList.remove('dialogue-atmospheric', 'dialogue-choice');
     dialogue.active  = false;
     dialogue.closing = false;
     dialogue.node    = null;

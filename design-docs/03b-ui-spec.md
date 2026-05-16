@@ -467,7 +467,13 @@ The canvas continues to scale to fit the viewport as on desktop. On phones wider
 
 D-pad at bottom-left, action button at bottom-right (same positions as landscape — they sit in the band below the canvas).
 
-**Dialogue in portrait:** `#dialogue-box` switches to `position: fixed; bottom: 0; left: 0; right: 0` so it appears in the bottom band below the canvas (escaping the canvas `overflow: hidden` without any DOM move). When dialogue is active, `body.dialogue-active` class hides the D-pad and action button so they don't compete. Notebook and pause icons (top-right) remain accessible during dialogue.
+**Dialogue in portrait:** `#dialogue-box` switches to `position: fixed; bottom: 0; left: 0; right: 0` so it appears in the bottom band below the canvas (escaping the canvas `overflow: hidden` without any DOM move). The D-pad and action button remain in the DOM at all times — no layout shift (Sprint M1.1).
+
+- **Atmospheric dialogue** (SPACE-to-continue): D-pad ghosts to 25% opacity with `pointer-events: none` (`body.dialogue-atmospheric` class). Action button stays full opacity with icon `▶`.
+- **Choice menu** (↑↓ navigate, SPACE select): D-pad returns to full opacity (`body.dialogue-choice` class). Action button full opacity, icon `▶`.
+- **Room mode**: both at full opacity, action icon `●`.
+
+The action button icon (`●` / `▶`) updates via `updateActionButtonIcon()`, called from `setControlsStrip()` and `setRoomStrip()` on every UI mode change. Icon swap is instantaneous; opacity transition is 0.18s ease. Notebook and pause icons (top-right) remain accessible at all times.
 
 ### Out of scope for M1 (deferred to M2)
 

@@ -156,7 +156,6 @@ These are unresolved decisions. They don't need to be answered now, but they wil
 ### Technical
 
 - **Single-file vs split-file architecture for the production version?** Currently single. Will need to split as it grows.
-- **Hosting?** Same domain as recipe site? CDN?
 - **Mobile design?** Need to confirm tap targets work on small screens.
 - **Accessibility?** Screen reader support, contrast options, motion-sensitive options.
 
@@ -206,6 +205,8 @@ A running record of every sprint that has shipped, in order. Every future sprint
 | 10-polish-r2 | Vignette intensity tuned | 2026-05-14 | Inner transparent stop 30%→15%, outer stop 0.85→1.0; restores moody corners while keeping the seam invisible. |
 | 10.7 | Chapter 1 opening restructure | 2026-05-14 | Hallway start with materialization + yawn opening, lump-in-bed pre-reveal dialogue, post-reveal dialogue wired but state-gated to Sprint 11, neutral-plane lore established. |
 | 11 | Mirror beat | 2026-05-14 | Cabin rework (visible walls, mirror, child's drawing), mirror cinematic with melting effect, bed reveal of Pip's body, scripted panic-float and comic tear-spray exit, memory-mist visual language defined, left-arrow-back in dialogue. |
+| 12 | Doc patch — collect verb and stomach | 2026-05-14 | Collect verb, stomach model, treat taxonomy, key remap (`↓` collect / `TAB` notebook), observation deck added to Ch1 structure. Doc-only sprint; no code changes. |
+| 13 | Collect verb and stomach implementation | 2026-05-14 | `↓` collect verb, stomach meter (chewing-boy HUD), blink-back death sequence, pickup tween, notebook Items section. Debug Bamsemums placed in hallway for system testing. |
 
 ---
 
@@ -377,6 +378,7 @@ A running list of locked decisions so they don't re-litigate.
 | 2026-05-14 | **Involuntary panic-float locked as foreshadowing for Beat 8.** After the bed reveal, Pip's ghost-body involuntarily floats up ~30 px in panic, hangs, drops back. This is a scripted one-shot — the float ability is NOT unlocked here; space bar continues to do nothing for the player. Float remains gated to Beat 8 (kitchen/Henrik sequence). This moment plants the seed narratively; Beat 8 unlocks it as a player skill. |
 | 2026-05-14 | **Panic-exit register locked.** After the panic-float resolves, Pip glides out of the cabin at 1.8× walk speed with comic tear spray from his eyes (cool-white droplets, ~6/s, arcing backward and fading). Tone is gentle-comic: he is grief-stricken AND he is a small ghost moving very fast. Both registers live in the same beat without one undercutting the other. Player control suspended throughout; restored once Pip is in the hallway. |
 | 2026-05-14 | **Left-arrow-back in dialogue.** Pressing left arrow during dialogue steps backward one line. At first line, no-op. Controls strip during dialogue gains `← BACK` hint. Works on every dialogue node in the game. Closes the open question logged 2026-05-14. |
+| 2026-05-16 | **Hosting resolved.** Game deployed on GitHub Pages at https://juliatetrud.github.io/thelastbites/, with a root `index.html` meta-refresh redirect to `game/index.html`. Separate domain from the recipe site; no CDN. Closes the "Hosting?" open question from the Technical section. |
 
 ---
 

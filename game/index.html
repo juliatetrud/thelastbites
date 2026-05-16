@@ -877,7 +877,9 @@ const notebook = {
 /* --- DEBUG HALLWAY COLLECTIBLE ---
    Temporary: a Bamsemums placed in the hallway for testing the collect
    system before the kitchen room exists.
-   Remove or re-gate when the kitchen room is built (see sprint spec §c). */
+   Remove or re-gate when the kitchen room is built (see sprint spec §c).
+   Canonical kitchen-sprint annotation (replaces this):
+     'Bamsemums — from Henrik, in the kitchen.' */
 const hallwayCollectibles = [
   {
     id:           'debug-bamsemums',
@@ -886,7 +888,7 @@ const hallwayCollectibles = [
     kind:         'treat',
     sprite:       'bamsemums',
     name:         'Bamsemums',
-    annotation:   'Bamsemums \u2014 from Henrik, in the kitchen.',
+    annotation:   'Bamsemums \u2014 a small bag, left in the hallway.',
     stomachValue: 25,
     collected:    false,
     tutorialNarrated: false,       // true once the proximity auto-narration has fired
@@ -2026,8 +2028,8 @@ function updateOpeningSequence(dt) {
 
 const STRIP_STRINGS = {
   // Sprint 13: ↓ COLLECT added; TAB NOTEBOOK replaces ESC JOURNAL
-  'room':                 '← →  MOVE     ↑  LOOK     ↓  COLLECT     TAB  NOTEBOOK     ESC  PAUSE',
-  'room-floatable':       '← →  MOVE     ↑  LOOK     ↓  COLLECT     SPACE  FLOAT     TAB  NOTEBOOK     ESC  PAUSE',
+  'room':                 '← →  MOVE     ↑  LOOK     ↓  COLLECT     TAB  NOTEBOOK',
+  'room-floatable':       '← →  MOVE     ↑  LOOK     ↓  COLLECT     SPACE  FLOAT     TAB  NOTEBOOK',
   'atmospheric-dialogue': '←  BACK     SPACE  CONTINUE',
   'interactive-dialogue': '←  BACK     ↑↓  CHOOSE     SPACE  SELECT',
   'cinematic':            'SPACE  CONTINUE     ESC  SKIP',

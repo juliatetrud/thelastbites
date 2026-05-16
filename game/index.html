@@ -832,7 +832,7 @@
         <p><em>The Last Bites</em> is a gentle ghost story about grief, memory, and the meals that carry us through both. Each chapter visits a real place &#8212; Brooklyn, Tallinn, Southampton, T&#252;rkiye, Cape Town, Indonesia, Brazil &#8212; and explores a regional food and a regional folklore. Each chapter unlocks a recipe on Julia&#8217;s website, so you can cook what Pip tasted.</p>
         <p>It&#8217;s a small game. It will take a few evenings. It is not scary; it is not cruel. There are no fail states and no combat. Just a boy with a fork, learning what a fork is for.</p>
       </div>
-      <div class="about-cta">Press SPACE or ENTER to begin.</div>
+      <div class="about-cta">Press SPACE or ESC to return.</div>
     </div>
 
     <!-- Grain + vignette overlay sits above the canvas -->
@@ -2448,7 +2448,7 @@ function updateOpeningSequence(dt) {
 const STRIP_STRINGS = {
   // Sprint 15: title screen
   'title':                '↑↓  CHOOSE   SPACE  SELECT',
-  'title-about':          '←  BACK   SPACE / ESC  RETURN',
+  'title-about':          'SPACE / ESC / ←  RETURN',
   // Sprint 13: ↓ COLLECT added; TAB NOTEBOOK replaces ESC JOURNAL
   'room':                 '← →  MOVE | ↑  LOOK | ↓  COLLECT | TAB  NOTEBOOK',
   'room-floatable':       '← →  MOVE | ↑  LOOK | ↓  COLLECT | SPACE  FLOAT | TAB  NOTEBOOK',
@@ -6099,10 +6099,8 @@ function initTitleScreen() {
 
 function handleTitleKey(code) {
   if (titleState.aboutVisible) {
-    if (code === 'Escape' || code === 'ArrowLeft') {
+    if (code === 'Escape' || code === 'ArrowLeft' || code === 'Space' || code === 'Enter') {
       closeAboutPanel();
-    } else if (code === 'Space' || code === 'Enter') {
-      startTitleToGameplay();
     }
     return;
   }

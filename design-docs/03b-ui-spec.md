@@ -419,9 +419,9 @@ Full-screen panel (`z-index 75`, above controls strip). Content is locked:
 
 > Pip is a young ghost on a haunted cruise ship. [… full text in sprint-15-title-screen-parallax.md]
 
-Title in `Special Elite`; body in `Cormorant Garamond` at generous line-height. Final line "Press `SPACE` or `ENTER` to begin." renders in `Special Elite`, small, letter-spaced — visually distinct as an instruction.
+Title in `Special Elite`; body in `Cormorant Garamond` at generous line-height. Final line "Press `SPACE` or `ESC` to return." renders in `Special Elite`, small, letter-spaced — visually distinct as an instruction.
 
-`ESC` or `←` returns to title menu. `SPACE`/`ENTER` from About also starts the game.
+`SPACE`, `ENTER`, `ESC`, or `←` all return to the title menu. To start the game, return to the menu and select Play.
 
 ### Music
 

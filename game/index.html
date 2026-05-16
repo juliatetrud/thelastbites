@@ -5317,10 +5317,11 @@ function toggleMusic() {
     btn.title = 'Music on (click to mute)';
     btn.setAttribute('aria-label', 'Music on (click to mute)');
     if (music.unlocked) {
-      // Sprint 15: on title screen play title track; in gameplay play active element
+      // On title screen resume title track at full volume; in gameplay resume active element
       if (gameMode === 'title' && titleAudio) {
+        titleAudio.volume = music.baseVolume;
         titleAudio.play().catch(() => {});
-      } else if (gameMode !== 'title') {
+      } else if (gameMode !== 'title' && gameMode !== 'gate') {
         const activeEl = music.current === 'a' ? music.audioA : music.audioB;
         activeEl.play().catch(() => {});
       }
@@ -5329,10 +5330,10 @@ function toggleMusic() {
     btn.classList.add('muted');
     btn.title = 'Music off (click to play)';
     btn.setAttribute('aria-label', 'Music off (click to play)');
-    // Sprint 15: mute whichever track is currently active
-    if (gameMode === 'title' && titleAudio) {
+    // Mute whichever track is currently active
+    if ((gameMode === 'title' || gameMode === 'gate') && titleAudio) {
       titleAudio.pause();
-    } else {
+    } else if (gameMode === 'gameplay') {
       const activeEl = music.current === 'a' ? music.audioA : music.audioB;
       activeEl.pause();
     }
@@ -5350,9 +5351,9 @@ function initMusic() {
   window.addEventListener('keydown', unlockMusic, { once: true });
   window.addEventListener('click',   unlockMusic, { once: true });
 
-  // Sprint 15: Don't start gameplay track during title screen;
+  // Don't start gameplay track during title or gate mode.
   // playMusic('main') is called by startTitleToGameplay() when Play is selected.
-  if (gameMode !== 'title') {
+  if (gameMode !== 'title' && gameMode !== 'gate') {
     playMusic('main');
   }
 }
@@ -6044,13 +6045,13 @@ function initTitleTrack() {
   // Called from inside a user gesture (gate dismiss), so autoplay is guaranteed.
   // Volume ramps from 0 to target over 600ms.
   titleAudio.volume = 0;
-  titleAudio.play().catch(() => {});
-  const TARGET = music.on ? music.baseVolume : 0;
+  if (music.on) titleAudio.play().catch(() => {});
   const RAMP_MS = 600;
-  const startT = performance.now();
+  const startT  = performance.now();
   (function rampUp(ts) {
     const t = Math.min((ts - startT) / RAMP_MS, 1);
-    if (titleAudio) titleAudio.volume = TARGET * t;
+    // Re-read music.on each frame so a mid-ramp mute is honored immediately.
+    if (titleAudio) titleAudio.volume = music.on ? music.baseVolume * t : 0;
     if (t < 1) requestAnimationFrame(rampUp);
   })(performance.now());
 }

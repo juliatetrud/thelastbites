@@ -29,6 +29,8 @@ What we know we want to build, and what we still need to decide.
 - Sprint 01: foundational architecture (resolution bump to 480×270, narration-with-choices interaction model, strength meter scaffolding, journal stub, float ability framework)
 - Then incrementally: hallway, grandparents' cabin, radio room, dark corridor + janitor + float discovery, kitchen + Henrik, dock farewell
 
+**Mobile philosophy:** The game is keyboard-first on desktop and touch-first on mobile, not "desktop with touch grafted on." On phone, the controls live in the device, not on top of the game — that means on-screen D-pad and action buttons rendered as honest UI chrome, not gestures that compete with browser scrolling or accidental swipes. Portrait phone is supported because that's how most people pick up a phone; landscape is the premium experience for players who want to commit. Dialogue placement is orientation-aware: in landscape it overlays the canvas like on desktop; in portrait it lives in the padding bar so the canvas stays uncluttered.
+
 ---
 
 ## Near-term Roadmap
@@ -157,6 +159,9 @@ These are unresolved decisions. They don't need to be answered now, but they wil
 
 - **Single-file vs split-file architecture for the production version?** Currently single. Will need to split as it grows.
 - **Mobile design?** Need to confirm tap targets work on small screens.
+- **Canvas scaling on small portrait viewports.** Internal resolution is 480×270 (16:9). On a portrait phone (e.g. iPhone at 390×844 logical px), scaling the canvas to fit the screen width produces a canvas that is 390×219 — very small. Pip renders at roughly 32px physical. Is this readable enough, or does the portrait layout need a non-standard zoom (e.g. render only the central 320×180 of the canvas, scaled up, with the camera following Pip more aggressively)?
+- **Dialogue zone behavior when no dialogue is active (portrait).** Three candidates: (A) zone always present, empty when no dialogue, never shifts; (B) zone collapses when no dialogue, canvas expands to fill, layout reflows; (C) zone holds the controls strip or ambient narration when no dialogue. Recommended default: (A) — layout stability over space efficiency. To confirm in M1.5.
+- **Fullscreen behavior on iOS Safari.** Desktop game has F-key fullscreen with padding-fx (stars, fireflies, vignette). iOS Safari does not honor the standard fullscreen API; it relies on "Add to Home Screen" + standalone mode for true fullscreen. Mobile probably hides the F-key entirely and relies on the browser chrome being minimal in landscape. To confirm in M1.
 - **Accessibility?** Screen reader support, contrast options, motion-sensitive options.
 
 ### Art
@@ -173,6 +178,24 @@ These are unresolved decisions. They don't need to be answered now, but they wil
 - **Composer?** Sparse, instrumental, evocative. Think Jon Brion, Mica Levi, or a folk-music composer per region.
 - **Voice acting?** Probably not — it's a reading game. But maybe Henrik gets a single muttered "Så" in Norwegian as a flavor moment.
 - **Reserved sound effects** — squeeze-and-pop (Iris's emergence) and TV-static-with-whispers (the shadow). Don't reuse for anything else.
+
+---
+
+## Sprint Queue
+
+Sprints planned but not yet started, in order. Updated as sprints ship or are resequenced.
+
+| Sprint | Name | Status |
+|--------|------|--------|
+| 15 | Parallax background system | Queued |
+| 16 | Hallway detail pass | Queued |
+| 17 | Interior conventions doc | Queued |
+| 18 | Character gallery expansion (Ch1 cast) | Queued |
+| **M1** | **Mobile: landscape input + viewport** | **Queued** |
+| **M1.5** | **Mobile: portrait input + dialogue-in-padding** | **Queued** |
+| **M2** | **Mobile: post-playtest polish** | **Queued** |
+| 19 | Title screen (touch-first) | Queued |
+| 20+ | Henrik kitchen (Beat 4 rework + first-taste cinematic) | Queued |
 
 ---
 
@@ -384,6 +407,7 @@ A running list of locked decisions so they don't re-litigate.
 | 2026-05-16 | **Cabin 646 gating locked (Sprint 14).** Pip's cabin is closed off until the grandparents' cinematic has played. Before grandparents': the cabin door offers "Listen at the door" (which overhears the doctor's voice saying *"…there was nothing more we could do. I'm so sorry."*) and "Not now." There is no "Go in" option. After grandparents': "Go in" appears. The first entry plays a brief cinematic of the doctor exiting through a far door. The "Listen at the door" choice persists indefinitely. This is the canonical Beat 4 ordering — Pip's realization that he is dead is *earned* by grief witnessed and door overheard, not stumbled into immediately. |
 | 2026-05-16 | **Bed/mirror reframing and panic-glide extension deferred to Henrik kitchen sprint.** The Sprint 11 bed-reveal cinematic and panic-glide-to-hallway will be reworked when the kitchen room exists. The new shape: after the mirror cinematic, the player walks to the bed and *initiates* the sheet-lifting (Pip's action, not a passive cinematic). The panic glide then chains through the hallway and into the kitchen, ending at Henrik. Until the kitchen ships, the current implementation stands. |
 | 2026-05-16 | **Character gallery audited and chapter-tagged (Sprint 14.5).** Every character cell now displays inline chapter tags (e.g., "Henrik (Ch 1, 4–8)", "Babcia (Ch 1, 8)"). Capuchin moved from Monsters to Echo Creatures (it is a ghost-animal guide in Ch7's Brazil forest, not a folkloric threat). The audit checked all classifications against chapter outlines and the character reference doc; the gallery is now the canonical reference for who appears in which chapter. |
+| 2026-05-16 | **Mobile support planned (Sprints M1, M1.5, M2).** Target: iPhone and Android, landscape-primary with fully playable portrait. Slotted between Sprint 18 (character gallery expansion) and Sprint 19 (title screen) so the title screen can be designed touch-first from day one. Input scheme: on-screen D-pad on the left, action buttons (↑ interact / ↓ collect / continue) on the right. No swipe gestures (too unreliable on small targets). Music autoplay deferred to first touch interaction. **Dialogue placement is orientation-aware:** in landscape, dialogue overlays the canvas exactly as on desktop; in portrait, dialogue lives in the bottom padding bar below the canvas. **Portrait quality target: (a) — portrait works, comfortable to play.** A higher quality target (b) — portrait polished as a first-class experience — is deferred to post-launch, contingent on observed mobile traffic share. **Control overlay aesthetic: always-visible for v1.** Subtler treatments (fade-on-touch, ghost-buttons) may follow after real-phone playtest if always-visible feels intrusive. **Sprint M1** establishes the landscape input layer, viewport scaling, orientation detection, and autoplay handling. **Sprint M1.5** adds the portrait input layer and dialogue-in-padding system. **Sprint M2** is post-playtest polish: notch/safe-area handling, button sizing tuning, ergonomic fixes from actual phone testing. |
 
 ---
 

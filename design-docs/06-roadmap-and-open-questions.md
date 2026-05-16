@@ -187,15 +187,14 @@ Sprints planned but not yet started, in order. Updated as sprints ship or are re
 
 | Sprint | Name | Status |
 |--------|------|--------|
-| 15 | Parallax background system | Queued |
+| 15 | Title screen with parallax (shipped as 15, was queued as 19) | **Shipped 2026-05-16** |
 | 16 | Hallway detail pass | Queued |
 | 17 | Interior conventions doc | Queued |
 | 18 | Character gallery expansion (Ch1 cast) | Queued |
 | **M1** | **Mobile: landscape input + viewport** | **Queued** |
 | **M1.5** | **Mobile: portrait input + dialogue-in-padding** | **Queued** |
 | **M2** | **Mobile: post-playtest polish** | **Queued** |
-| 19 | Title screen (touch-first) | Queued |
-| 20+ | Henrik kitchen (Beat 4 rework + first-taste cinematic) | Queued |
+| 19+ | Henrik kitchen (Beat 4 rework + first-taste cinematic) | Queued |
 
 ---
 
@@ -232,6 +231,7 @@ A running record of every sprint that has shipped, in order. Every future sprint
 | 13 | Collect verb and stomach implementation | 2026-05-14 | `↓` collect verb, stomach meter (chewing-boy HUD), blink-back death sequence, pickup tween, notebook Items section. Debug Bamsemums placed in hallway for system testing. |
 | 14 | Cabin gating + doctor exit | 2026-05-16 | Cabin door gated until grandparents' plays; new "Listen at the door" choice with doctor's voice; doctor-exit cinematic on first cabin entry. Bed/mirror/panic-glide deferred to Henrik kitchen sprint. |
 | 14.5 | Gallery audit + chapter tags | 2026-05-16 | Capuchin reclassified to Echo Creatures; inline chapter tags added to every character cell; classification audit against chapter outlines completed. |
+| 15 | Title screen with parallax | 2026-05-16 | Six-layer parallax title screen (sky, aurora, horizon, Mnemosyne, smoke, water); two-item menu (Play/About); title track; About overlay with locked text; 0.8s fade-to-black transition into hallway. |
 
 ---
 
@@ -408,6 +408,7 @@ A running list of locked decisions so they don't re-litigate.
 | 2026-05-16 | **Bed/mirror reframing and panic-glide extension deferred to Henrik kitchen sprint.** The Sprint 11 bed-reveal cinematic and panic-glide-to-hallway will be reworked when the kitchen room exists. The new shape: after the mirror cinematic, the player walks to the bed and *initiates* the sheet-lifting (Pip's action, not a passive cinematic). The panic glide then chains through the hallway and into the kitchen, ending at Henrik. Until the kitchen ships, the current implementation stands. |
 | 2026-05-16 | **Character gallery audited and chapter-tagged (Sprint 14.5).** Every character cell now displays inline chapter tags (e.g., "Henrik (Ch 1, 4–8)", "Babcia (Ch 1, 8)"). Capuchin moved from Monsters to Echo Creatures (it is a ghost-animal guide in Ch7's Brazil forest, not a folkloric threat). The audit checked all classifications against chapter outlines and the character reference doc; the gallery is now the canonical reference for who appears in which chapter. |
 | 2026-05-16 | **Mobile support planned (Sprints M1, M1.5, M2).** Target: iPhone and Android, landscape-primary with fully playable portrait. Slotted between Sprint 18 (character gallery expansion) and Sprint 19 (title screen) so the title screen can be designed touch-first from day one. Input scheme: on-screen D-pad on the left, action buttons (↑ interact / ↓ collect / continue) on the right. No swipe gestures (too unreliable on small targets). Music autoplay deferred to first touch interaction. **Dialogue placement is orientation-aware:** in landscape, dialogue overlays the canvas exactly as on desktop; in portrait, dialogue lives in the bottom padding bar below the canvas. **Portrait quality target: (a) — portrait works, comfortable to play.** A higher quality target (b) — portrait polished as a first-class experience — is deferred to post-launch, contingent on observed mobile traffic share. **Control overlay aesthetic: always-visible for v1.** Subtler treatments (fade-on-touch, ghost-buttons) may follow after real-phone playtest if always-visible feels intrusive. **Sprint M1** establishes the landscape input layer, viewport scaling, orientation detection, and autoplay handling. **Sprint M1.5** adds the portrait input layer and dialogue-in-padding system. **Sprint M2** is post-playtest polish: notch/safe-area handling, button sizing tuning, ergonomic fixes from actual phone testing. |
+| 2026-05-16 | **Title screen ships with parallax composition and two-item menu (Sprint 15).** Game now opens to a title screen instead of dropping directly into the hallway. Visual: six-layer parallax (sky with twinkling stars, drifting aurora, barely-visible horizon, procedurally drawn Mnemosyne, discrete smoke bursts from three chimneys, dark water with porthole reflections). Menu has two items only: **Play** and **About**. Save/continue/chapter-select/credits are deferred until save state exists. Sound toggle is the existing music icon; no separate menu item. The Mnemosyne is modeled on Lusitania/Mauretania class (Cunard, 1906): dark charcoal hull, three cream-topped raked funnels, fore and aft masts, two porthole rows (~35% lit warm amber). Title track at `game/assets/Title.mp3`; crossfades to `main` on Play. Sprint Queue numbers renumbered: title screen was previously Sprint 19; it shipped as Sprint 15. |
 
 ---
 

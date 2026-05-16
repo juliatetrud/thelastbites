@@ -632,6 +632,141 @@
   }
   .pause-item.selected { color: var(--warm-pool-amber); }
   .pause-item:hover    { color: var(--warm-pool-glow); }
+
+  /* ============================================================
+     SPRINT 15: TITLE SCREEN
+     z-index 55 — above canvas and grain (50), below controls strip (60).
+     Canvas draws the parallax scene; DOM text and menu sit on top.
+     About panel at z-index 75 — covers controls strip when open.
+     ============================================================ */
+  #title-screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    z-index: 55;
+  }
+
+  #title-text {
+    font-family: 'Special Elite', serif;
+    font-size: clamp(36px, 6vw, 64px);
+    letter-spacing: 0.18em;
+    color: var(--text-narration);
+    text-shadow: 0 0 30px rgba(255, 244, 216, 0.4);
+    text-align: center;
+    margin-top: 26%;
+    line-height: 1;
+  }
+
+  #title-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(14px, 2vw, 20px);
+    color: var(--text-speaker);
+    text-align: center;
+    margin-top: 2%;
+    font-style: italic;
+    letter-spacing: 0.04em;
+  }
+
+  #title-menu-panel {
+    margin-top: 5%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    pointer-events: auto;
+    padding: 10px 28px;
+    border: 1px solid var(--panel-border);
+    position: relative;
+  }
+  #title-menu-panel::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid var(--panel-border-soft);
+    pointer-events: none;
+  }
+
+  .title-item {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(15px, 2.2vw, 22px);
+    color: var(--text-narration);
+    padding: 3px 14px;
+    cursor: pointer;
+    transition: color 0.15s ease;
+    letter-spacing: 0.06em;
+    text-align: center;
+    min-width: 90px;
+  }
+  .title-item.selected { color: var(--warm-pool-amber); }
+  .title-item:hover    { color: var(--warm-pool-glow); }
+
+  /* About overlay — z-index 75, covers controls strip */
+  #about-panel {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 6, 12, 0.93);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6% 10%;
+    pointer-events: auto;
+    z-index: 75;
+    overflow-y: auto;
+  }
+  #about-panel.visible { display: flex; }
+
+  .about-title {
+    font-family: 'Special Elite', serif;
+    font-size: clamp(15px, 2.2vw, 22px);
+    color: var(--text-narration);
+    text-align: center;
+    margin-bottom: 4%;
+    letter-spacing: 0.1em;
+  }
+
+  .about-body {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(12px, 1.7vw, 17px);
+    color: var(--text-narration);
+    line-height: 1.75;
+    max-width: 480px;
+    padding: 18px 24px;
+    border: 1px solid var(--panel-border);
+    position: relative;
+    background: rgba(4, 3, 8, 0.7);
+  }
+  .about-body::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid var(--panel-border-soft);
+    pointer-events: none;
+  }
+  .about-body p { margin-bottom: 0.75em; }
+  .about-body p:last-child { margin-bottom: 0; }
+
+  .about-cta {
+    font-family: 'Special Elite', serif;
+    font-size: clamp(9px, 1.1vw, 12px);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-top: 14px;
+    text-align: center;
+  }
+
+  /* Music icon pulse when autoplay is blocked */
+  #music-toggle.wants-to-play {
+    animation: music-want-pulse 2s ease-in-out infinite;
+  }
+  @keyframes music-want-pulse {
+    0%, 100% { opacity: 0.85; }
+    50%       { opacity: 0.3; }
+  }
 </style>
 </head>
 <body>
@@ -640,6 +775,9 @@
      from Google Fonts even before any canvas text is drawn. -->
 <span style="position:absolute;opacity:0;pointer-events:none;font-family:'Special Elite',serif;font-size:1px;" aria-hidden="true">&nbsp;</span>
 <span style="position:absolute;opacity:0;pointer-events:none;font-family:'Cormorant Garamond',serif;font-size:1px;" aria-hidden="true">&nbsp;</span>
+
+<!-- Sprint 15: Title track. Autoplays on title screen; fades out on Play. -->
+<audio id="title-track" src="assets/Title.mp3" loop preload="auto"></audio>
 
 <!-- Two audio elements for crossfade switching between tracks.
      A is the initial active track; they alternate roles during crossfades. -->
@@ -655,6 +793,28 @@
   <div id="game">
     <!-- The game canvas: 480×270 internal resolution, scaled by CSS -->
     <canvas id="canvas" width="480" height="270"></canvas>
+
+    <!-- Sprint 15: Title screen — text, subtitle, and menu over the parallax canvas -->
+    <div id="title-screen">
+      <div id="title-text">THE LAST BITES</div>
+      <div id="title-subtitle"><em>A ghost-boy. A haunted ship. One last meal.</em></div>
+      <div id="title-menu-panel">
+        <div class="title-item selected" id="title-item-play">Play</div>
+        <div class="title-item" id="title-item-about">About</div>
+      </div>
+    </div>
+
+    <!-- Sprint 15: About overlay — full-screen, above controls strip -->
+    <div id="about-panel">
+      <div class="about-title">About <em>The Last Bites</em></div>
+      <div class="about-body">
+        <p>Pip is a young ghost on a haunted cruise ship.</p>
+        <p>He doesn&#8217;t quite remember how he got there, or why his grandmother is on the deck below crying. He doesn&#8217;t yet know that the ship &#8212; the <em>Mnemosyne</em> &#8212; travels between worlds, that the chef speaks to him in a kitchen that smells like his childhood, that every port hides a kind of monster that food, of all things, can soothe.</p>
+        <p><em>The Last Bites</em> is a gentle ghost story about grief, memory, and the meals that carry us through both. Each chapter visits a real place &#8212; Brooklyn, Tallinn, Southampton, T&#252;rkiye, Cape Town, Indonesia, Brazil &#8212; and explores a regional food and a regional folklore. Each chapter unlocks a recipe on Julia&#8217;s website, so you can cook what Pip tasted.</p>
+        <p>It&#8217;s a small game. It will take a few evenings. It is not scary; it is not cruel. There are no fail states and no combat. Just a boy with a fork, learning what a fork is for.</p>
+      </div>
+      <div class="about-cta">Press SPACE or ENTER to begin.</div>
+    </div>
 
     <!-- Grain + vignette overlay sits above the canvas -->
     <div id="grain"></div>
@@ -1521,6 +1681,9 @@ const rooms = {
    Pip spawns at the leftmost playable x. */
 let currentRoom = 'hallway';
 
+/* Sprint 15: top-level game mode. 'title' on cold load; 'gameplay' after Play. */
+let gameMode = 'title';
+
 /* Set Pip's initial position to leftmost hallway position.
    pip.x was initially set to ROOM_W/2 in the pip object definition — override here. */
 pip.x = rooms.hallway.pipMinX + 4;
@@ -1581,6 +1744,38 @@ const cinematic = {
      Default false — only memory/flashback cinematics set this.
      Mirror and bed-reveal cinematics are present-tense: isMemory = false. */
   isMemory:  false,
+};
+
+/* ================================================================
+   SPRINT 15: TITLE SCREEN STATE
+   ================================================================ */
+
+const titleState = {
+  menuSelected:        0,      // 0=Play, 1=About
+  aboutVisible:        false,
+  autoplayBlocked:     false,  // true when browser blocked title track autoplay
+  transitioningToGame: false,
+};
+
+let titleAudio = null;  // <audio id="title-track">
+
+/* Smoke plume particles emitted by the Mnemosyne's chimneys.
+   Chimney positions match the funnel x-coords in drawTitleMnemosyne. */
+const titleSmoke = {
+  plumes: [],
+  chimneys: [
+    { x: 189, y: 115, nextSpawn: 0 },
+    { x: 226, y: 115, nextSpawn: 2.2 },
+    { x: 263, y: 115, nextSpawn: 4.7 },
+  ],
+};
+
+/* Aurora animation phases — accumulated each frame in updateTitleScene. */
+const titleAurora = {
+  phase1:      0,   // green band horizontal drift (14s period)
+  phase2:      1.3, // violet band drift (11s period), offset so they start apart
+  brightPhase: 0,   // overall brightness pulse (7.5s period)
+  edgePhase:   0,   // lower-edge curtain wave (5s period)
 };
 
 /* ================================================================
@@ -1702,6 +1897,12 @@ function handleKeyAction(code) {
   // M — music toggle. Works at all times: gameplay, dialogue, cinematics.
   if (code === 'KeyM') {
     toggleMusic();
+    return;
+  }
+
+  // Sprint 15: title screen handles its own keys
+  if (gameMode === 'title') {
+    handleTitleKey(code);
     return;
   }
 
@@ -1882,6 +2083,8 @@ function loop(timestamp) {
    ================================================================ */
 
 function update(dt) {
+  if (gameMode !== 'gameplay') return;
+
   // Opening sequence update (Sprint 10.7) — runs before anything else
   updateOpeningSequence(dt);
 
@@ -2215,6 +2418,9 @@ function updateOpeningSequence(dt) {
    ================================================================ */
 
 const STRIP_STRINGS = {
+  // Sprint 15: title screen
+  'title':                '↑↓  CHOOSE   SPACE  SELECT',
+  'title-about':          '←  BACK   SPACE / ESC  RETURN',
   // Sprint 13: ↓ COLLECT added; TAB NOTEBOOK replaces ESC JOURNAL
   'room':                 '← →  MOVE | ↑  LOOK | ↓  COLLECT | TAB  NOTEBOOK',
   'room-floatable':       '← →  MOVE | ↑  LOOK | ↓  COLLECT | SPACE  FLOAT | TAB  NOTEBOOK',
@@ -2639,6 +2845,13 @@ function render(now) {
   render._lastNow = now;
 
   ctx.clearRect(0, 0, W, H);
+
+  // Sprint 15: title screen draws its own scene; skip all gameplay rendering
+  if (gameMode === 'title') {
+    updateTitleScene(dt);
+    drawTitleScene(now);
+    return;
+  }
 
   if (cinematic.active) {
     // Cinematic mode: draw the cinematic scene only; dialogue HTML overlay renders on top
@@ -5055,6 +5268,13 @@ function playMusic(trackId) {
 function unlockMusic() {
   if (music.unlocked) return;
   music.unlocked = true;
+  // Sprint 15: unlock title track if it's waiting to play
+  if (titleAudio && titleState.autoplayBlocked && music.on) {
+    titleAudio.play().catch(() => {});
+    titleState.autoplayBlocked = false;
+    document.getElementById('music-toggle').classList.remove('wants-to-play');
+  }
+  // Unlock gameplay track if one is queued
   if (music.on && music.trackId !== null) {
     const activeEl = music.current === 'a' ? music.audioA : music.audioB;
     activeEl.play().catch(() => {});
@@ -5065,19 +5285,32 @@ function toggleMusic() {
   music.on = !music.on;
   localStorage.setItem('tlb-music-on', music.on ? 'true' : 'false');
 
-  const btn      = document.getElementById('music-toggle');
-  const activeEl = music.current === 'a' ? music.audioA : music.audioB;
+  const btn = document.getElementById('music-toggle');
 
   if (music.on) {
     btn.classList.remove('muted');
-    btn.title      = 'Music on (click to mute)';
+    btn.title = 'Music on (click to mute)';
     btn.setAttribute('aria-label', 'Music on (click to mute)');
-    if (music.unlocked) activeEl.play().catch(() => {});
+    if (music.unlocked) {
+      // Sprint 15: on title screen play title track; in gameplay play active element
+      if (gameMode === 'title' && titleAudio && !titleState.autoplayBlocked) {
+        titleAudio.play().catch(() => {});
+      } else if (gameMode !== 'title') {
+        const activeEl = music.current === 'a' ? music.audioA : music.audioB;
+        activeEl.play().catch(() => {});
+      }
+    }
   } else {
     btn.classList.add('muted');
-    btn.title      = 'Music off (click to play)';
+    btn.title = 'Music off (click to play)';
     btn.setAttribute('aria-label', 'Music off (click to play)');
-    activeEl.pause();
+    // Sprint 15: mute whichever track is currently active
+    if (gameMode === 'title' && titleAudio) {
+      titleAudio.pause();
+    } else {
+      const activeEl = music.current === 'a' ? music.audioA : music.audioB;
+      activeEl.pause();
+    }
   }
 }
 
@@ -5088,11 +5321,15 @@ function initMusic() {
   // Wire toggle button
   document.getElementById('music-toggle').addEventListener('click', toggleMusic);
 
-  // Arm first-keypress unlock
+  // Arm first-keypress (or click) unlock
   window.addEventListener('keydown', unlockMusic, { once: true });
+  window.addEventListener('click',   unlockMusic, { once: true });
 
-  // Queue the opening track (src set immediately; play deferred to first keypress)
-  playMusic('main');
+  // Sprint 15: Don't start gameplay track during title screen;
+  // playMusic('main') is called by startTitleToGameplay() when Play is selected.
+  if (gameMode !== 'title') {
+    playMusic('main');
+  }
 }
 
 /* ================================================================
@@ -5770,13 +6007,478 @@ document.getElementById('notebook-icon').addEventListener('click', () => {
 });
 
 /* ================================================================
+   SPRINT 15: TITLE SCREEN
+   The game's front door. Six-layer parallax composition of
+   the Mnemosyne at night, with title text, menu, and About.
+   See sprint-15 spec for design rationale.
+   ================================================================ */
+
+function initTitleTrack() {
+  titleAudio = document.getElementById('title-track');
+  if (!titleAudio) return;
+  titleAudio.volume = music.on ? music.baseVolume : 0;
+  titleAudio.play().catch(() => {
+    titleState.autoplayBlocked = true;
+    document.getElementById('music-toggle').classList.add('wants-to-play');
+  });
+}
+
+function initTitleScreen() {
+  // Mouse hover changes selection
+  document.getElementById('title-item-play').addEventListener('mouseover',  () => selectTitleItem(0));
+  document.getElementById('title-item-about').addEventListener('mouseover', () => selectTitleItem(1));
+  // Mouse click selects
+  document.getElementById('title-item-play').addEventListener('click', () => {
+    unlockMusic();
+    startTitleToGameplay();
+  });
+  document.getElementById('title-item-about').addEventListener('click', () => {
+    unlockMusic();
+    selectTitleItem(1);
+    openAboutPanel();
+  });
+}
+
+function handleTitleKey(code) {
+  // Any keypress while autoplay is blocked: attempt to play
+  if (titleState.autoplayBlocked && titleAudio && music.on) {
+    titleAudio.play().catch(() => {});
+    titleState.autoplayBlocked = false;
+    document.getElementById('music-toggle').classList.remove('wants-to-play');
+  }
+
+  if (titleState.aboutVisible) {
+    if (code === 'Escape' || code === 'ArrowLeft') {
+      closeAboutPanel();
+    } else if (code === 'Space' || code === 'Enter') {
+      startTitleToGameplay();
+    }
+    return;
+  }
+
+  if (code === 'ArrowUp') {
+    selectTitleItem(Math.max(0, titleState.menuSelected - 1));
+  } else if (code === 'ArrowDown') {
+    selectTitleItem(Math.min(1, titleState.menuSelected + 1));
+  } else if (code === 'Space' || code === 'Enter') {
+    if (titleState.menuSelected === 0) {
+      startTitleToGameplay();
+    } else {
+      openAboutPanel();
+    }
+  } else if (code === 'KeyF') {
+    toggleFullscreen();
+  }
+}
+
+function selectTitleItem(index) {
+  titleState.menuSelected = index;
+  document.querySelectorAll('.title-item').forEach((el, i) => {
+    el.classList.toggle('selected', i === index);
+  });
+}
+
+function openAboutPanel() {
+  titleState.aboutVisible = true;
+  document.getElementById('about-panel').classList.add('visible');
+  setControlsStrip('title-about');
+}
+
+function closeAboutPanel() {
+  titleState.aboutVisible = false;
+  document.getElementById('about-panel').classList.remove('visible');
+  setControlsStrip('title');
+}
+
+function startTitleToGameplay() {
+  if (titleState.transitioningToGame) return;
+  titleState.transitioningToGame = true;
+
+  document.getElementById('about-panel').classList.remove('visible');
+
+  // Fade out title audio
+  if (titleAudio) {
+    const startVol  = titleAudio.volume;
+    const fadeDurMs = 800;
+    const fadeT0    = performance.now();
+    (function fadeTitleOut(ts) {
+      const p = Math.min((ts - fadeT0) / fadeDurMs, 1);
+      if (titleAudio) titleAudio.volume = startVol * (1 - p);
+      if (p < 1) requestAnimationFrame(fadeTitleOut);
+      else if (titleAudio) titleAudio.pause();
+    })(performance.now());
+  }
+
+  // Manually animate overlay to black over 0.8s (CSS transition is 0.2s — override)
+  const overlay = document.getElementById('room-transition');
+  overlay.style.transition = 'none';
+
+  const fadeDurMs = 800;
+  const fadeT0    = performance.now();
+  (function fadeToBlack(ts) {
+    const p = Math.min((ts - fadeT0) / fadeDurMs, 1);
+    overlay.style.opacity = p.toFixed(3);
+    if (p < 1) {
+      requestAnimationFrame(fadeToBlack);
+    } else {
+      // Screen is black — switch to gameplay
+      gameMode = 'gameplay';
+      document.getElementById('title-screen').style.display = 'none';
+      playMusic('main');
+      showHUD();
+      setControlsStrip('');   // opening sequence will set strip when narration fires
+
+      // Hold briefly, then fade from black (restore CSS transition for normal room use)
+      setTimeout(() => {
+        overlay.style.transition = '';  // restore CSS rule (opacity 0.2s ease)
+        overlay.style.opacity    = '0';
+        setTimeout(() => {
+          // Transition overlay done — opening sequence runs naturally
+        }, 200);
+      }, 200);
+    }
+  })(performance.now());
+}
+
+/* ---- Smoke particle system ---- */
+
+function updateTitleScene(dt) {
+  // Aurora phase accumulation
+  titleAurora.phase1      += dt * (2 * Math.PI / 14);
+  titleAurora.phase2      += dt * (2 * Math.PI / 11);
+  titleAurora.brightPhase += dt * (2 * Math.PI / 7.5);
+  titleAurora.edgePhase   += dt * (2 * Math.PI / 5);
+
+  // Spawn new smoke plumes
+  for (const chimney of titleSmoke.chimneys) {
+    chimney.nextSpawn -= dt;
+    if (chimney.nextSpawn <= 0) {
+      titleSmoke.plumes.push({
+        x:        chimney.x + (Math.random() - 0.5) * 3,
+        y:        chimney.y,
+        vx:       -(0.5 + Math.random() * 0.9),  // drift left (prevailing wind)
+        vy:       -(8  + Math.random() * 5),      // rise speed px/s
+        radius:   2.5,
+        age:      0,
+        lifetime: 3.5 + Math.random() * 1.5,      // 3.5–5s
+      });
+      chimney.nextSpawn = 4 + Math.random() * 4;  // 4–8s between bursts
+    }
+  }
+
+  // Age and expand plumes
+  for (const p of titleSmoke.plumes) {
+    p.age += dt;
+    p.x   += p.vx * dt;
+    p.y   += p.vy * dt;
+    p.vy  *= 0.985;  // slow rise over time
+    p.radius = 2.5 + p.age * 6;  // expand as it rises
+  }
+
+  // Cull dead plumes
+  for (let i = titleSmoke.plumes.length - 1; i >= 0; i--) {
+    if (titleSmoke.plumes[i].age >= titleSmoke.plumes[i].lifetime) {
+      titleSmoke.plumes.splice(i, 1);
+    }
+  }
+}
+
+/* ---- Six parallax draw layers ---- */
+
+function drawTitleScene(now) {
+  drawTitleSky(now);
+  drawTitleAurora(now);
+  drawTitleHorizon(now);
+  drawTitleMnemosyne(now);
+  drawTitleSmoke(now);
+  drawTitleWater(now);
+}
+
+function drawTitleSky(now) {
+  const t = now / 1000;
+
+  // Deep indigo sky gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0,   '#05071a');
+  grad.addColorStop(0.6, '#0a0d1f');
+  grad.addColorStop(1,   '#10182c');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars — deterministic positions via seeded RNG, twinkling via time
+  const rng       = makePadLCG(0xf00dbabe);
+  const starCount = 110;
+  for (let i = 0; i < starCount; i++) {
+    const sx     = rng() * W;
+    const sy     = rng() * (H * 0.74);          // keep above water zone
+    const size   = rng() < 0.88 ? 1 : 2;
+    const speed  = 1.4 + rng() * 2.2;
+    const phase  = rng() * Math.PI * 2;
+    const faint  = rng() < 0.25;
+    const twinkle = 0.5 + 0.5 * Math.sin(t * speed + phase);
+    const alpha   = (faint ? 0.25 : 0.55) * (0.5 + 0.5 * twinkle);
+    ctx.fillStyle = `rgba(210,222,242,${alpha.toFixed(2)})`;
+    ctx.fillRect(Math.round(sx), Math.round(sy), size, size);
+  }
+}
+
+function drawTitleAurora(now) {
+  const bandH = H * 0.27;  // upper 27% of canvas
+  const bright = 0.5 + 0.5 * Math.sin(titleAurora.brightPhase);
+
+  // Green band — radial gradient drifting horizontally
+  const gx1 = W * (0.28 + 0.2 * Math.sin(titleAurora.phase1));
+  const g1  = ctx.createRadialGradient(gx1, bandH * 0.55, 0, gx1, bandH * 0.55, W * 0.42);
+  g1.addColorStop(0, `rgba(36,96,72,${(0.17 + 0.07 * bright).toFixed(3)})`);
+  g1.addColorStop(1, 'rgba(36,96,72,0)');
+  ctx.fillStyle = g1;
+  ctx.fillRect(0, 0, W, bandH);
+
+  // Violet band — offset phase so the two bands don't overlap in sync
+  const gx2 = W * (0.62 + 0.16 * Math.sin(titleAurora.phase2));
+  const g2  = ctx.createRadialGradient(gx2, bandH * 0.65, 0, gx2, bandH * 0.65, W * 0.38);
+  g2.addColorStop(0, `rgba(58,40,88,${(0.14 + 0.08 * bright).toFixed(3)})`);
+  g2.addColorStop(1, 'rgba(58,40,88,0)');
+  ctx.fillStyle = g2;
+  ctx.fillRect(0, 0, W, bandH);
+
+  // Lower-edge curtain wave — makes the aurora feel like hanging light, not a stripe
+  ctx.save();
+  ctx.globalAlpha = 0.05 + 0.04 * bright;
+  ctx.fillStyle = '#4a8898';
+  ctx.beginPath();
+  ctx.moveTo(0, bandH);
+  for (let x = 0; x <= W; x += 3) {
+    const wy = bandH + Math.sin((x / W) * 4 * Math.PI + titleAurora.edgePhase) * 5;
+    ctx.lineTo(x, wy);
+  }
+  ctx.lineTo(W, bandH + 8);
+  ctx.lineTo(0, bandH + 8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawTitleHorizon(now) {
+  // Barely-visible glow where sea meets sky — a subtle warmth bleed from the ship lights
+  const horizY = 202;
+  const g = ctx.createLinearGradient(0, horizY - 12, 0, horizY + 10);
+  g.addColorStop(0, 'rgba(40,52,82,0)');
+  g.addColorStop(0.5, 'rgba(40,52,82,0.10)');
+  g.addColorStop(1, 'rgba(10,14,28,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, horizY - 12, W, 22);
+}
+
+function drawTitleMnemosyne(now) {
+  /*
+   * Mnemosyne — early 1900s ocean liner at night.
+   * Reference: Lusitania / Mauretania class (Cunard, 1906–1907):
+   *   - Long dark hull sitting low in the water
+   *   - Three tall funnels, slightly raked aft, clustered in the midship
+   *   - Two masts (fore + aft), taller than the funnels
+   *   - Two rows of portholes along the hull: ~35% lit warm amber
+   *   - Plumb bow (right), broad stern (left)
+   *   - White / cream superstructure above the dark hull
+   *
+   * Canvas position: stern x=75, bow x=383 (~63% canvas width).
+   * Waterline at y=208. Three-quarter angle hinted by bow taper.
+   */
+  const SX = 75;   // stern x (left)
+  const BX = 383;  // bow x (right, before taper)
+  const WL = 208;  // waterline y
+  const DK = 168;  // main deck y (hull top)
+  const SS = 148;  // superstructure top y
+
+  // Hull — main body
+  ctx.fillStyle = '#1a1812';
+  ctx.fillRect(SX, DK, BX - SX, WL - DK);
+
+  // Hull upper band (very slightly lighter top 4px — catches ambient light)
+  ctx.fillStyle = '#221e16';
+  ctx.fillRect(SX, DK, BX - SX, 4);
+
+  // Bow — angled taper to suggest three-quarter perspective
+  ctx.fillStyle = '#121008';
+  ctx.beginPath();
+  ctx.moveTo(BX, DK);          // top of bow face
+  ctx.lineTo(BX + 10, WL - 4); // bow tip, slightly above waterline
+  ctx.lineTo(BX, WL);          // waterline corner
+  ctx.closePath();
+  ctx.fill();
+
+  // Stern — very slight wedge
+  ctx.fillStyle = '#100e08';
+  ctx.beginPath();
+  ctx.moveTo(SX, DK + 4);
+  ctx.lineTo(SX - 4, WL - 5);
+  ctx.lineTo(SX, WL);
+  ctx.closePath();
+  ctx.fill();
+
+  // Superstructure — lower promenade deck
+  ctx.fillStyle = '#1e1c18';
+  ctx.fillRect(SX + 22, SS + 10, BX - SX - 34, DK - (SS + 10));
+
+  // Superstructure — upper deck
+  ctx.fillStyle = '#1c1a16';
+  ctx.fillRect(SX + 32, SS, BX - SX - 54, 10);
+
+  // Bridge — forward (right) end of upper deck
+  ctx.fillStyle = '#181614';
+  ctx.fillRect(BX - 72, SS - 9, 56, 9);
+
+  // Aft deckhouse — left end
+  ctx.fillStyle = '#181614';
+  ctx.fillRect(SX + 22, SS - 6, 42, 6);
+
+  // Three funnels — evenly spaced in the midship, slightly raked aft
+  const FW  = 10;   // funnel width
+  const FH  = 33;   // funnel height above superstructure
+  // Left edges of funnels at deck bottom (before rake offset)
+  const FXS = [
+    SX + Math.round((BX - SX) * 0.38) - Math.round(FW / 2),  // ≈ 184
+    SX + Math.round((BX - SX) * 0.50) - Math.round(FW / 2),  // ≈ 221
+    SX + Math.round((BX - SX) * 0.62) - Math.round(FW / 2),  // ≈ 258
+  ];
+
+  for (const fx of FXS) {
+    const fy = SS - FH;   // funnel top y ≈ 115
+    // Funnel body — raked 2px aft (top shifted left relative to bottom)
+    ctx.fillStyle = '#1a1816';
+    ctx.beginPath();
+    ctx.moveTo(fx - 2,      fy);   // top-left (raked)
+    ctx.lineTo(fx - 2 + FW, fy);   // top-right (raked)
+    ctx.lineTo(fx + FW,     SS);   // bottom-right
+    ctx.lineTo(fx,          SS);   // bottom-left
+    ctx.closePath();
+    ctx.fill();
+
+    // Cream band at funnel top (characteristic Cunard stripe)
+    ctx.fillStyle = '#78705e';
+    ctx.fillRect(fx - 2, fy, FW, 4);
+    // Dark band just below cream
+    ctx.fillStyle = '#1a1816';
+    ctx.fillRect(fx - 2, fy + 4, FW, 4);
+    // Very faint glow inside top (coal heat)
+    ctx.fillStyle = 'rgba(200,110,30,0.10)';
+    ctx.fillRect(fx - 1, fy + 1, FW - 2, 2);
+  }
+
+  // Fore mast — near bow, taller than funnels
+  ctx.fillStyle = '#2a2620';
+  ctx.fillRect(BX - 40, SS - 52, 2, 52);
+
+  // Aft mast — near stern
+  ctx.fillRect(SX + 36, SS - 46, 2, 46);
+
+  // Portholes — two rows, ~35% lit warm amber
+  const portRNG = makePadLCG(0xbeef1234);
+  const portRows = [DK + 10, DK + 22];
+  const portGap  = 14;
+
+  for (const py of portRows) {
+    for (let px = SX + 15; px < BX - 8; px += portGap) {
+      const lit = portRNG() < 0.35;
+      const rx  = Math.round(px);
+      const ry  = Math.round(py);
+      if (lit) {
+        // Warm amber glow halo then bright dot
+        ctx.fillStyle = 'rgba(240,192,136,0.20)';
+        ctx.fillRect(rx - 2, ry - 2, 7, 7);
+        ctx.fillStyle = '#f0c080';
+        ctx.fillRect(rx, ry, 3, 3);
+      } else {
+        // Dark porthole frame then very dark glass
+        ctx.fillStyle = '#1c1a18';
+        ctx.fillRect(rx - 1, ry - 1, 5, 5);
+        ctx.fillStyle = '#0a0806';
+        ctx.fillRect(rx, ry, 3, 3);
+      }
+    }
+  }
+
+  // Deck railing line
+  ctx.fillStyle = '#2a2820';
+  ctx.fillRect(SX + 22, DK, BX - SX - 34, 1);
+
+  // Waterline foam highlight
+  ctx.fillStyle = 'rgba(70,90,130,0.18)';
+  ctx.fillRect(SX, WL - 1, BX - SX + 9, 2);
+}
+
+function drawTitleSmoke(now) {
+  for (const p of titleSmoke.plumes) {
+    const life    = p.age / p.lifetime;
+    // Fade in quickly (0→0.3s), then fade out over the rest of lifetime
+    const fadeIn  = Math.min(1, p.age / 0.3);
+    const alpha   = 0.52 * fadeIn * (1 - life);
+    const r       = Math.max(1, p.radius);
+
+    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+    g.addColorStop(0, `rgba(165,172,190,${alpha.toFixed(3)})`);
+    g.addColorStop(1, 'rgba(165,172,190,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(p.x - r, p.y - r, r * 2, r * 2);
+  }
+}
+
+function drawTitleWater(now) {
+  const t        = now / 1000;
+  const waterTop = 207;
+
+  // Very dark indigo water
+  const wg = ctx.createLinearGradient(0, waterTop, 0, H);
+  wg.addColorStop(0, '#090c1c');
+  wg.addColorStop(1, '#020408');
+  ctx.fillStyle = wg;
+  ctx.fillRect(0, waterTop, W, H - waterTop);
+
+  // Subtle ambient horizontal ripple bands
+  for (let i = 0; i < 7; i++) {
+    const ry    = waterTop + 5 + i * 9;
+    const alpha = 0.035 + 0.02 * Math.sin(t * 0.45 + i * 0.8);
+    ctx.fillStyle = `rgba(75,88,118,${alpha.toFixed(3)})`;
+    ctx.fillRect(0, Math.round(ry), W, 1);
+  }
+
+  // Porthole light reflections — amber shimmer below each lit porthole.
+  // Uses the same seed as drawTitleMnemosyne so the lit/unlit pattern matches.
+  const portRNG  = makePadLCG(0xbeef1234);
+  const SX       = 75;
+  const BX       = 383;
+  const DK       = 168;
+  const WL       = 208;
+  const portRows = [DK + 10, DK + 22];
+  const portGap  = 14;
+
+  for (const py of portRows) {
+    for (let px = SX + 15; px < BX - 8; px += portGap) {
+      const lit = portRNG() < 0.35;
+      if (!lit) continue;
+      const rx = Math.round(px) + 1;
+      // 3 ripple segments, expanding with depth
+      for (let seg = 0; seg < 3; seg++) {
+        const segY     = WL + 3 + seg * 6;
+        const wobble   = Math.sin(t * 1.6 + seg * 1.5 + px * 0.045) * 2.5;
+        const segAlpha = 0.16 - seg * 0.04;
+        const segW     = 4 + seg * 2;
+        ctx.fillStyle  = `rgba(238,196,148,${segAlpha.toFixed(3)})`;
+        ctx.fillRect(Math.round(rx + wobble - segW / 2), segY, segW, 2);
+      }
+    }
+  }
+}
+
+/* ================================================================
    KICK OFF
    ================================================================ */
 
 initMusic();
-// Sprint 10.7: opening sequence starts in 'materializing' state — clear the controls strip
-// until the narration fires (which sets it via setControlsStrip / setRoomStrip).
-setControlsStrip('');
+initTitleTrack();
+initTitleScreen();
+// Sprint 15: show title controls strip; opening sequence strip fires after Play → game transition
+setControlsStrip('title');
 resizePaddingLights();
 window.addEventListener('resize', resizePaddingLights);
 requestAnimationFrame(loop);

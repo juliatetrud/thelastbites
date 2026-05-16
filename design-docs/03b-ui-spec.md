@@ -361,56 +361,64 @@ No "Quit" option — this is a browser game. Closing the tab is the quit gesture
 
 ## 7. The Title Screen
 
+**Sprint 15 implementation — this section reflects shipped state as of 2026-05-16.**
+
 The game's front door. The first thing the player sees.
 
-### Layout
+### Visual composition
 
-- Full-screen
-- Background: a cinematic still of *The Mnemosyne* at night — a hand-painted port-side shot of the ship from the dock, warm cabin lights in some portholes, deep blue night around it. Placeholder: a flat radial gradient using the universal palette (`#1a2030` deepening to `#02040a`).
-- Subtle drifting sparkles (matching the demo's sparkle-drift animation)
-- Heavy vignette and grain
+Six-layer parallax canvas scene, drawn in z-order back-to-front:
+
+1. **Sky** — deep indigo gradient (`#05071a` → `#10182c`) with 110 seeded cold-white twinkling stars
+2. **Aurora** — two radial-gradient bands (cool green `rgba(36,96,72)` and violet `rgba(58,40,88)`) drifting horizontally on independent sine cycles (~14s, ~11s); brightness pulses at ~7.5s; lower edge has a subtle 5s curtain wave
+3. **Horizon** — barely-visible indigo glow at the waterline
+4. **Mnemosyne** — procedurally drawn early-1900s ocean liner (Lusitania/Mauretania silhouette): dark charcoal hull, three cream-topped raked funnels, two masts, two porthole rows (~35% lit warm amber)
+5. **Smoke plumes** — discrete burst particles from each chimney; spawn every 4–8s per chimney, expand and dissipate over 3.5–5s, drift slightly left
+6. **Water** — very dark indigo with faint amber ripple reflections below lit portholes
+
+Heavy vignette and grain (persistent `#grain` overlay, same as gameplay).
 
 ### Title
 
-- `THE LAST BITES` in `Special Elite`, `clamp(36px, 6vw, 64px)`, letter-spacing `0.18em`, `var(--text-narration)`
+- `THE LAST BITES` — DOM overlay, `Special Elite`, `clamp(36px, 6vw, 64px)`, letter-spacing `0.18em`, `var(--text-narration)`
 - Soft text-shadow: `0 0 30px rgba(255, 244, 216, 0.4)`
-- Centered horizontally, ~30% from top
+- Centered horizontally, ~26% from top of `#game`
 
 ### Subtitle
 
-A tagline beneath the title. Locked text:
-
 > *A ghost-boy. A haunted ship. One last meal.*
 
-`Cormorant Garamond` italic, `clamp(14px, 2vw, 20px)`, `var(--text-speaker)`. Margin-top `2%`.
+DOM overlay, `Cormorant Garamond` italic, `clamp(14px, 2vw, 20px)`, `var(--text-speaker)`. Margin-top `2%`.
 
-### Menu options
+### Menu (v1 — two items)
 
-Vertically stacked, centered horizontally, starting ~55% from top. Same chrome and selection state as dialogue choices.
+Double-border panel (matching dialogue-box chrome) beneath the subtitle. Two items:
 
-1. **New voyage** (starts Chapter 1 fresh)
-2. **Continue** (resumes most recent save — disabled/dimmed if no save exists)
-3. **Chapter select** (lists completed chapters; only shows once at least one chapter is done)
-4. **Sound  ►  ON / OFF**
-5. **Credits**
+1. **Play** — fades title screen to black over ~0.8s, crossfades title track → `main` track, loads hallway
+2. **About** — opens About overlay (see below)
 
-### Save slots
+Save/continue/chapter-select/credits are deferred until save state exists. Sound toggle is the existing music icon — no separate menu item.
 
-Initial release: **one save slot.** Continue resumes from the last checkpoint. No multi-slot management.
+Navigation: `↑`/`↓` keys move selection; `SPACE`/`ENTER` confirms. Mouse hover and click also work.
 
-(Multi-slot can be added later if needed. Flag this as a near-term decision.)
+### About overlay
 
-### Chapter select
+Full-screen panel (`z-index 75`, above controls strip). Content is locked:
 
-When unlocked, shows a vertical list of completed chapters by title (`I. CABIN 646`, `II. TALLINN`, etc.). Locked chapters appear faint and unselectable.
+> Pip is a young ghost on a haunted cruise ship. [… full text in sprint-15-title-screen-parallax.md]
 
-### Credits screen
+Title in `Special Elite`; body in `Cormorant Garamond` at generous line-height. Final line "Press `SPACE` or `ENTER` to begin." renders in `Special Elite`, small, letter-spaced — visually distinct as an instruction.
 
-Triggered from `Credits` menu item. A simple scrolling list of names — Julia, the artist (when commissioned), composer (when commissioned), Anthropic for Claude, anyone else. Fades up over `1s`, scrolls slowly. `ESC` returns to title.
+`ESC` or `←` returns to title menu. `SPACE`/`ENTER` from About also starts the game.
+
+### Music
+
+Dedicated title track at `game/assets/Title.mp3`. Autoplays on load; music icon shows a slow pulse if browser blocks autoplay (intent-on state). First keypress or click resolves the block. Crossfades to `main` track when Play is selected. Mute state shared with gameplay audio.
 
 ### Controls strip
 
-`↑↓  CHOOSE     SPACE  SELECT`
+- During title menu: `↑↓  CHOOSE   SPACE  SELECT`
+- During About panel: `←  BACK   SPACE / ESC  RETURN`
 
 ---
 

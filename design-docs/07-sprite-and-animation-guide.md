@@ -469,3 +469,41 @@ When the user asks for a new sprite or animation, follow this order:
 - Atmospheric particles: z's for sleep, dust for ambient, sparkles for inspect
 
 When in doubt, read the existing prototype and follow the patterns it already uses. The prototype is the canon.
+
+
+---
+
+## The Mnemosyne (title screen sprite) — Sprint 15
+
+**Reference research:** Modeled on Cunard Line's Lusitania / Mauretania class (1906–1907), the largest ocean liners of the early 1900s.
+
+### Key visual observations from research
+
+- **Hull**: Very long (length-to-beam ~8:1), sitting low in the water. Hull is uniformly black / dark charcoal — minimal surface variation. A very slight lighter band at the uppermost hull edge catches ambient light.
+- **Funnels**: Lusitania/Mauretania had four funnels arranged in pairs; the Mnemosyne uses three (one is vestigial — like Titanic's fourth funnel, some were dummy vents). Funnels are thick, tall, and slightly raked aft. Distinctive cream stripe band at the top (Cunard company colors), then a dark gap below it.
+- **Masts**: Two tall masts, fore and aft, taller than the funnels. Very thin — 2px at this canvas resolution.
+- **Superstructure**: White / cream-colored upper decks above the dark hull. Multiple deck levels with railings visible along the top edge. At night, these read as dark gray (no direct illumination).
+- **Portholes**: Two rows along the main hull at irregular intervals (not a perfect grid — structural elements interrupt the row). ~30–40% lit warm amber at night. Each porthole is round, roughly 18–24 inches diameter at 1:1 scale.
+- **Bow**: Plumb bow (straight vertical front), not raked. At the bow end the hull tapers slightly to a point at the waterline.
+- **Stern**: Broader and blunter than the bow.
+
+### Mnemosyne canvas position (480×270 internal resolution)
+
+- Stern x = 75 (left), Bow x = 383 (right) — ~63% canvas width
+- Waterline y = 208
+- Main deck (hull top) y = 168
+- Superstructure top y = 148
+- Funnel tops y ≈ 115 (funnel height = 33px above superstructure)
+
+### Design call: three-quarter angle
+
+"Three-quarter angle, bow on the right" is represented at pixel-art scale by a slight taper at the right end of the hull — the bow face is drawn as a small wedge (3 vertices) rather than a flat wall, giving the illusion the nose is angled slightly toward the viewer. At 480×270 this reads clearly enough without requiring isometric perspective.
+
+### Chimney positions for smoke system
+
+Smoke plumes spawn from the top center of each funnel:
+- Funnel 1: x ≈ 190, y = 115
+- Funnel 2: x ≈ 227, y = 115
+- Funnel 3: x ≈ 264, y = 115
+
+Plumes drift left (prevailing wind), expand and dissipate over 3.5–5s. Spawn interval per chimney: 4–8s (staggered so they don't burst in sync).

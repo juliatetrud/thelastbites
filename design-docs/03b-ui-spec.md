@@ -339,15 +339,15 @@ Alternative: a small pause icon in the notebook's corner that opens the menu. De
 
 ### Menu options
 
-Stacked vertically, same chrome as choice list:
+**Shipped state (Sprint M1):** Three items, navigated with ↑↓, confirmed with SPACE/ENTER:
 
 1. `Resume`
-2. `Restart from last checkpoint`
-3. `Restart chapter`
-4. `Sound  ►  ON / OFF`  *(toggles in place)*
-5. `Return to title`
+2. `Mobile controls: ON / OFF` *(toggles in place — does not close menu)*
+3. `Restart Chapter`
 
-Each option uses the same double-bordered panel as dialogue choices. Selection state matches dialogue choice selection (amber highlight).
+The mobile-controls item reflects auto-detection by default (`ON` on touch devices, `OFF` on desktop). Selecting it overrides detection for the session (no localStorage persistence). Earlier plans for Sound toggle, checkpoint restore, and Return to title are deferred until save state exists.
+
+Each item: `Cormorant Garamond`, `clamp(16px, 2.6vw, 26px)`, `var(--text-narration)`. Selected state: `var(--warm-pool-amber)`. Hover: `var(--warm-pool-glow)`. Clickable/tappable directly.
 
 ### Controls strip during pause
 
@@ -434,7 +434,51 @@ Dedicated title track at `game/assets/audio/title.mp3`. Starts at volume 0 and r
 
 ---
 
-## 8. Chapter Card Screens
+## 8. Mobile Layout
+
+**Sprint M1 — shipped 2026-05-16.** Describes the touch control layer and orientation-aware layout. Desktop is unchanged.
+
+### Detection
+
+Mobile layout activates automatically when `'ontouchstart' in window || navigator.maxTouchPoints > 0`. The pause menu item "Mobile controls: ON/OFF" overrides auto-detection for the session.
+
+### Touch control elements
+
+All in `#touch-controls` (`position: fixed; inset: 0; pointer-events: none; z-index: 120`). Individual buttons have `pointer-events: auto`.
+
+- **`#touch-dpad`** — D-pad cross: four 36×36px buttons (▲ ▼ ◀ ▶) in a + arrangement, 120×120px bounding box.
+- **`#touch-action`** — single 60px diameter circle button (SPACE). Bottom-right, raised 80px from screen edge.
+- **`#touch-notebook`** — 44×44px icon (TAB). Top-right, left of music toggle.
+- **`#touch-pause`** — 44×44px icon (ESC). Top-right, left of notebook icon.
+
+Button style: `rgba(20,16,36,0.70)` background, `rgba(140,160,200,0.30)` border, `var(--text-narration)` color, rounded corners, always-visible (no fade-on-touch for v1).
+
+Touch → keyboard synthesis: each `touchstart` dispatches a `KeyboardEvent('keydown')` on `document`; `touchend`/`touchcancel` dispatches `keyup`. Routes through existing `keysHeld` and `handleKeyAction` without any changes to game logic.
+
+### Landscape layout (`body.mobile-landscape`)
+
+`#touch-controls` covers the viewport. D-pad at bottom-left (`left: 14px; bottom: 18px`). Action button at bottom-right (`right: 14px; bottom: 80px`). Notebook and pause icons at top-right. Controls strip hidden (too small to read on phone).
+
+The canvas continues to scale to fit the viewport as on desktop. On phones wider than 16:9 the controls sit in the letterbox bands; on exactly 16:9 phones they float over the canvas corners (non-critical areas).
+
+### Portrait layout (`body.mobile-portrait`)
+
+`#game-wrap` stacks vertically (`flex-direction: column`). Canvas fills screen width (`width: 100%; height: 100vw × 9/16`), pinned to the top.
+
+D-pad at bottom-left, action button at bottom-right (same positions as landscape — they sit in the band below the canvas).
+
+**Dialogue in portrait:** `#dialogue-box` switches to `position: fixed; bottom: 0; left: 0; right: 0` so it appears in the bottom band below the canvas (escaping the canvas `overflow: hidden` without any DOM move). When dialogue is active, `body.dialogue-active` class hides the D-pad and action button so they don't compete. Notebook and pause icons (top-right) remain accessible during dialogue.
+
+### Out of scope for M1 (deferred to M2)
+
+- Notch and safe-area insets (`env(safe-area-inset-*)`)
+- Button size tuning from real-phone testing
+- iOS standalone / Add-to-Home-Screen
+- Haptic feedback
+
+---
+
+## 9. Chapter Card Screens
 
 Shown at the start of each chapter, between cinematics, as a brief setting card.
 
@@ -512,14 +556,11 @@ The breadcrumb aura (elevated-intensity sparkle used for story-critical objects,
 
 ---
 
-## 12. Mobile Tap Layer (Placeholder Decision)
+## 12. Mobile Tap Layer *(superseded by §8)*
 
-Deferred to a later sprint, but locking the *approach* now so future implementation has direction:
+~~Deferred to a later sprint, but locking the *approach* now so future implementation has direction:~~
 
-- **No on-screen virtual joystick.** It clutters and breaks the screen's quiet.
-- **Tap-to-move:** tapping the left or right half of the screen moves Pip in that direction. Holding moves continuously.
-- **Tap-and-hold center:** floats (when float is unlocked).
-- **Tap on a sparkle-highlighted object:** inspects (equivalent to `↑`).
+**Superseded by Sprint M1 (2026-05-16).** The tap-to-move / tap-half-screen approach was replaced by an explicit D-pad + action button layout (see §8 Mobile Layout). The D-pad handles all four arrow inputs; a single action button handles SPACE. See §8 for the shipped implementation.
 - **Tap on a dialogue choice:** selects and confirms it.
 - **Tap on the strength indicator area:** opens the notebook (equivalent to `TAB`).
 - **Swipe down anywhere:** opens the pause menu.

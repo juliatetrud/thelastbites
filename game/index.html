@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>The Last Bites</title>
 
 <!--
@@ -759,6 +759,151 @@
     text-align: center;
   }
 
+  /* ============================================================
+     SPRINT M1: MOBILE TOUCH CONTROLS
+     body.mobile-landscape / body.mobile-portrait drive layout.
+     No class = desktop — touch controls stay hidden.
+     All buttons: minimum 44px tap target, dark semi-transparent,
+     always-visible for v1 per the 2026-05-16 Decisions Log.
+     ============================================================ */
+
+  .touch-btn {
+    background: rgba(20, 16, 36, 0.70);
+    border: 1px solid rgba(140, 160, 200, 0.30);
+    color: var(--text-narration);
+    font-size: 18px;
+    line-height: 1;
+    text-align: center;
+    cursor: pointer;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s ease, border-color 0.1s ease;
+  }
+  .touch-btn:active {
+    background: rgba(58, 48, 88, 0.82);
+    border-color: rgba(180, 200, 255, 0.50);
+  }
+
+  /* Hidden by default (desktop) */
+  #touch-controls { display: none; }
+
+  /* D-pad: + shaped 3×3 grid with corner gaps */
+  #touch-dpad {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    pointer-events: auto;
+  }
+  #touch-up    { position: absolute; top:  0;  left: 42px; width: 36px; height: 36px; }
+  #touch-left  { position: absolute; top: 42px; left: 0;  width: 36px; height: 36px; }
+  #touch-down  { position: absolute; top: 84px; left: 42px; width: 36px; height: 36px; }
+  #touch-right { position: absolute; top: 42px; left: 84px; width: 36px; height: 36px; }
+
+  /* Action button */
+  #touch-action {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 26px;
+    pointer-events: auto;
+    position: absolute;
+  }
+
+  /* Notebook and pause icon buttons */
+  #touch-notebook, #touch-pause {
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    font-size: 18px;
+    pointer-events: auto;
+    position: absolute;
+  }
+
+  /* ---- Mobile landscape and portrait: fixed full-screen overlay ---- */
+  body.mobile-landscape #touch-controls,
+  body.mobile-portrait  #touch-controls {
+    display: block;
+    position: fixed;
+    inset: 0;
+    pointer-events: none; /* container passes through; children opt in */
+    z-index: 120;
+  }
+
+  /* D-pad: bottom-left */
+  body.mobile-landscape #touch-dpad,
+  body.mobile-portrait  #touch-dpad {
+    left: 14px;
+    bottom: 18px;
+  }
+
+  /* Action button: bottom-right, raised 80px for thumb comfort */
+  body.mobile-landscape #touch-action,
+  body.mobile-portrait  #touch-action {
+    right: 14px;
+    bottom: 80px;
+  }
+
+  /* Notebook icon: top-right, left of music toggle (which is at right:16px w:32px) */
+  body.mobile-landscape #touch-notebook,
+  body.mobile-portrait  #touch-notebook {
+    top: 10px;
+    right: 62px;
+  }
+
+  /* Pause icon: top-right, left of notebook */
+  body.mobile-landscape #touch-pause,
+  body.mobile-portrait  #touch-pause {
+    top: 10px;
+    right: 112px;
+  }
+
+  /* Portrait: dialogue repositioned below the canvas into the bottom band.
+     position:fixed escapes #game overflow:hidden without any DOM move. */
+  body.mobile-portrait #game {
+    width: 100%;
+    /* height set by JS on load/resize to 100vw * 9/16 */
+    flex-shrink: 0;
+  }
+
+  body.mobile-portrait #dialogue-box {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-width: none;
+    transform: none;
+    /* top calculated in JS and set as inline style so it tracks canvas height */
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 0;
+    padding: 14px 16px 20px;
+  }
+  body.mobile-portrait #dialogue-box::before { display: none; }
+
+  /* In portrait with dialogue active: hide movement controls so they don't
+     compete with the dialogue. Notebook/pause icons stay accessible (top-right). */
+  body.mobile-portrait.dialogue-active #touch-dpad,
+  body.mobile-portrait.dialogue-active #touch-action { display: none; }
+
+  /* Portrait: game-wrap stacks vertically */
+  body.mobile-portrait #game-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+
+  /* Landscape: hide controls strip (too small to read, redundant on touch) */
+  body.mobile-landscape #controls-strip,
+  body.mobile-portrait  #controls-strip { display: none; }
+
   /* Pre-title gate: black hold screen with press-any-key prompt */
   #gate-overlay {
     position: absolute;
@@ -889,11 +1034,12 @@
       </div>
     </div>
 
-    <!-- Pause overlay: ESC in room mode. Resume + Restart Chapter. -->
+    <!-- Pause overlay: ESC in room mode. Resume / Mobile toggle / Restart Chapter. -->
     <div id="pause-overlay">
       <div id="pause-box">
         <div class="pause-title">Paused</div>
         <div class="pause-item selected" onclick="closePause()">Resume</div>
+        <div class="pause-item" id="pause-mobile-toggle" onclick="toggleMobileControls()">Mobile controls: ON</div>
         <div class="pause-item" onclick="window.location.reload()">Restart Chapter</div>
       </div>
     </div>
@@ -907,6 +1053,21 @@
     <div id="gate-overlay">
       <span id="gate-text">Press any key to begin.</span>
     </div>
+  </div>
+
+  <!-- Sprint M1: Touch controls. Visibility gated by body.mobile-landscape/portrait.
+       D-pad (four arrows) on the left; single action button (SPACE) on the right.
+       Notebook and pause icon buttons at top-right alongside the music toggle. -->
+  <div id="touch-controls" aria-hidden="true">
+    <div id="touch-dpad">
+      <button class="touch-btn" id="touch-up"    data-key="ArrowUp">▲</button>
+      <button class="touch-btn" id="touch-left"  data-key="ArrowLeft">◀</button>
+      <button class="touch-btn" id="touch-down"  data-key="ArrowDown">▼</button>
+      <button class="touch-btn" id="touch-right" data-key="ArrowRight">▶</button>
+    </div>
+    <button class="touch-btn" id="touch-action"   data-key="Space">●</button>
+    <button class="touch-btn" id="touch-notebook" data-key="Tab" title="Notebook">☰</button>
+    <button class="touch-btn" id="touch-pause"    data-key="Escape" title="Pause">⏸</button>
   </div>
 
   <!-- Music toggle: inside #game-wrap so it appears in fullscreen context.
@@ -1709,6 +1870,10 @@ let currentRoom = 'hallway';
 /* Sprint 15: top-level game mode. 'gate' on cold load; 'title' after first keypress; 'gameplay' after Play. */
 let gameMode = 'gate';
 
+/* Sprint M1: mobile detection overrides (session-only, no localStorage). */
+let mobileOverrideOn  = false;
+let mobileOverrideOff = false;
+
 /* Set Pip's initial position to leftmost hallway position.
    pip.x was initially set to ROOM_W/2 in the pip object definition — override here. */
 pip.x = rooms.hallway.pipMinX + 4;
@@ -1988,7 +2153,7 @@ function handleKeyAction(code) {
       pauseSelected = Math.max(0, pauseSelected - 1);
       updatePauseHighlight();
     } else if (code === 'ArrowDown') {
-      pauseSelected = Math.min(1, pauseSelected + 1);
+      pauseSelected = Math.min(2, pauseSelected + 1);
       updatePauseHighlight();
     } else if (code === 'Space' || code === 'Enter') {
       confirmPauseSelection();
@@ -2065,6 +2230,7 @@ function openPause() {
   gamePaused    = true;
   pauseSelected = 0;
   updatePauseHighlight();
+  updatePauseMobileLabel();
   document.getElementById('pause-overlay').classList.add('open');
   setControlsStrip('pause');
   if (music.unlocked) { music.audioA.pause(); music.audioB.pause(); }
@@ -2089,6 +2255,8 @@ function updatePauseHighlight() {
 function confirmPauseSelection() {
   if (pauseSelected === 0) {
     closePause();
+  } else if (pauseSelected === 1) {
+    toggleMobileControls();  // doesn't close pause
   } else {
     window.location.reload();
   }
@@ -2550,6 +2718,7 @@ function showDialogue(node) {
 
   // Show box
   document.getElementById('dialogue-box').classList.add('active');
+  document.body.classList.add('dialogue-active');
   setControlsStrip('atmospheric-dialogue');
 }
 
@@ -2559,6 +2728,7 @@ function closeDialogue() {
   dialogue.closing = true;
 
   document.getElementById('dialogue-box').classList.remove('active');
+  document.body.classList.remove('dialogue-active');
 
   dialogue._closeTimer = setTimeout(() => {
     dialogue._closeTimer = null;
@@ -4036,6 +4206,7 @@ function skipCinematic() {
   // Force-close dialogue immediately (no 300ms fade delay)
   if (dialogue.active || dialogue.closing) {
     document.getElementById('dialogue-box').classList.remove('active');
+    document.body.classList.remove('dialogue-active');
     dialogue.active  = false;
     dialogue.closing = false;
     dialogue.node    = null;
@@ -6534,6 +6705,84 @@ function drawTitleWater(now) {
 }
 
 /* ================================================================
+   SPRINT M1: MOBILE SUPPORT
+   Automatic detection + manual pause-menu toggle.
+   Touch → keyboard synthesis routes through existing handlers.
+   ================================================================ */
+
+function isMobile() {
+  if (mobileOverrideOn)  return true;
+  if (mobileOverrideOff) return false;
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
+
+function applyMobileLayout() {
+  const mobile    = isMobile();
+  const landscape = window.innerWidth > window.innerHeight;
+  document.body.classList.remove('mobile-landscape', 'mobile-portrait');
+  if (mobile) {
+    document.body.classList.add(landscape ? 'mobile-landscape' : 'mobile-portrait');
+    // Portrait: anchor dialogue bottom and set its top to just below the canvas.
+    if (!landscape) {
+      const canvasH = window.innerWidth * 9 / 16;
+      document.getElementById('dialogue-box').style.top = canvasH + 'px';
+    } else {
+      document.getElementById('dialogue-box').style.top = '';
+    }
+    // Set #game height explicitly in portrait so CSS calc(100vw*9/16) works
+    // even on browsers that don't support it correctly in all flex contexts.
+    const gameEl = document.getElementById('game');
+    if (!landscape) {
+      gameEl.style.width  = window.innerWidth  + 'px';
+      gameEl.style.height = Math.round(window.innerWidth * 9 / 16) + 'px';
+    } else {
+      gameEl.style.width  = '';
+      gameEl.style.height = '';
+    }
+  } else {
+    document.getElementById('dialogue-box').style.top = '';
+    document.getElementById('game').style.width  = '';
+    document.getElementById('game').style.height = '';
+  }
+  updatePauseMobileLabel();
+}
+
+function updatePauseMobileLabel() {
+  const el = document.getElementById('pause-mobile-toggle');
+  if (el) el.textContent = 'Mobile controls: ' + (isMobile() ? 'ON' : 'OFF');
+}
+
+function toggleMobileControls() {
+  if (isMobile()) {
+    mobileOverrideOff = true;
+    mobileOverrideOn  = false;
+  } else {
+    mobileOverrideOn  = true;
+    mobileOverrideOff = false;
+  }
+  applyMobileLayout();
+}
+
+function initTouchControls() {
+  // Wire each data-key button: touchstart → keydown, touchend/touchcancel → keyup.
+  // Dispatch on document so existing document.addEventListener('keydown') catches them.
+  document.querySelectorAll('.touch-btn[data-key]').forEach(btn => {
+    const code = btn.dataset.key;
+    btn.addEventListener('touchstart', e => {
+      e.preventDefault();
+      document.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true }));
+    }, { passive: false });
+    btn.addEventListener('touchend', e => {
+      e.preventDefault();
+      document.dispatchEvent(new KeyboardEvent('keyup', { code, bubbles: true }));
+    }, { passive: false });
+    btn.addEventListener('touchcancel', e => {
+      document.dispatchEvent(new KeyboardEvent('keyup', { code, bubbles: true }));
+    });
+  });
+}
+
+/* ================================================================
    KICK OFF
    ================================================================ */
 
@@ -6543,7 +6792,10 @@ initTitleScreen();
 // Gate mode on cold load: no controls strip until first keypress (transitionFromGate sets 'title')
 setControlsStrip('');
 resizePaddingLights();
-window.addEventListener('resize', resizePaddingLights);
+applyMobileLayout();
+initTouchControls();
+window.addEventListener('resize', () => { resizePaddingLights(); applyMobileLayout(); });
+window.addEventListener('orientationchange', () => { setTimeout(applyMobileLayout, 120); });
 requestAnimationFrame(loop);
 requestAnimationFrame(padLightsLoop);
 

@@ -425,7 +425,7 @@ Title in `Special Elite`; body in `Cormorant Garamond` at generous line-height. 
 
 ### Music
 
-Dedicated title track at `game/assets/title.mp3`. Autoplays on load; music icon shows a slow pulse if browser blocks autoplay (intent-on state). First keypress or click resolves the block. Crossfades to `main` track when Play is selected. Mute state shared with gameplay audio.
+Dedicated title track at `game/assets/audio/title.mp3`. Starts at volume 0 and ramps to `music.baseVolume` over 0.6s after the gate is dismissed (see Pre-title gate above). Crossfades to `main` track when Play is selected. Mute state shared with gameplay audio.
 
 ### Controls strip
 

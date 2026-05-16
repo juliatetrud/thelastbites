@@ -855,6 +855,7 @@ const cabinState = {
   beatStage: 'pre-grandparents',
 
   mirrorRevealed: false,   // true after mirror cinematic plays; mirror shows ghost-face
+  doctorSeen:     false,   // Sprint 14: true after doctor-exit cinematic plays on first cabin entry
 };
 
 /* Sprint 11 — cinematic / sequence state for mirror beat */
@@ -1217,31 +1218,102 @@ const hallwayObjects = [
   /* ---- Cabin door (Pip's cabin — Sprint 10.7) ----
      Cabin 646. Pip recognizes the door as his own.
      Pressing ↑ near it transitions to the cabin room. */
+  /* ---- Cabin 646 door ----
+     Sprint 14: gated on grandparents' cinematic.
+     Before grandparents': Listen / Not now only.
+     After grandparents': Go in / Listen / Not now. */
   {
     id: 'hallway-cabin-door',
     x: 480,
     sparkleY: 110,
-    node: {
-      id: 'cabin-door-inspect',
-      lines: [
-        { speaker: null, text: 'Cabin 646. Pip\u2019s cabin. The door is closed but unlocked.', italic: false },
-      ],
-      choices: [
-        {
-          id: 'enter-cabin',
-          text: 'Go in.',
-          onSelect() {
-            closeDialogue();
-            setTimeout(() => startTransition('cabin', 'fromLeft'), 310);
+    get node() {
+      // Shared "Listen at the door" handler \u2014 doctor's voice; always re-hearable.
+      function listenAtDoor() {
+        showDialogue({
+          id: 'doctor-voice',
+          lines: [
+            { speaker: null, text: 'Pip presses his ear to the door.', italic: false },
+            { speaker: null, text: 'From inside, a man\u2019s voice \u2014 quiet, careful.', italic: false },
+            { speaker: 'DOCTOR (FROM INSIDE)', text: '\u2026there was nothing more we could do. I\u2019m so sorry.', italic: false },
+          ],
+          choices: null,
+          onEnd: null,
+        });
+      }
+
+      if (cinematic.played.has('grandparents')) {
+        return {
+          id: 'cabin-door-post-gp',
+          lines: [
+            { speaker: null, text: 'Cabin 646. Pip\u2019s cabin. The door is closed but unlocked.', italic: false },
+          ],
+          choices: [
+            {
+              id: 'enter-cabin',
+              text: 'Go in.',
+              onSelect() {
+                closeDialogue();
+                setTimeout(() => {
+                  // Manual transition so doctor-exit cinematic can fire on arrival.
+                  const overlay = document.getElementById('room-transition');
+                  transition.active = true;
+                  overlay.style.opacity = '1';
+                  setTimeout(() => {
+                    currentRoom        = 'cabin';
+                    pip.x              = rooms.cabin.pipEntryX.fromLeft;
+                    pip.body.facing    = 'right';
+                    pip.float.altitude = 0;
+                    pip.float.vy       = 0;
+                    playMusic(ROOM_MUSIC['cabin'] || 'main');
+                    // Release transition lock before cinematic so ESC skip works
+                    transition.active = false;
+                    if (!cabinState.doctorSeen) {
+                      startDoctorExitCinematic(() => {
+                        cabinState.doctorSeen = true;
+                        setRoomStrip();
+                      });
+                    } else {
+                      setRoomStrip();
+                    }
+                    overlay.style.opacity = '0';
+                  }, 200);
+                }, 310);
+              },
+            },
+            {
+              id: 'listen-door-post-gp',
+              text: 'Listen at the door.',
+              onSelect() { listenAtDoor(); },
+            },
+            {
+              id: 'not-now-cabin',
+              text: 'Not now.',
+              onSelect() { closeDialogue(); },
+            },
+          ],
+          onEnd: null,
+        };
+      }
+
+      return {
+        id: 'cabin-door-pre-gp',
+        lines: [
+          { speaker: null, text: 'Cabin 646. The door is closed.', italic: false },
+        ],
+        choices: [
+          {
+            id: 'listen-door-pre-gp',
+            text: 'Listen at the door.',
+            onSelect() { listenAtDoor(); },
           },
-        },
-        {
-          id: 'not-now-cabin',
-          text: 'Not now.',
-          onSelect() { closeDialogue(); },
-        },
-      ],
-      onEnd: null,
+          {
+            id: 'not-now-cabin',
+            text: 'Not now.',
+            onSelect() { closeDialogue(); },
+          },
+        ],
+        onEnd: null,
+      };
     },
   },
 
@@ -1832,6 +1904,11 @@ function update(dt) {
       cinematic.holdTimer = 0;
       startCinematicFadeOut();
     }
+  }
+
+  // Sprint 14: doctor-exit animation tick
+  if (cinematic.active && cinematic.name === 'cabin-doctor-exit' && !cinematic.fadingOut) {
+    updateDoctorExit(dt);
   }
 
   // Movement gated by dialogue, room transitions, cinematic hold, opening sequence, AND panic sequence
@@ -3258,12 +3335,26 @@ function drawCabin(camX, now) {
     }
   }
 
-  // Door — game-world x=120 (hallway door)
+  // Door — game-world x=120 (hallway door, entry side left)
   const doorGX = 120;
   const doorSX = Math.round(doorGX - camX);
   const dw = 32, dh = 110, doorTop = baseboardY - dh;   // 168-110=58
   if (doorSX > -(dw + 6) && doorSX < W + (dw + 6)) {
     drawDoor(doorSX, doorTop, { w: dw, h: dh, warm: false });
+  }
+
+  // Far door: doctor's exit. Not interactable. Cabin's existing door (entry) is on the left. This door is on the right.
+  const farDoorGX = 450;
+  const farDoorSX = Math.round(farDoorGX - camX);
+  if (farDoorSX > -(dw + 6) && farDoorSX < W + (dw + 6)) {
+    if (doctorExit.doorOpen) {
+      // Door ajar: dark gap on entry side, panel shifted open
+      ctx.fillStyle = '#050810';
+      ctx.fillRect(farDoorSX - Math.floor(dw / 2), doorTop, 10, dh);
+      drawDoor(farDoorSX + 8, doorTop, { w: dw - 6, h: dh, warm: false });
+    } else {
+      drawDoor(farDoorSX, doorTop, { w: dw, h: dh, warm: false });
+    }
   }
 
   // Floor surface
@@ -3593,6 +3684,27 @@ function updatePassenger(dt) {
 }
 
 /* ================================================================
+   DOCTOR EXIT CINEMATIC STATE  (Sprint 14)
+   Silent, time-based animation: doctor walks to the far door and exits.
+   Driven by startDoctorExitCinematic() + updateDoctorExit(dt).
+   ================================================================ */
+
+const DOCTOR_X_START   = 280;   // screen x (= game-world x when camX=0)
+const DOCTOR_X_DOOR    = 430;   // screen x of far-door approach point
+const DOCTOR_WALK_SPD  = 90;    // px/s (measured in screen px when camX=0)
+const DOCTOR_WALK_DUR  = (DOCTOR_X_DOOR - DOCTOR_X_START) / DOCTOR_WALK_SPD;  // ~1.67s
+const DOCTOR_EXIT_DUR  = 0.35;  // fade-out duration as doctor passes through door
+const DOCTOR_HOLD_DUR  = 0.55;  // pause after exit before fade-to-black
+
+const doctorExit = {
+  elapsed:  0,
+  screenX:  DOCTOR_X_START,
+  alpha:    1.0,
+  doorOpen: false,   // true during exit fade; drawCabin uses this to draw door ajar
+  done:     false,
+};
+
+/* ================================================================
    CINEMATIC ENGINE
    showCinematic(name, onEnd) — activates a named cinematic.
    skipCinematic()            — ESC: instant-close dialogue, run fade.
@@ -3719,10 +3831,56 @@ function startCinematicFadeOut() {
   }, 600);
 }
 
+/* Sprint 14: silent doctor-exit cinematic — no dialogue, purely animated.
+   Triggered by startDoctorExitCinematic(); updated by updateDoctorExit(). */
+function startDoctorExitCinematic(onEnd) {
+  cinematic.active    = true;
+  cinematic.name      = 'cabin-doctor-exit';
+  cinematic.holdTimer = 0;
+  cinematic.fadingOut = false;
+  cinematic.onEnd     = onEnd || null;
+  cinematic.isMemory  = false;
+  // Not added to cinematic.played — gated externally by cabinState.doctorSeen
+
+  doctorExit.elapsed  = 0;
+  doctorExit.screenX  = DOCTOR_X_START;
+  doctorExit.alpha    = 1.0;
+  doctorExit.doorOpen = false;
+  doctorExit.done     = false;
+
+  hideHUD();
+  setControlsStrip('cinematic');
+}
+
+function updateDoctorExit(dt) {
+  doctorExit.elapsed += dt;
+  const e       = doctorExit.elapsed;
+  const walkEnd = DOCTOR_WALK_DUR;
+  const exitEnd = walkEnd + DOCTOR_EXIT_DUR;
+  const holdEnd = exitEnd + DOCTOR_HOLD_DUR;
+
+  if (e < walkEnd) {
+    doctorExit.screenX  = DOCTOR_X_START + (e / walkEnd) * (DOCTOR_X_DOOR - DOCTOR_X_START);
+    doctorExit.alpha    = 1.0;
+    doctorExit.doorOpen = false;
+  } else if (e < exitEnd) {
+    doctorExit.screenX  = DOCTOR_X_DOOR;
+    doctorExit.doorOpen = true;
+    doctorExit.alpha    = Math.max(0, 1 - (e - walkEnd) / DOCTOR_EXIT_DUR);
+  } else if (e < holdEnd) {
+    doctorExit.alpha    = 0;
+    doctorExit.doorOpen = false;
+  } else if (!doctorExit.done) {
+    doctorExit.done = true;
+    startCinematicFadeOut();
+  }
+}
+
 function drawCinematicScene(name, now) {
-  if (name === 'grandparents')        drawGrandparentsCinematic(now);
+  if (name === 'grandparents')          drawGrandparentsCinematic(now);
   else if (name === 'mirror-realization') drawMirrorCinematic(now);
-  else if (name === 'bed-reveal')     drawBedRevealCinematic(now);
+  else if (name === 'bed-reveal')       drawBedRevealCinematic(now);
+  else if (name === 'cabin-doctor-exit') drawDoctorExitCinematic(now);
   // Sprint 11: memory mist opt-in — drawn on top of scene, below dialogue overlay
   if (cinematic.isMemory) drawMemoryMist(now);
 }
@@ -4316,6 +4474,76 @@ function drawMemoryMist(now) {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
   }
+}
+
+/* ================================================================
+   DOCTOR EXIT CINEMATIC DRAW  (Sprint 14)
+   Silent. Cabin shown from fixed entry-side view (camX=0).
+   Pip stands at the entry; doctor walks right toward the far door.
+   ================================================================ */
+
+function drawDoctorExitCinematic(now) {
+  // Cabin background — fixed camera at entry side
+  drawCabin(0, now);
+
+  // Pip at entry, facing right (watching the doctor leave)
+  drawPip(pip.x, FLOOR_Y, now);
+
+  // Doctor walking toward the far door
+  if (doctorExit.alpha > 0) {
+    ctx.save();
+    ctx.globalAlpha = doctorExit.alpha;
+    drawDoctor(Math.round(doctorExit.screenX), FLOOR_Y, now);
+    ctx.restore();
+  }
+}
+
+/* Procedural doctor sprite — Adult NPC scale (~60px).
+   Dark suit, white collar, grey skin, small black bag. Facing right (toward far door). */
+function drawDoctor(screenX, groundY, now) {
+  const bob  = Math.abs(Math.sin(now / 380)) * 2;
+  const foot = Math.round(groundY + bob);
+
+  ctx.save();
+  ctx.translate(screenX, foot);
+
+  // Hair (dark)
+  ctx.fillStyle = '#1a1218';
+  ctx.fillRect(-5, -60, 11,  4);
+
+  // Head (tired-pale skin)
+  ctx.fillStyle = '#988076';
+  ctx.fillRect(-4, -56,  9, 10);
+
+  // White shirt / collar
+  ctx.fillStyle = '#b8bcc8';
+  ctx.fillRect(-2, -46,  5,  3);
+
+  // Suit jacket shoulders + body (dark charcoal)
+  ctx.fillStyle = '#1e2030';
+  ctx.fillRect(-8, -43, 16,  3);   // shoulders
+  ctx.fillRect(-6, -40, 12, 14);   // jacket body
+  ctx.fillRect(-9, -40,  3, 14);   // left arm
+  ctx.fillRect( 6, -40,  3, 14);   // right arm
+  ctx.fillRect(-5, -26, 10,  4);   // jacket lower hem
+
+  // Trousers (dark grey)
+  ctx.fillStyle = '#28262e';
+  ctx.fillRect(-5, -22,  4, 16);   // left leg
+  ctx.fillRect( 1, -22,  4, 16);   // right leg
+
+  // Shoes (very dark)
+  ctx.fillStyle = '#0e0e14';
+  ctx.fillRect(-6,  -6,  5,  2);
+  ctx.fillRect( 1,  -6,  5,  2);
+
+  // Doctor's bag — small rectangular, held at right side
+  ctx.fillStyle = '#1a1008';
+  ctx.fillRect( 8, -32,  7,  6);   // bag body
+  ctx.fillStyle = '#2a1a0e';
+  ctx.fillRect( 9, -34,  5,  2);   // bag handle
+
+  ctx.restore();
 }
 
 /* ================================================================

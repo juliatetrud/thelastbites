@@ -116,27 +116,39 @@ Now the cabin door becomes the trigger.
 
 ---
 
-### Beat 4: THE DOOR (first ability - walk through walls)
-**Mode:** Cinematic + Room
+### Beat 4: THE CABIN DOOR (listen, wait, then enter)
+**Mode:** Room — Hallway → Cabin
 
-Pip approaches the door. From the other side, faint sound: someone crying.
+*(Canonical sequence locked Sprint 14. The old Beat 4 (hand-through-doorknob cinematic, walk-through-door ability) is superseded by the sequence below. The walk-through-walls ability is still the correct interpretation of Pip's ghost nature; it just isn't a puzzle beat in Chapter 1 — he moves through doors naturally as part of the cinematic transitions.)*
 
-He tries the handle. The screen transitions to Cinematic — the hand-through-doorknob shot.
+**Canonical sequence:**
 
-Dialogue:
-> *The door to the hallway. From the other side, you can hear someone crying.*
-> PIP: *…Babcia?*
-> *Pip reaches for the handle. His hand passes through it.*
-> PIP: *Wait — what?*
-> *Maybe… he could pass through too?*
+1. **Pip approaches the cabin door** (hallway, x≈480). Pressing `↑` opens the door dialogue:
+   > *Cabin 646. The door is closed.*
 
-After cinematic, control returns. The door is still "locked" mechanically, but **the player must figure out to walk INTO the door.** A subtle hint: when Pip is touching the door, a small ghost-shimmer effect appears.
+   Two choices: **Listen at the door.** / **Not now.**
 
-Pressing into the door long enough triggers a cool ability-discovery animation — Pip phasing through. **First ability earned.**
+2. **Listen at the door.** Three atmospheric lines:
+   > *Pip presses his ear to the door.*
+   > *From inside, a man's voice — quiet, careful.*
+   > DOCTOR (FROM INSIDE): *…there was nothing more we could do. I'm so sorry.*
 
-The chapter notebook updates: *"I can pass through wood. Not metal — that still feels solid."*
+   No "Go in" option yet. Pip can re-hear the doctor's voice as many times as he wants; the choice persists. He cannot enter.
 
-Pip steps into the hallway.
+3. **He goes elsewhere** — typically to the grandparents' door. The grandparents' cinematic plays.
+
+4. **After the grandparents' cinematic,** Pip returns to the cabin door. The dialogue changes:
+   > *Cabin 646. Pip's cabin. The door is closed but unlocked.*
+
+   Three choices: **Go in.** / **Listen at the door.** / **Not now.** The doctor's voice remains re-hearable even now.
+
+5. **Go in.** Room transition fires. On arrival in the cabin: the doctor-exit cinematic plays. A doctor stands at center-right in his dark suit, holding his small black bag. He walks toward a far door at the opposite end of the cabin (x≈450), the door briefly opens, the doctor fades out, the door closes. Pip stands at the entry facing right, watching in silence. ~2–3 seconds. No dialogue.
+
+6. **Control restores.** Cabin is empty. The far door remains visible but is not interactable.
+
+7. **The mirror moment follows** (Beat 5 / Sprint 11 behavior: unchanged in Sprint 14).
+
+*(As of Sprint 14, the bed reveal and panic exit retain their Sprint 11 cinematic form. The Henrik kitchen sprint will rework these — the bed reveal becoming player-initiated (Pip lifts the sheets himself) and the panic glide extending through the hallway and into the kitchen as one continuous motion. The current implementation is correct-but-incomplete.)*
 
 ---
 

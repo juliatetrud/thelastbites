@@ -207,6 +207,7 @@ A running record of every sprint that has shipped, in order. Every future sprint
 | 11 | Mirror beat | 2026-05-14 | Cabin rework (visible walls, mirror, child's drawing), mirror cinematic with melting effect, bed reveal of Pip's body, scripted panic-float and comic tear-spray exit, memory-mist visual language defined, left-arrow-back in dialogue. |
 | 12 | Doc patch — collect verb and stomach | 2026-05-14 | Collect verb, stomach model, treat taxonomy, key remap (`↓` collect / `TAB` notebook), observation deck added to Ch1 structure. Doc-only sprint; no code changes. |
 | 13 | Collect verb and stomach implementation | 2026-05-14 | `↓` collect verb, stomach meter (chewing-boy HUD), blink-back death sequence, pickup tween, notebook Items section. Debug Bamsemums placed in hallway for system testing. |
+| 14 | Cabin gating + doctor exit | 2026-05-16 | Cabin door gated until grandparents' plays; new "Listen at the door" choice with doctor's voice; doctor-exit cinematic on first cabin entry. Bed/mirror/panic-glide deferred to Henrik kitchen sprint. |
 
 ---
 
@@ -379,6 +380,8 @@ A running list of locked decisions so they don't re-litigate.
 | 2026-05-14 | **Panic-exit register locked.** After the panic-float resolves, Pip glides out of the cabin at 1.8× walk speed with comic tear spray from his eyes (cool-white droplets, ~6/s, arcing backward and fading). Tone is gentle-comic: he is grief-stricken AND he is a small ghost moving very fast. Both registers live in the same beat without one undercutting the other. Player control suspended throughout; restored once Pip is in the hallway. |
 | 2026-05-14 | **Left-arrow-back in dialogue.** Pressing left arrow during dialogue steps backward one line. At first line, no-op. Controls strip during dialogue gains `← BACK` hint. Works on every dialogue node in the game. Closes the open question logged 2026-05-14. |
 | 2026-05-16 | **Hosting resolved.** Game deployed on GitHub Pages at https://juliatetrud.github.io/thelastbites/, with a root `index.html` meta-refresh redirect to `game/index.html`. Separate domain from the recipe site; no CDN. Closes the "Hosting?" open question from the Technical section. |
+| 2026-05-16 | **Cabin 646 gating locked (Sprint 14).** Pip's cabin is closed off until the grandparents' cinematic has played. Before grandparents': the cabin door offers "Listen at the door" (which overhears the doctor's voice saying *"…there was nothing more we could do. I'm so sorry."*) and "Not now." There is no "Go in" option. After grandparents': "Go in" appears. The first entry plays a brief cinematic of the doctor exiting through a far door. The "Listen at the door" choice persists indefinitely. This is the canonical Beat 4 ordering — Pip's realization that he is dead is *earned* by grief witnessed and door overheard, not stumbled into immediately. |
+| 2026-05-16 | **Bed/mirror reframing and panic-glide extension deferred to Henrik kitchen sprint.** The Sprint 11 bed-reveal cinematic and panic-glide-to-hallway will be reworked when the kitchen room exists. The new shape: after the mirror cinematic, the player walks to the bed and *initiates* the sheet-lifting (Pip's action, not a passive cinematic). The panic glide then chains through the hallway and into the kitchen, ending at Henrik. Until the kitchen ships, the current implementation stands. |
 
 ---
 

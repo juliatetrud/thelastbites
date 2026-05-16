@@ -777,7 +777,7 @@
 <span style="position:absolute;opacity:0;pointer-events:none;font-family:'Cormorant Garamond',serif;font-size:1px;" aria-hidden="true">&nbsp;</span>
 
 <!-- Sprint 15: Title track. Autoplays on title screen; fades out on Play. -->
-<audio id="title-track" src="assets/Title.mp3" loop preload="auto"></audio>
+<audio id="title-track" src="assets/title.mp3" loop preload="auto"></audio>
 
 <!-- Two audio elements for crossfade switching between tracks.
      A is the initial active track; they alternate roles during crossfades. -->
@@ -6223,40 +6223,54 @@ function drawTitleSky(now) {
 }
 
 function drawTitleAurora(now) {
-  const bandH = H * 0.27;  // upper 27% of canvas
+  const topY   = 0;
+  const botY   = H * 0.28;  // curtains hang down ~75px from top of canvas
   const bright = 0.5 + 0.5 * Math.sin(titleAurora.brightPhase);
 
-  // Green band — radial gradient drifting horizontally
-  const gx1 = W * (0.28 + 0.2 * Math.sin(titleAurora.phase1));
-  const g1  = ctx.createRadialGradient(gx1, bandH * 0.55, 0, gx1, bandH * 0.55, W * 0.42);
-  g1.addColorStop(0, `rgba(36,96,72,${(0.17 + 0.07 * bright).toFixed(3)})`);
-  g1.addColorStop(1, 'rgba(36,96,72,0)');
-  ctx.fillStyle = g1;
-  ctx.fillRect(0, 0, W, bandH);
+  // Very faint violet haze behind the green ribbons — ambiance, not a band
+  const vx  = W * (0.55 + 0.12 * Math.sin(titleAurora.phase2));
+  const vg  = ctx.createRadialGradient(vx, botY * 0.4, 0, vx, botY * 0.4, W * 0.3);
+  vg.addColorStop(0, `rgba(52,34,72,${(0.055 + 0.03 * bright).toFixed(3)})`);
+  vg.addColorStop(1, 'rgba(52,34,72,0)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, topY, W, botY);
 
-  // Violet band — offset phase so the two bands don't overlap in sync
-  const gx2 = W * (0.62 + 0.16 * Math.sin(titleAurora.phase2));
-  const g2  = ctx.createRadialGradient(gx2, bandH * 0.65, 0, gx2, bandH * 0.65, W * 0.38);
-  g2.addColorStop(0, `rgba(58,40,88,${(0.14 + 0.08 * bright).toFixed(3)})`);
-  g2.addColorStop(1, 'rgba(58,40,88,0)');
-  ctx.fillStyle = g2;
-  ctx.fillRect(0, 0, W, bandH);
+  // Curtain 1 — dominant, center-left, drifts on phase1
+  drawAuroraCurtain(
+    W * (0.30 + 0.18 * Math.sin(titleAurora.phase1)),
+    55, topY, botY, titleAurora.edgePhase, 0.28 + 0.12 * bright
+  );
 
-  // Lower-edge curtain wave — makes the aurora feel like hanging light, not a stripe
-  ctx.save();
-  ctx.globalAlpha = 0.05 + 0.04 * bright;
-  ctx.fillStyle = '#4a8898';
-  ctx.beginPath();
-  ctx.moveTo(0, bandH);
-  for (let x = 0; x <= W; x += 3) {
-    const wy = bandH + Math.sin((x / W) * 4 * Math.PI + titleAurora.edgePhase) * 5;
-    ctx.lineTo(x, wy);
+  // Curtain 2 — slightly narrower, center-right, drifts on phase2
+  drawAuroraCurtain(
+    W * (0.63 + 0.14 * Math.sin(titleAurora.phase2 + 0.5)),
+    42, topY, botY, titleAurora.edgePhase + 2.1, 0.20 + 0.09 * bright
+  );
+
+  // Curtain 3 — faint, far left, shorter — gives a sense of depth behind curtains 1 & 2
+  drawAuroraCurtain(
+    W * (0.10 + 0.07 * Math.sin(titleAurora.phase1 + 1.7)),
+    28, topY, botY * 0.65, titleAurora.edgePhase + 4.5, 0.10 + 0.05 * bright
+  );
+}
+
+function drawAuroraCurtain(cx, halfW, topY, botY, edgePhase, maxAlpha) {
+  // Draws one vertical aurora ribbon: bright at the top, fading toward the bottom.
+  // Left and right edges undulate sinusoidally along y, giving the draped-curtain look.
+  const h = botY - topY;
+  for (let y = Math.round(topY); y <= Math.round(botY); y++) {
+    const t          = (y - topY) / h;
+    const brightness = Math.max(0, (1 - t) * (1 - t * 0.45));  // stays bright in top third, then falls
+    if (brightness < 0.012) continue;
+
+    // Left and right edges wobble with slightly different phases — not a parallelogram
+    const lx = Math.round(cx - halfW + Math.sin(t * 5.5 * Math.PI + edgePhase)       * 5);
+    const rx = Math.round(cx + halfW + Math.sin(t * 5.5 * Math.PI + edgePhase + 1.0) * 4);
+    const w  = Math.max(1, rx - lx);
+
+    ctx.fillStyle = `rgba(56,152,104,${(maxAlpha * brightness).toFixed(3)})`;
+    ctx.fillRect(lx, y, w, 1);
   }
-  ctx.lineTo(W, bandH + 8);
-  ctx.lineTo(0, bandH + 8);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
 }
 
 function drawTitleHorizon(now) {

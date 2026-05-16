@@ -588,6 +588,50 @@
 
   /* Controls strip during notebook */
   /* (Reuses existing #controls-strip positioning; setControlsStrip handles content) */
+
+  /* ============================================================
+     PAUSE OVERLAY
+     Minimal pause menu: Resume + Restart Chapter.
+     z-index 82 — above notebook (80), below blink-back (75 is lower but
+     pause can't open during blink-back — gated in handleKeyAction).
+     ============================================================ */
+  #pause-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 6, 12, 0.88);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 82;
+  }
+  #pause-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #pause-box {
+    text-align: center;
+  }
+  .pause-title {
+    font-family: 'Special Elite', serif;
+    font-size: clamp(11px, 1.6vw, 16px);
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 28px;
+  }
+  .pause-item {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(16px, 2.6vw, 26px);
+    color: var(--text-narration);
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+  .pause-item.selected { color: var(--warm-pool-amber); }
+  .pause-item:hover    { color: var(--warm-pool-glow); }
 </style>
 </head>
 <body>
@@ -663,6 +707,15 @@
           <div class="notebook-page-dot" data-page="1"></div>
           <div class="notebook-page-dot active" data-page="2"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- Pause overlay: ESC in room mode. Resume + Restart Chapter. -->
+    <div id="pause-overlay">
+      <div id="pause-box">
+        <div class="pause-title">Paused</div>
+        <div class="pause-item selected" onclick="closePause()">Resume</div>
+        <div class="pause-item" onclick="window.location.reload()">Restart Chapter</div>
       </div>
     </div>
 
@@ -1512,6 +1565,7 @@ const passenger = {
   x:                0,      // current game-world x
   speed:            105,    // px/s — slightly faster than Pip's 90
   aftermathPending: false,  // true after exit, until aftermath dialogue fires
+  thoughtBeatFired: false,  // one-shot mid-walk thought (suppresses aftermath)
 };
 
 /* Sprint 10.7: game starts in the hallway, so arm the passenger flag here.
@@ -1627,16 +1681,31 @@ function handleKeyAction(code) {
   // During cinematic hold (dialogue closed but cinematic still active): block room input
   if (cinematic.active) return;
 
+  // ---- Pause menu mode ----
+  if (gamePaused) {
+    if (code === 'ArrowUp') {
+      pauseSelected = Math.max(0, pauseSelected - 1);
+      updatePauseHighlight();
+    } else if (code === 'ArrowDown') {
+      pauseSelected = Math.min(1, pauseSelected + 1);
+      updatePauseHighlight();
+    } else if (code === 'Space' || code === 'Enter') {
+      confirmPauseSelection();
+    } else if (code === 'Escape') {
+      closePause();
+    }
+    return;
+  }
+
   // ---- Notebook open mode ----
   if (notebook.open) {
-    if (code === 'Tab') {
+    if (code === 'Tab' || code === 'Escape') {
       closeNotebook();
     } else if (code === 'ArrowLeft') {
       notebookTurnPage(-1);
     } else if (code === 'ArrowRight') {
       notebookTurnPage(1);
     }
-    // ESC from notebook: reserved for pause menu (Sprint 05 TODO)
     return;
   }
 
@@ -1661,8 +1730,9 @@ function handleKeyAction(code) {
     if (code === 'KeyF') {
       toggleFullscreen();
     }
-    // ESC: reserved for pause menu (Sprint 05 TODO)
-    // TODO: ESC reserved for pause menu — Sprint 05
+    if (code === 'Escape' && openingSeq.state === 'complete' && !blinkBack.active) {
+      openPause();
+    }
 
     // Sprint 13: DEBUG — Shift+Minus drains stomach by 10 for testing blink-back
     if (code === 'Minus' && (keysHeld['ShiftLeft'] || keysHeld['ShiftRight'])) {
@@ -1682,6 +1752,47 @@ function movingRight() { return keysHeld['ArrowRight'] || keysHeld['KeyD']; }
 
 let lastTimestamp = null;
 
+/* ================================================================
+   PAUSE MENU
+   ESC in room mode opens a minimal pause overlay.
+   ================================================================ */
+
+let gamePaused    = false;
+let pauseSelected = 0;
+
+function openPause() {
+  gamePaused    = true;
+  pauseSelected = 0;
+  updatePauseHighlight();
+  document.getElementById('pause-overlay').classList.add('open');
+  setControlsStrip('pause');
+  if (music.unlocked) { music.audioA.pause(); music.audioB.pause(); }
+}
+
+function closePause() {
+  gamePaused = false;
+  document.getElementById('pause-overlay').classList.remove('open');
+  setRoomStrip();
+  if (music.on && music.unlocked) {
+    const active = music.current === 'a' ? music.audioA : music.audioB;
+    active.play().catch(() => {});
+  }
+}
+
+function updatePauseHighlight() {
+  document.querySelectorAll('.pause-item').forEach((el, i) => {
+    el.classList.toggle('selected', i === pauseSelected);
+  });
+}
+
+function confirmPauseSelection() {
+  if (pauseSelected === 0) {
+    closePause();
+  } else {
+    window.location.reload();
+  }
+}
+
 function loop(timestamp) {
   requestAnimationFrame(loop);
 
@@ -1690,7 +1801,7 @@ function loop(timestamp) {
   const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
   lastTimestamp = timestamp;
 
-  update(dt);
+  if (!gamePaused) update(dt);
   render(timestamp);
 }
 
@@ -2028,12 +2139,13 @@ function updateOpeningSequence(dt) {
 
 const STRIP_STRINGS = {
   // Sprint 13: ↓ COLLECT added; TAB NOTEBOOK replaces ESC JOURNAL
-  'room':                 '← →  MOVE     ↑  LOOK     ↓  COLLECT     TAB  NOTEBOOK',
-  'room-floatable':       '← →  MOVE     ↑  LOOK     ↓  COLLECT     SPACE  FLOAT     TAB  NOTEBOOK',
-  'atmospheric-dialogue': '←  BACK     SPACE  CONTINUE',
-  'interactive-dialogue': '←  BACK     ↑↓  CHOOSE     SPACE  SELECT',
-  'cinematic':            'SPACE  CONTINUE     ESC  SKIP',
-  'notebook':             '← →  TURN PAGE     TAB  CLOSE     ESC  PAUSE',
+  'room':                 '← →  MOVE | ↑  LOOK | ↓  COLLECT | TAB  NOTEBOOK',
+  'room-floatable':       '← →  MOVE | ↑  LOOK | ↓  COLLECT | SPACE  FLOAT | TAB  NOTEBOOK',
+  'atmospheric-dialogue': '←  BACK | SPACE  CONTINUE',
+  'interactive-dialogue': '←  BACK | ↑↓  CHOOSE | SPACE  SELECT',
+  'cinematic':            'SPACE  CONTINUE | ESC  SKIP',
+  'notebook':             '← →  TURN PAGE | TAB  CLOSE | ESC  CLOSE',
+  'pause':                '↑↓  CHOOSE | SPACE  SELECT | ESC  RESUME',
 };
 
 function setControlsStrip(context) {
@@ -2049,7 +2161,7 @@ function setControlsStrip(context) {
    Appends the fullscreen hint. Call anywhere room-mode strip should be shown. */
 function setRoomStrip() {
   const base = STRIP_STRINGS[pip.float.unlocked ? 'room-floatable' : 'room'] || '';
-  const fsHint = fullscreenActive ? '     F · EXIT FULLSCREEN' : '     F · FULLSCREEN';
+  const fsHint = fullscreenActive ? ' | F · EXIT FULLSCREEN' : ' | F · FULLSCREEN';
   const raw = base + fsHint;
   document.getElementById('controls-strip').innerHTML =
     raw.replace(/ {3,}/g, '<span style="display:inline-block;width:2.2em"></span>');
@@ -2066,7 +2178,7 @@ function updateRoomStripForProximity() {
     if (!c.collected && Math.abs(pip.x - c.x) < 18) {
       // Near a collectible — inject the named version
       const base = STRIP_STRINGS[pip.float.unlocked ? 'room-floatable' : 'room'] || '';
-      const fsHint = fullscreenActive ? '     F · EXIT FULLSCREEN' : '     F · FULLSCREEN';
+      const fsHint = fullscreenActive ? ' | F · EXIT FULLSCREEN' : ' | F · FULLSCREEN';
       const raw = base + fsHint;
       // Replace the '↓  COLLECT' segment with the named version in amber
       const named = raw.replace(
@@ -3445,21 +3557,38 @@ function updatePassenger(dt) {
   // Walk left
   if (passenger.active) {
     passenger.x -= passenger.speed * dt;
+
+    // Mid-walk thought: fires the moment passenger passes through Pip's x position.
+    if (!passenger.thoughtBeatFired && passenger.x <= pip.x
+        && !dialogue.active && !dialogue.closing) {
+      passenger.thoughtBeatFired = true;
+      const savedFacing = pip.body.facing;
+      pip.body.facing = 'left';
+      showDialogue({
+        id: 'passenger-thought',
+        lines: [{ speaker: 'PIP', text: '\u2026they didn\u2019t see me.', italic: true }],
+        choices: null,
+        onEnd: () => { pip.body.facing = savedFacing; },
+      });
+    }
+
     if (passenger.x < -40) {
-      passenger.active          = false;
+      passenger.active           = false;
       passenger.aftermathPending = true;
     }
   }
 
-  // Fire aftermath dialogue once he exits and no dialogue is already active
+  // Aftermath: suppressed if thought beat already fired
   if (passenger.aftermathPending && !dialogue.active && !dialogue.closing) {
     passenger.aftermathPending = false;
-    showDialogue({
-      id: 'passenger-aftermath',
-      lines: [{ speaker: 'PIP', text: '\u2026they didn\u2019t see me.', italic: false }],
-      choices: null,
-      onEnd: null,
-    });
+    if (!passenger.thoughtBeatFired) {
+      showDialogue({
+        id: 'passenger-aftermath',
+        lines: [{ speaker: 'PIP', text: '\u2026they didn\u2019t see me.', italic: false }],
+        choices: null,
+        onEnd: null,
+      });
+    }
   }
 }
 
@@ -3471,19 +3600,22 @@ function updatePassenger(dt) {
    drawCinematicScene(name)   — dispatches to per-scene draw function.
    ================================================================ */
 
+// Grandparents cinematic \u2014 trimmed 2026-05-16 for demo density. Full 12-line script:
+// { speaker: null,  text: 'Babcia is on the bed with her head in her hands. She is making a sound Pip has never heard her make. She is sobbing.', italic: false },
+// { speaker: 'PIP', text: '\u201cBabcia, what\u2019s wrong?\u201d', italic: false },
+// { speaker: null,  text: 'Dziadek stands at the window. His shoulders are shaking. He says nothing. Tears stream down his face.', italic: false },
+// { speaker: null,  text: 'On the nightstand sits a photograph. It shows Pip on his sixth birthday, holding a pierogi as big as his face.', italic: false },
+// { speaker: 'PIP', text: '\u201cBabcia? \u2026 Dziadek?\u201d', italic: false },
+// { speaker: null,  text: 'They do not look up.', italic: false },
+// { speaker: 'PIP', text: '\u201cHello! I\u2019m here. I\u2019m right here. What\u2019s wrong?\u201d', italic: false },
+// { speaker: null,  text: 'Pip\u2019s stomach turns.', italic: false },
+// { speaker: null,  text: 'They continue to cry.', italic: false },
+// { speaker: null,  text: 'Dziadek turns. For a moment, just a moment, he looks toward the doorway. He frowns. He shakes his head and turns back to the window.', italic: false },
+// { speaker: 'PIP', text: '\u201cDziadek\u2026\u201d', italic: false },
+// { speaker: null,  text: 'Pip tries. But Dziadek does not hear him.', italic: false },
 const CINEMATIC_SCRIPTS = {
   grandparents: [
     { speaker: null,  text: 'Babcia is on the bed with her head in her hands. She is making a sound Pip has never heard her make. She is sobbing.', italic: false },
-    { speaker: 'PIP', text: '\u201cBabcia, what\u2019s wrong?\u201d', italic: false },
-    { speaker: null,  text: 'Dziadek stands at the window. His shoulders are shaking. He says nothing. Tears stream down his face.', italic: false },
-    { speaker: null,  text: 'On the nightstand sits a photograph. It shows Pip on his sixth birthday, holding a pierogi as big as his face.', italic: false },
-    { speaker: 'PIP', text: '\u201cBabcia? \u2026 Dziadek?\u201d', italic: false },
-    { speaker: null,  text: 'They do not look up.', italic: false },
-    { speaker: 'PIP', text: '\u201cHello! I\u2019m here. I\u2019m right here. What\u2019s wrong?\u201d', italic: false },
-    { speaker: null,  text: 'Pip\u2019s stomach turns.', italic: false },
-    { speaker: null,  text: 'They continue to cry.', italic: false },
-    { speaker: null,  text: 'Dziadek turns. For a moment, just a moment, he looks toward the doorway. He frowns. He shakes his head and turns back to the window.', italic: false },
-    { speaker: 'PIP', text: '\u201cDziadek\u2026\u201d', italic: false },
     { speaker: null,  text: 'Pip tries. But Dziadek does not hear him.', italic: false },
   ],
 
@@ -4724,16 +4856,6 @@ function toggleMusic() {
 function initMusic() {
   music.audioA = document.getElementById('bg-music-a');
   music.audioB = document.getElementById('bg-music-b');
-
-  // Restore toggle state from previous session
-  const saved = localStorage.getItem('tlb-music-on');
-  if (saved === 'false') {
-    music.on = false;
-    const btn = document.getElementById('music-toggle');
-    btn.classList.add('muted');
-    btn.title     = 'Music off (click to play)';
-    btn.setAttribute('aria-label', 'Music off (click to play)');
-  }
 
   // Wire toggle button
   document.getElementById('music-toggle').addEventListener('click', toggleMusic);

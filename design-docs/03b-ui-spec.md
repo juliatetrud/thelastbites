@@ -361,16 +361,28 @@ No "Quit" option — this is a browser game. Closing the tab is the quit gesture
 
 ## 7. The Title Screen
 
-**Sprint 15 implementation — this section reflects shipped state as of 2026-05-16.**
+**Sprint 15 implementation — this section reflects shipped state as of 2026-05-16 (gate added 2026-05-16).**
 
 The game's front door. The first thing the player sees.
+
+### Pre-title gate
+
+On cold load, the game shows a pure black screen before the title. A single line — *"Press any key to begin."* — fades in over 1.2s (Cormorant Garamond, `clamp(13px, 1.9vw, 18px)`, `var(--text-narration)`, letter-spacing `0.12em`). Any keypress, mouse click, or touch dismisses the gate.
+
+**Why it exists:** browser autoplay policy blocks audio until a user gesture occurs. The gate guarantees that the title track can start the moment the player engages — no blocked-autoplay fallback needed.
+
+**Transition:** gate fades out over 0.4s (`#gate-overlay.hidden` class → `opacity: 0; pointer-events: none`). Simultaneously, `gameMode` switches to `'title'` and the title canvas starts rendering. The title track begins at volume 0 and ramps to `music.baseVolume` over 0.6s. The gate DOM element is removed from display after the fade completes.
+
+**DOM element:** `#gate-overlay` — `position: absolute; inset: 0; background: #000; z-index: 80`. Contains `#gate-text`.
+
+**Controls strip:** empty during gate mode. Set to the title strip string once the gate is dismissed.
 
 ### Visual composition
 
 Six-layer parallax canvas scene, drawn in z-order back-to-front:
 
 1. **Sky** — deep indigo gradient (`#05071a` → `#10182c`) with 110 seeded cold-white twinkling stars
-2. **Aurora** — two radial-gradient bands (cool green `rgba(36,96,72)` and violet `rgba(58,40,88)`) drifting horizontally on independent sine cycles (~14s, ~11s); brightness pulses at ~7.5s; lower edge has a subtle 5s curtain wave
+2. **Aurora** — dominant green vertical curtains (`rgba(56,152,104,...)`) drawn row-by-row with sinusoidal edge wobble; brightness fades toward the bottom of each curtain; three curtains of varying width drift slowly on independent sine cycles (~14s, ~11s); a very faint violet radial haze sits behind the green as a subtle accent; overall brightness pulses at ~7.5s
 3. **Horizon** — barely-visible indigo glow at the waterline
 4. **Mnemosyne** — procedurally drawn early-1900s ocean liner (Lusitania/Mauretania silhouette): dark charcoal hull, three cream-topped raked funnels, two masts, two porthole rows (~35% lit warm amber)
 5. **Smoke plumes** — discrete burst particles from each chimney; spawn every 4–8s per chimney, expand and dissipate over 3.5–5s, drift slightly left

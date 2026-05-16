@@ -759,13 +759,32 @@
     text-align: center;
   }
 
-  /* Music icon pulse when autoplay is blocked */
-  #music-toggle.wants-to-play {
-    animation: music-want-pulse 2s ease-in-out infinite;
+  /* Pre-title gate: black hold screen with press-any-key prompt */
+  #gate-overlay {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 80;
+    pointer-events: auto;
+    transition: opacity 0.4s ease;
   }
-  @keyframes music-want-pulse {
-    0%, 100% { opacity: 0.85; }
-    50%       { opacity: 0.3; }
+  #gate-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  #gate-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(13px, 1.9vw, 18px);
+    color: var(--text-narration);
+    letter-spacing: 0.12em;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+  }
+  #gate-text.visible {
+    opacity: 1;
   }
 </style>
 </head>
@@ -882,6 +901,12 @@
     <!-- Controls strip: persistent context-sensitive bottom hint.
          See 03b-ui-spec.md §1. Managed by setControlsStrip(). -->
     <div id="controls-strip"></div>
+
+    <!-- Pre-title gate: black screen shown on cold load until first keypress/click/touch.
+         Guarantees a user gesture before title audio starts (autoplay policy). -->
+    <div id="gate-overlay">
+      <span id="gate-text">Press any key to begin.</span>
+    </div>
   </div>
 
   <!-- Music toggle: inside #game-wrap so it appears in fullscreen context.
@@ -1681,8 +1706,8 @@ const rooms = {
    Pip spawns at the leftmost playable x. */
 let currentRoom = 'hallway';
 
-/* Sprint 15: top-level game mode. 'title' on cold load; 'gameplay' after Play. */
-let gameMode = 'title';
+/* Sprint 15: top-level game mode. 'gate' on cold load; 'title' after first keypress; 'gameplay' after Play. */
+let gameMode = 'gate';
 
 /* Set Pip's initial position to leftmost hallway position.
    pip.x was initially set to ROOM_W/2 in the pip object definition — override here. */
@@ -1753,7 +1778,7 @@ const cinematic = {
 const titleState = {
   menuSelected:        0,      // 0=Play, 1=About
   aboutVisible:        false,
-  autoplayBlocked:     false,  // true when browser blocked title track autoplay
+  gateDone:            false,  // true once first-keypress gate has been dismissed
   transitioningToGame: false,
 };
 
@@ -1899,6 +1924,9 @@ function handleKeyAction(code) {
     toggleMusic();
     return;
   }
+
+  // Gate mode: any key dismisses the gate
+  if (gameMode === 'gate') { transitionFromGate(); return; }
 
   // Sprint 15: title screen handles its own keys
   if (gameMode === 'title') {
@@ -2845,6 +2873,9 @@ function render(now) {
   render._lastNow = now;
 
   ctx.clearRect(0, 0, W, H);
+
+  // Gate mode: canvas stays black; DOM gate-overlay handles the display
+  if (gameMode === 'gate') return;
 
   // Sprint 15: title screen draws its own scene; skip all gameplay rendering
   if (gameMode === 'title') {
@@ -5268,13 +5299,7 @@ function playMusic(trackId) {
 function unlockMusic() {
   if (music.unlocked) return;
   music.unlocked = true;
-  // Sprint 15: unlock title track if it's waiting to play
-  if (titleAudio && titleState.autoplayBlocked && music.on) {
-    titleAudio.play().catch(() => {});
-    titleState.autoplayBlocked = false;
-    document.getElementById('music-toggle').classList.remove('wants-to-play');
-  }
-  // Unlock gameplay track if one is queued
+  // Unlock gameplay track if one is queued (title track is handled via gate gesture)
   if (music.on && music.trackId !== null) {
     const activeEl = music.current === 'a' ? music.audioA : music.audioB;
     activeEl.play().catch(() => {});
@@ -5293,7 +5318,7 @@ function toggleMusic() {
     btn.setAttribute('aria-label', 'Music on (click to mute)');
     if (music.unlocked) {
       // Sprint 15: on title screen play title track; in gameplay play active element
-      if (gameMode === 'title' && titleAudio && !titleState.autoplayBlocked) {
+      if (gameMode === 'title' && titleAudio) {
         titleAudio.play().catch(() => {});
       } else if (gameMode !== 'title') {
         const activeEl = music.current === 'a' ? music.audioA : music.audioB;
@@ -6016,11 +6041,43 @@ document.getElementById('notebook-icon').addEventListener('click', () => {
 function initTitleTrack() {
   titleAudio = document.getElementById('title-track');
   if (!titleAudio) return;
-  titleAudio.volume = music.on ? music.baseVolume : 0;
-  titleAudio.play().catch(() => {
-    titleState.autoplayBlocked = true;
-    document.getElementById('music-toggle').classList.add('wants-to-play');
+  // Called from inside a user gesture (gate dismiss), so autoplay is guaranteed.
+  // Volume ramps from 0 to target over 600ms.
+  titleAudio.volume = 0;
+  titleAudio.play().catch(() => {});
+  const TARGET = music.on ? music.baseVolume : 0;
+  const RAMP_MS = 600;
+  const startT = performance.now();
+  (function rampUp(ts) {
+    const t = Math.min((ts - startT) / RAMP_MS, 1);
+    if (titleAudio) titleAudio.volume = TARGET * t;
+    if (t < 1) requestAnimationFrame(rampUp);
+  })(performance.now());
+}
+
+function initGate() {
+  const overlay = document.getElementById('gate-overlay');
+  const text    = document.getElementById('gate-text');
+  overlay.addEventListener('click', transitionFromGate);
+  overlay.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    transitionFromGate();
+  }, { passive: false });
+  // Fade in the gate text (double rAF forces a paint before the transition fires)
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { text.classList.add('visible'); });
   });
+}
+
+function transitionFromGate() {
+  if (titleState.gateDone) return;
+  titleState.gateDone = true;
+  gameMode = 'title';
+  const overlay = document.getElementById('gate-overlay');
+  overlay.classList.add('hidden');
+  initTitleTrack();
+  setControlsStrip('title');
+  setTimeout(() => { overlay.style.display = 'none'; }, 450);
 }
 
 function initTitleScreen() {
@@ -6040,13 +6097,6 @@ function initTitleScreen() {
 }
 
 function handleTitleKey(code) {
-  // Any keypress while autoplay is blocked: attempt to play
-  if (titleState.autoplayBlocked && titleAudio && music.on) {
-    titleAudio.play().catch(() => {});
-    titleState.autoplayBlocked = false;
-    document.getElementById('music-toggle').classList.remove('wants-to-play');
-  }
-
   if (titleState.aboutVisible) {
     if (code === 'Escape' || code === 'ArrowLeft') {
       closeAboutPanel();
@@ -6489,10 +6539,10 @@ function drawTitleWater(now) {
    ================================================================ */
 
 initMusic();
-initTitleTrack();
+initGate();
 initTitleScreen();
-// Sprint 15: show title controls strip; opening sequence strip fires after Play → game transition
-setControlsStrip('title');
+// Gate mode on cold load: no controls strip until first keypress (transitionFromGate sets 'title')
+setControlsStrip('');
 resizePaddingLights();
 window.addEventListener('resize', resizePaddingLights);
 requestAnimationFrame(loop);

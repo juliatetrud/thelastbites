@@ -44,15 +44,15 @@ Each context defines its own hint string. Keys shown in arrow glyphs (`←` `→
 
 *(Sprint 12: `TAB` opens the notebook; `ESC` is for pause. `↓ COLLECT` added. `← BACK` added to dialogue strips. "Journal" renamed "notebook" throughout.)*
 
-- **Room mode, pre-float:** `← →  MOVE     ↑  LOOK     ↓  COLLECT     TAB  NOTEBOOK     ESC  PAUSE`
-- **Room mode, pre-float, near collectible:** `← →  MOVE     ↑  LOOK     ↓  COLLECT [TREAT NAME]     TAB  NOTEBOOK     ESC  PAUSE` *(name shown in warm amber)*
-- **Room mode, post-float:** `← →  MOVE     ↑  LOOK     ↓  COLLECT     SPACE  FLOAT     TAB  NOTEBOOK     ESC  PAUSE`
+- **Room mode, pre-float:** `← →  MOVE     ↑  LOOK     ↓  COLLECT     TAB  NOTEBOOK     P  PAUSE`
+- **Room mode, pre-float, near collectible:** `← →  MOVE     ↑  LOOK     ↓  COLLECT [TREAT NAME]     TAB  NOTEBOOK     P  PAUSE` *(name shown in warm amber)*
+- **Room mode, post-float:** `← →  MOVE     ↑  LOOK     ↓  COLLECT     SPACE  FLOAT     TAB  NOTEBOOK     P  PAUSE`
 - **Atmospheric dialogue (no choices):** `←  BACK     SPACE  CONTINUE`
 - **Interactive dialogue (with choices):** `←  BACK     ↑↓  CHOOSE     SPACE  SELECT`
 - **Cinematic:** `SPACE  CONTINUE     ESC  SKIP`
 - **Wordless traversal:** `← →  MOVE     SPACE  FLOAT` (no LOOK or NOTEBOOK — nothing to inspect)
 - **Notebook open:** `← →  TURN PAGE     TAB  CLOSE`
-- **Pause menu:** `↑↓  CHOOSE     SPACE  SELECT     ESC  RESUME`
+- **Pause menu:** `↑↓  CHOOSE     SPACE  SELECT     P  RESUME`
 - **Title screen:** `↑↓  CHOOSE     SPACE  SELECT`
 
 ### Behavior
@@ -313,17 +313,18 @@ When a dialogue scene allows an item to be used, the relevant item glows softly 
 
 ### Controls strip during notebook
 
-`← →  TURN PAGE     TAB  CLOSE     ESC  PAUSE`
+`← →  TURN PAGE     TAB  CLOSE     ESC  CLOSE`
 
 ---
 
 ## 6. The Pause / Menu Screen
 
-*(Sprint 12: `TAB` now opens the notebook, not `ESC`. `ESC` is reserved for the pause menu. The earlier refinement below is superseded.)*
+*(Sprint 12: `TAB` now opens the notebook, not `ESC`. The earlier refinement below is superseded.)*
+*(2026-05-17: Pause moved from `ESC` to `P`. `ESC` is intentionally reserved for browser fullscreen exit — pressing ESC while in fullscreen mode exits fullscreen, not the pause menu. `P` opens the pause menu from room mode. `ESC` (or `P`) closes the pause menu — ESC is kept as a secondary resume binding because you cannot be simultaneously paused and exiting fullscreen.)*
 
 ~~**Refinement: `ESC` opens the journal directly, not a pause menu.**~~ *(Retired — see Sprint 12 TAB/ESC remap.)*
 
-The current key map: `TAB` opens the notebook; `ESC` opens the pause menu directly. From inside the notebook, `ESC` opens the pause menu (the notebook stacks below the pause overlay).
+The current key map: `TAB` opens the notebook; `P` opens the pause menu directly. From inside the notebook, `ESC` closes the notebook.
 
 Alternative: a small pause icon in the notebook's corner that opens the menu. Designer call; defaulting to the layered pattern above.
 
@@ -352,7 +353,9 @@ Each item: `Cormorant Garamond`, `clamp(16px, 2.6vw, 26px)`, `var(--text-narrati
 
 ### Controls strip during pause
 
-`↑↓  CHOOSE     SPACE  SELECT     ESC  RESUME`
+`↑↓  CHOOSE     SPACE  SELECT     P  RESUME`
+
+*(ESC also resumes as a secondary binding — not shown in the strip.)*
 
 ### Quit?
 

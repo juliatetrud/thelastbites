@@ -1080,7 +1080,7 @@
     </div>
     <button class="touch-btn" id="touch-action"   data-key="Space">●</button>
     <button class="touch-btn" id="touch-notebook" data-key="Tab" title="Notebook">☰</button>
-    <button class="touch-btn" id="touch-pause"    data-key="Escape" title="Pause">⏸</button>
+    <button class="touch-btn" id="touch-pause"    data-key="KeyP" title="Pause">⏸</button>
   </div>
 
   <!-- Music toggle: inside #game-wrap so it appears in fullscreen context.
@@ -2323,7 +2323,7 @@ function handleKeyAction(code) {
     if (code === 'KeyF') {
       toggleFullscreen();
     }
-    if (code === 'Escape' && openingSeq.state === 'complete' && !blinkBack.active) {
+    if (code === 'KeyP' && openingSeq.state === 'complete' && !blinkBack.active) {
       openPause();
     }
 
@@ -2347,7 +2347,8 @@ let lastTimestamp = null;
 
 /* ================================================================
    PAUSE MENU
-   ESC in room mode opens a minimal pause overlay.
+   P in room mode opens a minimal pause overlay.
+   ESC is reserved for browser fullscreen exit (and also closes the pause menu).
    ================================================================ */
 
 let gamePaused    = false;
@@ -2759,13 +2760,13 @@ const STRIP_STRINGS = {
   'title':                '↑↓  CHOOSE   SPACE  SELECT',
   'title-about':          'SPACE / ESC / ←  RETURN',
   // Sprint 13: ↓ COLLECT added; TAB NOTEBOOK replaces ESC JOURNAL
-  'room':                 '← →  MOVE | ↑  LOOK | ↓  COLLECT | TAB  NOTEBOOK',
-  'room-floatable':       '← →  MOVE | ↑  LOOK | ↓  COLLECT | SPACE  FLOAT | TAB  NOTEBOOK',
+  'room':                 '← →  MOVE | ↑  LOOK | ↓  COLLECT | TAB  NOTEBOOK | P  PAUSE',
+  'room-floatable':       '← →  MOVE | ↑  LOOK | ↓  COLLECT | SPACE  FLOAT | TAB  NOTEBOOK | P  PAUSE',
   'atmospheric-dialogue': '←  BACK | SPACE  CONTINUE',
   'interactive-dialogue': '←  BACK | ↑↓  CHOOSE | SPACE  SELECT',
   'cinematic':            'SPACE  CONTINUE | ESC  SKIP',
   'notebook':             '← →  TURN PAGE | TAB  CLOSE | ESC  CLOSE',
-  'pause':                '↑↓  CHOOSE | SPACE  SELECT | ESC  RESUME',
+  'pause':                '↑↓  CHOOSE | SPACE  SELECT | P  RESUME',
 };
 
 function updateActionButtonIcon() {

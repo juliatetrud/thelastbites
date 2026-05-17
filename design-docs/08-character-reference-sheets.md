@@ -533,6 +533,25 @@ The omen who can be fed. Resolution: Pip feeds the Black Shuck. He does not figh
 
 ---
 
+#### The Shadow
+
+**Role:** The climactic antagonist of Ch8 and the game. Not a separate creature — a shadow version of Pip himself: his grief, his fear, his anger for dying, tangled into one shape that should not exist.
+**Chapter:** Final chapter (Ch8, Greenpoint).
+**Door-fraction:** Pip-sized (~0.40), but never settles into a fixed shape — constantly shifting.
+**Color signature:** Blood-iron family (`#7a1418`), shared with Mamlambo. Inside the shape: static-darkness silhouette with TV-channel memories playing.
+
+**Shape:** Tangled, knotted black wires. Constantly shape-shifting. Never settles. Every time the player looks, the configuration is different.
+
+**Inside the shape:** Memories play like a TV skipping channels — moments from Pip's life, both happy and painful. The painful ones recur. The most recurring channel is the melting-face mirror image from Chapter 1, Cinematic 2, played at full cinematic fidelity but sped up.
+
+**Movement:** Slightly faster than Pip. Always one configuration ahead. The player should feel they cannot quite catch up to it visually.
+
+**Defeat condition:** Not defeated. Answered. It dissolves channel by channel as Pip overrides each painful memory with a joyful one. The final dissolve is into Pip himself — reintegration, not destruction.
+
+**What NOT to draw:** The Shadow as a separate creature (it is Pip). The Shadow as "defeated" or stabbed or attacked (it is answered, not killed). The Shadow as a stable shape (it never settles).
+
+---
+
 ### Echo-creatures
 
 #### Echo-fish (cod, haddock, plaice)

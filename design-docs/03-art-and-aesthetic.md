@@ -715,3 +715,25 @@ Portholes now render live scene layers instead of a static placeholder. Registry
 ### Luggage trolley
 
 A single ambient prop at world x=530 (just outside Pip's cabin door). Rendered via `drawLuggageTrolley(x, groundY)`: two small wheels, a metal frame, a lower rigid suitcase, an upper soft bag with clasp, and an upright handle. Gives the corridor a lived-in, in-transit feeling. Use sparingly — one trolley per corridor section to avoid clutter.
+
+---
+
+## Aurora — chapter-wide atmospheric in Ch1
+
+*(Locked P1 Session 1, 2026-05-17.)*
+
+The northern lights are part of Chapter 1's atmospheric register, not a single-room exclusive feature. The aurora is visible through:
+
+- The cabin porthole (faint reflection in the upper portion of the night-water view)
+- The grandparents' cabin window (faint reflection through wooden mullions)
+- The hallway portholes (faint reflection, all three instances)
+- The observation deck's wide viewport (the most-visible instance — the room's primary visual)
+
+The aurora's intensity scales with the room's purpose:
+
+- In transit / domestic rooms (cabin, hallway, grandparents' cabin): **subtle.** A faint band of green-violet color in the upper portion of any window-rendered scene. Slow drift.
+- In the observation deck: **full.** The aurora is the room's primary visual, occupying the upper half of the viewport, with multi-layer parallax drift.
+
+Implementation: each window/porthole scene gains an optional aurora layer in its `PORTHOLE_SCENES` config (or equivalent). The layer is drawn behind the stars and water layers, at low alpha. The observation deck uses a dedicated `drawAuroraScene` function with full parallax treatment.
+
+Bergen sits at ~60°N. The aurora is visible there, especially in winter. This is realistic, not invented.

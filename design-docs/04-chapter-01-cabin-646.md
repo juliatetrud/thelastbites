@@ -67,8 +67,15 @@ The lump carries the standard warm-amber aura (baseline ~0.15, not breadcrumb-el
 > *Hmm, my old bed.*
 *(Italic — Pip's interior thought.)*
 
-**Other cabin inspectables (unchanged):**
-- **Porthole** (showing distant Norwegian coast) — unchanged
+**Cabin props (P1 Session 1 additions — canonical, not yet implemented):**
+- **Writing desk** (world-x ~220, along the wall opposite the bed) — period-appropriate. Inspectable or atmospheric at implementation time.
+- **Washstand** (world-x ~340, near the porthole) — period-appropriate.
+- **Under-bed drawer** (at the foot of the bed or beneath the mattress) — inspectable. Contains the Smørbukk treat (per Sprint 12 suggestion, now canonical).
+- **Child's drawing on the wall** (world-x ~160) — inspectable. Narration locked:
+  > *Babcia made me pin it up. She said I'd want to see Norway in my drawing before I saw it through the window.*
+
+**Other cabin inspectables:**
+- **Porthole** (showing distant Norwegian coast; also shows a faint aurora reflection in the upper portion of the night-water view — per chapter-wide aurora rule, see `03-art-and-aesthetic.md`)
 - **Door** (the three-choice man-talking dialogue) — unchanged
 
 **Inspect text — Porthole:**
@@ -158,11 +165,19 @@ Now the cabin door becomes the trigger.
 A long ship corridor. Side-scrolls. Pixel art of a Hurtigruten-style narrow hallway, doors lining one side, brass fixtures, deep red carpet, a flickering wall sconce.
 
 The hallway has multiple inspectables:
-- **A bulletin board** with the ship's day-by-day itinerary, headed: *"WELCOME ABOARD THE MNEMOSYNE"* (Norway, Iceland, Scotland, Ireland… planting seeds for future chapters). Inspecting it triggers a small narrator beat that re-reinforces the pronunciation joke for any player who skipped the opening narration. *"Mnemosyne (Nem-OSS-uh-nee) Welcomes You Aboard. Today's Port: Bergen."*
+- **A bulletin board** (world-x ~260, early in the hallway before the first sconce) — a real visual asset: a small wooden framed board mounted on the wall with the *"WELCOME ABOARD THE MNEMOSYNE"* header rendered visibly, plus a port itinerary visible below (Norway, Iceland, Scotland, Ireland… planting seeds for future chapters). Inspecting it triggers a small narrator beat that re-reinforces the pronunciation joke for any player who skipped the opening narration. *"Mnemosyne (Nem-OSS-uh-nee) Welcomes You Aboard. Today's Port: Bergen."*
 - **A luggage cart** halfway down: *"Someone packed in a hurry. There's a stuffed bear sticking out — it looks like one Babcia gave me."*
 - **A flickering sconce** that responds to Pip — first hint of his electricity ability
 - **The grandparents' cabin door** (the next story trigger)
-- **The far end of the hallway** — leads to the rest of the ship, but is currently dark
+- **The far end of the hallway** — a descending staircase is visible in the dark zone past world-x ~1320. The staircase visibly descends into shadow, readable as "this is where you go next, but not yet." Pre-Beat-8 it is darkened; post-Beat-8 it is accessible. This is the visual signal of forward direction.
+
+**Wall-decor inspectables (P1 Session 1, canonical — two pieces confirmed):**
+- **Ship photograph** (world-x 230) — inspectable. Suggested narration: *A black-and-white photograph of a sister ship at her launch. The pose is formal, the steam pouring. A small brass plate reads something in Norwegian.*
+- **Navigational chart of the North Sea** (world-x 865) — inspectable. Suggested narration: *A framed nautical chart of the North Sea. Someone has drawn a small red circle around Bergen. The ink is fresh.*
+
+**Canonical hallway treat (P1 Session 1 — replaces debug placeholder):** A canonical treat is tucked near the luggage trolley or the bulletin board area. Specific treat TBD per Ch1 content sprint, but its existence is canonical. It emits the standard warm collect-aura. Collectable only after `↓` is learned (Beat 11b).
+
+**Hallway portholes:** All three hallway porthole scenes gain a faint aurora layer in the upper portion of the night-water view — per chapter-wide aurora rule. Subtle intensity (domestic/transit register). See `03-art-and-aesthetic.md`.
 
 **THE TWO STRANGERS.** Establishing the rule that Henrik will later break. Two scripted moments in the hallway:
 
@@ -199,8 +214,16 @@ The cinematic holds for a beat longer than feels comfortable. Then fades.
 
 Back in the room view (the grandparents' cabin in 2D), Pip can inspect:
 - **The photograph** — adds a memory to his notebook
-- **The suitcase** — Babcia's pierogi recipe card is sticking out (foreshadowing the final chapter)
-- **A radio on the desk** (the next ability hook)
+- **The suitcase** — Babcia's pierogi recipe card is sticking out (foreshadowing the final chapter). Third inspection line (P1 Session 1, canonical): *A handwritten recipe card is poking out from under the boat-shirt. Pierogi.* Do not explain it.
+- **Dziadek's radio** (world-x ~200, on the windowsill near Dziadek) — the next ability hook. See Beat 7 for locked behavior.
+
+**Grandparents' cabin decisions (P1 Session 1, canonical — not yet implemented):**
+
+- **Babcia's inspection line:** Locked as Polish. *Babciu, jestem tutaj.* No English fallback. The Polish version is canonical and final. (See Multilingual dialogue rule in `01-story-bible.md`.)
+- **Bed configuration:** One bed. Locked. The visual research tracker's "two beds" suggestion is overridden. This is canonical.
+- **Armchair with Dziadek's coat** (world-x ~280, between Dziadek's window-side and the bed) — inspectable. Suggested narration: *Dziadek's wool coat is folded over the armchair. He must have meant to wear it. He hasn't moved since they were told.*
+- **No wardrobe** — the coat-over-armchair carries the emotional weight; the wardrobe is not added.
+- **Window/porthole:** Shows a faint aurora reflection — per chapter-wide aurora rule. See `03-art-and-aesthetic.md`.
 
 **A subtle character note:** Dziadek's "almost-see" here is *different* from the strangers' total blindness in the hallway. He is grieving and family. The player should *not* register this as "his grandparents can see him" — that's wrong, they can't, not really. They are the *grieving family who almost feels something*. Henrik in the kitchen will be a categorically different beat: not almost. *Yes. I see you. Sit down.*
 
@@ -209,7 +232,9 @@ Back in the room view (the grandparents' cabin in 2D), Pip can inspect:
 ### Beat 7: THE RADIO (second ability - speak through speakers)
 **Mode:** Room
 
-Pip inspects the radio. As he gets close, it crackles on its own. He puts his hand near it. His voice comes out of the speaker — small, tinny, but real.
+Pip inspects the radio. As he gets close, it crackles on its own — this is the radio's canonical behavior (P1 Session 1): when Pip approaches within the standard aura range (~30 px), the domestic radio crackles to life with a faint static sound, foreshadowing the Beat 8 ship-intercom discovery. He puts his hand near it. His voice comes out of the speaker — small, tinny, but real.
+
+**Radio lore (P1 Session 1 — locked):** This is Dziadek's domestic radio (1900s-era Edwardian, wooden-cased, on the windowsill at world-x ~200). It is *not* the Beat 8 radio. The Beat 8 radio is the ship's intercom system. Two different radios; both are real objects in the game. The grandparents' cabin radio crackle is foreshadowing — the player will not yet know there is a second radio to find.
 
 > PIP: *Hello?*
 > *His own voice answers from the radio.*

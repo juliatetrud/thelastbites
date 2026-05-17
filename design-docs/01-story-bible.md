@@ -219,6 +219,16 @@ A massive world-cruising ocean liner named **The Mnemosyne** *(Nem-OSS-uh-nee)*.
 - **The Snail Hallway:** A passage on a lower deck where the great snail breakout took place. Now permanently inhabited by candle-shelled echo-snails. Pip traverses this in the Brittany chapter (see ports below).
 - **The Top Deck:** Open sea, weather, the sense of motion.
 
+### Echo-creatures: one species per chapter
+
+The Mnemosyne carries the residue of every encounter across its history — small spectral animals that drift along baseboards, scuttle across pipes, hang from rafters. The ghost-vermin. They are translucent, ground-level, and slightly drained-looking. Touching one drains a small amount of Pip's strength (canonical echo-creature behavior).
+
+Each chapter features **one species** as its ambient ghost-vermin, deliberately. The species changes by chapter — never repeated, always specific. This gives each port-of-call a distinct ambient register without overwhelming any single environment.
+
+**Chapter 1: echo-mice.** Small, ground-level, drained-amber translucent. They scuttle along baseboards in the dark corridor. They are unattended but not menacing — the chapter's only "small wrongness" beyond the cinematics.
+
+*(Future chapters TBD — the visual research tracker enumerates candidates: echo-spiders, echo-bats, echo-rats, echo-tarsiers, mosquitoes, urban vermin like cockroaches. Each will be assigned to a chapter as that chapter is designed.)*
+
 ---
 
 ## The Setting: The Ports
@@ -541,6 +551,18 @@ All three modes in one short passage, using the grandparents' cabin scene:
 - **Quoted** = what Pip says aloud, with attribution and optional narration tail.
 
 7. **Sensation has texture.** "Dark water sparkles and dances" rather than "dark water." "A sob breaks through the air" rather than "crying continues." The narration earns its emotional moments through specific physical detail.
+
+### Multilingual dialogue
+
+Characters speak their first language for emotionally-loaded moments. The player understands intent from context — there is no in-game translation UI, no subtitles, no hover-to-translate. The player's inability to translate-perfectly is part of Pip's experience: he is a child encountering languages he doesn't fully speak.
+
+**Examples:**
+
+- Babcia and Dziadek speak Polish to Pip. Babcia's inspection in the grandparents' cabin lands on *"Babciu, jestem tutaj"* ("Babcia, I'm here"). The Polish version is canonical; no English fallback is provided.
+- Henrik's mutter is Norwegian. The janitor's mutter is Norwegian.
+- Future chapters will use Estonian (Leida, Ch2), Turkish (Muhittin and Omer, Ch4), Indonesian (Ch6 chef), Portuguese (Ch7 chef), Polish again at the climax (Babcia in Ch8).
+
+When a line's emotional weight requires it, the original language is used. When clarity is essential (e.g., the player needs to know what was said for puzzle purposes), the line is in English. The default for atmospheric moments: original language.
 
 ---
 

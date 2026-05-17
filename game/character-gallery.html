@@ -239,7 +239,7 @@ html, body {
     <a href="#sec-greenpoint">Greenpoint</a>
     <a href="#sec-ship">The Ship</a>
     <a href="#sec-chefs">Chefs</a>
-    <a href="#sec-ghosts">Ghost-children</a>
+    <a href="#sec-ghosts">Ghosts</a>
     <a href="#sec-monsters">Monsters</a>
     <a href="#sec-echoes">Echo-creatures</a>
   </nav>
@@ -273,7 +273,7 @@ html, body {
   </div>
 
   <div id="sec-ghosts" class="gallery-section">
-    <div class="section-header"><span>Ghost-children</span></div>
+    <div class="section-header"><span>Ghosts</span></div>
     <div class="gallery-row" id="row-ghosts"></div>
   </div>
 
@@ -1232,6 +1232,12 @@ const CHARACTERS = [
     colorSig: 'evening-wear black / white shirt',
     tells: 'formal collar, white shirt-front',
   },
+  {
+    id: 'doctor', name: 'The Doctor', chapterTag: 'Ch 1', section: 'ship', designed: false,
+    frac: 0.62, fracLabel: '0.60–0.65',
+    colorSig: 'dark formal coat / cream shirt',
+    tells: 'middle-aged adult, formal coat, small medical bag, tired posture',
+  },
 
   // ── CHEFS ──────────────────────────────────────────────────
   {
@@ -1269,10 +1275,40 @@ const CHARACTERS = [
     tells: 'similar to Omer, blue detail',
   },
   {
-    id: 'sandy-family', name: "Sandy's Family", chapterTag: 'Ch 3', section: 'chefs', designed: false,
-    frac: 0.55, fracLabel: 'group',
-    colorSig: 'warm-amber kitchen palette',
-    tells: 'warm kitchen group, multiple figures',
+    id: 'caitlin', name: 'Caitlin', chapterTag: 'Ch 3', section: 'chefs', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'blond pixie cut / kitchen apron',
+    tells: 'middle-aged woman, short blond pixie haircut, apron, in motion',
+  },
+  {
+    id: 'robert', name: 'Robert', chapterTag: 'Ch 3', section: 'chefs', designed: false,
+    frac: 0.62, fracLabel: '0.60–0.68',
+    colorSig: 'brown hair / casual',
+    tells: 'adult, tall, brown hair, muscular build',
+  },
+  {
+    id: 'archie', name: 'Archie', chapterTag: 'Ch 3', section: 'chefs', designed: false,
+    frac: 0.62, fracLabel: '0.60–0.68',
+    colorSig: 'brown hair / quiet',
+    tells: 'adult, tall, skinny, brown hair, quieter — almost-sees Sandy',
+  },
+  {
+    id: 'max', name: 'Max', chapterTag: 'Ch 3', section: 'chefs', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'brown hair / casual',
+    tells: 'adult, slightly shorter than Archie, brown hair',
+  },
+  {
+    id: 'gus', name: 'Gus', chapterTag: 'Ch 3', section: 'chefs', designed: false,
+    frac: 0.60, fracLabel: '0.55–0.65',
+    colorSig: 'brown hair / casual',
+    tells: 'adult, slightly shorter than Archie, brown hair, often with Max',
+  },
+  {
+    id: 'bibi', name: 'Bibi', chapterTag: 'Ch 3', section: 'chefs', designed: false,
+    frac: 0.38, fracLabel: '0.35–0.40',
+    colorSig: 'light brown hair / child',
+    tells: "child, about Pip's age, skinny, long light brown hair, the only girl",
   },
   {
     id: 'johannes', name: 'Johannes', chapterTag: 'Ch 5', section: 'chefs', designed: false,
@@ -1299,7 +1335,7 @@ const CHARACTERS = [
     tells: 'shorter adult, faded cotton dress',
   },
 
-  // ── GHOST-CHILDREN ─────────────────────────────────────────
+  // ── GHOSTS ─────────────────────────────────────────────────
   {
     id: 'erik', name: 'Erik', chapterTag: 'ghost, Ch 7–8', section: 'ghosts', designed: true,
     colorSig: 'warm-amber glow / dark hair', fracLabel: '~0.40',
@@ -1321,6 +1357,12 @@ const CHARACTERS = [
     frac: 0.38, fracLabel: '0.35–0.40',
     colorSig: 'sea-green-blue translucent',
     tells: 'Edwardian collar, pale hair, girl-height',
+  },
+  {
+    id: 'edie', name: 'Edie', chapterTag: 'ghost, Ch 3', section: 'ghosts', designed: false,
+    frac: 0.58, fracLabel: '0.55–0.65',
+    colorSig: 'warm-amber / brass-button cardigan',
+    tells: 'elderly ghost, apron, headscarf, brass-buttoned cardigan, wet hands',
   },
 
   // ── MONSTERS ──────────────────────────────────────────────

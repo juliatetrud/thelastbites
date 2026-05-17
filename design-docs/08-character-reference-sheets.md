@@ -257,6 +257,21 @@ Reference implementation: scripted passenger NPC in `game/index.html`, establish
 
 ---
 
+#### The Doctor
+
+**Role:** Attending physician present on the night of Pip's death. The human face of the news Pip hasn't yet understood.
+**Chapter:** Ch1 only (cabin-exit cinematic, Beat 4).
+**Door-fraction:** 0.60–0.65 (66–72 px).
+**Color signature:** No locked spirit color — he is alive. Formal palette: dark formal coat or doctor's overcoat + cream shirt. No ghost glow.
+**Silhouette tell:** Middle-aged adult man, formal coat, small medical bag in hand. Tired posture — slightly inclined, weight-bearing. Brown hair.
+**Movement register:** To be locked if/when needed. He passes Pip without seeing him — one-shot scripted exit only.
+
+He was called to Cabin 646 when Pip collapsed. The player overhears him through the cabin door ("…there was nothing more we could do. I'm so sorry."), then sees him exit the cabin past Pip in the cabin-exit cinematic. He never sees Pip. He is not recurring.
+
+**What NOT to draw:** the Doctor as cold or clinical — he is *tired and kind*. He cared. He is not a villain; he is a witness.
+
+---
+
 ### Chefs by Chapter
 
 #### Henrik (present-day)

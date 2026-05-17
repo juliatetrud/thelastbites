@@ -339,13 +339,14 @@ Alternative: a small pause icon in the notebook's corner that opens the menu. De
 
 ### Menu options
 
-**Shipped state (Sprint M1):** Three items, navigated with ↑↓, confirmed with SPACE/ENTER:
+**Shipped state (Sprint 17):** Four items, navigated with ↑↓, confirmed with SPACE/ENTER:
 
 1. `Resume`
 2. `Mobile controls: ON / OFF` *(toggles in place — does not close menu)*
-3. `Restart Chapter`
+3. `Save and quit` *(auto-saves immediately, then reloads to title/gate; shown in `var(--text-faint)` with `pointer-events: none` when unavailable — specifically during cinematics, transitions, or before the opening sequence completes)*
+4. `Restart Chapter`
 
-The mobile-controls item reflects auto-detection by default (`ON` on touch devices, `OFF` on desktop). Selecting it overrides detection for the session (no localStorage persistence). Earlier plans for Sound toggle, checkpoint restore, and Return to title are deferred until save state exists.
+The mobile-controls item reflects auto-detection by default (`ON` on touch devices, `OFF` on desktop). Selecting it overrides detection for the session (no localStorage persistence). Earlier plans for Sound toggle and checkpoint restore are deferred.
 
 Each item: `Cormorant Garamond`, `clamp(16px, 2.6vw, 26px)`, `var(--text-narration)`. Selected state: `var(--warm-pool-amber)`. Hover: `var(--warm-pool-glow)`. Clickable/tappable directly.
 
@@ -370,6 +371,8 @@ The game's front door. The first thing the player sees.
 On cold load, the game shows a pure black screen before the title. A single line — *"Press any key to begin."* — fades in over 1.2s (Cormorant Garamond, `clamp(13px, 1.9vw, 18px)`, `var(--text-narration)`, letter-spacing `0.12em`). Any keypress, mouse click, or touch dismisses the gate.
 
 **Why it exists:** browser autoplay policy blocks audio until a user gesture occurs. The gate guarantees that the title track can start the moment the player engages — no blocked-autoplay fallback needed.
+
+**Returning players (Sprint 17):** when a valid save exists in localStorage, the gate auto-dismisses — `transitionFromGate()` is called from `initGate()` before the text fade-in, so the title screen appears immediately with `Continue` highlighted. Audio unlocks on the player's first keypress at the title menu.
 
 **Transition:** gate fades out over 0.4s (`#gate-overlay.hidden` class → `opacity: 0; pointer-events: none`). Simultaneously, `gameMode` switches to `'title'` and the title canvas starts rendering. The title track begins at volume 0 and ramps to `music.baseVolume` over 0.6s. The gate DOM element is removed from display after the fade completes.
 
@@ -402,16 +405,20 @@ Heavy vignette and grain (persistent `#grain` overlay, same as gameplay).
 
 DOM overlay, `Cormorant Garamond` italic, `clamp(14px, 2vw, 20px)`, `var(--text-speaker)`. Margin-top `2%`.
 
-### Menu (v1 — two items)
+### Menu
 
-Double-border panel (matching dialogue-box chrome) beneath the subtitle. Two items:
+Double-border panel (matching dialogue-box chrome) beneath the subtitle. Navigation: `↑`/`↓` keys move selection; `SPACE`/`ENTER` confirms. Mouse hover and click also work.
 
-1. **Play** — fades title screen to black over ~0.8s, crossfades title track → `main` track, loads hallway
+**No save (first-time player):** Two items:
+1. **Play** — fades title screen to black over ~0.8s, crossfades title track → `main` track, loads hallway at the start of Chapter 1
 2. **About** — opens About overlay (see below)
 
-Save/continue/chapter-select/credits are deferred until save state exists. Sound toggle is the existing music icon — no separate menu item.
+**Save exists (returning player):** Three items:
+1. **Continue** *(highlighted by default)* — applies saved state (room, position, stomach, notebook items, cinematics played) and loads directly into gameplay. Opening narration does not replay.
+2. **About** — opens About overlay
+3. **Start over** *(rendered in `var(--text-faint)` as a secondary action)* — clears the save and starts a fresh game immediately, no confirmation prompt.
 
-Navigation: `↑`/`↓` keys move selection; `SPACE`/`ENTER` confirms. Mouse hover and click also work.
+Chapter-select and credits are deferred to post-Chapter-1 sprints. Sound toggle is the existing music icon — no separate menu item.
 
 ### About overlay
 

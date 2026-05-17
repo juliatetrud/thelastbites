@@ -237,31 +237,65 @@ The existing prototype's structure makes each of these straightforward.
 
 ## Saving and Loading
 
-Use `localStorage`:
-```javascript
-function save() {
-  localStorage.setItem('lastbites-save', JSON.stringify({
-    chapter: currentChapter,
-    room: currentRoom,
-    abilities: pip.abilities,
-    journal: journalEntries,
-    pairedMemories: pairedMemoryInventory,  // Ch5+ — for the climax
-    flags: storyFlags,
-  }));
-}
+**Shipped Sprint 17. This section reflects the implementation as of 2026-05-17.**
 
-function load() {
-  const data = JSON.parse(localStorage.getItem('lastbites-save') || 'null');
-  if (data) { /* restore state */ }
+Single auto-save slot in `localStorage` under the key `tlb-save-v1`. The doc's earlier `lastbites-save` key is superseded.
+
+### Key and schema
+
+```javascript
+const SAVE_KEY     = 'tlb-save-v1';
+const SAVE_VERSION = 1;
+
+// Save shape (v1)
+{
+  version:         1,
+  savedAt:         "<ISO timestamp>",
+  currentRoom:     "hallway" | "cabin" | "grandparents",
+  pip: {
+    x:             <number>,
+    facing:        "left" | "right",
+    stomachValue:  <number 0–100>,
+    floatUnlocked: <boolean>,
+  },
+  cabinState:      { bedRevealed, beatStage, mirrorRevealed, doctorSeen },
+  chapterState:    { openingPlayed },
+  cinematicPlayed: [<array of cinematic name strings>],
+  passenger:       { thoughtBeatFired: <boolean> },
+  notebookItems:   [{ id, name, annotation, kind, sprite }],
 }
 ```
 
-Auto-save when:
-- Entering a new room
-- Completing a puzzle
-- Triggering a cinematic
-- Unlocking an ability
-- Adding to the paired-memory inventory (Ch5+)
+Paired-memory inventory and port history (Ch5+) are not yet persisted — fields will be added in a future sprint.
+
+### Save-at-exit principle
+
+Saves fire at the **end** of a beat, never at the start. A returning player never re-watches content they have already seen. Specifically, `autoSave()` is called from:
+
+1. `startTransition()` — after the fade-in completes and `transition.active` is cleared
+2. `startCinematicFadeOut()` — inside the 600ms callback, after `onEnd()` fires
+3. `pickupCollectible()` — inside the tween `onComplete`, after the notebook pulse
+4. Opening narration `onEnd` callback — after `showHUD()`
+5. Blink-back `narrating` phase completion — after `setRoomStrip()`
+
+### Schema version handling
+
+On load, if `data.version !== SAVE_VERSION`, a console warning is logged and the save is treated as non-existent. The orphan data remains in localStorage (for potential future migration). JSON parse failures are caught and treated the same way.
+
+### Incognito / storage disabled
+
+All `localStorage` calls are wrapped in `try/catch`. If storage is unavailable, `autoSave()` silently no-ops and `loadSave()` returns `null`. Game plays normally without persistence.
+
+### Title screen integration
+
+- `initGate()` calls `loadSave()`. A valid save → `titleState.savedGame` is set and the gate auto-dismisses.
+- `initTitleScreen()` reads `titleState.savedGame` to switch the menu between 2-item (Play/About) and 3-item (Continue/About/Start over) layouts.
+- `startContinueToGameplay()` calls `applySave()` then fades into gameplay at the saved room.
+- `Start over` calls `clearSave()` and `startTitleToGameplay()` immediately, no confirmation prompt.
+
+### Pause menu Save and quit
+
+Fourth pause item. Calls `autoSave()` then `window.location.reload()`. Disabled (faint, `pointer-events:none`) when `cinematic.active`, `transition.active`, or `openingSeq.state !== 'complete'` — prevents mid-beat saves that would violate the save-at-exit principle.
 
 ---
 

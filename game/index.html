@@ -630,8 +630,9 @@
     cursor: pointer;
     transition: color 0.15s ease;
   }
-  .pause-item.selected { color: var(--warm-pool-amber); }
-  .pause-item:hover    { color: var(--warm-pool-glow); }
+  .pause-item.selected  { color: var(--warm-pool-amber); }
+  .pause-item:hover     { color: var(--warm-pool-glow); }
+  .pause-item.disabled  { color: var(--text-faint); pointer-events: none; }
 
   /* ============================================================
      SPRINT 15: TITLE SCREEN
@@ -700,8 +701,9 @@
     text-align: center;
     min-width: 90px;
   }
-  .title-item.selected { color: var(--warm-pool-amber); }
-  .title-item:hover    { color: var(--warm-pool-glow); }
+  .title-item.selected  { color: var(--warm-pool-amber); }
+  .title-item:hover     { color: var(--warm-pool-glow); }
+  .title-item.secondary { color: var(--text-faint); }
 
   /* About overlay — z-index 75, covers controls strip */
   #about-panel {
@@ -974,6 +976,7 @@
       <div id="title-menu-panel">
         <div class="title-item selected" id="title-item-play">Play</div>
         <div class="title-item" id="title-item-about">About</div>
+        <div class="title-item secondary" id="title-item-startover" style="display:none">Start over</div>
       </div>
     </div>
 
@@ -1049,6 +1052,7 @@
         <div class="pause-title">Paused</div>
         <div class="pause-item selected" onclick="closePause()">Resume</div>
         <div class="pause-item" id="pause-mobile-toggle" onclick="toggleMobileControls()">Mobile controls: ON</div>
+        <div class="pause-item" id="pause-save-quit" onclick="handleSaveAndQuit()">Save and quit</div>
         <div class="pause-item" onclick="window.location.reload()">Restart Chapter</div>
       </div>
     </div>
@@ -1232,6 +1236,118 @@ const mirrorBeat = {
 const chapterState = {
   openingPlayed: false, // true once the materialization/yawn/narration sequence completes
 };
+
+/* ================================================================
+   SPRINT 17: SAVE STATE
+   Single auto-save slot. Key: 'tlb-save-v1'. Save-at-exit only.
+   ================================================================ */
+
+const SAVE_KEY     = 'tlb-save-v1';
+const SAVE_VERSION = 1;
+
+function buildSaveObject() {
+  return {
+    version:         SAVE_VERSION,
+    savedAt:         new Date().toISOString(),
+    currentRoom,
+    pip: {
+      x:             pip.x,
+      facing:        pip.body.facing,
+      stomachValue:  pip.stomach.value,
+      floatUnlocked: pip.float.unlocked,
+    },
+    cabinState:      { ...cabinState },
+    chapterState:    { ...chapterState },
+    cinematicPlayed: Array.from(cinematic.played),
+    passenger:       { thoughtBeatFired: passenger.thoughtBeatFired },
+    notebookItems:   notebook.items.map(i => ({ ...i })),
+  };
+}
+
+function autoSave() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(buildSaveObject()));
+    pulseNotebookIcon();
+  } catch (e) {
+    // Storage disabled / quota exceeded — silently no-op.
+  }
+}
+
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data.version !== SAVE_VERSION) {
+      console.log('[TLB] Save version mismatch (found', data.version, ', expected', SAVE_VERSION, '). Starting fresh.');
+      return null;
+    }
+    return data;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearSave() {
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+}
+
+function applySave(data) {
+  // Restore currentRoom first — setRoomStrip and music read it.
+  currentRoom = data.currentRoom;
+
+  // Restore Pip position and orientation
+  pip.x              = data.pip.x;
+  pip.body.facing    = data.pip.facing;
+  pip.float.altitude = 0;
+  pip.float.vy       = 0;
+  pip.stomach.value  = data.pip.stomachValue;
+  pip.float.unlocked = data.pip.floatUnlocked;
+
+  // Restore story flags
+  Object.assign(cabinState,   data.cabinState);
+  Object.assign(chapterState, data.chapterState);
+
+  // Restore cinematic history (saved as array, live state is Set)
+  cinematic.played = new Set(data.cinematicPlayed);
+
+  // Restore passenger state; re-arm spawn timer if still pending
+  passenger.thoughtBeatFired = data.passenger.thoughtBeatFired;
+  if (currentRoom === 'hallway') {
+    passenger.hallwayEntered = true;
+    if (!passenger.thoughtBeatFired) {
+      passenger.firstEntryTimer = 1.5;
+    } else {
+      passenger.triggered = true;
+    }
+  }
+
+  // Restore notebook items and mark collectibles as already collected
+  notebook.items = data.notebookItems.map(i => ({ ...i }));
+  renderNotebookItems();
+  const collectedIds = new Set(data.notebookItems.map(i => i.id));
+  for (const room of Object.values(rooms)) {
+    if (room.collectibles) {
+      for (const c of room.collectibles) {
+        if (collectedIds.has(c.id)) c.collected = true;
+      }
+    }
+  }
+
+  // Opening sequence is complete — skip materialization on game start
+  openingSeq.state = 'complete';
+
+  // Sync HUD DOM
+  renderStomachIndicator();
+}
+
+function pulseNotebookIcon() {
+  const icon = document.getElementById('notebook-icon');
+  if (!icon) return;
+  icon.classList.remove('pulse');
+  void icon.offsetWidth; // reflow to restart animation
+  icon.classList.add('pulse');
+}
 
 /* ================================================================
    SPRINT 13: STOMACH + BLINK-BACK CONSTANTS
@@ -1950,10 +2066,11 @@ const cinematic = {
    ================================================================ */
 
 const titleState = {
-  menuSelected:        0,      // 0=Play, 1=About
+  menuSelected:        0,      // 0=Play/Continue, 1=About, 2=Start over (save exists)
   aboutVisible:        false,
   gateDone:            false,  // true once first-keypress gate has been dismissed
   transitioningToGame: false,
+  savedGame:           null,   // Sprint 17: non-null when a valid save was found on load
 };
 
 let titleAudio = null;  // <audio id="title-track">
@@ -2162,7 +2279,7 @@ function handleKeyAction(code) {
       pauseSelected = Math.max(0, pauseSelected - 1);
       updatePauseHighlight();
     } else if (code === 'ArrowDown') {
-      pauseSelected = Math.min(2, pauseSelected + 1);
+      pauseSelected = Math.min(3, pauseSelected + 1);
       updatePauseHighlight();
     } else if (code === 'Space' || code === 'Enter') {
       confirmPauseSelection();
@@ -2256,8 +2373,12 @@ function closePause() {
 }
 
 function updatePauseHighlight() {
+  const saveQuitAvailable = openingSeq.state === 'complete' && !cinematic.active && !transition.active;
   document.querySelectorAll('.pause-item').forEach((el, i) => {
     el.classList.toggle('selected', i === pauseSelected);
+    if (el.id === 'pause-save-quit') {
+      el.classList.toggle('disabled', !saveQuitAvailable);
+    }
   });
 }
 
@@ -2266,9 +2387,18 @@ function confirmPauseSelection() {
     closePause();
   } else if (pauseSelected === 1) {
     toggleMobileControls();  // doesn't close pause
+  } else if (pauseSelected === 2) {
+    handleSaveAndQuit();
   } else {
     window.location.reload();
   }
+}
+
+function handleSaveAndQuit() {
+  const available = openingSeq.state === 'complete' && !cinematic.active && !transition.active;
+  if (!available) return;
+  autoSave();
+  window.location.reload();
 }
 
 function loop(timestamp) {
@@ -2611,6 +2741,7 @@ function updateOpeningSequence(dt) {
             setRoomStrip();
             // Sprint 13: show HUD once opening completes
             showHUD();
+            autoSave();
           },
         });
       }, 200);
@@ -3015,6 +3146,7 @@ function pickupCollectible(c) {
       if (c.kind === 'treat') {
         gainStrength(c.stomachValue);
       }
+      autoSave();
     },
   });
 
@@ -4056,6 +4188,7 @@ function startTransition(toRoom, entryEdge, entryX) {
 
       setTimeout(() => {
         transition.active = false;
+        autoSave();
       }, 200);  // wait for fade-out transition to complete
     }, 200);  // hold duration
   }, 200);  // wait for fade-in to complete before swapping
@@ -4265,6 +4398,7 @@ function startCinematicFadeOut() {
     if (openingSeq.state === 'complete') showHUD();
 
     if (onEnd) onEnd();
+    autoSave();
   }, 600);
 }
 
@@ -6194,6 +6328,7 @@ function updateBlinkBack(dt) {
         document.getElementById('stomach-indicator').classList.add('visible');
         document.getElementById('notebook-icon').classList.add('visible');
         setRoomStrip();
+        autoSave();
       }
       break;
   }
@@ -6257,7 +6392,17 @@ function initGate() {
     e.preventDefault();
     transitionFromGate();
   }, { passive: false });
-  // Fade in the gate text (double rAF forces a paint before the transition fires)
+
+  // Sprint 17: returning players skip the gate; save is loaded here so
+  // initTitleScreen() can read titleState.savedGame immediately after.
+  const saved = loadSave();
+  if (saved) {
+    titleState.savedGame = saved;
+    transitionFromGate();  // hides overlay, sets gameMode='title'
+    return;
+  }
+
+  // First-time players: fade in the gate prompt
   requestAnimationFrame(() => {
     requestAnimationFrame(() => { text.classList.add('visible'); });
   });
@@ -6275,22 +6420,49 @@ function transitionFromGate() {
 }
 
 function initTitleScreen() {
+  // Sprint 17: if a save exists, switch to the 3-item Continue menu
+  if (titleState.savedGame) {
+    document.getElementById('title-item-play').textContent = 'Continue';
+    document.getElementById('title-item-startover').style.display = '';
+  }
+
   // Mouse hover changes selection
-  document.getElementById('title-item-play').addEventListener('mouseover',  () => selectTitleItem(0));
-  document.getElementById('title-item-about').addEventListener('mouseover', () => selectTitleItem(1));
-  // Mouse click selects
+  document.getElementById('title-item-play').addEventListener('mouseover',      () => selectTitleItem(0));
+  document.getElementById('title-item-about').addEventListener('mouseover',     () => selectTitleItem(1));
+  document.getElementById('title-item-startover').addEventListener('mouseover', () => {
+    if (titleState.savedGame) selectTitleItem(2);
+  });
+
+  // Mouse click
   document.getElementById('title-item-play').addEventListener('click', () => {
     unlockMusic();
-    startTitleToGameplay();
+    if (titleState.savedGame) {
+      startContinueToGameplay();
+    } else {
+      startTitleToGameplay();
+    }
   });
   document.getElementById('title-item-about').addEventListener('click', () => {
     unlockMusic();
     selectTitleItem(1);
     openAboutPanel();
   });
+  document.getElementById('title-item-startover').addEventListener('click', () => {
+    if (!titleState.savedGame) return;
+    unlockMusic();
+    clearSave();
+    titleState.savedGame = null;
+    startTitleToGameplay();
+  });
 }
 
 function handleTitleKey(code) {
+  // Sprint 17: for returning players (gate auto-dismissed), unlock audio on first keypress
+  if (!music.unlocked) unlockMusic();
+  if (titleAudio && titleAudio.paused && music.on) {
+    titleAudio.play().catch(() => {});
+  }
+
   if (titleState.aboutVisible) {
     if (code === 'Escape' || code === 'ArrowLeft' || code === 'Space' || code === 'Enter') {
       closeAboutPanel();
@@ -6298,15 +6470,26 @@ function handleTitleKey(code) {
     return;
   }
 
+  const maxItem = titleState.savedGame ? 2 : 1;
+
   if (code === 'ArrowUp') {
     selectTitleItem(Math.max(0, titleState.menuSelected - 1));
   } else if (code === 'ArrowDown') {
-    selectTitleItem(Math.min(1, titleState.menuSelected + 1));
+    selectTitleItem(Math.min(maxItem, titleState.menuSelected + 1));
   } else if (code === 'Space' || code === 'Enter') {
     if (titleState.menuSelected === 0) {
-      startTitleToGameplay();
-    } else {
+      if (titleState.savedGame) {
+        startContinueToGameplay();
+      } else {
+        startTitleToGameplay();
+      }
+    } else if (titleState.menuSelected === 1) {
       openAboutPanel();
+    } else {
+      // Start over
+      clearSave();
+      titleState.savedGame = null;
+      startTitleToGameplay();
     }
   } else if (code === 'KeyF') {
     toggleFullscreen();
@@ -6377,6 +6560,52 @@ function startTitleToGameplay() {
         setTimeout(() => {
           // Transition overlay done — opening sequence runs naturally
         }, 200);
+      }, 200);
+    }
+  })(performance.now());
+}
+
+/* Sprint 17: Continue path — applies save then fades into gameplay at saved room. */
+function startContinueToGameplay() {
+  if (titleState.transitioningToGame) return;
+  titleState.transitioningToGame = true;
+
+  document.getElementById('about-panel').classList.remove('visible');
+  applySave(titleState.savedGame);
+
+  // Fade out title audio
+  if (titleAudio) {
+    const startVol  = titleAudio.volume;
+    const fadeDurMs = 800;
+    const fadeT0    = performance.now();
+    (function fadeTitleOut(ts) {
+      const p = Math.min((ts - fadeT0) / fadeDurMs, 1);
+      if (titleAudio) titleAudio.volume = startVol * (1 - p);
+      if (p < 1) requestAnimationFrame(fadeTitleOut);
+      else if (titleAudio) titleAudio.pause();
+    })(performance.now());
+  }
+
+  const overlay = document.getElementById('room-transition');
+  overlay.style.transition = 'none';
+
+  const fadeDurMs = 800;
+  const fadeT0    = performance.now();
+  (function fadeToBlack(ts) {
+    const p = Math.min((ts - fadeT0) / fadeDurMs, 1);
+    overlay.style.opacity = p.toFixed(3);
+    if (p < 1) {
+      requestAnimationFrame(fadeToBlack);
+    } else {
+      gameMode = 'gameplay';
+      document.getElementById('title-screen').style.display = 'none';
+      playMusic(ROOM_MUSIC[currentRoom] || 'main');
+      showHUD();
+      setRoomStrip();
+
+      setTimeout(() => {
+        overlay.style.transition = '';
+        overlay.style.opacity    = '0';
       }, 200);
     }
   })(performance.now());

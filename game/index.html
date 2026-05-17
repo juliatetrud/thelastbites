@@ -3821,7 +3821,7 @@ function drawCabinNumberPlaque(x, y, number) {
 function drawRunnerCarpet(camX) {
   const carpetY = FLOOR_Y;
   const carpetH = 9;
-  const margin  = 10;
+  const margin  = 28;
 
   // Crimson base band
   ctx.fillStyle = '#4a1818';
@@ -5612,7 +5612,7 @@ function drawHallway(camX, now) {
     const gx = Number(gxStr);
     const sx = Math.round(gx - camX);
     if (sx > W + doorW + 22 || sx < -doorW - 22) continue;
-    drawCabinNumberPlaque(sx + Math.floor(doorW / 2) + 3, doorTop + 28, num);
+    drawCabinNumberPlaque(sx, doorTop + 28, num);
   }
 
   // Far-right dark zone (game-world x 1320–1440)

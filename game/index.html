@@ -1963,12 +1963,13 @@ const rooms = {
     },
   },
   hallway: {
-    width:       HALL_W,                      // 1440
-    pipMaxX:     1312,                        // 1320 − PIP_HALF_W — stops before dark zone
-    pipMinX:     PIP_HALF_W + 4,              //   16 — left wall (Sprint 10.7: visible wall added)
-    objects:     hallwayObjects,
-    collectibles: hallwayCollectibles,        // Sprint 13: debug Bamsemums for testing
-    draw:        drawHallway,                 // defined below (hoisted)
+    width:        HALL_W,                      // 1440
+    pipMaxX:      1312,                        // 1320 − PIP_HALF_W — stops before dark zone
+    pipMinX:      PIP_HALF_W + 4,              //   16 — left wall (Sprint 10.7: visible wall added)
+    objects:      hallwayObjects,
+    collectibles: hallwayCollectibles,         // Sprint 13: debug Bamsemums for testing
+    draw:         drawHallway,                 // defined below (hoisted)
+    portholeScene: 'ch1-ocean-night',          // Sprint 16: porthole scenery system
     pipEntryX: {
       fromLeft:  PIP_HALF_W + 8,              //  16 — entering from left
       fromRight: HALL_W - PIP_HALF_W - 8,     // 1424 — entering from right (future use)
@@ -3387,6 +3388,22 @@ function drawPipMouthYawn(yawnT) {
    (porthole, sconce) → openings (brass fitting, door).
    ================================================================ */
 
+/* ================================================================
+   SPRINT 16: PORTHOLE SCENE SYSTEM
+   PORTHOLE_SCENES is the registry. Add an entry for each chapter's
+   porthole scene. drawHallway passes the room's portholeScene id.
+   ================================================================ */
+
+const PORTHOLE_SCENES = {
+  'ch1-ocean-night': {
+    layers: [
+      { kind: 'sky-stars',    parallax: 0.008 },
+      { kind: 'horizon-line', parallax: 0 },
+      { kind: 'water-waves',  parallax: 0 },
+    ],
+  },
+};
+
 /* drawShipPanel — one riveted metal wall panel.
    Strokes the panel outline; places 2×2 rivet dots at all four
    corners (4px inset) when rivets:true (default).
@@ -3611,7 +3628,360 @@ function drawSconce(x, y, opts) {
   ctx.fillStyle = lightGrad;
   ctx.fillRect(x - 30, y - 22, 60, 52);
 
+  // ── Floor light pool — warm amber on floor beneath sconce (Sprint 16) ──
+  ctx.globalAlpha = bracketB * 0.20;
+  const floorPool = ctx.createRadialGradient(x, FLOOR_Y, 0, x, FLOOR_Y, 38);
+  floorPool.addColorStop(0, 'rgba(240,200,152,1)');
+  floorPool.addColorStop(1, 'rgba(240,200,152,0)');
+  ctx.fillStyle = floorPool;
+  ctx.fillRect(x - 38, FLOOR_Y - 14, 76, 34);
+
   ctx.globalAlpha = 1;
+}
+
+/* ================================================================
+   SPRINT 16: PORTHOLE SCENE DRAW FUNCTIONS
+   drawPortholeScene wraps drawPorthole's brass frame with a clipped
+   scene interior. _drawPortholeLayer renders each layer kind.
+   ================================================================ */
+
+/* Draw a porthole with a scene-filled interior. Brass frame drawn on top. */
+function drawPortholeScene(x, y, radius, sceneId, camX, now) {
+  const r     = radius;
+  const ri    = r - 3;
+  const scene = PORTHOLE_SCENES[sceneId];
+  const worldX = Math.round(x + camX);
+
+  // Outer bevel
+  ctx.strokeStyle = 'rgba(50,35,15,0.6)';
+  ctx.lineWidth   = 2;
+  ctx.beginPath(); ctx.arc(x, y, r + 2, 0, Math.PI * 2); ctx.stroke();
+
+  // Brass ring
+  ctx.strokeStyle = '#8a6c3c';
+  ctx.lineWidth   = 3;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+
+  // Scene interior — clipped to inner radius
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, ri, 0, Math.PI * 2);
+  ctx.clip();
+
+  ctx.fillStyle = '#0a0d1f';
+  ctx.beginPath(); ctx.arc(x, y, ri, 0, Math.PI * 2); ctx.fill();
+
+  if (scene) {
+    for (const layer of scene.layers) {
+      _drawPortholeLayer(x, y, ri, layer, camX, now, worldX);
+    }
+  }
+
+  // Pane divider within clip
+  ctx.strokeStyle = 'rgba(40,60,110,0.22)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(x - ri, y); ctx.lineTo(x + ri, y);
+  ctx.moveTo(x, y - ri); ctx.lineTo(x, y + ri);
+  ctx.stroke();
+
+  ctx.restore();
+
+  // Brass ring highlight
+  ctx.strokeStyle = 'rgba(185,155,85,0.45)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath(); ctx.arc(x, y, r - 1, Math.PI, Math.PI * 1.75); ctx.stroke();
+}
+
+/* Render one porthole scene layer inside an already-clipped context. */
+function _drawPortholeLayer(cx, cy, ri, layer, camX, now, worldX) {
+  switch (layer.kind) {
+    case 'sky-stars': {
+      // Deep indigo sky — upper portion of the porthole
+      const sg = ctx.createLinearGradient(cx, cy - ri, cx, cy + 3);
+      sg.addColorStop(0, '#0a0d1f');
+      sg.addColorStop(1, '#12182e');
+      ctx.fillStyle = sg;
+      ctx.fillRect(cx - ri, cy - ri, ri * 2, ri + 5);
+
+      // Deterministic cold-white stars; subtle camera drift for parallax
+      const drift = (camX * layer.parallax) % (ri * 2);
+      const seed  = (worldX * 7919 + 3) | 0;
+      ctx.fillStyle = '#dde4f0';
+      for (let i = 0; i < 9; i++) {
+        const h0 = ((seed ^ (i * 1237)) * 2654435761 >>> 0) & 0xFFFF;
+        const h1 = ((seed ^ (i * 2053 + 7)) * 2654435761 >>> 0) & 0xFFFF;
+        const sx = cx + ((h0 / 65535) - 0.5) * (ri * 1.8) - drift;
+        const sy = cy - 1 - (h1 / 65535) * (ri - 2);
+        ctx.globalAlpha = 0.45 + (h0 % 55) / 100;
+        ctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case 'horizon-line': {
+      // Subtle darker band where sky meets water; slow ambient pulse
+      const pulse = 0.85 + Math.sin(now / 12000) * 0.15;
+      const hy    = cy + 1;
+      const hg    = ctx.createLinearGradient(cx, hy - 2, cx, hy + 5);
+      hg.addColorStop(0,   'rgba(3,5,12,0)');
+      hg.addColorStop(0.5, `rgba(3,5,12,${(0.65 * pulse).toFixed(2)})`);
+      hg.addColorStop(1,   'rgba(3,5,12,0)');
+      ctx.fillStyle = hg;
+      ctx.fillRect(cx - ri, hy - 2, ri * 2, 7);
+      break;
+    }
+    case 'water-waves': {
+      // Very dark water base — lower half
+      ctx.fillStyle = '#040810';
+      ctx.fillRect(cx - ri, cy + 1, ri * 2, ri - 1);
+
+      // 3 slow drifting wave-crest streaks
+      for (let i = 0; i < 3; i++) {
+        const wY = cy + 3 + i * 3 + Math.sin(now / (8000 + i * 1500) + i * 2.1) * 1.5;
+        const wA = Math.max(0.03, 0.06 + Math.sin(now / 6000 + i * 1.7) * 0.03);
+        ctx.globalAlpha = wA;
+        ctx.fillStyle   = '#2a3858';
+        ctx.fillRect(cx - ri + 2, Math.round(wY), ri * 2 - 4, 1);
+      }
+      ctx.globalAlpha = 1;
+
+      // Very faint amber water-surface glimmer
+      ctx.globalAlpha = Math.max(0, 0.04 + Math.sin(now / 9000) * 0.015);
+      ctx.fillStyle   = '#3a2818';
+      ctx.fillRect(cx - ri + 1, cy + 1, ri * 2 - 2, 2);
+      ctx.globalAlpha = 1;
+      break;
+    }
+  }
+}
+
+/* ================================================================
+   SPRINT 16: CABIN NUMBER PLAQUES
+   Brass plate with engraved 3-digit number in a 3×5 pixel font.
+   ================================================================ */
+
+/* 3×5 pixel bitmap font for digits 0–9. Row-major, left-to-right. */
+const _TINY_DIGITS = [
+  [1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1], // 0
+  [0,1,0, 1,1,0, 0,1,0, 0,1,0, 1,1,1], // 1
+  [1,1,1, 0,0,1, 0,1,1, 1,0,0, 1,1,1], // 2
+  [1,1,1, 0,0,1, 0,1,1, 0,0,1, 1,1,1], // 3
+  [1,0,1, 1,0,1, 1,1,1, 0,0,1, 0,0,1], // 4
+  [1,1,1, 1,0,0, 1,1,1, 0,0,1, 1,1,1], // 5
+  [1,1,0, 1,0,0, 1,1,1, 1,0,1, 1,1,1], // 6
+  [1,1,1, 0,0,1, 0,1,0, 0,1,0, 0,1,0], // 7
+  [1,1,1, 1,0,1, 1,1,1, 1,0,1, 1,1,1], // 8
+  [1,1,1, 1,0,1, 1,1,1, 0,0,1, 1,1,1], // 9
+];
+
+function _drawTinyNumber(x, y, n) {
+  const digits = String(n).padStart(3, '0').split('').map(Number);
+  ctx.fillStyle = 'rgba(10,6,2,0.88)';
+  digits.forEach((d, di) => {
+    const bitmap = _TINY_DIGITS[d];
+    const ox     = x + di * 4;     // 3px digit + 1px gap between digits
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 3; col++) {
+        if (bitmap[row * 3 + col]) ctx.fillRect(ox + col, y + row, 1, 1);
+      }
+    }
+  });
+}
+
+/* Draw a brass cabin-number plaque. x,y = plate centre (screen coords). */
+function drawCabinNumberPlaque(x, y, number) {
+  const pw = 18, ph = 9;
+  const pl = Math.round(x - pw / 2);
+  const pt = Math.round(y - ph / 2);
+
+  // Plate body
+  ctx.fillStyle = '#8a6c3c';
+  ctx.fillRect(pl, pt, pw, ph);
+
+  // Bevel highlight — top and left edges
+  ctx.fillStyle = 'rgba(185,155,85,0.65)';
+  ctx.fillRect(pl, pt, pw, 1);
+  ctx.fillRect(pl, pt, 1, ph);
+
+  // Bevel shadow — bottom and right edges
+  ctx.fillStyle = 'rgba(35,22,6,0.55)';
+  ctx.fillRect(pl, pt + ph - 1, pw, 1);
+  ctx.fillRect(pl + pw - 1, pt, 1, ph);
+
+  // Number: 3 digits × (3px wide + 1px gap) = 11px total; start offset to center
+  _drawTinyNumber(Math.round(x - 5), Math.round(y - 2), number);
+}
+
+/* ================================================================
+   SPRINT 16: RUNNER CARPET
+   Deep-crimson runner over the floor planks, narrower than corridor.
+   ================================================================ */
+
+function drawRunnerCarpet(camX) {
+  const carpetY = FLOOR_Y;
+  const carpetH = 9;
+  const margin  = 10;
+
+  // Crimson base band
+  ctx.fillStyle = '#4a1818';
+  ctx.fillRect(margin, carpetY, W - margin * 2, carpetH);
+
+  // Highlight strip at top (pile sheen)
+  ctx.fillStyle = 'rgba(115,42,42,0.60)';
+  ctx.fillRect(margin, carpetY, W - margin * 2, 1);
+
+  // Wear texture — world-fixed darker patches
+  const spacing = 43;
+  const offset  = camX % spacing;
+  ctx.fillStyle = 'rgba(16,4,4,0.42)';
+  for (let wx = -offset; wx < W; wx += spacing) {
+    const sx = Math.round(wx);
+    if (sx < margin + 1 || sx > W - margin - 7) continue;
+    ctx.fillRect(sx,      carpetY + 2, 4, 2);
+    ctx.fillRect(sx + 10, carpetY + 5, 3, 1);
+  }
+
+  // Two subtle woven detail lines (fringe pattern suggestion)
+  ctx.fillStyle = 'rgba(80,22,22,0.55)';
+  ctx.fillRect(margin + 3, carpetY + 3, W - margin * 2 - 6, 1);
+  ctx.fillRect(margin + 3, carpetY + 6, W - margin * 2 - 6, 1);
+}
+
+/* ================================================================
+   SPRINT 16: WALL DECOR
+   Framed decorative pieces hung at mid-wall eye-line.
+   ================================================================ */
+
+function drawWallArt(x, y, kind) {
+  switch (kind) {
+    case 'ship-photo': {
+      const w = 16, h = 12;
+      const fl = Math.round(x - w / 2), ft = Math.round(y - h / 2);
+      ctx.fillStyle = '#5a4028';  // dark wood frame
+      ctx.fillRect(fl - 1, ft - 1, w + 2, h + 2);
+      ctx.fillStyle = '#8a7050';  // sepia print
+      ctx.fillRect(fl, ft, w, h);
+      ctx.fillStyle = '#4a3418';  // ship silhouette
+      ctx.fillRect(fl + 3,  ft + h - 4, 10, 2);   // hull
+      ctx.fillRect(fl + 6,  ft + h - 7, 2,  3);   // funnel
+      ctx.fillRect(fl + 10, ft + h - 6, 1,  2);   // mast
+      ctx.fillStyle = 'rgba(200,220,255,0.07)';    // glass reflection
+      ctx.fillRect(fl, ft, w / 2, h / 2);
+      break;
+    }
+    case 'botanical': {
+      const w = 14, h = 14;
+      const fl = Math.round(x - w / 2), ft = Math.round(y - h / 2);
+      ctx.fillStyle = '#3a2c18';  // dark wood frame
+      ctx.fillRect(fl - 1, ft - 1, w + 2, h + 2);
+      ctx.fillStyle = '#c0b080';  // cream mat
+      ctx.fillRect(fl, ft, w, h);
+      ctx.fillStyle = '#586438';  // leaves
+      ctx.fillRect(fl + 2, ft + 4, 4, 6);
+      ctx.fillRect(fl + 5, ft + 3, 4, 7);
+      ctx.fillRect(fl + 8, ft + 5, 4, 5);
+      ctx.fillStyle = '#303820';  // stems
+      ctx.fillRect(fl + 6, ft + 2, 1, 8);
+      ctx.fillRect(fl + 3, ft + 3, 1, 6);
+      break;
+    }
+    case 'mirror': {
+      const r = 7;
+      ctx.fillStyle = '#8a6c3c';  // brass frame
+      ctx.beginPath(); ctx.arc(Math.round(x), Math.round(y), r + 1, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#0c1428';  // dark reflective glass
+      ctx.beginPath(); ctx.arc(Math.round(x), Math.round(y), r - 1, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(28,48,88,0.38)';  // blue-tint suggestion
+      ctx.fillRect(Math.round(x) - 3, Math.round(y) - 4, 6, 8);
+      ctx.strokeStyle = 'rgba(130,155,200,0.22)';
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      ctx.arc(Math.round(x) - 1, Math.round(y) - 1, r - 2, Math.PI * 1.1, Math.PI * 1.7);
+      ctx.stroke();
+      break;
+    }
+    case 'barometer': {
+      const r = 7;
+      ctx.fillStyle = '#8a6c3c';  // brass rim
+      ctx.beginPath(); ctx.arc(Math.round(x), Math.round(y), r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#d4c8a4';  // ivory face
+      ctx.beginPath(); ctx.arc(Math.round(x), Math.round(y), r - 2, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#2e1808';  // needle
+      ctx.lineWidth   = 1;
+      ctx.beginPath();
+      ctx.moveTo(Math.round(x), Math.round(y));
+      ctx.lineTo(Math.round(x) + 3, Math.round(y) - 4);
+      ctx.stroke();
+      ctx.fillStyle = '#8a6c3c';  // center pin
+      ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 2, 2);
+      break;
+    }
+    case 'map': {
+      const w = 18, h = 12;
+      const fl = Math.round(x - w / 2), ft = Math.round(y - h / 2);
+      ctx.fillStyle = '#3a2c18';  // dark frame
+      ctx.fillRect(fl - 1, ft - 1, w + 2, h + 2);
+      ctx.fillStyle = '#b8a060';  // aged parchment
+      ctx.fillRect(fl, ft, w, h);
+      ctx.strokeStyle = '#4a2e14';  // coastline marks
+      ctx.lineWidth   = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(fl + 2,  ft + 4); ctx.lineTo(fl + 5,  ft + 8); ctx.lineTo(fl + 8,  ft + 7);
+      ctx.moveTo(fl + 10, ft + 3); ctx.lineTo(fl + 13, ft + 5); ctx.lineTo(fl + 15, ft + 8);
+      ctx.stroke();
+      ctx.strokeStyle = '#6a4420';  // inner border rule
+      ctx.lineWidth   = 0.5;
+      ctx.strokeRect(fl + 1, ft + 1, w - 2, h - 2);
+      break;
+    }
+  }
+  ctx.globalAlpha = 1;
+  ctx.lineWidth   = 1;
+}
+
+/* ================================================================
+   SPRINT 16: LUGGAGE TROLLEY
+   Ambient decoration — vintage steel trolley with stacked bags.
+   x = horizontal centre, groundY = floor y (screen coords).
+   ================================================================ */
+
+function drawLuggageTrolley(x, groundY) {
+  const cx = Math.round(x), fy = Math.round(groundY);
+
+  // Wheels
+  ctx.fillStyle = '#202020';
+  ctx.beginPath(); ctx.arc(cx - 8, fy - 3, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx + 8, fy - 3, 2, 0, Math.PI * 2); ctx.fill();
+
+  // Trolley frame — dark metal
+  ctx.fillStyle = '#383028';
+  ctx.fillRect(cx - 9,  fy - 18, 2, 15);   // left leg
+  ctx.fillRect(cx + 7,  fy - 18, 2, 15);   // right leg
+  ctx.fillRect(cx - 9,  fy - 18, 18, 2);   // bottom shelf bar
+  ctx.fillRect(cx - 8,  fy - 28, 16, 2);   // luggage shelf bar
+
+  // Handle post + grip
+  ctx.fillStyle = '#503c28';
+  ctx.fillRect(cx - 2, fy - 40, 4, 14);
+  ctx.fillRect(cx - 6, fy - 40, 12, 2);
+
+  // Lower suitcase — brown leather
+  ctx.fillStyle = '#6a4828';
+  ctx.fillRect(cx - 8, fy - 27, 16, 10);
+  ctx.fillStyle = '#885e38';   // top highlight
+  ctx.fillRect(cx - 8, fy - 27, 16, 2);
+  ctx.fillStyle = '#9e7a48';   // brass clasps/strap
+  ctx.fillRect(cx - 1, fy - 27, 2, 10);
+  ctx.fillRect(cx - 8, fy - 22, 16, 1);
+
+  // Upper bag — darker leather
+  ctx.fillStyle = '#4e3822';
+  ctx.fillRect(cx - 5, fy - 38, 10, 9);
+  ctx.fillStyle = '#6a5030';   // highlight
+  ctx.fillRect(cx - 5, fy - 38, 10, 2);
+  ctx.fillStyle = '#9e7a48';   // buckle
+  ctx.fillRect(cx - 1, fy - 34, 2, 4);
 }
 
 /* drawBrassFitting(x, y, type, w) — small brass door detail.
@@ -5164,6 +5534,21 @@ function drawHallway(camX, now) {
     });
   }
 
+  // Sprint 16: Wall decor — framed pieces at mid-wall eye-line, between fixtures
+  const WALL_DECOR = [
+    { x: 230,  kind: 'ship-photo' },
+    { x: 435,  kind: 'barometer'  },
+    { x: 650,  kind: 'botanical'  },
+    { x: 865,  kind: 'map'        },
+    { x: 1115, kind: 'mirror'     },
+  ];
+  const decorY = 118;
+  for (const d of WALL_DECOR) {
+    const sx = Math.round(d.x - camX);
+    if (sx < -25 || sx > W + 25) continue;
+    drawWallArt(sx, decorY, d.kind);
+  }
+
   // Wall fixtures — one per gap between the 6 doors, all at y=85.
   // Pattern alternates porthole / sconce / porthole / sconce / porthole.
   // x positions are gap centres (doors at 80,280,480,700,920,1180):
@@ -5172,15 +5557,17 @@ function drawHallway(camX, now) {
   //   gap 3 (480→700) x=600  porthole
   //   gap 4 (700→920) x=810  sconce (flickering — Beat 8 foreshadowing)
   //   gap 5 (920→1180) x=1050 porthole
-  const fixtureY  = 85;
-  const portholeR = 17;   // bottom edge 85+17=102; doorTop is now 58
-  const PORTHOLES = [180, 600, 1050];
-  const SCONCES   = [390, 810];   // 810 flickers
+  const fixtureY   = 85;
+  const portholeR  = 17;   // bottom edge 85+17=102; doorTop is now 58
+  const PORTHOLES  = [180, 600, 1050];
+  const SCONCES    = [390, 810];   // 810 flickers
+  const hallScene  = rooms.hallway.portholeScene;
 
+  // Sprint 16: portholes now render a clipped ocean-at-night scene
   for (const gx of PORTHOLES) {
     const sx = Math.round(gx - camX);
     if (sx < -(portholeR + 5) || sx > W + portholeR + 5) continue;
-    drawPorthole(sx, fixtureY, portholeR, { moonlight: true, divider: true });
+    drawPortholeScene(sx, fixtureY, portholeR, hallScene, camX, now);
   }
 
   for (const gx of SCONCES) {
@@ -5211,13 +5598,21 @@ function drawHallway(camX, now) {
     });
   }
 
-  // Doors — six total; grandparents' door (1180) has warm glow
-  // Sprint 10.7: door at 480 is Pip's cabin door (Cabin 646)
+  // Doors — six total; grandparents' door (1180) and Pip's cabin (480) have warm glow
+  // Sprint 16: cabin numbers assigned — 640/642/646/648/650/644(grandparents)
   for (const gx of [80, 280, 480, 700, 920, 1180]) {
     const sx = Math.round(gx - camX);
     if (sx > W + doorW || sx < -doorW) continue;
-    // Cabin door (480) gets a faint warm hint — it's Pip's room
     drawDoor(sx, doorTop, { w: doorW, h: doorH, warm: gx === 1180 || gx === 480 });
+  }
+
+  // Sprint 16: cabin number plaques — to the right of each door, upper-mid height
+  const CABIN_NUMBERS = { 80: 640, 280: 642, 480: 646, 700: 648, 920: 650, 1180: 644 };
+  for (const [gxStr, num] of Object.entries(CABIN_NUMBERS)) {
+    const gx = Number(gxStr);
+    const sx = Math.round(gx - camX);
+    if (sx > W + doorW + 22 || sx < -doorW - 22) continue;
+    drawCabinNumberPlaque(sx + Math.floor(doorW / 2) + 3, doorTop + 28, num);
   }
 
   // Far-right dark zone (game-world x 1320–1440)
@@ -5234,20 +5629,18 @@ function drawHallway(camX, now) {
     }
   }
 
-  // Floor surface with carpet tint — lifted base
+  // Floor surface — lifted base, warm-purple carpet tint
   const floorSurfH = 20;
   const floorGrad  = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + floorSurfH);
-  floorGrad.addColorStop(0,    '#283858');   // lifted from #1a2848
-  floorGrad.addColorStop(0.35, '#2e2030');   // warm-purple carpet tint
+  floorGrad.addColorStop(0,    '#283858');
+  floorGrad.addColorStop(0.35, '#2e2030');
   floorGrad.addColorStop(1,    '#080e20');
   ctx.fillStyle = floorGrad;
   ctx.fillRect(0, FLOOR_Y, W, floorSurfH);
 
-  // Carpet runner
-  ctx.fillStyle = 'rgba(90,18,28,0.28)';
-  ctx.fillRect(0, FLOOR_Y - 3, W, 5);
-
+  // Sprint 16: floor planks first, then runner carpet on top
   drawFloorPlanks(camX, { lineColor: 'rgba(18,30,58,0.20)' });
+  drawRunnerCarpet(camX);
 
   // Floor line
   ctx.strokeStyle = 'rgba(90,72,120,0.45)';
@@ -5258,6 +5651,12 @@ function drawHallway(camX, now) {
     fillColor:   'rgba(20,32,58,0.68)',
     strokeColor: 'rgba(70,55,95,0.38)',
   });
+
+  // Sprint 16: luggage trolley — ambient set-dressing, game-world x=530
+  const trolleySX = Math.round(530 - camX);
+  if (trolleySX > -30 && trolleySX < W + 30) {
+    drawLuggageTrolley(trolleySX, FLOOR_Y);
+  }
 }
 
 /* ================================================================

@@ -672,3 +672,46 @@ Here's a clean spec sheet to give any artist. Includes the locked decisions; exp
 **Animation, when used.** Hand-animated frames at 6–10 FPS. Two to four frames for most cycles. Reserved for: the mirror melt, Henrik's first reaction, Pip's tasting moments, the shared-meal beats, the final crossing-through-the-door, and the shadow's wire shape-shifts. Not used for ambient room life — that's done in code (drifting dust, lamp flicker, parallax).
 
 **Style references.** *Owlboy*, *Hyper Light Drifter*, *Thimbleweed Park*, *The Excavation of Hob's Barrow*, plus *7th Guest*, *Coraline*, *Over the Garden Wall*, *Luigi's Mansion*.
+
+---
+
+## Ship-Corridor Detail Kit
+
+*(Added Sprint 16. Reuse these systems in any future ship-interior room.)*
+
+The hallway introduced five ambient detail layers that future corridor scenes should reuse or extend. All are procedural (no commissioned art required), in keeping with the code-driven ambient life budget.
+
+### Cabin number plaques
+
+Brass plates with a 1px bevel, 18×9px, attached above each door. Numbers rendered via a 3×5 pixel bitmap font (`_TINY_DIGITS`). Three-digit even integers following the ship's alternating-side corridor numbering convention: odd rooms on the starboard side, even on the port side, increasing toward the bow. Pip's cabin is **646**; grandparents' cabin is **644** (next door in number space). Non-player doors use 640, 642, 648, 650. Function: `drawCabinNumberPlaque(x, y, number)`.
+
+### Runner carpet
+
+A 9px-tall deep-crimson (`#4a1818`) strip running the full hallway length at floor level, slightly inset from each baseboard (10px margin). World-fixed wear texture (seeded `Math.sin` per world-x) and two woven detail lines (one pixel each) simulate an aged fabric runner. Function: `drawRunnerCarpet(camX)`. Draws after floor planks so it sits on top of them.
+
+### Wall decor
+
+Five artworks distributed along the hallway at world x: 230, 435, 650, 865, 1115. Kinds: `ship-photo`, `barometer`, `botanical`, `map`, `mirror`. Each is a small 24–32px canvas placeholder — ornate frame outline, hint of interior content. Spaced to avoid portholes (at 180, 600, 1050). Function: `drawWallArt(x, y, kind)`. Future ship corridors can use the same function; add new `kind` values as needed.
+
+### Sconce floor light pools
+
+The existing sconce draw function was extended to cast a radial warm-amber gradient pool on the floor directly below each wall bracket. Gradient: `rgba(240,200,152,1)` at center to transparent, radius 38, anchored at `FLOOR_Y`. Alpha at `bracketB * 0.20` (flicker-driven) so the pool breathes with the flame. The low alpha (0.20) keeps the effect atmospheric rather than garish — adjustable if future scenes need stronger pools.
+
+### Porthole scenery system
+
+Portholes now render live scene layers instead of a static placeholder. Registry: `PORTHOLE_SCENES`, keyed by scene id string. Each entry has a `layers` array; each layer has a `kind` and a `parallax` coefficient.
+
+**Layer kinds (currently implemented):**
+- `sky-stars` — indigo gradient + 9 seeded stars with slow camera-drift
+- `horizon-line` — dark band with slow sine pulse
+- `water-waves` — dark base + 3 drifting streaks + occasional warm-amber shimmer
+
+**Parallax values:** Keep star parallax near 0.008 (just perceptible drift as the camera moves). Horizon and water layers at 0 (time-based animation only) — higher parallax values shift content out of the porthole clip region at the extremes of the hallway scroll range.
+
+**Chapter 1 scene:** `'ch1-ocean-night'` — three layers (sky-stars/horizon-line/water-waves). Add new scene ids per chapter in the `PORTHOLE_SCENES` registry without modifying the rendering code.
+
+**Clip region:** `drawPortholeScene` clips all layer rendering inside the inner porthole radius using `ctx.save() / ctx.clip() / ctx.restore()`. The brass frame is drawn *after* the clip restore so it always sits on top.
+
+### Luggage trolley
+
+A single ambient prop at world x=530 (just outside Pip's cabin door). Rendered via `drawLuggageTrolley(x, groundY)`: two small wheels, a metal frame, a lower rigid suitcase, an upper soft bag with clasp, and an upright handle. Gives the corridor a lived-in, in-transit feeling. Use sparingly — one trolley per corridor section to avoid clutter.

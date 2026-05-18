@@ -1116,6 +1116,12 @@ const FLOAT_MAX_RISE_V = 80;   // px/s upward speed cap
 
 const HALL_W = 1440;           // hallway width — 3× canvas width
 
+/* Sprint 20: Beat 8 constants */
+const JANITOR_SPEED             = 105;    // px/s — matches passenger speed
+const DARK_CORRIDOR_AURA_R      = 38;     // px radius of Pip's aura in the dark corridor
+const FLOAT_DISCOVERY_RISE_RATE = 50;     // px/s upward during involuntary float discovery
+const FLOAT_DISCOVERY_FALL_RATE = 50;     // px/s downward after peak
+
 /* ================================================================
    CANVAS SETUP
    ================================================================ */
@@ -1194,6 +1200,15 @@ const pip = {
 
   /* Sprint 13: squat animation when ↓ pressed with no collectible nearby */
   squatTimer: 0,   // counts down from SQUAT_DURATION; >0 means squatting
+
+  /* Sprint 20: ability flags earned through story puzzles.
+     Gating: used for narrative consistency and future chapters.
+     electricity: earned at Beat 8 broken-sconce puzzle.
+     talkThroughSpeakers: earned at Beat 7 radio discovery. */
+  abilities: {
+    electricity:          false,
+    talkThroughSpeakers:  false,
+  },
 };
 
 /* ================================================================
@@ -1217,6 +1232,71 @@ const cabinState = {
   doctorSeen:     false,   // Sprint 14: true after doctor-exit cinematic plays on first cabin entry
 };
 
+/* ================================================================
+   SPRINT 20: DARK CORRIDOR ROOM STATE
+   ================================================================ */
+
+const darkCorridor = {
+  lit:         false,  // false = near-black dark state; true = industrial-palette lit state
+  cartRemoved: false,  // true after janitor walks the cart off-screen
+  cartX:       840,    // cart world-x; updated by janitorWalk when janitor pushes it
+};
+
+/* Held-button puzzle primitive. Sprint 20: only the broken sconce uses this. */
+const heldButtonPuzzle = {
+  active:      false,
+  buttonCode:  'ArrowUp',
+  chargeLevel: 0,
+  fillRate:    1 / 1.5,   // fills in 1.5s
+  drainRate:   1 / 3.0,   // drains in 3.0s — slower than fill, no fail state
+  onComplete:  null,
+};
+
+/* Lights-on scripted sequence — runs after sconce puzzle completes. */
+const lightsOnSequence = {
+  active:       false,
+  elapsed:      0,
+  sconcesLit:   0,
+  totalSconces: 5,
+};
+
+/* Spark particles during held-button sconce puzzle. */
+const sconceSparks = [];   // [{x, y, vx, vy, age, maxAge}]
+
+/* Beat 8 involuntary float discovery (distinct from Beat 5 panic float). */
+const floatDiscovery = {
+  active: false,
+  phase:  'none',   // 'none' | 'rising' | 'falling' | 'done'
+  timer:  0,
+};
+
+/* Janitor's scripted walk state machine. */
+const janitorWalk = {
+  active:  false,
+  phase:   'none',  // 'none' | 'entering' | 'paused-at-cart' | 'pushing-cart' | 'done'
+  x:       -20,
+  facing:  'right',
+  targetX: 840,
+  timer:   0,
+};
+
+/* Echo-mouse AI state. */
+const echoMouse = {
+  x:          600,     // world-x
+  facing:     'right',
+  phase:      'pausing',  // 'walking' | 'pausing'
+  timer:      2.0,        // seconds remaining in current phase
+  walkTarget: 660,        // world-x destination for current walk burst
+  ANCHOR:     600,        // centre of range
+  RANGE:      70,         // stays within ANCHOR±RANGE
+  BURST:      80,         // walk burst length
+  touched:    false,      // cooldown flag: briefly true after draining Pip
+  touchTimer: 0,
+};
+
+/* Sprint 20: audio stubs — no-op until a sound-design sprint ships. */
+function playSound(name) { /* stub — name logged only in dev */ }
+
 /* Sprint 11 — cinematic / sequence state for mirror beat */
 const mirrorBeat = {
   /* Scripted panic sequence (post-bed-reveal) */
@@ -1235,6 +1315,15 @@ const mirrorBeat = {
 
 const chapterState = {
   openingPlayed: false, // true once the materialization/yawn/narration sequence completes
+
+  /* Sprint 20: Beat 7 + Beat 8 state flags */
+  radioDiscovered:     false, // true after first radio inspection (talk-through-speakers earned)
+  darkCorridorEntered: false, // true on first entry to dark corridor
+  sconceFixed:         false, // true after broken-sconce held-button puzzle completes
+  floatUnlocked:       false, // true after broken-glass float-discovery sequence
+  cartFound:           false, // true after janitor's cart inspection
+  janitorPaged:        false, // true after Pip pages J. Henriksen via radio
+  janitorWalked:       false, // true after janitor's scripted walk completes
 };
 
 /* ================================================================
@@ -1251,13 +1340,16 @@ function buildSaveObject() {
     savedAt:         new Date().toISOString(),
     currentRoom,
     pip: {
-      x:             pip.x,
-      facing:        pip.body.facing,
-      stomachValue:  pip.stomach.value,
-      floatUnlocked: pip.float.unlocked,
+      x:                    pip.x,
+      facing:               pip.body.facing,
+      stomachValue:         pip.stomach.value,
+      floatUnlocked:        pip.float.unlocked,
+      abilityElectricity:   pip.abilities.electricity,
+      abilityTalkSpeakers:  pip.abilities.talkThroughSpeakers,
     },
     cabinState:      { ...cabinState },
     chapterState:    { ...chapterState },
+    darkCorridor:    { lit: darkCorridor.lit, cartRemoved: darkCorridor.cartRemoved, cartX: darkCorridor.cartX },
     cinematicPlayed: Array.from(cinematic.played),
     passenger:       { thoughtBeatFired: passenger.thoughtBeatFired },
     notebookItems:   notebook.items.map(i => ({ ...i })),
@@ -1302,11 +1394,20 @@ function applySave(data) {
   pip.float.altitude = 0;
   pip.float.vy       = 0;
   pip.stomach.value  = data.pip.stomachValue;
-  pip.float.unlocked = data.pip.floatUnlocked;
+  pip.float.unlocked                 = data.pip.floatUnlocked;
+  pip.abilities.electricity          = data.pip.abilityElectricity   || false;
+  pip.abilities.talkThroughSpeakers  = data.pip.abilityTalkSpeakers  || false;
 
   // Restore story flags
   Object.assign(cabinState,   data.cabinState);
   Object.assign(chapterState, data.chapterState);
+
+  // Restore dark corridor state (additive — missing fields default to initial values)
+  if (data.darkCorridor) {
+    darkCorridor.lit         = data.darkCorridor.lit         || false;
+    darkCorridor.cartRemoved = data.darkCorridor.cartRemoved || false;
+    darkCorridor.cartX       = data.darkCorridor.cartX       != null ? data.darkCorridor.cartX : 840;
+  }
 
   // Restore cinematic history (saved as array, live state is Set)
   cinematic.played = new Set(data.cinematicPlayed);
@@ -1937,6 +2038,207 @@ const grandparentsObjects = [
       choices: null, onEnd: null,
     },
   },
+
+  /* ---- Dziadek's radio (Sprint 20) ---- windowsill, world-x ~200
+     Three dialogue states gated on chapterState flags.
+     State 1 (pre-discovery): radio discovery + talk-through-speakers unlock.
+     State 2 (post-discovery, pre-cart): brief passive re-inspect line.
+     State 3 (post-cart-found): three choices: Listen / Page / Not now. */
+  {
+    id: 'gp-radio',
+    x: 200,
+    sparkleY: 100,
+    get breadcrumb() { return chapterState.cartFound; },   // elevated aura post-cart-found
+    get node() {
+      if (!chapterState.radioDiscovered) {
+        // State 1: first inspection \u2014 discovery
+        return {
+          id: 'gp-radio-discovery',
+          lines: [
+            { speaker: null,  text: 'Pip\u2019s voice would come out of this radio.', italic: false },
+            { speaker: 'PIP', text: '\u201c\u2026hello?\u201d', italic: false },
+            { speaker: null,  text: 'His voice answers from the speaker. Tinny. Small. But real.', italic: false },
+            { speaker: 'PIP', text: '\u201cOh. Oh, this is good.\u201d', italic: false },
+          ],
+          choices: null,
+          onEnd() {
+            chapterState.radioDiscovered = true;
+            pip.abilities.talkThroughSpeakers = true;
+          },
+        };
+      }
+      if (!chapterState.cartFound) {
+        // State 2: post-discovery, pre-cart \u2014 passive re-inspect
+        return {
+          id: 'gp-radio-passive',
+          lines: [
+            { speaker: null, text: 'The radio hums quietly.', italic: false },
+          ],
+          choices: null, onEnd: null,
+        };
+      }
+      // State 3: post-cart-found \u2014 page-choice node
+      return {
+        id: 'gp-radio-page-choice',
+        lines: [
+          { speaker: null, text: 'Pip\u2019s voice would come out of this radio.', italic: false },
+        ],
+        choices: [
+          {
+            id: 'radio-listen',
+            text: 'Listen.',
+            onSelect() {
+              showDialogue({
+                id: 'gp-radio-discovery-replay',
+                lines: [
+                  { speaker: null,  text: 'Pip\u2019s voice would come out of this radio.', italic: false },
+                  { speaker: 'PIP', text: '\u201c\u2026hello?\u201d', italic: false },
+                  { speaker: null,  text: 'His voice answers from the speaker. Tinny. Small. But real.', italic: false },
+                  { speaker: 'PIP', text: '\u201cOh. Oh, this is good.\u201d', italic: false },
+                ],
+                choices: null, onEnd: null,
+              });
+            },
+          },
+          {
+            id: 'radio-page',
+            text: 'Page someone over the intercom.',
+            onSelect() {
+              showDialogue({
+                id: 'gp-radio-paging',
+                lines: [
+                  { speaker: null,  text: 'Pip thinks of the name on the cart. He clears his throat.', italic: false },
+                  { speaker: 'PIP', text: '\u201cAttention. J. Henriksen to the dark corridor. Please.\u201d', italic: false },
+                  { speaker: null,  text: 'His voice carries through the ship.', italic: false },
+                ],
+                choices: null,
+                onEnd() {
+                  chapterState.janitorPaged = true;
+                },
+              });
+            },
+          },
+          {
+            id: 'radio-not-now',
+            text: 'Not now.',
+            onSelect() { closeDialogue(); },
+          },
+        ],
+        onEnd: null,
+      };
+    },
+  },
+];
+
+/* ================================================================
+   SPRINT 20: DARK CORRIDOR OBJECTS
+   Broken sconce, janitor's cart, stairwell. Echo-mouse handled via
+   the echoMouse state object (not an inspectable object).
+   ================================================================ */
+
+const darkCorridorObjects = [
+  /* ---- Broken sconce + wires ---- world-x ~420 */
+  {
+    id: 'dc-sconce',
+    x: 420,
+    sparkleY: 110,
+    breadcrumb: true,   // elevated aura pulse
+    get node() {
+      if (chapterState.sconceFixed) {
+        // Already fixed — no re-inspect interaction
+        return {
+          id: 'dc-sconce-fixed',
+          lines: [
+            { speaker: null, text: 'The sconce is repaired. The wires are quiet now.', italic: false },
+          ],
+          choices: null, onEnd: null,
+        };
+      }
+      // Pre-puzzle: start the held-button interaction
+      return {
+        id: 'dc-sconce-pre',
+        lines: [
+          { speaker: null, text: 'The wires are sparking.', italic: false },
+          { speaker: null, text: 'Pip wonders if he could do something with them.', italic: true },
+          { speaker: null, text: 'He reaches out.', italic: false },
+        ],
+        choices: null,
+        onEnd() {
+          startHeldButtonPuzzle('ArrowUp', 1 / 1.5, 1 / 3.0, () => {
+            // Puzzle complete
+            chapterState.sconceFixed = true;
+            pip.abilities.electricity = true;
+            playSound('sconce-buzz');
+            startLightsOnSequence();
+          });
+        },
+      };
+    },
+  },
+
+  /* ---- Janitor's cart ---- world-x dynamic (darkCorridor.cartX) */
+  {
+    id: 'dc-cart',
+    get x() { return darkCorridor.cartX; },
+    sparkleY: 148,
+    get node() {
+      if (chapterState.cartFound) {
+        return {
+          id: 'dc-cart-push-fail',
+          lines: [
+            { speaker: null, text: 'The cart is too heavy. Pip’s hands pass through it.', italic: false },
+          ],
+          choices: null, onEnd: null,
+        };
+      }
+      return {
+        id: 'dc-cart-inspect',
+        lines: [
+          { speaker: null, text: 'A janitor’s cart, abandoned mid-shift.', italic: false },
+          { speaker: null, text: 'A name tag on the clipboard reads: "J. Henriksen, Maintenance."', italic: false },
+          { speaker: null, text: 'Pip wonders how to get past it.', italic: true },
+        ],
+        choices: null,
+        onEnd() {
+          chapterState.cartFound = true;
+        },
+      };
+    },
+  },
+
+  /* ---- Stairwell descent ---- world-x ~880 */
+  {
+    id: 'dc-stairwell',
+    x: 880,
+    sparkleY: 150,
+    get node() {
+      if (!chapterState.janitorWalked) {
+        return null;   // not interactive until janitor walk completes
+      }
+      return {
+        id: 'dc-stairwell-descend',
+        lines: [
+          { speaker: null, text: 'The stairwell descends into the kitchen below.', italic: false },
+        ],
+        choices: [
+          {
+            id: 'go-down',
+            text: 'Go down.',
+            onSelect() {
+              closeDialogue();
+              setTimeout(() => startTransition('kitchen', 'fromLeft'), 310);
+            },
+          },
+          {
+            id: 'not-yet',
+            text: 'Not yet.',
+            onSelect() { closeDialogue(); },
+          },
+        ],
+        onEnd: null,
+      };
+    },
+  },
 ];
 
 /* ================================================================
@@ -1985,6 +2287,34 @@ const rooms = {
     pipEntryX: {
       fromLeft:  PIP_HALF_W + 8,              //  16 — entering from door
       fromRight: 720 - PIP_HALF_W - 8,        // 704 — entering from right
+    },
+  },
+
+  /* Sprint 20: dark corridor — Beat 8 puzzle room */
+  darkCorridor: {
+    width:       ROOM_W,                      // 960
+    pipMaxX:     ROOM_W - PIP_HALF_W,         // 948 — right wall (stairwell beyond 880)
+    pipMinX:     PIP_HALF_W,                  //  12 — left edge
+    objects:     darkCorridorObjects,
+    collectibles: [],
+    draw:        drawDarkCorridor,            // defined below
+    pipEntryX: {
+      fromLeft:       PIP_HALF_W + 8,         //  20 — entering from hallway staircase
+      fromStairwell:  ROOM_W - PIP_HALF_W - 8, // 940 — future use
+    },
+  },
+
+  /* Sprint 20: kitchen placeholder — Beat 9+ is Sprint 21 */
+  kitchen: {
+    width:        W,                           // single-screen, no scroll
+    pipMaxX:      W - PIP_HALF_W,
+    pipMinX:      PIP_HALF_W,
+    objects:      [],
+    collectibles: [],
+    draw:         drawKitchenPlaceholder,      // defined below
+    pipEntryX: {
+      fromLeft:  PIP_HALF_W + 8,
+      fromRight: W - PIP_HALF_W - 8,
     },
   },
 };
@@ -2127,10 +2457,11 @@ const MONSTER_TRACKS = [
 /* Per-room logical track id.
    All Chapter 1 rooms use 'main'. Kitchen (future sprint) → 'chefs'. */
 const ROOM_MUSIC = {
-  cabin:        'main',
-  hallway:      'main',
-  grandparents: 'main',
-  // kitchen:   'chefs',  // future sprint
+  cabin:         'main',
+  hallway:       'main',
+  grandparents:  'main',
+  darkCorridor:  'main',   // Sprint 20 placeholder; ambient track TBD in sound-design sprint
+  kitchen:       'main',   // Sprint 21: will switch to 'chefs'
 };
 
 /* ================================================================
@@ -2231,6 +2562,9 @@ function handleKeyAction(code) {
 
   // Suppress non-music key actions during panic sequence
   if (mirrorBeat.panicPhase !== 'none' && mirrorBeat.panicPhase !== 'done') return;
+
+  // Sprint 20: suppress key actions during float discovery sequence
+  if (floatDiscovery.active) return;
 
   // ESC during cinematic — always skippable, regardless of dialogue state
   if (cinematic.active && code === 'Escape') {
@@ -2451,9 +2785,9 @@ function update(dt) {
     updateDoctorExit(dt);
   }
 
-  // Movement gated by dialogue, room transitions, cinematic hold, opening sequence, AND panic sequence
+  // Movement gated by dialogue, room transitions, cinematic hold, opening sequence, panic, AND float discovery
   const panicActive = mirrorBeat.panicPhase !== 'none' && mirrorBeat.panicPhase !== 'done';
-  if (!dialogue.active && !transition.active && !cinematic.active && openingSeq.state === 'complete' && !panicActive) {
+  if (!dialogue.active && !transition.active && !cinematic.active && openingSeq.state === 'complete' && !panicActive && !floatDiscovery.active) {
     const left  = movingLeft();
     const right = movingRight();
 
@@ -2479,7 +2813,47 @@ function update(dt) {
     } else if (currentRoom === 'grandparents' && pip.x <= PIP_HALF_W + 1) {
       // Return to hallway at the grandparents' door position
       startTransition('hallway', 'fromRight', 1164);
+    } else if (currentRoom === 'hallway' && pip.x >= 1312 && cabinState.beatStage === 'post-bed') {
+      // Sprint 20: hallway far-right staircase to dark corridor (available post-Beat-5)
+      startTransition('darkCorridor', 'fromLeft');
+    } else if (currentRoom === 'darkCorridor' && pip.x <= rooms.darkCorridor.pipMinX + 1) {
+      // Exit dark corridor back to hallway at the staircase position
+      startTransition('hallway', 'fromRight', 1300);
+    } else if (currentRoom === 'kitchen' && pip.x <= rooms.kitchen.pipMinX + 1) {
+      // Return from kitchen placeholder to dark corridor
+      startTransition('darkCorridor', 'fromRight', ROOM_W - PIP_HALF_W - 8);
     }
+  }
+
+  // Sprint 20: new Beat 8 updates
+  updateHeldButtonPuzzle(dt);
+  updateLightsOnSequence(dt);
+  updateFloatDiscovery(dt);
+  updateJanitorWalk(dt);
+  updateEchoMouse(dt);
+  updateSconceSparks(dt);
+
+  // Sprint 20: float-discovery trigger (broken glass at world-x ~420)
+  if (currentRoom === 'darkCorridor' && !floatDiscovery.active && !chapterState.floatUnlocked
+      && chapterState.sconceFixed && !dialogue.active && !heldButtonPuzzle.active) {
+    if (pip.x > 415 && pip.x < 425) {
+      triggerFloatDiscovery();
+    }
+  }
+
+  // Sprint 20: on first dark-corridor entry, set darkCorridorEntered flag
+  if (currentRoom === 'darkCorridor' && !chapterState.darkCorridorEntered) {
+    chapterState.darkCorridorEntered = true;
+  }
+
+  // Sprint 20: janitor walk trigger — fires once on re-entry after paging
+  if (currentRoom === 'darkCorridor' && chapterState.janitorPaged && !chapterState.janitorWalked
+      && !janitorWalk.active && !janitorWalk.pendingStart) {
+    janitorWalk.pendingStart = true;
+    setTimeout(() => {
+      janitorWalk.pendingStart = false;
+      if (currentRoom === 'darkCorridor') startJanitorWalk();
+    }, 500);
   }
 
   updatePassenger(dt);
@@ -2767,6 +3141,8 @@ const STRIP_STRINGS = {
   'cinematic':            'SPACE  CONTINUE | ESC  SKIP',
   'notebook':             '← →  TURN PAGE | TAB  CLOSE | ESC  CLOSE',
   'pause':                '↑↓  CHOOSE | SPACE  SELECT | P  RESUME',
+  // Sprint 20: held-button puzzle
+  'held-puzzle':          'Hold ↑',
 };
 
 function updateActionButtonIcon() {
@@ -3077,9 +3453,12 @@ function confirmChoice(idx) {
 /* ---- Attempt to inspect the nearest object ---- */
 function tryInspect() {
   if (dialogue.active) return;
+  if (heldButtonPuzzle.active) return;  // Sprint 20: ↑ held drives puzzle; don't inspect
   for (const obj of rooms[currentRoom].objects) {
+    const node = obj.node;
+    if (!node) continue;   // Sprint 20: null node = not yet interactive (e.g. stairwell)
     if (Math.abs(pip.x - obj.x) < 18) {
-      showDialogue(obj.node);
+      showDialogue(node);
       break;
     }
   }
@@ -3246,6 +3625,12 @@ function render(now) {
       // visually conveying "through Pip" (the no-one-can-see-me rule).
       if (currentRoom === 'hallway' && passenger.active) {
         drawPassenger(passenger.x - camX, FLOOR_Y, now);
+      }
+
+      // Sprint 20: janitor drawn after Pip so he renders on top when overlapping.
+      // Draw order: room → Pip → janitor — communicates "you don't exist to him."
+      if (currentRoom === 'darkCorridor' && janitorWalk.active) {
+        drawJanitor(janitorWalk.x - camX, FLOOR_Y, janitorWalk.facing, now);
       }
     }
   }
@@ -4328,6 +4713,8 @@ function drawCabin(camX, now) {
 function drawObjectAura(camX, now) {
   if (dialogue.active) return;
   for (const obj of rooms[currentRoom].objects) {
+    // Sprint 20: skip objects with no active node (e.g. stairwell before janitor walks)
+    if (obj.node === null) continue;
     const screenX  = Math.round(obj.x - camX);
     const distance = Math.abs(pip.x - obj.x);
     // Sprint 11: breadcrumb objects have elevated baseline + slow pulse (~3s cycle)
@@ -5630,6 +6017,14 @@ function drawHallway(camX, now) {
     }
   }
 
+  // Sprint 20: descending staircase at world-x ~1330, visible post-Beat-5
+  if (cabinState.beatStage === 'post-bed') {
+    const stairSX = Math.round(1330 - camX);
+    if (stairSX > -50 && stairSX < W + 50) {
+      drawDescendingStaircase(stairSX);
+    }
+  }
+
   // Floor surface — lifted base, warm-purple carpet tint
   const floorSurfH = 20;
   const floorGrad  = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + floorSurfH);
@@ -5883,6 +6278,12 @@ function drawGrandparents(camX, now) {
     strokeColor: 'rgba(65,46,16,0.4)',
   });
 
+  // --- Dziadek's radio (Sprint 20) — on windowsill near world-x 200 ---
+  const radioSX = Math.round(200 - camX);
+  if (radioSX > -20 && radioSX < W + 20) {
+    drawDziadekRadio(radioSX, now);
+  }
+
   // --- NPCs drawn beneath Pip ---
   const dzSX = Math.round(160 - camX);
   if (dzSX > -20 && dzSX < W + 20) {
@@ -5955,6 +6356,852 @@ function drawDziadek(screenX, groundY, now) {
 
   ctx.globalAlpha = 1;
   ctx.restore();
+}
+
+/* ================================================================
+   SPRINT 20: HELD-BUTTON PUZZLE PRIMITIVE
+   ================================================================ */
+
+function startHeldButtonPuzzle(buttonCode, fillRate, drainRate, onComplete) {
+  heldButtonPuzzle.active      = true;
+  heldButtonPuzzle.buttonCode  = buttonCode;
+  heldButtonPuzzle.chargeLevel = 0;
+  heldButtonPuzzle.fillRate    = fillRate;
+  heldButtonPuzzle.drainRate   = drainRate;
+  heldButtonPuzzle.onComplete  = onComplete;
+  setControlsStrip('held-puzzle');
+}
+
+function updateHeldButtonPuzzle(dt) {
+  if (!heldButtonPuzzle.active) return;
+  if (keysHeld[heldButtonPuzzle.buttonCode]) {
+    heldButtonPuzzle.chargeLevel = Math.min(1, heldButtonPuzzle.chargeLevel + dt * heldButtonPuzzle.fillRate);
+    if (heldButtonPuzzle.chargeLevel >= 1) {
+      heldButtonPuzzle.active = false;
+      heldButtonPuzzle.chargeLevel = 1;
+      setRoomStrip();
+      if (heldButtonPuzzle.onComplete) heldButtonPuzzle.onComplete();
+    }
+  } else {
+    heldButtonPuzzle.chargeLevel = Math.max(0, heldButtonPuzzle.chargeLevel - dt * heldButtonPuzzle.drainRate);
+  }
+}
+
+/* ================================================================
+   SPRINT 20: LIGHTS-ON SEQUENCE
+   ================================================================ */
+
+function startLightsOnSequence() {
+  lightsOnSequence.active       = true;
+  lightsOnSequence.elapsed      = 0;
+  lightsOnSequence.sconcesLit   = 0;
+  lightsOnSequence.totalSconces = 5;
+}
+
+function updateLightsOnSequence(dt) {
+  if (!lightsOnSequence.active) return;
+  lightsOnSequence.elapsed += dt;
+  const targetLit = Math.floor(lightsOnSequence.elapsed / 0.2);
+  while (lightsOnSequence.sconcesLit < Math.min(targetLit, lightsOnSequence.totalSconces)) {
+    lightsOnSequence.sconcesLit++;
+    playSound('sconce-buzz');
+  }
+  if (lightsOnSequence.elapsed >= 1.0) {
+    darkCorridor.lit          = true;
+    lightsOnSequence.active   = false;
+    // Post-puzzle dialogue
+    showDialogue({
+      id: 'dc-sconce-post',
+      lines: [
+        { speaker: null, text: 'The wires spark. The sconce buzzes. Then another. Then another.', italic: false },
+        { speaker: null, text: 'The corridor breathes back into light.', italic: true },
+      ],
+      choices: null,
+      onEnd() {
+        // HUD hint via controls strip (replace once room strip takes over on close)
+        const strip = document.getElementById('controls-strip');
+        if (strip) {
+          strip.innerHTML = 'Third ability earned. Hold ↑ near broken electricity.';
+          setTimeout(() => setRoomStrip(), 4000);
+        }
+      },
+    });
+  }
+}
+
+/* ================================================================
+   SPRINT 20: SCONCE SPARK PARTICLES
+   ================================================================ */
+
+function updateSconceSparks(dt) {
+  if (currentRoom !== 'darkCorridor') { sconceSparks.length = 0; return; }
+
+  // Age existing sparks
+  for (let i = sconceSparks.length - 1; i >= 0; i--) {
+    const s = sconceSparks[i];
+    s.age += dt;
+    s.x   += s.vx * dt;
+    s.y   += s.vy * dt;
+    if (s.age >= s.maxAge) sconceSparks.splice(i, 1);
+  }
+
+  // Spawn new sparks while puzzle active
+  if (!heldButtonPuzzle.active || heldButtonPuzzle.chargeLevel <= 0) return;
+  const rate   = heldButtonPuzzle.chargeLevel * 20;   // sparks/sec
+  const budget = rate * dt;
+  const count  = Math.floor(budget + Math.random());
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 12 + Math.random() * 30;
+    sconceSparks.push({
+      x:      420,                             // world-x of broken sconce
+      y:      FLOOR_Y - 28,                   // approx hanging sconce y
+      vx:     Math.cos(angle) * speed,
+      vy:     Math.sin(angle) * speed - 20,   // bias upward
+      age:    0,
+      maxAge: 0.1 + Math.random() * 0.25,
+    });
+  }
+}
+
+function drawSconceSparks(camX) {
+  if (sconceSparks.length === 0) return;
+  ctx.save();
+  for (const s of sconceSparks) {
+    const t     = s.age / s.maxAge;
+    const alpha = (1 - t) * 0.9;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle   = t < 0.5 ? '#fff8c0' : '#ffa040';
+    const sx = Math.round(s.x - camX);
+    ctx.fillRect(sx, Math.round(s.y), 2, 2);
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/* ================================================================
+   SPRINT 20: FLOAT DISCOVERY SEQUENCE
+   ================================================================ */
+
+function triggerFloatDiscovery() {
+  floatDiscovery.active = true;
+  floatDiscovery.phase  = 'rising';
+  floatDiscovery.timer  = 0.6;
+  pip.float.altitude    = 0;
+  playSound('float-discovery');
+}
+
+function updateFloatDiscovery(dt) {
+  if (!floatDiscovery.active) return;
+  if (floatDiscovery.phase === 'rising') {
+    pip.float.altitude    += FLOAT_DISCOVERY_RISE_RATE * dt;
+    floatDiscovery.timer  -= dt;
+    if (floatDiscovery.timer <= 0 || pip.float.altitude >= 30) {
+      floatDiscovery.phase = 'falling';
+    }
+  } else if (floatDiscovery.phase === 'falling') {
+    pip.float.altitude -= FLOAT_DISCOVERY_FALL_RATE * dt;
+    if (pip.float.altitude <= 0) {
+      pip.float.altitude         = 0;
+      pip.float.vy               = 0;
+      floatDiscovery.phase       = 'done';
+      floatDiscovery.active      = false;
+      chapterState.floatUnlocked = true;
+      pip.float.unlocked         = true;
+      setRoomStrip();    // immediately update controls strip to show SPACE float
+      showDialogue({
+        id: 'dc-float-discovery',
+        lines: [
+          { speaker: null, text: 'Pip didn\u2019t mean to do that.', italic: false },
+          { speaker: null, text: 'But he can do that.', italic: true },
+        ],
+        choices: null,
+        onEnd() {
+          const strip = document.getElementById('controls-strip');
+          if (strip) {
+            strip.innerHTML = 'Fourth ability earned. Hold SPACE to float.';
+            setTimeout(() => setRoomStrip(), 4000);
+          }
+        },
+      });
+    }
+  }
+}
+
+/* ================================================================
+   SPRINT 20: JANITOR SCRIPTED WALK
+   ================================================================ */
+
+function startJanitorWalk() {
+  janitorWalk.active   = true;
+  janitorWalk.phase    = 'entering';
+  janitorWalk.x        = -20;
+  janitorWalk.facing   = 'right';
+  janitorWalk.targetX  = 840;
+  janitorWalk.timer    = 0;
+  darkCorridor.cartX   = 840;   // reset cart position in case it drifted
+}
+
+function updateJanitorWalk(dt) {
+  if (!janitorWalk.active) return;
+  if (janitorWalk.phase === 'entering') {
+    janitorWalk.x += JANITOR_SPEED * dt;
+    if (janitorWalk.x >= janitorWalk.targetX) {
+      janitorWalk.x     = janitorWalk.targetX;
+      janitorWalk.phase = 'paused-at-cart';
+      janitorWalk.timer = 1.5;
+      showDialogue({
+        id: 'janitor-mutter',
+        lines: [
+          { speaker: 'JANITOR', text: '“Hvor i alle dager…”', italic: false },
+        ],
+        choices: null, onEnd: null,
+      });
+    }
+  } else if (janitorWalk.phase === 'paused-at-cart') {
+    if (!dialogue.active) {
+      janitorWalk.timer -= dt;
+      if (janitorWalk.timer <= 0) {
+        janitorWalk.phase  = 'pushing-cart';
+        janitorWalk.facing = 'left';
+      }
+    }
+  } else if (janitorWalk.phase === 'pushing-cart') {
+    janitorWalk.x      -= JANITOR_SPEED * dt;
+    darkCorridor.cartX -= JANITOR_SPEED * dt;
+    if (janitorWalk.x < -30) {
+      janitorWalk.phase        = 'done';
+      janitorWalk.active       = false;
+      darkCorridor.cartRemoved = true;
+      chapterState.janitorWalked = true;
+      setTimeout(() => {
+        if (currentRoom === 'darkCorridor') {
+          showDialogue({
+            id: 'dc-post-janitor',
+            lines: [
+              { speaker: null, text: 'No one can see me.', italic: true },
+              { speaker: null, text: '(can they?)', italic: true },
+            ],
+            choices: null, onEnd: null,
+          });
+        }
+      }, 500);
+    }
+  }
+}
+
+/* ================================================================
+   SPRINT 20: ECHO-MOUSE AI
+   ================================================================ */
+
+function updateEchoMouse(dt) {
+  if (currentRoom !== 'darkCorridor' || !darkCorridor.lit) return;
+
+  // Cooldown for strength-drain contact
+  if (echoMouse.touched) {
+    echoMouse.touchTimer -= dt;
+    if (echoMouse.touchTimer <= 0) echoMouse.touched = false;
+  }
+
+  echoMouse.timer -= dt;
+  if (echoMouse.phase === 'pausing') {
+    if (echoMouse.timer <= 0) {
+      // Pick a new walk target within ANCHOR±RANGE
+      const dir = echoMouse.facing === 'right' ? -1 : 1;   // alternate direction
+      echoMouse.facing     = dir === 1 ? 'right' : 'left';
+      const newTarget      = echoMouse.ANCHOR + dir * echoMouse.RANGE * (0.4 + Math.random() * 0.6);
+      echoMouse.walkTarget = Math.max(echoMouse.ANCHOR - echoMouse.RANGE,
+                               Math.min(echoMouse.ANCHOR + echoMouse.RANGE, newTarget));
+      echoMouse.phase      = 'walking';
+      echoMouse.timer      = echoMouse.BURST / JANITOR_SPEED;   // time to walk the burst
+    }
+  } else {
+    // Walking phase — move toward target
+    const dir   = echoMouse.walkTarget > echoMouse.x ? 1 : -1;
+    echoMouse.x += dir * 60 * dt;   // ~60 px/s mouse speed
+    if (Math.abs(echoMouse.x - echoMouse.walkTarget) < 3) {
+      echoMouse.x     = echoMouse.walkTarget;
+      echoMouse.phase = 'pausing';
+      echoMouse.timer = 2 + Math.random();   // 2–3s pause
+    }
+    echoMouse.facing = dir > 0 ? 'right' : 'left';
+  }
+
+  // Collision with Pip — drain 1 strength point (with cooldown)
+  if (!echoMouse.touched && Math.abs(pip.x - echoMouse.x) < 10) {
+    echoMouse.touched    = true;
+    echoMouse.touchTimer = 1.5;   // 1.5s cooldown between touches
+    loseStrength(1);
+  }
+}
+
+/* ================================================================
+   SPRINT 20: GRANDPARENTS CABIN — DZIADEK'S RADIO DRAW
+   ================================================================ */
+
+function drawDziadekRadio(screenX, now) {
+  const cx = Math.round(screenX);
+  // windowsill y: window bottom at winRY+winRH = 24+90 = 114; radio sits on sill
+  const sillY = 114;
+  const rW = 14, rH = 18;
+  const rx  = cx - Math.floor(rW / 2);
+  const ry  = sillY - rH;
+
+  // Wooden cabinet body
+  ctx.fillStyle = '#5c3a14';
+  ctx.fillRect(rx, ry, rW, rH);
+  ctx.strokeStyle = 'rgba(120,70,20,0.6)';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(rx, ry, rW, rH);
+
+  // Fabric grill (upper 60%)
+  ctx.fillStyle = 'rgba(80,50,20,0.55)';
+  ctx.fillRect(rx + 2, ry + 2, rW - 4, Math.round(rH * 0.6));
+
+  // Grill lines
+  ctx.strokeStyle = 'rgba(40,22,6,0.4)';
+  ctx.lineWidth   = 1;
+  for (let i = 0; i < 3; i++) {
+    const ly = ry + 3 + i * 3;
+    ctx.beginPath(); ctx.moveTo(rx + 2, ly); ctx.lineTo(rx + rW - 2, ly); ctx.stroke();
+  }
+
+  // Tuning dial (brass circle)
+  ctx.fillStyle   = '#c87828';
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath();
+  ctx.arc(cx - 2, ry + rH - 4, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Volume knob (smaller)
+  ctx.fillStyle = '#8a5820';
+  ctx.beginPath();
+  ctx.arc(cx + 4, ry + rH - 4, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Proximity-crackle shimmer when undiscovered + Pip nearby
+  if (!chapterState.radioDiscovered && Math.abs(pip.x - 200) < 35) {
+    const flicker = Math.sin(now * 0.031) * 0.5 + 0.5;
+    if (Math.random() < 0.4) {
+      ctx.globalAlpha = flicker * 0.7;
+      ctx.fillStyle   = '#fff8c0';
+      const sx = rx + 1 + Math.floor(Math.random() * (rW - 2));
+      const sy = ry + 1 + Math.floor(Math.random() * Math.round(rH * 0.6));
+      ctx.fillRect(sx, sy, 1, 1);
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+/* ================================================================
+   SPRINT 20: HALLWAY DESCENDING STAIRCASE
+   Drawn in drawHallway at world-x ~1330 when post-bed beatStage.
+   ================================================================ */
+
+function drawDescendingStaircase(screenX) {
+  const cx  = Math.round(screenX);
+  const stW = 38;   // staircase total width
+  const stepH = 10; // each step height
+  const steps = 7;  // total steps visible
+
+  ctx.save();
+  // Draw steps descending right-to-left, each lower than the previous
+  for (let i = 0; i < steps; i++) {
+    const sx  = cx - Math.floor(stW / 2) + i * (stW / steps);
+    const sy  = FLOOR_Y - (steps - i) * stepH;
+    const sw  = Math.ceil(stW / steps) + 1;
+    const sh  = (steps - i) * stepH;
+    const darkness = 0.4 + (i / steps) * 0.5;
+    ctx.fillStyle   = `rgba(8,12,24,${darkness.toFixed(2)})`;
+    ctx.fillRect(Math.round(sx), Math.round(sy), sw, sh);
+  }
+  // Handrail — dark pipe along the wall side
+  ctx.strokeStyle = 'rgba(60,80,120,0.55)';
+  ctx.lineWidth   = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - Math.floor(stW / 2), FLOOR_Y - steps * stepH);
+  ctx.lineTo(cx + Math.floor(stW / 2), FLOOR_Y);
+  ctx.stroke();
+
+  // Subtle label-glow "down" indicator
+  ctx.fillStyle   = 'rgba(80,100,160,0.18)';
+  ctx.beginPath();
+  ctx.arc(cx, FLOOR_Y - 20, 14, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/* ================================================================
+   SPRINT 20: DARK CORRIDOR — MAIN DRAW FUNCTION
+   ================================================================ */
+
+function drawDarkCorridor(camX, now) {
+  // ---- Base fill (UI zone) ----
+  ctx.fillStyle = '#08080e';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!darkCorridor.lit && !lightsOnSequence.active) {
+    // ---- DARK STATE: near-black with Pip's aura ----
+    ctx.fillStyle = '#0a0c14';
+    ctx.fillRect(0, 0, W, FLOOR_Y);
+
+    // The single working sconce at world-x 240 — weak flicker
+    const sc1SX = Math.round(240 - camX);
+    if (sc1SX > -(20 + DARK_CORRIDOR_AURA_R) && sc1SX < W + 20 + DARK_CORRIDOR_AURA_R) {
+      ctx.save();
+      ctx.globalAlpha = 0.4;
+      drawSconce(sc1SX, 70, { flicker: true, intensity: 0.35, now });
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    // Draw props within Pip's aura radius (they become visible as Pip approaches)
+    drawDarkCorridorProps(camX, now, true);
+
+    // Pip's aura overlay — radial hole punched in darkness
+    drawDarkOverlay(camX, now);
+
+    // Spark particles (during sconce puzzle)
+    drawSconceSparks(camX);
+
+    // Draw floor line (always visible)
+    ctx.strokeStyle = 'rgba(40,48,68,0.45)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath(); ctx.moveTo(0, FLOOR_Y); ctx.lineTo(W, FLOOR_Y); ctx.stroke();
+
+  } else {
+    // ---- LIT STATE (or lights-on transition) ----
+
+    // Transition progress 0→1 while lightsOnSequence runs
+    let litFrac = darkCorridor.lit ? 1 : (lightsOnSequence.elapsed / 1.0);
+    litFrac = Math.min(1, litFrac);
+
+    // Industrial-palette wall gradient
+    const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+    wallGrad.addColorStop(0,   `rgba(30,36,56,${litFrac})`);
+    wallGrad.addColorStop(0.5, `rgba(42,48,72,${litFrac})`);
+    wallGrad.addColorStop(1,   `rgba(28,34,48,${litFrac})`);
+    ctx.fillStyle = wallGrad;
+    ctx.fillRect(0, 0, W, FLOOR_Y);
+
+    // Ambient edge darkening
+    const edgeGrad = ctx.createRadialGradient(W / 2, FLOOR_Y * 0.45, FLOOR_Y * 0.2, W / 2, FLOOR_Y * 0.45, H * 0.9);
+    edgeGrad.addColorStop(0, 'rgba(0,0,0,0)');
+    edgeGrad.addColorStop(1, 'rgba(4,6,14,0.5)');
+    ctx.fillStyle = edgeGrad;
+    ctx.fillRect(0, 0, W, FLOOR_Y);
+
+    // Riveted wall panels — industrial palette
+    const panelSpacing = 120;
+    const panelOffset  = (camX * 0.5) % panelSpacing;
+    const panelTop  = 20;
+    const baseboardH = 12;
+    const panelH    = FLOOR_Y - baseboardH - panelTop;
+    for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
+      ctx.globalAlpha = litFrac;
+      drawShipPanel(Math.round(px), panelTop, panelSpacing, panelH, {
+        strokeColor: 'rgba(60,70,100,0.22)',
+        rivetColor:  'rgba(70,80,110,0.38)',
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    // Overhead pipes — industrial detail
+    drawDarkCorridorPipes(camX, litFrac);
+
+    // Sconces in lit state — positioned along corridor
+    const LIT_SCONCES = [100, 240, 420, 600, 800];
+    let sconcesToDraw = darkCorridor.lit
+      ? LIT_SCONCES.length
+      : lightsOnSequence.sconcesLit;
+    for (let i = 0; i < sconcesToDraw; i++) {
+      const gx = LIT_SCONCES[i];
+      const sx = Math.round(gx - camX);
+      if (sx < -20 || sx > W + 20) continue;
+      // The broken sconce at 420 is repaired — draw it fixed (same style)
+      drawSconce(sx, 70, { flicker: gx === 420, intensity: 0.55, now });
+    }
+
+    // Draw all props in lit state
+    drawDarkCorridorProps(camX, now, false);
+
+    // Spark particles (during sconce puzzle — shouldn't be active in lit state, but guard anyway)
+    drawSconceSparks(camX);
+
+    // Floor surface
+    const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + 20);
+    floorGrad.addColorStop(0, '#1e2030');
+    floorGrad.addColorStop(1, '#08080e');
+    ctx.fillStyle = floorGrad;
+    ctx.fillRect(0, FLOOR_Y, W, 20);
+
+    drawFloorPlanks(camX, { lineColor: 'rgba(20,24,38,0.22)' });
+
+    ctx.strokeStyle = 'rgba(50,58,80,0.45)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath(); ctx.moveTo(0, FLOOR_Y); ctx.lineTo(W, FLOOR_Y); ctx.stroke();
+
+    drawBaseboard(0, FLOOR_Y - baseboardH, W, {
+      fillColor:   'rgba(12,14,24,0.72)',
+      strokeColor: 'rgba(40,48,68,0.38)',
+    });
+
+    // Echo-mouse (lit state only, in its range)
+    if (darkCorridor.lit) {
+      drawEchoMouse(echoMouse.x - camX, FLOOR_Y, now);
+    }
+  }
+}
+
+/* ---- Dark corridor props — drawn in both dark and lit states ---- */
+function drawDarkCorridorProps(camX, now, darkMode) {
+  // In dark mode, props are only visible within Pip's aura
+  const pipSX = pip.x - camX;
+
+  // ---- Working sconce at world-x 240 (lit state — already drawn above, skip in dark) ----
+
+  // ---- Fallen sconce + broken glass at world-x 420 ----
+  const scSX = Math.round(420 - camX);
+  if (scSX > -40 && scSX < W + 40) {
+    const inAura = !darkMode || Math.abs(pip.x - 420) < DARK_CORRIDOR_AURA_R + 20;
+    if (inAura) {
+      drawFallenSconce(scSX, now, darkMode);
+      drawBrokenGlass(scSX, darkMode);
+    }
+  }
+
+  // ---- Janitor's cart at darkCorridor.cartX ----
+  if (!darkCorridor.cartRemoved) {
+    const ctSX = Math.round(darkCorridor.cartX - camX);
+    if (ctSX > -60 && ctSX < W + 60) {
+      const inAura = !darkMode || Math.abs(pip.x - darkCorridor.cartX) < DARK_CORRIDOR_AURA_R + 20;
+      if (inAura) drawJanitorCart(ctSX, darkMode);
+    }
+  }
+
+  // ---- Stairwell descent at world-x 880 ----
+  if (!darkMode || darkCorridor.lit) {
+    const stSX = Math.round(880 - camX);
+    if (stSX > -20 && stSX < W + 20) {
+      drawStairwellDown(stSX);
+    }
+  }
+}
+
+/* ---- Dark overlay — full black fill with a soft circular hole at Pip's position ---- */
+function drawDarkOverlay(camX, now) {
+  const pipSX = Math.round(pip.x - camX);
+  const pipGY = Math.round(pip.y - pip.float.altitude - PIP_H / 2);
+
+  // Full-screen black overlay
+  ctx.fillStyle = 'rgba(4,6,12,0.96)';
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Punch a soft hole at Pip's position using destination-out composite op
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  const aura = ctx.createRadialGradient(pipSX, pipGY, DARK_CORRIDOR_AURA_R * 0.35, pipSX, pipGY, DARK_CORRIDOR_AURA_R + 8);
+  aura.addColorStop(0,   'rgba(0,0,0,0.98)');
+  aura.addColorStop(0.7, 'rgba(0,0,0,0.6)');
+  aura.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = aura;
+  ctx.beginPath();
+  ctx.arc(pipSX, pipGY, DARK_CORRIDOR_AURA_R + 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Faint amber aura ring around Pip (on top of the hole)
+  ctx.save();
+  const ringGrad = ctx.createRadialGradient(pipSX, pipGY, DARK_CORRIDOR_AURA_R * 0.3, pipSX, pipGY, DARK_CORRIDOR_AURA_R + 6);
+  ringGrad.addColorStop(0,   'rgba(255,200,100,0)');
+  ringGrad.addColorStop(0.7, 'rgba(255,200,100,0)');
+  ringGrad.addColorStop(0.9, 'rgba(255,200,100,0.08)');
+  ringGrad.addColorStop(1,   'rgba(255,200,100,0)');
+  ctx.fillStyle = ringGrad;
+  ctx.beginPath();
+  ctx.arc(pipSX, pipGY, DARK_CORRIDOR_AURA_R + 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ---- Overhead pipes — decorative industrial detail ---- */
+function drawDarkCorridorPipes(camX, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha * 0.7;
+  ctx.strokeStyle = '#2a3040';
+  ctx.lineWidth   = 4;
+  // Horizontal pipe runs offset by parallax
+  const pipeOffset = (camX * 0.3) % 320;
+  for (let px = -pipeOffset; px < W + 320; px += 320) {
+    ctx.beginPath();
+    ctx.moveTo(Math.round(px), 14);
+    ctx.lineTo(Math.round(px + 300), 14);
+    ctx.stroke();
+    // Pipe collar / joint
+    ctx.fillStyle = '#363c50';
+    ctx.fillRect(Math.round(px + 295), 11, 6, 7);
+  }
+  // Vertical drop pipes
+  for (let px = -pipeOffset + 60; px < W + 320; px += 160) {
+    ctx.beginPath();
+    ctx.moveTo(Math.round(px), 14);
+    ctx.lineTo(Math.round(px), 34);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/* ---- Fallen sconce + hanging wires ---- */
+function drawFallenSconce(screenX, now, darkMode) {
+  const cx = Math.round(screenX);
+  ctx.save();
+  if (darkMode) ctx.globalAlpha = 0.7;
+
+  // Hanging wire (from ceiling)
+  ctx.strokeStyle = '#c8a870';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - 2, 0);
+  ctx.lineTo(cx - 2, FLOOR_Y - 35);
+  ctx.stroke();
+
+  // Fallen sconce body on floor
+  ctx.fillStyle = '#8a6c3c';
+  ctx.fillRect(cx - 7, FLOOR_Y - 10, 14, 6);
+  ctx.strokeStyle = 'rgba(100,75,30,0.5)';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(cx - 7, FLOOR_Y - 10, 14, 6);
+
+  // Broken glass indicator (small fragments)
+  ctx.fillStyle = 'rgba(200,220,255,0.3)';
+  ctx.fillRect(cx - 4, FLOOR_Y - 4, 3, 2);
+  ctx.fillRect(cx + 2, FLOOR_Y - 6, 2, 3);
+  ctx.fillRect(cx - 1, FLOOR_Y - 8, 2, 2);
+
+  // Exposed wires sparking
+  if (chapterState.sconceFixed) {
+    ctx.strokeStyle = 'rgba(120,160,255,0.4)';
+  } else {
+    const sparkAlpha = 0.5 + Math.sin(now * 0.012) * 0.3;
+    ctx.strokeStyle = `rgba(255,230,80,${sparkAlpha.toFixed(2)})`;
+  }
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - 2, FLOOR_Y - 35);
+  ctx.lineTo(cx - 2 + (Math.sin(now * 0.017) * 3 | 0), FLOOR_Y - 12);
+  ctx.stroke();
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/* ---- Broken glass tile (float-discovery trigger zone) ---- */
+function drawBrokenGlass(screenX, darkMode) {
+  if (chapterState.sconceFixed && !chapterState.floatUnlocked) {
+    // Glass visible after sconce is fixed, before float discovery
+    const cx = Math.round(screenX);
+    ctx.save();
+    if (darkMode) ctx.globalAlpha = 0.6;
+    ctx.fillStyle = 'rgba(180,210,255,0.18)';
+    ctx.fillRect(cx - 6, FLOOR_Y - 3, 12, 3);
+    // A few gleam lines
+    ctx.strokeStyle = 'rgba(200,230,255,0.25)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath(); ctx.moveTo(cx - 5, FLOOR_Y - 2); ctx.lineTo(cx - 2, FLOOR_Y - 1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + 1, FLOOR_Y - 3); ctx.lineTo(cx + 4, FLOOR_Y - 1); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+}
+
+/* ---- Janitor's cart ---- */
+function drawJanitorCart(screenX, darkMode) {
+  const cx  = Math.round(screenX);
+  const cW  = 28, cH = 28;
+  const cY  = FLOOR_Y - cH;
+  ctx.save();
+  if (darkMode) ctx.globalAlpha = 0.75;
+
+  // Cart body
+  ctx.fillStyle = '#384048';
+  ctx.fillRect(cx - cW / 2, cY, cW, cH);
+  ctx.strokeStyle = 'rgba(80,100,120,0.5)';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(cx - cW / 2, cY, cW, cH);
+
+  // Cart handle
+  ctx.strokeStyle = '#5a6870';
+  ctx.lineWidth   = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx + cW / 2, cY + 4);
+  ctx.lineTo(cx + cW / 2 + 8, cY + 4);
+  ctx.lineTo(cx + cW / 2 + 8, cY + 16);
+  ctx.stroke();
+
+  // Mop head hanging on side
+  ctx.fillStyle = '#bab090';
+  ctx.fillRect(cx - cW / 2 - 4, cY + cH * 0.3, 4, 10);
+  ctx.fillStyle = '#d8d0a8';
+  ctx.fillRect(cx - cW / 2 - 6, cY + cH * 0.3 + 8, 8, 4);
+
+  // Clipboard (name tag visible)
+  ctx.fillStyle = '#c8b890';
+  ctx.fillRect(cx - 5, cY + 4, 10, 8);
+  ctx.strokeStyle = 'rgba(80,60,30,0.4)';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(cx - 5, cY + 4, 10, 8);
+
+  // Wheels
+  ctx.fillStyle = '#2a2e38';
+  ctx.beginPath(); ctx.arc(cx - cW / 2 + 3, FLOOR_Y, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx + cW / 2 - 3, FLOOR_Y, 3, 0, Math.PI * 2); ctx.fill();
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/* ---- Stairwell descent (dark corridor right end) ---- */
+function drawStairwellDown(screenX) {
+  const cx  = Math.round(screenX);
+  const sW  = 42, stepH = 8, steps = 9;
+  ctx.save();
+  for (let i = 0; i < steps; i++) {
+    const sx = cx - Math.floor(sW / 2) + i * (sW / steps);
+    const sy = FLOOR_Y - (steps - i) * stepH;
+    const sw = Math.ceil(sW / steps) + 1;
+    const sh = (steps - i) * stepH;
+    const d  = 0.5 + (i / steps) * 0.45;
+    ctx.fillStyle = `rgba(8,10,20,${d.toFixed(2)})`;
+    ctx.fillRect(Math.round(sx), Math.round(sy), sw, sh);
+  }
+  // Left handrail
+  ctx.strokeStyle = 'rgba(50,65,90,0.5)';
+  ctx.lineWidth   = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - Math.floor(sW / 2), FLOOR_Y - steps * stepH);
+  ctx.lineTo(cx - Math.floor(sW / 2), FLOOR_Y);
+  ctx.stroke();
+
+  // Glow if janitor walked (now interactive)
+  if (chapterState.janitorWalked) {
+    const glow = ctx.createRadialGradient(cx, FLOOR_Y - 20, 0, cx, FLOOR_Y - 20, 22);
+    glow.addColorStop(0, 'rgba(255,200,100,0.12)');
+    glow.addColorStop(1, 'rgba(255,200,100,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(cx, FLOOR_Y - 20, 22, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ---- Janitor NPC sprite ---- */
+function drawJanitor(screenX, groundY, facing, now) {
+  const bob = Math.abs(Math.sin(now / 400)) * 2;
+  const cx  = Math.round(screenX);
+  const cy  = Math.round(groundY + bob);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (facing === 'left') ctx.scale(-1, 1);
+
+  ctx.fillStyle   = '#2a2438';
+  ctx.globalAlpha = 0.95;
+  ctx.shadowBlur  = 0;
+
+  // Work cap
+  ctx.fillRect(-8, -66, 18,  5);   // brim
+  ctx.fillRect(-6, -71, 14,  6);   // crown
+  // Head
+  ctx.fillRect(-7, -61, 14, 14);
+  // Neck
+  ctx.fillRect(-4, -47,  8,  4);
+  // Jumpsuit torso
+  ctx.fillStyle = '#34304a';
+  ctx.fillRect(-12, -43, 24, 20);
+  // Torso stripe
+  ctx.fillStyle = '#4a4860';
+  ctx.fillRect(-10, -38, 4, 12);
+  // Lower body
+  ctx.fillStyle = '#34304a';
+  ctx.fillRect(-11, -22, 22,  9);
+  // Legs
+  ctx.fillRect( -9, -12,  7, 12);
+  ctx.fillRect(  2, -12,  7, 12);
+  // Work boots
+  ctx.fillStyle = '#2a2030';
+  ctx.fillRect(-11,  -1, 10,  3);
+  ctx.fillRect(  2,  -1, 10,  3);
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/* ---- Echo-mouse sprite ---- */
+function drawEchoMouse(screenX, groundY, now) {
+  const cx  = Math.round(screenX);
+  const walk = Math.abs(Math.sin(now / 150)) * 1.5;
+  const cy  = Math.round(groundY - 6 + walk);
+
+  ctx.save();
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle   = '#d4a040';   // drained-amber translucent
+
+  if (echoMouse.facing === 'left') ctx.scale(-1, 1), ctx.translate(-cx * 2, 0);
+
+  // Body
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, 6, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Head
+  ctx.beginPath();
+  ctx.ellipse(cx + 7, cy - 1, 3, 2.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ear
+  ctx.beginPath();
+  ctx.arc(cx + 8, cy - 4, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tail
+  ctx.strokeStyle = '#d4a040';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - 5, cy);
+  ctx.quadraticCurveTo(cx - 10, cy - 3, cx - 12, cy);
+  ctx.stroke();
+
+  // Legs (tiny)
+  for (let i = 0; i < 4; i++) {
+    const lx = cx - 4 + i * 3;
+    const ly = cy + 3 + (i % 2 === 0 ? walk : -walk * 0.5);
+    ctx.fillRect(Math.round(lx), Math.round(ly), 1, 2);
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/* ---- Placeholder kitchen room ---- */
+function drawKitchenPlaceholder(camX, now) {
+  ctx.fillStyle = '#060408';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle   = 'rgba(255,244,216,0.65)';
+  ctx.font        = '12px "Cormorant Garamond", serif';
+  ctx.textAlign   = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('End of Sprint 20. Kitchen coming in Sprint 21.', W / 2, H / 2 - 10);
+  ctx.fillStyle   = 'rgba(180,160,120,0.45)';
+  ctx.font        = '10px "Cormorant Garamond", serif';
+  ctx.fillText('← Walk left to return to the dark corridor.', W / 2, H / 2 + 14);
+  ctx.textAlign   = 'left';
+  ctx.textBaseline = 'alphabetic';
+
+  ctx.fillStyle = 'rgba(40,38,50,0.8)';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
 }
 
 /* ================================================================

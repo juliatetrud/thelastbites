@@ -65,7 +65,7 @@ The alternating warm/cool rhythm — porthole, sconce, porthole, sconce, porthol
 Per the door positions above. Brass cabin-number plaques sit on each door's upper panel, centered. Plaques are 18×9 px brass plates with engraved 3-digit numerals in a 3×5 pixel bitmap font.
 
 - **644 (grandparents, x=920):** Interactive. From the hallway side, `↑` triggers Cinematic 3 (grandparents' room reveal via phase-through). Post-cinematic, the door is enterable as a regular room transition. Always has a warm glow.
-- **646 (Pip's cabin, x=1180):** Interactive. Gated — pre-grandparents' cinematic: `↑` offers "Listen at the door" / "Not now" only. Post-grandparents': "Go in" appears and the door warms visually. Entering plays the doctor-exit cinematic on first entry.
+- **646 (Pip's cabin, x=1180):** Interactive. Gated — pre-grandparents' cinematic: `↑` offers "Listen at the door" / "Not now" only. This door is the **return-visit entry**, not the first-visit entry. Pip's first entry to Cabin 646 happens via the shared-wall phase-through from grandparents' cabin 644 (Beat 6 continuation) — the doctor-exit cinematic fires there, on arrival through the wall. The hallway door at x=1180 is used for all subsequent visits after Pip has exited via the panic glide. Whether the door dialogue updates post-grandparents' is an open question for Sprint 23 (see `04-chapter-01-cabin-646.md` Beat 4).
 - **636, 638, 640, 642:** Non-interactive. Pure visual.
 
 ### Bulletin board (inspectable)

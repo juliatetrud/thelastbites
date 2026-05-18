@@ -123,10 +123,10 @@ Now the cabin door becomes the trigger.
 
 ---
 
-### Beat 4: THE CABIN DOOR (listen, wait, then enter)
-**Mode:** Room — Hallway → Cabin
+### Beat 4: THE CABIN DOOR (listen and wait — first visit happens via the shared wall)
+**Mode:** Room — Hallway
 
-*(Canonical sequence locked Sprint 14. The old Beat 4 (hand-through-doorknob cinematic, walk-through-door ability) is superseded by the sequence below. The walk-through-walls ability is still the correct interpretation of Pip's ghost nature; it just isn't a puzzle beat in Chapter 1 — he moves through doors naturally as part of the cinematic transitions.)*
+*(Sprint 22 doc patch: the cabin door at x≈1180 is no longer the first-visit entry to Cabin 646. Under the canonical flow, Pip's first entry to Cabin 646 is via the shared-wall phase-through from grandparents' cabin 644, which happens as Beat 6 continuation after the grandparents' cinematic. The hallway door remains a real door used for all return visits after the panic glide exits Pip back to the hallway. This supersedes the Sprint 14 "Go in appears post-grandparents'" sequence for the first-visit path.)*
 
 **Canonical sequence:**
 
@@ -144,16 +144,11 @@ Now the cabin door becomes the trigger.
 
 3. **He goes elsewhere** — typically to the grandparents' door. The grandparents' cinematic plays.
 
-4. **After the grandparents' cinematic,** Pip returns to the cabin door. The dialogue changes:
-   > *Cabin 646. Pip's cabin. The door is closed but unlocked.*
+4. **After the grandparents' cinematic,** Pip's path to Cabin 646 runs through the shared wall, not through this door. See Beat 6 continuation for the full sequence: Pip walks right inside grandparents' cabin, phases through the shared wall, arrives in Cabin 646 from the left side. The doctor-exit cinematic fires on this first entry via the shared wall.
 
-   Three choices: **Go in.** / **Listen at the door.** / **Not now.** The doctor's voice remains re-hearable even now.
+   *(Open question for Julia — must resolve before Sprint 23 is written:* **Post-grandparents' but pre-first-entry-to-646, does the hallway door at x≈1180 show any updated prompt?** Three options: (A) the door dialogue remains "Listen at the door / Not now" unchanged — no "Go in" ever appears, since Pip enters via the shared wall instead; (B) the door gains "Go in" post-grandparents' as a redundant entry path alongside the shared wall; (C) the door gains flavor dialogue reflecting that something has changed ("Something is different now") without offering entry. My read: option A is cleanest — the hallway door never needed a "Go in" under the new flow; it's locked pre-grandparents' and becomes an ordinary return-path post-panic. But Julia should lock this before Sprint 23.)
 
-5. **Go in.** Room transition fires. On arrival in the cabin: the doctor-exit cinematic plays. A doctor stands at center-right in his dark suit, holding his small black bag. He walks toward a far door at the opposite end of the cabin (x≈450), the door briefly opens, the doctor fades out, the door closes. Pip stands at the entry facing right, watching in silence. ~2–3 seconds. No dialogue.
-
-6. **Control restores.** Cabin is empty. The far door remains visible but is not interactable.
-
-7. **The mirror moment follows** (Beat 5 / Sprint 11 behavior: unchanged in Sprint 14).
+5. **Return visits (after the panic glide).** Once Pip has been inside Cabin 646 and exited via the panic glide back to the hallway, the cabin door at x≈1180 is his return entry point. No dialogue gate — he phases through the wooden door normally (the phase-through verb is now understood). `cabinState.doctorSeen` is true; the doctor-exit cinematic does not replay. The mirror shows the ghost-face. The bed is in its post-reveal state.
 
 *(As of Sprint 14, the bed reveal and panic exit retain their Sprint 11 cinematic form. The Henrik kitchen sprint will rework these — the bed reveal becoming player-initiated (Pip lifts the sheets himself) and the panic glide extending through the hallway and into the kitchen as one continuous motion. The current implementation is correct-but-incomplete.)*
 
@@ -231,6 +226,20 @@ Back in the room view (the grandparents' cabin in 2D), Pip can inspect:
 - **Window/porthole:** Shows a faint aurora reflection — per chapter-wide aurora rule. See `03-art-and-aesthetic.md`.
 
 **A subtle character note:** Dziadek's "almost-see" here is *different* from the strangers' total blindness in the hallway. He is grieving and family. The player should *not* register this as "his grandparents can see him" — that's wrong, they can't, not really. They are the *grieving family who almost feels something*. Henrik in the kitchen will be a categorically different beat: not almost. *Yes. I see you. Sit down.*
+
+**Beat 6 continuation — the shared-wall phase-through:**
+
+After the cinematic and room-mode inspectables (Babcia, Dziadek, photo, suitcase, radio), Pip can walk right toward the far wall of the grandparents' cabin. The right wall is the shared wall between cabin 644 and cabin 646.
+
+A faint cool-blue glow marks the phase-through point on the right wall — similar in visual register to the cool-blue glow that signals the hallway-side door, but positioned on the right wall instead of the left. This signals a traversal possibility without labeling it.
+
+Pip walks into the wall. His hand reaches the wall surface and passes through. The screen shimmers briefly — the phase-through visual. Pip arrives in Cabin 646 at its left side, facing right.
+
+**Doctor-exit cinematic on first entry:** This is the first entry to Cabin 646 regardless of how it happens. The doctor-exit cinematic fires: a doctor in a dark suit, holding his black bag, walks from center-room toward the far door (world-x ~450), the door briefly opens, the doctor fades out, the door closes. Pip stands at the left side of the room, watching in silence. ~2–3 seconds. No dialogue. `cabinState.doctorSeen = true` is set after this plays.
+
+**This is the first mechanical use of the phase-through-wood ability.** The narrative discovery was at the grandparents' door (the cinematic at the start of Beat 6). This shared-wall traversal is the moment the ability becomes a verb the player understands — Pip chose to walk into a wall and came out the other side.
+
+Beat 6 ends with Pip in Cabin 646, control restored. The mirror and bed beats follow (Beat 3 in chapter structure; played now in actual order). After the panic glide exits Pip back to the hallway, the grandparents' cabin is accessible again for subsequent visits.
 
 ---
 
@@ -498,7 +507,7 @@ Once the chapter is functionally playable end-to-end:
 
 *(Sprint 12: `↓ COLLECT` added. See `ch01-cabin-646-outline.md` for fuller descriptions.)*
 
-1. **Walk through wood (not metal).** Beat 4, cabin door.
+1. **Walk through wood (not metal).** Two-stage discovery: (a) *narrative discovery* — Beat 6, grandparents' cabin door (hallway side), when Pip's hand passes through the door as the cinematic begins. No menu unlock, no journal entry — just the moment of realization. (b) *first mechanical use* — Beat 6 continuation, shared wall between cabin 644 and cabin 646, when Pip walks right and phases through into Cabin 646. The ability is now a traversal verb the player understands. The cabin hallway door at x≈1180 is not a phase-through teaching moment under the canonical flow.
 2. **Talk through speakers.** Beat 7, radio in grandparents' cabin.
 3. **Flicker electricity.** Beat 8, dark corridor, broken sconce.
 4. **Float.** Beat 8, alongside electricity — broken glass on the floor triggers involuntary rise; becomes player-controlled ability from that point.
@@ -512,6 +521,7 @@ Once the chapter is functionally playable end-to-end:
 - How to walk and inspect (room mode)
 - How dialogue choices appear and resolve (narration-with-choices model)
 - That abilities are *discovered*, not granted from a menu
+- That **Ch1 is the teaching chapter** for all five of Pip's ghost abilities (walk-through-wood, talk-through-speakers, flicker-electricity, float, taste-memory). Each has a specific discovery moment within this chapter, encountered through use. Chapters 2 and beyond assume the player knows these verbs; Ch1 is where each one is earned.
 - That the world has things you can't immediately solve (the locked door, the dark corridor) and abilities are how you solve them
 - That food is the central verb of this game
 - That cinematics happen at emotional peaks, not as cutscenes between zones

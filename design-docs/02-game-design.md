@@ -112,6 +112,12 @@ Two to four per moment. Each choice should be *meaningfully different* — not "
 
 Wrong choices in a puzzle never kill or set back the player. The chef gives a hint. The monster grumbles. The player tries again. This rule is absolute.
 
+### Proximity is not interaction
+
+Treats, inspectables, and ability triggers have visual cues (the warm-humming collect aura, the sparkle-aura, the cool-blue glow of a phase-through point) but **never auto-stop Pip or auto-fire dialogue**. Pip walks past freely. The player chooses when to engage. This applies universally — the teaching is in the doing, not in the forcing.
+
+Proximity coercion contradicts the design principle that abilities and verbs are discovered through use. If a treat auto-stops Pip, the player did not discover the collect verb — the game forced it. If an inspectable fires on approach, the player did not choose to look. Neither is right. The visual cue says "something is here"; the `↑` or `↓` keypress says "I want this."
+
 ---
 
 ## The Stat System: Strength and Empathy

@@ -6017,8 +6017,8 @@ function drawHallway(camX, now) {
   }
 
   // Sprint 16: cabin number plaques — to the right of each door, upper-mid height
-  // Beat-order correction: 646 (Pip) now at x=1180; 644 (grandparents) at x=920.
-  const CABIN_NUMBERS = { 80: 640, 280: 642, 480: 650, 700: 648, 920: 644, 1180: 646 };
+  // Sprint 21: ascending 636–646, Pip's 646 last (rightmost). Grandparents 644 immediately before.
+  const CABIN_NUMBERS = { 80: 636, 280: 638, 480: 640, 700: 642, 920: 644, 1180: 646 };
   for (const [gxStr, num] of Object.entries(CABIN_NUMBERS)) {
     const gx = Number(gxStr);
     const sx = Math.round(gx - camX);

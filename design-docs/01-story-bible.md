@@ -271,7 +271,7 @@ The Greenpoint chapter is the climax. Pip returns to his own home kitchen, faces
 
 The whole game is structured around classic story shape. Each chapter mirrors this in miniature too.
 
-**1. Exposition.** Pip wakes in Cabin 646 aboard The Mnemosyne. He's dead. He doesn't know it yet. Establish the ship, the loneliness, the warm-but-spooky tone.
+**1. Exposition.** Pip wakes in the hallway of The Mnemosyne. He's dead. He doesn't know it yet. He visits his grandparents' cabin first — witnesses their grief — then returns to Cabin 646 where the mirror and bed confirm what he already suspects. Establish the ship, the loneliness, the warm-but-spooky tone.
 
 **2. Inciting Incident.** Pip discovers he's a ghost (mirror scene). He cannot follow his grandparents off the ship. He meets Henrik, who explains the rules: taste your way through the world, earn your passage. (Chapter 1.)
 
@@ -320,8 +320,8 @@ The locked arc is **8 chapters**: Ch1 Cabin 646, Ch2 Tallinn, Ch3 Southampton, C
 **Status:** Outlined + partial implementation doc (`04-chapter-01-cabin-646.md`). See `ch01-cabin-646-outline.md` for the most current narrative shape.
 
 **Locked:**
-- Pip wakes; the mirror; he learns he's dead; his grandparents leave with his body.
-- Five rooms: cabin, hallway, grandparents' cabin, dark corridor, kitchen. Closes on deck.
+- Pip wakes in the hallway; visits grandparents' cabin first; the mirror; he learns he's dead; his grandparents leave with his body.
+- Six rooms in play order: hallway → grandparents' cabin → Cabin 646 → dark corridor → kitchen → observation deck. Closes on deck.
 - Five abilities introduced: walk-through-wood, talk-through-speakers, flicker-electricity, float, taste-memory.
 - Doubled first-taste cinematic — gravlaks (6a, Henrik as boy with his grandfather) and lefse (6b, Henrik teaching young Erik, face partially hidden).
 - Henrik tells the Nøkken story after Cinematic 6b, folded into the existing first-taste sequence.

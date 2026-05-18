@@ -1,5 +1,7 @@
 # Sprint 10.7: Chapter 1 opening restructure — hallway start, pixelate-in yawn, lump-in-bed
 
+> **⚠ PARTIALLY SUPERSEDED — 2026-05-18.** The section of this spec that described cabin entry order as ambiguous ("between the first-door man and the grandparents' room, **or after** — implementer's discretion") and the test question framing "hallway → cabin → grandparents' room" encode the wrong play order. Canonical beat order is: hallway → grandparents' cabin (x=920) → Cabin 646 (x=1180). See Decisions Log entry dated 2026-05-18 in `design-docs/06-roadmap-and-open-questions.md`.
+
 ## Documentation hygiene (applies to every sprint)
 
 **Every sprint in this project maintains the design docs as a first-class deliverable, not an afterthought.** When a sprint creates, modifies, or supersedes anything that touches the canonical docs, those updates ship in the same commit as the sprint's primary work.

@@ -1328,11 +1328,14 @@ const chapterState = {
 
 /* ================================================================
    SPRINT 17: SAVE STATE
-   Single auto-save slot. Key: 'tlb-save-v1'. Save-at-exit only.
+   Single auto-save slot. Key: 'tlb-save-v2'. Save-at-exit only.
+   Beat-order correction (2026-05-18) bumped v1 → v2; v1 saves are
+   silently dropped (no migration — cabin/grandparents spatial change
+   would leave saved pip.x in inconsistent state).
    ================================================================ */
 
-const SAVE_KEY     = 'tlb-save-v1';
-const SAVE_VERSION = 1;
+const SAVE_KEY     = 'tlb-save-v2';
+const SAVE_VERSION = 2;
 
 function buildSaveObject() {
   return {
@@ -1796,7 +1799,7 @@ const hallwayObjects = [
      After grandparents': Go in / Listen / Not now. */
   {
     id: 'hallway-cabin-door',
-    x: 480,
+    x: 1180,
     sparkleY: 110,
     get node() {
       // Shared "Listen at the door" handler \u2014 doctor's voice; always re-hearable.
@@ -1895,7 +1898,7 @@ const hallwayObjects = [
      The getter returns the appropriate node based on runtime state. */
   {
     id: 'hallway-grandparents-door',
-    x: 1180,
+    x: 920,
     sparkleY: 110,
     get node() {
       if (cinematic.played.has('grandparents')) {
@@ -2525,7 +2528,7 @@ if (DEBUG_DC) {
   pip.abilities.electricity         = true;
   pip.abilities.talkThroughSpeakers = true;
   pip.x                             = 1270;         // near staircase; walk right to trigger
-  console.log('[debug=darkcorridor] Beat-8 state injected. Walk right to staircase at x≥1312.');
+  console.log('[debug=darkcorridor] Beat-8 state injected. Pip at x=1270 (grandparents door=920, cabin door=1180). Walk right to staircase at x≥1312.');
 }
 
 /* ================================================================
@@ -2823,13 +2826,13 @@ function update(dt) {
     pip.x = Math.max(roomMin, Math.min(rooms[currentRoom].pipMaxX, pip.x));
 
     // Room edge triggers — walk into the edge to change rooms
-    // Sprint 10.7: cabin exits via left wall (door at x=120) back to hallway at cabin door position (480)
+    // Sprint 10.7: cabin exits via left wall (door at x=120) back to hallway at cabin door position (1180)
     if (currentRoom === 'cabin' && pip.x <= rooms.cabin.pipMinX + 1) {
       // Exit cabin through the door — return to hallway at the cabin door position
-      startTransition('hallway', 'fromRight', 464);   // just left of cabin door at hallway x=480
+      startTransition('hallway', 'fromRight', 1164);  // just left of cabin door at hallway x=1180
     } else if (currentRoom === 'grandparents' && pip.x <= PIP_HALF_W + 1) {
-      // Return to hallway at the grandparents' door position
-      startTransition('hallway', 'fromRight', 1164);
+      // Return to hallway at the grandparents' door position (now x=920)
+      startTransition('hallway', 'fromRight', 904);
     } else if (currentRoom === 'hallway' && pip.x >= 1312 && cabinState.beatStage === 'post-bed') {
       // Sprint 20: hallway far-right staircase to dark corridor (available post-Beat-5)
       startTransition('darkCorridor', 'fromLeft');
@@ -3031,7 +3034,7 @@ function updatePanicSequence(dt) {
         mb.panicPhase = 'done';
         mb.tears = [];
         // Transition to hallway — startTransition restores control and room strip
-        startTransition('hallway', 'fromRight', 464);
+        startTransition('hallway', 'fromRight', 1164);  // just left of cabin door at x=1180
       }
       break;
     }
@@ -5957,11 +5960,11 @@ function drawHallway(camX, now) {
   // Wall fixtures — one per gap between the 6 doors, all at y=85.
   // Pattern alternates porthole / sconce / porthole / sconce / porthole.
   // x positions are gap centres (doors at 80,280,480,700,920,1180):
-  //   gap 1 (80→280)  x=180  porthole
-  //   gap 2 (280→480) x=390  sconce
-  //   gap 3 (480→700) x=600  porthole
-  //   gap 4 (700→920) x=810  sconce (flickering — Beat 8 foreshadowing)
-  //   gap 5 (920→1180) x=1050 porthole
+  //   gap 1 (80→280)   x=180  porthole
+  //   gap 2 (280→480)  x=390  sconce
+  //   gap 3 (480→700)  x=600  porthole
+  //   gap 4 (700→920)  x=810  sconce (flickering — Beat 8 foreshadowing; near grandparents door at 920)
+  //   gap 5 (920→1180) x=1050 porthole (between grandparents and cabin doors)
   const fixtureY   = 85;
   const portholeR  = 17;   // bottom edge 85+17=102; doorTop is now 58
   const PORTHOLES  = [180, 600, 1050];
@@ -6003,16 +6006,19 @@ function drawHallway(camX, now) {
     });
   }
 
-  // Doors — six total; grandparents' door (1180) and Pip's cabin (480) have warm glow
-  // Sprint 16: cabin numbers assigned — 640/642/646/648/650/644(grandparents)
+  // Doors — six total; grandparents' (920) always warm; cabin 646 (1180) warm only after grandparents visited.
+  // Beat-order correction 2026-05-18: grandparents moved from 1180 → 920, cabin from 480 → 1180.
+  const gpPlayed = cinematic.played.has('grandparents');
   for (const gx of [80, 280, 480, 700, 920, 1180]) {
     const sx = Math.round(gx - camX);
     if (sx > W + doorW || sx < -doorW) continue;
-    drawDoor(sx, doorTop, { w: doorW, h: doorH, warm: gx === 1180 || gx === 480 });
+    const warm = gx === 920 || (gx === 1180 && gpPlayed);
+    drawDoor(sx, doorTop, { w: doorW, h: doorH, warm });
   }
 
   // Sprint 16: cabin number plaques — to the right of each door, upper-mid height
-  const CABIN_NUMBERS = { 80: 640, 280: 642, 480: 646, 700: 648, 920: 650, 1180: 644 };
+  // Beat-order correction: 646 (Pip) now at x=1180; 644 (grandparents) at x=920.
+  const CABIN_NUMBERS = { 80: 640, 280: 642, 480: 650, 700: 648, 920: 644, 1180: 646 };
   for (const [gxStr, num] of Object.entries(CABIN_NUMBERS)) {
     const gx = Number(gxStr);
     const sx = Math.round(gx - camX);

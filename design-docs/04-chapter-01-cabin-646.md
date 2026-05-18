@@ -44,15 +44,15 @@ Player presses Space to dismiss. Player control begins.
 
 ---
 
-### Beat 2: WAKING IN THE CABIN (first cabin visit — now entered from hallway)
+### Beat 2: WAKING IN THE CABIN (second destination — Pip visits grandparents' cabin first)
 **Mode:** Room — Cabin 646
 
-*(The cabin is now a destination Pip enters from the hallway, not the starting room. The hallway is the home base; the cabin door in the hallway leads here.)*
+*(The cabin is a destination Pip enters from the hallway after the grandparents' cinematic has played. Beat-order correction 2026-05-18: grandparents' cabin is the discovery room; Cabin 646 is the confirmation room. The cabin door is gated until the grandparents' cinematic plays — see Beat 4.)*
 
-**Cabin door in the hallway (Sprint 10.7):** The cabin door is labeled Cabin 646. Inspection text:
-> *Cabin 646. Pip's cabin. The door is closed but unlocked.*
+**Cabin door in the hallway:** The cabin door is labeled Cabin 646. Located at hallway world-x ≈ 1180 (past grandparents' door at x ≈ 920). Inspection text before grandparents' cinematic:
+> *Cabin 646. The door is closed.*
 
-Pressing `↑` near the door transitions into the cabin.
+Pressing `↑` near the door transitions into the cabin only after grandparents' cinematic has played.
 
 **Lump-in-bed (Sprint 10.7):** From this sprint onward, the bed contains a **lump under the covers** — a soft shape suggesting a small body. A long bump along the bed's length, slightly larger toward where a head would be. No facial features, hair, or limbs are drawn. The lump is implied, not displayed.
 
@@ -130,7 +130,7 @@ Now the cabin door becomes the trigger.
 
 **Canonical sequence:**
 
-1. **Pip approaches the cabin door** (hallway, x≈480). Pressing `↑` opens the door dialogue:
+1. **Pip approaches the cabin door** (hallway, x≈1180 — past grandparents' door at x≈920). Pressing `↑` opens the door dialogue:
    > *Cabin 646. The door is closed.*
 
    Two choices: **Listen at the door.** / **Not now.**
@@ -164,12 +164,15 @@ Now the cabin door becomes the trigger.
 
 A long ship corridor. Side-scrolls. Pixel art of a Hurtigruten-style narrow hallway, doors lining one side, brass fixtures, deep red carpet, a flickering wall sconce.
 
-The hallway has multiple inspectables:
-- **A bulletin board** (world-x ~260, early in the hallway before the first sconce) — a real visual asset: a small wooden framed board mounted on the wall with the *"WELCOME ABOARD THE MNEMOSYNE"* header rendered visibly, plus a port itinerary visible below (Norway, Iceland, Scotland, Ireland… planting seeds for future chapters). Inspecting it triggers a small narrator beat that re-reinforces the pronunciation joke for any player who skipped the opening narration. *"Mnemosyne (Nem-OSS-uh-nee) Welcomes You Aboard. Today's Port: Bergen."*
-- **A luggage cart** halfway down: *"Someone packed in a hurry. There's a stuffed bear sticking out — it looks like one Babcia gave me."*
-- **A flickering sconce** that responds to Pip — first hint of his electricity ability
-- **The grandparents' cabin door** (the next story trigger)
+The hallway has multiple inspectables, encountered in this spatial order walking right from spawn:
+- **A bulletin board** (world-x ~180) — a real visual asset with the *"WELCOME ABOARD THE MNEMOSYNE"* header and port itinerary visible.
+- **A luggage cart** (world-x ~540) — *"Someone packed in a hurry. There's a stuffed bear sticking out — it looks like one Babcia gave me."*
+- **A flickering sconce** (world-x ~810) — first hint of Pip's electricity ability
+- **The grandparents' cabin door** (world-x ~920 — the first story trigger; encountered before Cabin 646)
+- **Cabin 646 door** (world-x ~1180 — gated until grandparents' cinematic plays; encountered after grandparents)
 - **The far end of the hallway** — a descending staircase is visible in the dark zone past world-x ~1320. The staircase visibly descends into shadow, readable as "this is where you go next, but not yet." Pre-Beat-8 it is darkened; post-Beat-8 it is accessible. This is the visual signal of forward direction.
+
+*(Beat-order correction 2026-05-18: grandparents' door now at x≈920, Cabin 646 door now at x≈1180. Grandparents is encountered first walking right; cabin is encountered second.)*
 
 **Wall-decor inspectables (P1 Session 1, canonical — two pieces confirmed):**
 - **Ship photograph** (world-x 230) — inspectable. Suggested narration: *A black-and-white photograph of a sister ship at her launch. The pose is formal, the steam pouring. A small brass plate reads something in Norwegian.*
@@ -194,8 +197,10 @@ The crying gets louder near the grandparents' cabin door.
 
 ---
 
-### Beat 6: GRANDPARENTS' CABIN (the gut punch)
+### Beat 6: GRANDPARENTS' CABIN (the gut punch — the discovery room)
 **Mode:** Cinematic 3 (GRANDPARENTS)
+
+*(Beat-order correction 2026-05-18: despite being numbered Beat 6 here, the grandparents' cabin is the FIRST room Pip enters after the hallway exploration — not the cabin. The beat numbering reflects chapter structure, not play order. Grandparents' cabin = discovery room. Cabin 646 = confirmation room. Beat 3 mirror is gated on grandparents' cinematic having played for exactly this reason.)*
 
 Pip phases through the door. The screen transitions to the cinematic — the wide shot of Babcia weeping on the bed, Dziadek at the window, the open suitcase, the small photograph of Pip on the nightstand.
 

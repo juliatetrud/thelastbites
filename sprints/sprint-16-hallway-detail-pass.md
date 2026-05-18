@@ -1,5 +1,7 @@
 # Sprint 16: Hallway Detail Pass
 
+> **⚠ PARTIALLY SUPERSEDED — 2026-05-18.** This sprint placed visual detail (warm glow, cabin number plaques, luggage-trolley placement description) using the pre-correction door positions: Cabin 646 at x=480, grandparents at x=1180. Those positions are now corrected: grandparents at x=920, Cabin 646 at x=1180. The warm-glow logic, CABIN_NUMBERS table, and trolley "between Pip's door" description in the spec are stale. The implementation in `game/index.html` has been updated. See Decisions Log entry dated 2026-05-18 in `design-docs/06-roadmap-and-open-questions.md`.
+
 ## Goal
 
 Make the hallway feel like a specific place on the *Mnemosyne* — not a generic corridor — by adding cabin number plaques, a runner carpet, wall decor, porthole scenery (Ch1: ocean at night), and refined sconce light pools.

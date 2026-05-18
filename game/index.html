@@ -2511,6 +2511,23 @@ if (DEV_MODE) {
   console.log('[dev mode] float unlocked');
 }
 
+/* ?debug=darkcorridor — skip to Beat-8 state without replaying Ch1.
+   Sets all flags needed for the hallway staircase to be reachable and
+   transitions directly to gameplay. Julia only; no-op without the param. */
+const DEBUG_DC = URL_PARAMS.get('debug') === 'darkcorridor';
+if (DEBUG_DC) {
+  cabinState.beatStage              = 'post-bed';
+  cabinState.bedRevealed            = true;
+  cabinState.doctorSeen             = true;
+  cinematic.played.add('grandparents');
+  openingSeq.state                  = 'complete';   // skip materialization gate
+  pip.float.unlocked                = true;
+  pip.abilities.electricity         = true;
+  pip.abilities.talkThroughSpeakers = true;
+  pip.x                             = 1270;         // near staircase; walk right to trigger
+  console.log('[debug=darkcorridor] Beat-8 state injected. Walk right to staircase at x≥1312.');
+}
+
 /* ================================================================
    INPUT
    Held keys tracked via keydown/keyup. Arrow keys and WASD for

@@ -182,7 +182,7 @@ The dialogue and choices are *unchanged* from pre-grandparents'. Pip's first ent
 
 **Mode:** Cinematic 2 (mirror melt)
 
-**Trigger:** Inside the cabin, post-doctor-cinematic, player presses `↑` near the mirror at world-x `~280`. One-shot per chapter.
+**Trigger:** Inside the cabin, post-doctor-cinematic *(which fires on shared-wall arrival in Beat 6 continuation, not on cabin-door entry — see § Beat 6 continuation below)*, player presses `↑` near the mirror at world-x `~280`. One-shot per chapter.
 
 **Player inputs allowed during cinematic:**
 - **Space** to advance through cinematic lines.

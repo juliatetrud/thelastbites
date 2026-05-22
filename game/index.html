@@ -1300,7 +1300,7 @@ function playSound(name) { /* stub — name logged only in dev */ }
 /* Sprint 11 — cinematic / sequence state for mirror beat */
 const mirrorBeat = {
   /* Scripted panic sequence (post-bed-reveal) */
-  panicPhase:   'none',   // 'none' | 'floating-up' | 'floating-hold' | 'floating-down' | 'gliding' | 'done'
+  panicPhase:   'none',   // 'none' | 'floating-up' | 'floating-hold' | 'floating-down' | 'gliding' | 'wall-phase' | 'done'
   panicTimer:   0,
   panicFloatAlt: 0,       // altitude during scripted float
   glideStartX:  0,
@@ -1790,106 +1790,14 @@ const hallwayObjects = [
     },
   },
 
-  /* ---- Cabin door (Pip's cabin — Sprint 10.7) ----
-     Cabin 646. Pip recognizes the door as his own.
-     Pressing ↑ near it transitions to the cabin room. */
   /* ---- Cabin 646 door ----
-     Sprint 14: gated on grandparents' cinematic.
-     Before grandparents': Listen / Not now only.
-     After grandparents': Go in / Listen / Not now. */
+     Sprint 24 Stage 1a: no interaction from the hallway side, ever.
+     Return visits: silent open via hallway trigger (Stage 3). */
   {
     id: 'hallway-cabin-door',
     x: 1180,
     sparkleY: 110,
-    get node() {
-      // Shared "Listen at the door" handler \u2014 doctor's voice; always re-hearable.
-      function listenAtDoor() {
-        showDialogue({
-          id: 'doctor-voice',
-          lines: [
-            { speaker: null, text: 'Pip presses his ear to the door.', italic: false },
-            { speaker: null, text: 'From inside, a man\u2019s voice \u2014 quiet, careful.', italic: false },
-            { speaker: 'DOCTOR (FROM INSIDE)', text: '\u2026there was nothing more we could do. I\u2019m so sorry.', italic: false },
-          ],
-          choices: null,
-          onEnd: null,
-        });
-      }
-
-      if (cinematic.played.has('grandparents')) {
-        return {
-          id: 'cabin-door-post-gp',
-          lines: [
-            { speaker: null, text: 'Cabin 646. Pip\u2019s cabin. The door is closed but unlocked.', italic: false },
-          ],
-          choices: [
-            {
-              id: 'enter-cabin',
-              text: 'Go in.',
-              onSelect() {
-                closeDialogue();
-                setTimeout(() => {
-                  // Manual transition so doctor-exit cinematic can fire on arrival.
-                  const overlay = document.getElementById('room-transition');
-                  transition.active = true;
-                  overlay.style.opacity = '1';
-                  setTimeout(() => {
-                    currentRoom        = 'cabin';
-                    pip.x              = rooms.cabin.pipEntryX.fromLeft;
-                    pip.body.facing    = 'right';
-                    pip.float.altitude = 0;
-                    pip.float.vy       = 0;
-                    playMusic(ROOM_MUSIC['cabin'] || 'main');
-                    // Release transition lock before cinematic so ESC skip works
-                    transition.active = false;
-                    if (!cabinState.doctorSeen) {
-                      startDoctorExitCinematic(() => {
-                        cabinState.doctorSeen = true;
-                        setRoomStrip();
-                      });
-                    } else {
-                      setRoomStrip();
-                    }
-                    overlay.style.opacity = '0';
-                  }, 200);
-                }, 310);
-              },
-            },
-            {
-              id: 'listen-door-post-gp',
-              text: 'Listen at the door.',
-              onSelect() { listenAtDoor(); },
-            },
-            {
-              id: 'not-now-cabin',
-              text: 'Not now.',
-              onSelect() { closeDialogue(); },
-            },
-          ],
-          onEnd: null,
-        };
-      }
-
-      return {
-        id: 'cabin-door-pre-gp',
-        lines: [
-          { speaker: null, text: 'Cabin 646. The door is closed.', italic: false },
-        ],
-        choices: [
-          {
-            id: 'listen-door-pre-gp',
-            text: 'Listen at the door.',
-            onSelect() { listenAtDoor(); },
-          },
-          {
-            id: 'not-now-cabin',
-            text: 'Not now.',
-            onSelect() { closeDialogue(); },
-          },
-        ],
-        onEnd: null,
-      };
-    },
+    get node() { return null; },
   },
 
   /* ---- Grandparents' door ----
@@ -3029,12 +2937,31 @@ function updatePanicSequence(dt) {
         });
       }
 
-      // Check for cabin exit (left wall)
+      // Sprint 24 Stage 1b: reach the left wall → enter wall-phase (shimmer, then transition)
       if (pip.x <= rooms.cabin.pipMinX + 1) {
+        pip.x = rooms.cabin.pipMinX;
+        mb.panicPhase = 'wall-phase';
+        mb.panicTimer = 0;
+      }
+      break;
+    }
+    case 'wall-phase': {
+      // Tears continue through the wall-phase so the spray is uninterrupted
+      if (Math.random() < dt * 6) {
+        mb.tears.push({
+          x:      pip.x + 4,
+          y:      pip.y - pip.float.altitude - PIP_H * 0.65,
+          vx:     PANIC_SPEED * 0.3 + (Math.random() - 0.5) * 10,
+          vy:     -15 - Math.random() * 10,
+          age:    0,
+          maxAge: 0.4,
+        });
+      }
+      mb.panicTimer += dt;
+      if (mb.panicTimer >= 0.35) {
         mb.panicPhase = 'done';
         mb.tears = [];
-        // Transition to hallway — startTransition restores control and room strip
-        startTransition('hallway', 'fromRight', 1164);  // just left of cabin door at x=1180
+        startTransition('hallway', 'fromRight', 1164);
       }
       break;
     }
@@ -4515,6 +4442,20 @@ function drawCabin(camX, now) {
       ctx.arc(leftWallSX + lwW - 8, ry, 2, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
+
+  // Sprint 24 Stage 1b: wall-phase shimmer (cool-blue pulse on left wall during panic exit)
+  if (mirrorBeat.panicPhase === 'wall-phase') {
+    const t = Math.min(1, mirrorBeat.panicTimer / 0.35);
+    const alpha = Math.sin(t * Math.PI) * 0.55;
+    const sx = Math.round(0 - camX);
+    ctx.save();
+    const shimGrad = ctx.createLinearGradient(sx, 0, sx + 30, 0);
+    shimGrad.addColorStop(0, `rgba(140, 210, 255, ${alpha.toFixed(3)})`);
+    shimGrad.addColorStop(1, `rgba(100, 180, 255, 0)`);
+    ctx.fillStyle = shimGrad;
+    ctx.fillRect(sx, 0, 30, FLOOR_Y);
+    ctx.restore();
   }
 
   /* ---- Right wall cap (game-world x=ROOM_W) — closes the right end of the cabin ---- */

@@ -14,6 +14,10 @@ If a task seems to require installing something, **stop and tell Julia**. She'll
 
 Reason: supply-chain attacks via malicious npm/pip packages are a real and growing risk. The protection is not installing anything the human hasn't vetted.
 
+## No downloads, no fetches, no external resources
+
+Claude Code does not run `npm install`, `pip install`, `gh extension install`, `curl`, `wget`, `git clone` of anything outside the current repo, or any command that pulls bytes from a third-party source. The repo is the entire scope of work. If a task seems to require an external dependency, stop and flag — do not fetch it. `git push` and `git pull` against the project's own remote are fine. `gh issue create` / `gh issue list` against the project's own repo are fine. Anything else that touches the network requires Julia's explicit go-ahead.
+
 ## Use only what's already on the system
 
 The system has: `git`, `python3`, `node`, `gh`, `open`, standard Unix tools. Use these.

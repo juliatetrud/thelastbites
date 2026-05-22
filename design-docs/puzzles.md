@@ -83,44 +83,42 @@ When Pip is within ~18 game-world pixels of an inspectable's x-coordinate, a spa
 
 ---
 
-## Puzzle 1: Cabin door (Beat 4) — listen only
+## Puzzle 1: Cabin door (Beat 4) — silent set-dressing / silent open
 
-**Status:** Shipped (Sprint 14). Post-grandparents' "Go in" superseded by Sprint 22 (option A locked). Sprint 23 patches the live code.
+**Status:** Retired Sprint 23 — the hallway-side cabin door produces no dialogue at any point. Sprint 24 strips the dialogue from `game/index.html` and builds the silent-open transition for return visits. (The Sprint 14 "Listen / Not now" dialogue is fully retired; the Sprint 22 retention of pre-grandparents' "Listen / Not now" is also retired.)
 
-**Type:** Conditional dialogue (no room transition from this door on first visit).
+**Type:** No-dialogue room transition (return visits only).
 
 ### State read
 
-- `cinematic.played.has('grandparents')` — pre-grandparents' / post-grandparents' state.
+- `cabinState.doctorSeen` — to confirm this is a return visit. First-time entry is via the shared wall (Puzzle 3.5), not via this door.
 
 ### State written
 
-- None. This puzzle is dialogue-only. `cabinState.doctorSeen` is written by Puzzle 3.5.
+- None from this puzzle directly. The return-visit transition does not change any cabin state.
 
 ### State machine (pseudocode)
 
 ```
-on inspect(hallway-cabin-door):
-  // Pre- or post-grandparents', the dialogue is identical
-  showDialogue(cabin-door-node)  // see dialogue.md
-  on choice 'listen-door':
-    showDialogue(doctor-voice-node)
-  on choice 'not-now-cabin':
-    closeDialogue()
-
-on roomTransition fired by player walking into cabin door post-Beat-6:
-  // Silent phase-through — no dialogue, no cinematic
-  // The phase-through ability is fully understood by this point
-  standardWoodenDoorTransition('cabin', 'fromLeft')
+on Pip approaches hallway-cabin-door from hallway:
+  if not cabinState.doctorSeen:
+    // First encounter — door is silent set-dressing.
+    // No interaction. Pip walks past it (or stops at it; nothing happens).
+    no-op
+  else:
+    // Return visit — silent open.
+    // No dialogue, no choice menu.
+    standardWoodenDoorTransition('cabin', 'fromLeft')
 ```
 
-*(Note for Sprint 23: the second block is approximate. Implementation may handle return-visit transitions via the existing transition system without a separate code path — Pip just walks into the door's interactable zone and the room changes. Sprint 23 locks the exact mechanism.)*
+*(Note for Sprint 24: the exact trigger mechanism — proximity walk-into vs. `↑` — is implementation choice. Recommend walk-into so the door "feels" like a real working door rather than a prompted interactable.)*
 
 ### Notes
 
-- The Listen sub-dialogue is **repeatable** — no state flag prevents re-listening.
-- The door dialogue is **identical** in both pre- and post-grandparents' states. The opening line (*Cabin 646. The door is closed.*) does not change to "closed but unlocked" post-grandparents'.
-- **No "Go in" choice** ever appears on this door. First entry to Cabin 646 is via the shared wall (Puzzle 3.5). Return visits are silent phase-throughs.
+- **No dialogue from the hallway side, ever.** No "Listen at the door," no "Not now," no opening line, no doctor's voice from this side. The doctor's voice line (*"…there was nothing more we could do. I'm so sorry."*) is preserved as content of the doctor-exit cinematic on shared-wall arrival (Puzzle 3.5); it is not gone from the game, only relocated.
+- On first encounter (any point before Pip enters Cabin 646 via the shared wall), the door is silent set-dressing — no sparkle, no warm aura, no prompt. Pip walks past it the same way he walks past the decorative doors at 640/642.
+- Return visits silently open the door on approach. The phase-through ability is fully understood by this point and the door operates as ordinary egress.
+- First-visit entry is the shared wall (Puzzle 3.5). First-visit exit (the panic exit at end of Beat 5) is a wall-phase back to the hallway per Sprint 23 canon — not a door exit.
 
 ---
 
@@ -1014,13 +1012,15 @@ Beat 2: Explore hallway              [passive — no state]
   ↓
 Beat 3: Passenger walks through      [passengerSeen]
   ↓
-Beat 4: Cabin door — Listen          [(no state) — repeatable]
+Beat 4: Cabin door — silent set-dressing  [no state, no interaction on first encounter]
   ↓
 Beat 6: Grandparents' cinematic      [cinematic.played.grandparents]
   ↓                                  [beatStage = 'pre-mirror']
 Beat 6 cont: Shared-wall phase-through [doctorSeen]
   ↓
 Beat 5: Mirror + Bed reveal + Panic  [mirrorRevealed, bedRevealed, beatStage='post-bed']
+  ↓                                  [panic exit is wall-phase to hallway, Sprint 23 canon]
+Beat 6.5: DOWN-sign descent to dark corridor  [descendedStairs (new, Sprint 24 impl)]
   ↓
 Beat 7: Dziadek's radio              [radioDiscovered, talkThroughSpeakers]
   ↓
@@ -1051,7 +1051,7 @@ Beat 12: Dock farewell + Nøkken      [grandparentsLeft, nokkenGlimpsed]
 Beat 13: Henrik's offer              [notebookReceived, chapter1Complete]
 ```
 
-The chapter has **one critical path** with no significant branching. The Listen-at-door is the only optional content. Wall-decor inspectables and ambient flavor are off-path but always available.
+The chapter has **one critical path** with no significant branching. Wall-decor inspectables and ambient flavor are off-path but always available. *(The earlier "Listen-at-door" optional content is retired per Sprint 23.)*
 
 ---
 

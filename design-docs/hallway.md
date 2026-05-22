@@ -21,7 +21,7 @@ A long side-scrolling corridor — 1440 px wide in world coordinates. The camera
 
 **Left boundary (world-x `0`):** A visible left wall (added Sprint 10.7). Pip cannot move further left than his start position. This is the corridor's terminus; everything is to the right.
 
-**Right boundary (world-x ~`1320–1440`):** A far-right dark zone. The corridor visibly continues into darkness — too dark to enter normally. This becomes accessible after the kitchen beat (it leads to the dark corridor / stairwell). Pre-kitchen, walking right into it returns no progress.
+**Right boundary (world-x ~`1320–1440`):** The hallway terminates in a lit **"DOWN" sign suspended over a descending staircase** (Sprint 23 canon — see `04-chapter-01-cabin-646.md` Beat 6.5). The stairhead is visible from chapter start as set-dressing; the sign stays lit throughout. The staircase is visually present but mechanically gated pre-Beat-5: walking right into it returns no progress until the panic exit lands Pip back in the hallway. Post-panic, the staircase is navigable — walking right onto the stairhead descends into the dark corridor (Beat 8).
 
 **Door positions (world-x) and cabin numbers (Sprint 21 canonical sequence — ascending left-to-right):**
 
@@ -65,7 +65,7 @@ The alternating warm/cool rhythm — porthole, sconce, porthole, sconce, porthol
 Per the door positions above. Brass cabin-number plaques sit on each door's upper panel, centered. Plaques are 18×9 px brass plates with engraved 3-digit numerals in a 3×5 pixel bitmap font.
 
 - **644 (grandparents, x=920):** Interactive. From the hallway side, `↑` triggers Cinematic 3 (grandparents' room reveal via phase-through). Post-cinematic, the door is enterable as a regular room transition. Always has a warm glow.
-- **646 (Pip's cabin, x=1180):** Interactive. Gated — pre-grandparents' cinematic: `↑` offers "Listen at the door" / "Not now" only. This door is the **return-visit entry**, not the first-visit entry. Pip's first entry to Cabin 646 happens via the shared-wall phase-through from grandparents' cabin 644 (Beat 6 continuation) — the doctor-exit cinematic fires there, on arrival through the wall. The hallway door at x=1180 is used for all subsequent visits after Pip has exited via the panic glide. Whether the door dialogue updates post-grandparents' is an open question for Sprint 23 (see `04-chapter-01-cabin-646.md` Beat 4).
+- **646 (Pip's cabin, x=1180):** **Not interactable on first encounter** (Sprint 23 — silent set-dressing). No sparkle, no warm aura, no prompt on `↑`. Pip walks past it the same way he walks past the decorative doors at 640/642. The path forward at this stage is the grandparents' door at x=920; that is the one that calls. Pip's first entry to Cabin 646 happens via the shared-wall phase-through from grandparents' cabin 644 (Beat 6 continuation) — the doctor-exit cinematic fires there, on arrival through the wall, not at this door. **Return visits** (after the Beat 5 panic exit): walking up to the door from the hallway opens it silently — no dialogue, no choice menu, no doctor's voice. The door behaves like an ordinary door that works. Implementation strip of the prior "Listen / Not now" dialogue lands in Sprint 24.
 - **636, 638, 640, 642:** Non-interactive. Pure visual.
 
 ### Bulletin board (inspectable)
@@ -184,5 +184,5 @@ From `design-docs/visual-research-tracker.md` (Ch1 section):
 
 4. **Bulletin board location.** Current code may not have a discrete bulletin-board object at a specific world-x — the inspection text exists, but is the visual asset there? Flag for verification when we walk the hallway code carefully in `art-checklist.md`.
 
-5. **Far-right dark zone presentation.** The corridor visibly continues into darkness past world-x `~1320`. Currently this is just "darkness" rendered as a darker overlay. Should this region get a specific visual treatment (a stairway descending? a doorway with no light coming through?) to signal "this is where you go next, but not yet"? Or is the current darkness enough?
+5. ~~**Far-right dark zone presentation.** The corridor visibly continues into darkness past world-x `~1320`. Currently this is just "darkness" rendered as a darker overlay. Should this region get a specific visual treatment (a stairway descending? a doorway with no light coming through?) to signal "this is where you go next, but not yet"? Or is the current darkness enough?~~ — **Resolved Sprint 23.** The far-right zone is now a lit "DOWN" sign suspended over a descending staircase. Visible as set-dressing from chapter start, gated until the Beat 5 panic exit, navigable afterward. See `04-chapter-01-cabin-646.md` Beat 6.5.
 

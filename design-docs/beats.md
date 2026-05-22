@@ -15,9 +15,10 @@ Chapter 1 has **14 beats**. Most beats are room-mode with a few cinematics inter
 | 1 | Waking in the hallway | Room | Shipped (Sprint 10.7) |
 | 2 | Exploring the hallway | Room | Shipped (Sprints 02–07, 16) |
 | 3 | The Passenger walk-through | Scripted in-room event | Shipped (Sprint 03) |
-| 4 | The cabin door (listen only — first entry to 646 is via shared wall) | Room | Shipped (Sprint 14; post-grandparents' "Go in" superseded Sprint 22) |
+| 4 | The cabin door (silent set-dressing — no interaction from hallway side) | Room | Spec'd Sprint 23 (door dialogue retired); code strip in Sprint 24 |
 | 5 | The mirror (Pip learns he is dead) | Cinematic 2 | Shipped (Sprint 11) |
 | 6 | The grandparents' cabin (phase-through + cinematic) | Cinematic 3 → Room | Shipped (Sprint 04, content patched Sprint 07) |
+| 6.5 | The DOWN sign and stairs (post-panic egress to dark corridor) | Room | **Not shipped** — spec'd Sprint 23, built Sprint 24+ |
 | 7 | Dziadek's radio (talk-through-speakers) | Room | **Not shipped** — to be built |
 | 8 | The dark corridor (electricity + float + janitor) | Room → puzzle | **Not shipped** — to be built |
 | 9 | The kitchen (Pip arrives, sees food) | Cinematic 4 | **Not shipped** — to be built |
@@ -89,7 +90,7 @@ Pip can walk right through the hallway. The hallway has six doors (636, 638, 640
 | ~820 | Flickering sconce | *An oil lamp flickers, not quite in time with itself.* / *When Pip steps close, it falters. When he steps back, it steadies. It almost feels like it's reacting to him.* / *How could that be? Pip wonders.* (italic) |
 | ~230 | Ship photograph (P1 S1) | *A black-and-white photograph of a sister ship at her launch. The pose is formal, the steam pouring. A small brass plate reads something in Norwegian.* |
 | ~865 | Navigational chart (P1 S1) | *A framed nautical chart of the North Sea. Someone has drawn a small red circle around Bergen. The ink is fresh.* |
-| ~1180 | Cabin 646 door | See Beat 4. Door has two states (pre-grandparents' / post-grandparents'). |
+| ~1180 | Cabin 646 door | **Not interactable from the hallway side on first encounter** (Sprint 23 — silent set-dressing). Return visits open it silently on approach. See Beat 4. |
 | ~900 | Grandparents' cabin door (644) | *From inside, someone is crying softly. The sound is familiar.* / *Pip reaches for the handle.* See Beat 6 for phase-through trigger. |
 
 **Hallway treat (P1 Session 1):** A canonical hallway treat exists near the luggage trolley or bulletin board area. It emits the warm collect-aura. **Not yet collectable** — Pip hasn't learned `↓` yet (taught in Beat 11b). Replay reward.
@@ -132,49 +133,42 @@ Pip can walk right through the hallway. The hallway has six doors (636, 638, 640
 
 ---
 
-## Beat 4: The cabin door (listen only — return-visit entry)
+## Beat 4: The cabin door (silent set-dressing — no interaction from hallway side)
 
 **Mode:** Room (hallway)
 
-**Trigger:** Player presses `↑` near the cabin door at world-x `~1180` in the hallway. Two-stage behavior gated on grandparents' cinematic. This door is the **return-visit entry** to Cabin 646. Pip's first entry to Cabin 646 happens via the shared-wall phase-through from grandparents' cabin (Beat 6 continuation, below).
+**Trigger:** None on first encounter. The cabin door at world-x `~1180` produces no dialogue from the hallway side — no sparkle, no warm aura, no prompt on `↑`. Pip walks past it the way he walks past the decorative doors at 640 / 642. Sprint 23 retired the prior "Listen / Not now" interaction; Sprint 24 strips the dialogue from `game/index.html`.
+
+For **return visits** (after the Beat 5 panic exit deposits Pip back in the hallway), Pip walks up to the door and it opens silently — no choice menu, no dialogue. The door behaves like an ordinary door that works.
 
 **Player inputs allowed:**
-- At the door (hallway side): **↑** to open dialogue; **↑↓** to navigate choices; **Space** to select; **←** to back out.
+- First encounter: standard hallway room-mode movement. No interaction with this door.
+- Return visit: walking up to the door triggers the silent open and room transition. No `↑` required (the door handles itself); no choices appear.
 
 **What happens:**
 
-### Pre-grandparents' (Beat 6 not yet played)
+### First encounter (any point before Pip first enters Cabin 646)
 
-Dialogue:
-> *Cabin 646. The door is closed.*
+The door is visually present — brass plaque reads "646" — but mechanically silent. No interactable hitbox in the hallway-side sense. Pip walks past it. The path forward at this stage is the grandparents' door at x≈920.
 
-Two choices:
-1. **Listen at the door.** Plays three lines:
-   > *Pip presses his ear to the door.*
-   > *From inside, a man's voice — quiet, careful.*
-   > DOCTOR (FROM INSIDE): *…there was nothing more we could do. I'm so sorry.*
-   
-   Returns to hallway. Repeatable.
-2. **Not now.** Closes dialogue. Returns to hallway.
+### After the grandparents' cinematic
 
-**No "Go in" option pre-grandparents'.** Pip hasn't realized he can phase through wood. The door is closed in narrative terms.
+Pip's first entry to Cabin 646 happens via the shared wall from grandparents' cabin (Beat 6 continuation, below). The doctor-exit cinematic fires on arrival at the shared wall, not at this door. The hallway-side cabin door remains silent set-dressing.
 
-### Post-grandparents' (Beat 6 has played)
+### Return visits (after Beat 5 panic exit)
 
-The dialogue and choices are *unchanged* from pre-grandparents'. Pip's first entry to Cabin 646 has already happened via the shared wall (see Beat 6 continuation below). For return visits, Pip phases through this door silently — no dialogue, no cinematic. The "Listen at the door" option remains available as atmospheric texture; the doctor's voice is still hearable indefinitely.
-
-**No "Go in" option ever appears on this door.** Return visits to Cabin 646 are silent phase-throughs through the wooden door.
+Pip walks up to the door from the hallway. The door opens silently and Pip enters the cabin. No dialogue, no choice menu. `cabinState.doctorSeen` is already true; the doctor cinematic does not replay. The mirror shows the ghost-face; the bed is in its post-reveal state.
 
 **Exit condition:**
-- For "Listen at the door": dialogue dismisses, return to hallway.
-- For return visits to Cabin 646: silent phase-through. No state change.
+- First encounter and post-grandparents'-pre-first-entry: no exit condition — the door produces no interaction.
+- Return visit: silent room transition to Cabin 646.
 
 **State changes:**
 - None. `cabinState.doctorSeen` is set in Beat 6 continuation, not here.
 
 **Files involved:**
-- `game/index.html` — `hallway-cabin-door` interactable, return-visit phase-through logic.
-- Sprint 14 is the canonical reference for the pre-grandparents' gating logic; post-grandparents' "Go in" superseded by Sprint 22 (option A locked).
+- `game/index.html` — `hallway-cabin-door` to be stripped of all hallway-side dialogue (Sprint 24); return-visit silent-open transition logic (Sprint 24 builds).
+- Sprint 23 is the canonical reference for the no-dialogue ruling. The Sprint 14 "Listen / Not now" content and the Sprint 22 retention of pre-grandparents' "Listen / Not now" are both fully retired.
 
 ---
 
@@ -197,11 +191,13 @@ The mirror cinematic plays — a close-up of Pip's face in the mirror, melting o
 3. Pip's reflection is recognizably him, but wrong. The realization lands.
 4. Dialogue plays (italic, Pip's interior thought):
    > *Oh.*
-5. **Panic glide + tear spray** (per Sprint 11):
-   - Pip glides toward the cabin door at 1.8× normal walk speed.
+5. **Panic glide + tear spray** (per Sprint 11; egress geometry reworked per Sprint 23 canon — see below):
+   - Pip glides toward the cabin's exit at 1.8× normal walk speed.
    - Cool-white teardrop particles arc backward from his eyes, fading within ~0.4s.
-   - He continues through the door and into the hallway. Tears stop.
+   - He arrives in the hallway. Tears stop.
    - Player control restores in the hallway.
+
+   *(Sprint 23 canon: per Julia's canonical beat-order paragraph, the panic exit is a **wall-phase back to the hallway**, not a glide through the cabin door — *"Spooked, he runs through the wall into the hallway."* The current implementation (Sprint 11) glides Pip through the door; rework to wall-phase egress lands in Sprint 24 alongside the cabin-door silent-open implementation.)*
 
 **Tone note:** This sequence is *gentle-comic* alongside the grief. The fast glide + tear spray is both real grief and a small ghost going very fast. Don't dampen the comic.
 
@@ -322,6 +318,38 @@ The cinematic fades. Pip is at the left edge of the room, facing right. Player h
 
 ---
 
+## Beat 6.5: The DOWN sign and stairs (new canon, Sprint 23)
+
+**Mode:** Room (hallway)
+
+**Status:** **Not yet shipped.** Spec'd Sprint 23; visual asset and gate logic land in Sprint 24+ as part of the kitchen build.
+
+**Trigger:** After the Beat 5 panic exit, Pip is in the hallway with player control restored. The hallway's far-right zone (past world-x ~1320), previously visually dark and impassable, now shows a lit "DOWN" sign suspended above a descending staircase. Walking right onto the stairhead (or `↑` at the stairhead) transitions to Beat 8 (the dark corridor).
+
+**Player inputs allowed:**
+- Standard hallway room-mode movement.
+- At the stairhead: walking right (or `↑`) descends.
+
+**What happens:**
+
+1. The DOWN sign is lit warm but specific — readable as functional ship signage. Suspended over the stairhead at the far-right hallway terminus.
+2. The descending staircase is visibly accessible (post-panic-exit). Pre-panic-exit it is visible-but-darkened set-dressing (sprint-23 canon — the sign itself stays lit throughout; what changes post-panic is the gate, not the sign).
+3. Pip walks right. At the stairhead, the camera transitions; the screen fades down. Beat 8 begins.
+
+**No dialogue lines on first descent.** The sign is its own communication. *(An optional italic Pip thought — e.g. *Down.* — is filed in `dialogue.md` as a TBD for the build sprint.)*
+
+**Exit condition:** Pip descends the stairs. Camera transitions to the dark corridor (Beat 8).
+
+**State changes:**
+- `chapterState.descendedStairs: false → true` *(new flag, pending Sprint 24 implementation — needed so the staircase trigger doesn't refire if Pip walks back up to the hallway and returns)*
+
+**Files involved:**
+- `game/index.html` — DOWN-sign visual at the hallway's far-right end; staircase visual; post-panic-exit gate logic; stairhead trigger that transitions to the dark corridor room.
+
+**Note on the prior beat numbering:** This beat is inserted as **6.5** because Beat 7 was already assigned to Dziadek's radio. The chronological order is Beat 5 (panic exit) → Beat 6.5 (DOWN sign, descent) → Beat 8 (dark corridor) → Beat 7 (radio paging, on backtrack to grandparents'). The doc-order placement (after Beat 6 continuation, before Beat 7) is structural — Beat 5/6/6-cont are the cabin-and-grandparents cluster, and Beat 6.5/7/8 are the moving-forward cluster.
+
+---
+
 ## Beat 7: Dziadek's radio (talk-through-speakers)
 
 **Mode:** Room (grandparents' cabin)
@@ -366,7 +394,7 @@ The cinematic fades. Pip is at the left edge of the room, facing right. Player h
 
 **Status:** **Not yet shipped.** The chapter's first multi-step puzzle.
 
-**Trigger:** Player walks through the hallway's far-right descending staircase (world-x `~1320+`) after Beat 5 has played. The staircase becomes navigable post-mirror; pre-mirror it's visually dark and impassable.
+**Trigger:** Player walks through the hallway's far-right descending staircase (world-x `~1320+`) after Beat 5 has played. The staircase is the egress from Beat 6.5 — see that beat for the DOWN-sign signpost and gate behavior. Pre-panic-exit the staircase is visible-but-impassable; post-panic it becomes navigable.
 
 **Player inputs allowed:**
 - Standard room-mode controls in the dark corridor (left/right/inspect/notebook/pause).
@@ -745,10 +773,11 @@ For Claude Code reference: the chapter's input register, beat by beat:
 | 1 | None during materialization; Space after |
 | 2 | Full room-mode |
 | 3 | Full room-mode (Passenger walks around Pip) |
-| 4 | Dialogue choices (Listen / Not now); return visits: silent phase-through |
+| 4 | First encounter: no interaction (door is silent set-dressing); return visits: silent open on approach |
 | 5 | Cinematic advance only (Space) |
 | 6 | Cinematic advance; then room-mode |
 | 6-cont | None during traversal + cinematic; room-mode in Cabin 646 after |
+| 6.5 | Room-mode (walk to DOWN-sign stairhead; no dialogue) |
 | 7 | Room-mode + dialogue advance |
 | 8 | Room-mode + held-button puzzle + scripted-walk room-mode |
 | 9 | Cinematic advance only |

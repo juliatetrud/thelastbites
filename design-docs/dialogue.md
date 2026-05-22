@@ -79,7 +79,7 @@ This doc supersedes the dialogue captured in `ch01-content-audit.docx` where the
 
 **Status:** One line, roman. Drafted in Sprint 19 patch; not yet in code.
 
-### Cabin 646 door (`hallway-cabin-door`) — see Beat 4
+### Cabin 646 door (`hallway-cabin-door`) — no dialogue from hallway side (Sprint 23). See Beat 4.
 
 ### Grandparents' cabin door (`hallway-grandparents-door`) — first visit
 
@@ -117,33 +117,11 @@ Two choices appear:
 
 ---
 
-## Beat 4: The cabin door (listen only — return-visit entry)
+## Beat 4: The cabin door (silent set-dressing — no dialogue from hallway side)
 
-**Status:** Shipped (Sprint 14 — gating logic + Sprint 07 — content). Post-grandparents' "Go in" superseded by Sprint 22 (option A locked). The pre-grandparents' dialogue is canonical in code; post-grandparents' branch will be patched in Sprint 23.
+**Status:** Retired Sprint 23. The cabin door at world-x ≈1180 produces **no dialogue from the hallway side, ever**. No opening line, no choice menu, no Listen sub-dialogue, no doctor's voice from this side. The door is silent set-dressing on first encounter (Pip walks past it) and opens silently on return visits after Beat 5. The doctor's voice — formerly heard via the "Listen at the door" choice — is now delivered only as part of the doctor-exit cinematic on shared-wall arrival inside Cabin 646 (Beat 6 continuation, no dialogue lines at all; see `beats.md` § Beat 6 continuation). Implementation removal of the prior `cabin-door-node` / `doctor-voice` dialogue from `game/index.html` is Sprint 24.
 
-### Pre-grandparents' (Beat 6 not yet played)
-
-Opening line:
-
-> *Cabin 646. The door is closed.* (roman)
-
-Choices:
-1. **Listen at the door.**
-2. **Not now.**
-
-### Listen sub-dialogue (`doctor-voice` node)
-
-> *Pip presses his ear to the door.* (roman)
->
-> *From inside, a man's voice — quiet, careful.* (roman)
->
-> DOCTOR (FROM INSIDE): *…there was nothing more we could do. I'm so sorry.* (roman)
-
-**Status:** Three lines. Repeatable.
-
-### Post-grandparents' (Beat 6 has played)
-
-The dialogue is *unchanged* — same opening line (*Cabin 646. The door is closed.*), same two choices ("Listen at the door" / "Not now"), same Listen sub-dialogue. Pip's first entry to Cabin 646 has already happened via the shared wall in Beat 6 continuation (see `beats.md` § Beat 6 continuation). For return visits to Cabin 646, Pip phases through this door silently — no dialogue, no narration. The "Listen at the door" choice persists as atmospheric texture; the doctor's voice remains hearable indefinitely. No "Go in" choice ever appears on this door.
+*(Historical note: the Sprint 14 "Listen at the door" / "Not now" choice menu and its `doctor-voice` sub-dialogue node — kept canonical through Sprint 22 — are fully retired by Sprint 23. The doctor's voice line *"…there was nothing more we could do. I'm so sorry."* is preserved as the doctor-exit cinematic's content; it is not gone from the game, only relocated.)*
 
 ---
 

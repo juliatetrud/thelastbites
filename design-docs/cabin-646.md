@@ -11,13 +11,28 @@ Two roles, played in sequence:
 
 Between those two visits the player understands the cabin shifted from "Pip's room" to "the room where Pip's body is." The cabin's draw state changes after the bed-reveal cinematic: the lump is removed (the body lives in the player's head, not on screen), and the mirror's reflective surface permanently shows Pip's ghost-face.
 
+## Cabin 646 as the collection room (Sprint 23 canon)
+
+New canon as of 2026-05-22: items Pip collects throughout the game appear physically in Cabin 646 and accumulate visibly across all chapters. Re-entering 646 — either via the shared wall on first visit or via the hallway door on return visits — shows the accumulated items.
+
+This turns Cabin 646 from "the room where the bad reveal happens" into "the room that fills up as Pip remembers more." A quiet visual arc that mirrors his journey across the game. The cabin is the only place where the player can *see* their cumulative inventory laid out in the world (the notebook tracks the same data textually).
+
+**The principle is locked.** Implementation specifics are filed as Open Questions for Sprint 24+ (see `06-roadmap-and-open-questions.md`):
+
+- Where each item type physically lands (desk, shelf, bed, drawer, floor).
+- Whether items group by chapter (Ch1 items together, Ch2 items together) or by category (recipes vs. memory components).
+- Whether accumulated items are inspectable in 646 — and if so, what the narration says (replay of original collection memory? new reflective lines? silent presence?).
+
+Recommendation captured in the open questions: fixed-position-per-item-id so returning players always find each item in the same spot; inspectable with short reflective lines that grow with the empathy stat — but the writing pass for those lines is its own design task.
+
 ## Spatial layout
 
 Single-screen room (no horizontal scroll required). Internal coordinates use `ROOM_W` per the standard room system.
 
 - **First-visit entry — shared wall from grandparents' cabin (Beat 6 continuation):** Pip phases through the shared wall between cabin 644 and cabin 646. He arrives on the left side of the room, facing right. The shared-wall entry point is distinct from the hallway door — there is no visible door frame; it is simply the wall. The doctor-exit cinematic fires immediately on this first entry (`cabinState.doctorSeen` gates it).
-- **Return-visit entry — hallway door at world-x `120`:** After Pip has entered and exited Cabin 646 via the panic glide, the hallway door at world-x 120 is the return entry point. Width 32, height 110, top at y=58. Brass handle, kickplate. Pip phases through this door normally on all subsequent visits. The doctor-exit cinematic does not replay (`cabinState.doctorSeen === true`).
-- **Pip exits to the left** via the hallway door on first-visit exit (the panic glide carries him through) and on all return-visit exits.
+- **Return-visit entry — hallway door at world-x `120`, silent open (Sprint 23 canon):** After Pip has entered and exited Cabin 646, the hallway door at world-x 120 is the return entry point. Width 32, height 110, top at y=58. Brass handle, kickplate. **No dialogue from the hallway side, ever** — no choice menu, no "Listen at the door." Pip walks up to the door from the hallway and it opens silently. The doctor-exit cinematic does not replay (`cabinState.doctorSeen === true`).
+- **First-visit exit (panic exit, Sprint 23 canon):** Pip exits Cabin 646 by **phasing through the wall back to the hallway**, not through the cabin door. Per Julia's canonical beat-order paragraph: *"Spooked, he runs through the wall into the hallway."* The current Sprint 11 implementation glides Pip through the door; rework to wall-phase egress lands in Sprint 24.
+- **Return-visit exit:** through the hallway door at world-x 120. No prompt; the door opens on approach.
 - **A second door at world-x `450`** — the doctor's exit door, added Sprint 14 for the doctor-exit cinematic. **Not interactable.** Pip cannot use it. After the doctor-exit cinematic plays once on first entry, the door appears closed; it has no further function. A code comment makes this explicit.
 - **The cabin has end walls** (Sprint 11): a 36-px left wall cap at world-x `0` and a 48-px right wall cap at world-x `ROOM_W`. The cabin reads as enclosed, not as a hallway segment. Both walls have rivet strips.
 - **A small brass plaque on the right wall** reads "CABIN 646."
@@ -71,12 +86,13 @@ All positions are world-x coordinates in cabin room space.
   > *Through the porthole, dark water sparkles and dances in the lights of a far shore. Norway, the brochure had said. The first stop.*
   > PIP: *"I never even got to see it."*
 
-### Door — entry/exit (inspectable from hallway, transition on use)
+### Door — entry/exit (no dialogue from hallway side; silent transition)
 
 - **Position:** world-x `120` (entry door, the one from the hallway). The far door at `450` is the doctor's; not interactable.
 - **Visual:** standard cabin door — wood, brass fittings.
-- **Interaction from inside cabin:** `↑` near the entry door returns Pip to the hallway.
-- **(The three-choice dialogue at this door — "Try the handle / Press your ear / Wait" — is from Sprint 02 and triggers from the hallway side, not from inside the cabin.)**
+- **Interaction from hallway side:** none on first encounter (silent set-dressing per Sprint 23). Return visits: silent open on approach, room transition into the cabin. No dialogue, no choice menu.
+- **Interaction from inside cabin:** standard room transition back to the hallway on return-visit exits. First-visit exit (the panic exit at end of Beat 5) is a wall-phase per the Sprint 23 canonical beat order, not a door exit.
+- *(Historical: a three-choice Sprint 02 dialogue ("Try the handle / Press your ear / Wait") and a Sprint 14 "Listen at the door / Not now" choice menu both formerly lived on the hallway side of this door. Both are retired as of Sprint 23 — see Decisions Log 2026-05-22. Code strip lands in Sprint 24.)*
 
 ## NPCs present
 

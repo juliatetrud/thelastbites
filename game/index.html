@@ -1326,6 +1326,12 @@ const chapterState = {
   janitorWalked:       false, // true after janitor's scripted walk completes
 };
 
+/* Sprint 24 Stage 3: Cabin 646 collection-room state.
+   Items Pip collects accumulate here and render as markers inside the cabin. */
+const cabinCollection = {
+  items: [],   // [{ id, chapter, source, addedAt }]
+};
+
 /* ================================================================
    SPRINT 17: SAVE STATE
    Single auto-save slot. Key: 'tlb-save-v2'. Save-at-exit only.
@@ -1355,7 +1361,8 @@ function buildSaveObject() {
     darkCorridor:    { lit: darkCorridor.lit, cartRemoved: darkCorridor.cartRemoved, cartX: darkCorridor.cartX },
     cinematicPlayed: Array.from(cinematic.played),
     passenger:       { thoughtBeatFired: passenger.thoughtBeatFired },
-    notebookItems:   notebook.items.map(i => ({ ...i })),
+    notebookItems:      notebook.items.map(i => ({ ...i })),
+    cabinCollection:    { items: cabinCollection.items.map(i => ({ ...i })) },
   };
 }
 
@@ -1424,6 +1431,11 @@ function applySave(data) {
     } else {
       passenger.triggered = true;
     }
+  }
+
+  // Sprint 24 Stage 3: restore collection-room items (additive — old saves without this field get [])
+  if (data.cabinCollection) {
+    cabinCollection.items = data.cabinCollection.items.map(i => ({ ...i }));
   }
 
   // Restore notebook items and mark collectibles as already collected
@@ -3400,7 +3412,15 @@ function confirmChoice(idx) {
 /* ---- Attempt to inspect the nearest object ---- */
 function tryInspect() {
   if (dialogue.active) return;
-  if (heldButtonPuzzle.active) return;  // Sprint 20: ↑ held drives puzzle; don't inspect
+  if (heldButtonPuzzle.active) return;  // Sprint 20: up held drives puzzle; don't inspect
+
+  // Sprint 24 Stage 3c: silent-open return visit to Cabin 646 (proximity + up, no dialogue)
+  if (currentRoom === 'hallway' && cabinState.beatStage === 'post-bed'
+      && Math.abs(pip.x - 1180) < 18) {
+    startTransition('cabin', 'fromLeft');
+    return;
+  }
+
   for (const obj of rooms[currentRoom].objects) {
     const node = obj.node;
     if (!node) continue;   // Sprint 20: null node = not yet interactive (e.g. stairwell)
@@ -3439,6 +3459,14 @@ function pickupCollectible(c) {
     sprite:     c.sprite,
   });
   renderNotebookItems();
+
+  // Sprint 24 Stage 3: also track in collection-room data structure
+  cabinCollection.items.push({
+    id:      c.id,
+    chapter: 1,
+    source:  currentRoom,
+    addedAt: new Date().toISOString(),
+  });
 
   // Compute canvas positions for the tween
   // Start: collectible world position → canvas position
@@ -4660,6 +4688,28 @@ function drawCabin(camX, now) {
     fillColor:   'rgba(20,32,58,0.68)',
     strokeColor: 'rgba(70,55,95,0.38)',
   });
+
+  // Sprint 24 Stage 3b: collection-room placeholder markers
+  drawCabinCollection(camX, now);
+}
+
+/* Sprint 24 Stage 3b: draw placeholder markers for collected items in Cabin 646.
+   Stage 3 only — 4x4 amber dots in a row along the far wall.
+   Visual design (where items physically land, how they look) is Sprint 25+ scope. */
+function drawCabinCollection(camX, now) {
+  if (cabinCollection.items.length === 0) return;
+  ctx.save();
+  ctx.fillStyle = 'rgba(200, 140, 30, 0.85)';
+  const dotY = FLOOR_Y - 10;
+  const startWorldX = 200;
+  const spacing     = 20;
+  for (let i = 0; i < cabinCollection.items.length; i++) {
+    const wx = startWorldX + i * spacing;
+    const sx = Math.round(wx - camX);
+    if (sx < -4 || sx > W + 4) continue;
+    ctx.fillRect(sx - 2, dotY - 2, 4, 4);
+  }
+  ctx.restore();
 }
 
 /* ----------------------------------------------------------------

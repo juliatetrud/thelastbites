@@ -6110,13 +6110,14 @@ function drawHallway(camX, now) {
     });
   }
 
-  // Doors — six total; grandparents' (920) always warm; cabin 646 (1180) warm only after grandparents visited.
+  // Doors — six total; grandparents' (920) always warm; cabin 646 (1180) warm only post-Beat-5.
   // Beat-order correction 2026-05-18: grandparents moved from 1180 → 920, cabin from 480 → 1180.
-  const gpPlayed = cinematic.played.has('grandparents');
+  // Sprint 25 Stage 3: glow-when-permeable rule. x=1180 glow fixed to beatStage==='post-bed'
+  // (previously used gpPlayed, which could show glow before the door actually opens).
   for (const gx of [80, 280, 480, 700, 920, 1180]) {
     const sx = Math.round(gx - camX);
     if (sx > W + doorW || sx < -doorW) continue;
-    const warm = gx === 920 || (gx === 1180 && gpPlayed);
+    const warm = gx === 920 || (gx === 1180 && cabinState.beatStage === 'post-bed');
     drawDoor(sx, doorTop, { w: doorW, h: doorH, warm });
   }
 

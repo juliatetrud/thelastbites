@@ -67,6 +67,22 @@ Every object Pip can inspect, carry, or interact with carries a warm-amber aura 
 
 This is the canonical interactable affordance for the entire game. No other visual language (outlines, icon badges, pulse rings) is used for object interaction.
 
+### Permeable surface convention
+
+*Locked Sprint 25 (2026-05-23). Applies to all doors, walls, and surfaces throughout the game.*
+
+A **warm-amber glow on a door or surface** means Pip can pass through it. No glow means the surface is inert from Pip's perspective — he cannot phase through it, and approaching it does nothing.
+
+- The glow uses the same warm-amber palette (`rgba(255, 180, 80, …)` linear gradient) as the `drawDoor` warm-underlight treatment.
+- Grandparents' cabin door (hallway x=920): always glows — always permeable.
+- Cabin 646 door (hallway x=1180): glows when `cabinState.beatStage === 'post-bed'` — permeable on return visits only.
+- Doctor-exit door (cabin x=450): never glows — Pip cannot use it.
+- Decorative doors (hallway x=80, 280, 480, 700): never glow — Pip cannot pass through them.
+
+This convention is universal. Future rooms follow it. If a new permeable surface is added, it must carry the warm-amber glow. If a surface is inert, it must not glow warm (even if it looks door-like).
+
+**Collection-item inspectables exception:** Collected items re-displayed in Cabin 646 use a **cool-blue shimmer** (`rgba(140, 200, 255, …)` / `#8cc8ff`) rather than warm-amber, to distinguish them as inspectables-in-place rather than permeable surfaces. This is the only cool-shimmer affordance in the game.
+
 ### Which register to use when
 
 - **In a chapter room, the player is moving and exploring** → Register A

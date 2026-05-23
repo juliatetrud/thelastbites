@@ -3176,6 +3176,13 @@ function showDialogue(node) {
     dialogue._closeTimer = null;
   }
 
+  // Guard: if no lines, fire onEnd immediately without activating the dialogue box.
+  // Handles trigger-only nodes (e.g. mirror-trigger) that use onEnd to start a cinematic.
+  if (!node.lines || node.lines.length === 0) {
+    if (node.onEnd) node.onEnd();
+    return;
+  }
+
   dialogue.active         = true;
   dialogue.node           = node;
   dialogue.lineIndex      = 0;
@@ -6121,9 +6128,9 @@ function drawHallway(camX, now) {
     drawDoor(sx, doorTop, { w: doorW, h: doorH, warm });
   }
 
-  // Sprint 16: cabin number plaques — to the right of each door, upper-mid height
-  // Sprint 21: ascending 636–646, Pip's 646 last (rightmost). Grandparents 644 immediately before.
-  const CABIN_NUMBERS = { 80: 636, 280: 638, 480: 640, 700: 642, 920: 644, 1180: 646 };
+  // Sprint 16: cabin number plaques — only canonical doors get numbers (GitHub #30).
+  // 644 = grandparents', 646 = Pip's. Decorative doors (636–642) are unlabelled.
+  const CABIN_NUMBERS = { 920: 644, 1180: 646 };
   for (const [gxStr, num] of Object.entries(CABIN_NUMBERS)) {
     const gx = Number(gxStr);
     const sx = Math.round(gx - camX);

@@ -17,13 +17,60 @@ New canon as of 2026-05-22: items Pip collects throughout the game appear physic
 
 This turns Cabin 646 from "the room where the bad reveal happens" into "the room that fills up as Pip remembers more." A quiet visual arc that mirrors his journey across the game. The cabin is the only place where the player can *see* their cumulative inventory laid out in the world (the notebook tracks the same data textually).
 
-**The principle is locked.** Implementation specifics are filed as Open Questions for Sprint 24+ (see `06-roadmap-and-open-questions.md`):
+**The principle is locked.** Implementation specifics were filed as Open Questions in Sprint 24 and locked in Sprint 25 — see "The collection room — Pip's mnemonic gallery" section below.
 
-- Where each item type physically lands (desk, shelf, bed, drawer, floor).
-- Whether items group by chapter (Ch1 items together, Ch2 items together) or by category (recipes vs. memory components).
-- Whether accumulated items are inspectable in 646 — and if so, what the narration says (replay of original collection memory? new reflective lines? silent presence?).
+## The collection room — Pip's mnemonic gallery
 
-Recommendation captured in the open questions: fixed-position-per-item-id so returning players always find each item in the same spot; inspectable with short reflective lines that grow with the empathy stat — but the writing pass for those lines is its own design task.
+*Placement coordinates locked Sprint 25 (2026-05-23). Supersedes the Sprint 24 open questions on item placement, inspection behavior, and door visual cue.*
+
+Each collected item has a fixed world-x/y position keyed by item id. Returning players always find each item in the same spot. Items are scattered with narrative rationale — placed where they make sense given their source, not grouped by chapter or category.
+
+### Ch1 item placements (locked)
+
+| Item id | World-x | Y | Rationale |
+|---|---|---|---|
+| `smorbukk` | 90 | FLOOR_Y - 4 | On the floor just left of the entry door, as if Pip dropped it on the way in. |
+| `bamsemums` | 340 | FLOOR_Y - 30 | Set on a low surface between the mirror and porthole, the way Henrik left it for him. |
+| `skillingsboller` | 200 | 40 | Ceiling-tucked between the child's drawing and the mirror. Float-required (y <= 80). |
+| `observation-deck-treat` | 690 | FLOOR_Y - 25 | On the nightstand surface just left of the bed (bed frame starts at world-x 720). |
+
+**Note on observation-deck treat position:** The Sprint 25 spec suggested world-x ~410, citing "near the bed/nightstand." The bed is at world-x 720; x 690 matches the stated rationale (nightstand beside the bed) and avoids the tight gap between porthole (x 398) and doctor-exit door (x 434). Adjusted in Stage 0 report-back; confirmed by Julia before Stage 1.
+
+**Conflict audit (Stage 0):** No writing desk exists in code (Sprint 19 did not add one). All four placements are clear of existing furniture. Confirmed furniture map:
+- Left wall cap: x 0-36
+- Entry door: x 104-136 (world-x 120)
+- Child's drawing: x 150-170 (world-x 160)
+- Mirror: x 268-292 (world-x 280)
+- Porthole: x 362-398 (world-x 380)
+- Doctor-exit door: x 434-466 (world-x 450) -- not interactable
+- Bed: x 720-820 (world-x 720, width 100)
+
+### Inspectable flavor lines (locked, implemented in Stage 2)
+
+Inspecting a collected item in Cabin 646 fires a short italic narration line. No memory replay. No notebook write. No state change.
+
+| Item id | Flavor line |
+|---|---|
+| `smorbukk` | *The Smorbukk wrapper is still sticky. He keeps it anyway.* |
+| `bamsemums` | *The little foam bears, sitting in a row. Henrik left them where Pip would find them.* |
+| `skillingsboller` | *Half a cinnamon bun. Wrapped in waxed paper. Someone meant to come back for it.* |
+| `observation-deck-treat` | *Whoever forgot it left their warmth in the wrapper.* |
+
+`skillingsboller` at y=40 requires Pip to be airborne (`pip.float.altitude > 0`) to inspect. If Pip approaches from the floor, the item sparkles but inspection does nothing.
+
+### Future-chapter zone reservations (not locked -- starting points only)
+
+| Chapter | Zone description | World-x approx | Notes |
+|---|---|---|---|
+| Ch2 (Tallinn) | Near entry door, floor level | ~120-180 | -- |
+| Ch3 (Southampton) | Bed surface | ~730-800 | On the bed itself |
+| Ch4 (Turkiye) | Floating zone above mirror | ~280, y<=60 | Float-required |
+| Ch5 (South Africa) | Behind bed-leg silhouette | ~720-740, low | Partially obscured |
+| Ch6 (Indonesia) | Porthole sill | ~380 | On the porthole rim |
+| Ch7 (Brazil) | Floating zone, upper-right | ~800-900, y<=60 | Float-required |
+| Ch8 (Greenpoint) | Center floor | ~480 | Deliberate prominence |
+
+Specific coordinates locked when each chapter is implemented.
 
 ## Spatial layout
 

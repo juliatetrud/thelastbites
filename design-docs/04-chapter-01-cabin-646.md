@@ -3,7 +3,7 @@
 The opening chapter. Establishes Pip, the world, the mechanics, the emotional stakes.
 
 **Estimated playtime:** 15-20 minutes
-**Cinematics needed:** 9 (see art doc — note the doubled first-taste scene)
+**Cinematics needed:** 8 (see art doc — note Cinematic 6 is the single first-taste, Erik memory only; doubled 6a/6b structure retired Sprint 26 Stage 0)
 **Rooms needed:** 6 (Cabin 646, Hallway, Grandparents' Cabin, Radio Room or Stairwell, Kitchen, Observation Deck)
 
 *(Sprint 12: observation deck added — see "The Observation Deck" section below. Implementation deferred to a future Ch1 content sprint.)*
@@ -28,7 +28,7 @@ This paragraph is the source-of-truth for the chapter's first-half play order. T
 
 ## Chapter Arc Summary
 
-Pip wakes in his cabin not knowing he's dead. Through the mirror, the truth lands. He explores the ship's hallway — passing two living people who can't see him, establishing the rule he expects to apply universally. He sees his grieving grandparents, discovers his ghostly abilities, makes his way to the kitchen, and is unexpectedly *seen* by Henrik the chef. Henrik becomes his mentor, gives him his first taste-memory experiences (a doubled cinematic — gravlaks then lefse), and sets up the journey ahead. The chapter closes at the dock as Pip's grandparents disembark with his body.
+Pip wakes in his cabin not knowing he's dead. Through the mirror, the truth lands. He explores the ship's hallway — passing two living people who can't see him, establishing the rule he expects to apply universally. He sees his grieving grandparents, discovers his ghostly abilities, makes his way to the kitchen, and is unexpectedly *seen* by Henrik the chef. Henrik becomes his mentor, gives him his first taste-memory experience (a single cinematic — the lefse-and-gravlaks meal, Erik memory), and sets up the journey ahead. The chapter closes at the dock as Pip's grandparents disembark with his body.
 
 ---
 
@@ -360,27 +360,32 @@ Then — sits down on a stool. Heavy.
 
 ---
 
-### Beat 11: THE FIRST TASTE — DOUBLED (the central mechanic reveal)
-**Mode:** Cinematic 6a, then 6b
+### Beat 11: THE FIRST TASTE (the central mechanic reveal)
+**Mode:** Cinematic 6
 
-This beat is **doubled** — Pip tastes two things, sees two memories. The player will not know until Chapter 4 that the second memory is load-bearing.
+*(Sprint 26 Stage 0, 2026-05-23: The doubled 6a/6b structure below is **retired**. The canonical cinematic is single — Erik memory only. The grandfather/gravlaks memory is reserved for Ch4. See 2026-05-23 Decisions Log entry and `dialogue.md` Beat 11 for the locked dialogue.)*
 
-**Cinematic 6a — Gravlaks taste.** Pip takes a bite of the gravlaks. The kitchen shimmers. He sees, briefly, a memory that isn't his.
+~~**Mode:** Cinematic 6a, then 6b~~
 
-A young Norwegian boy in a cottage kitchen, watching an old man's hands cure salmon. Sun through a window. The smell of dill. The boy is Henrik, decades ago. The man is his grandfather.
+~~This beat is **doubled** — Pip tastes two things, sees two memories. The player will not know until Chapter 4 that the second memory is load-bearing.~~
 
-> *And Pip understands, for the first time, that food carries the story of the person who made it.*
+~~**Cinematic 6a — Gravlaks taste.** Pip takes a bite of the gravlaks. The kitchen shimmers. He sees, briefly, a memory that isn't his. A young Norwegian boy in a cottage kitchen, watching an old man's hands cure salmon. Sun through a window. The smell of dill. The boy is Henrik, decades ago. The man is his grandfather.~~
 
-**Cinematic 6b — Lefse taste.** Pip takes a bite of the lefse. The kitchen shimmers a second time. A different memory now.
+~~**Cinematic 6b — Lefse taste.** Pip takes a bite of the lefse. The kitchen shimmers a second time. Pip sees an older Henrik — recognizably grown — teaching a young boy to make the same lefse, the same gravlaks. Different kitchen. The child's face is partially seen — turned away, in profile, in half-shadow. *(See art doc, Cinematic 6b, for treatment.)* Pip does not know who the child is. The child laughs at something off-screen.~~
 
-Pip sees an older Henrik — recognizably grown — teaching a young boy to make the same lefse, the same gravlaks. Different kitchen. The child's face is partially seen — turned away, in profile, in half-shadow. *(See art doc, Cinematic 6b, for treatment.)* Pip does not know who the child is. The child laughs at something off-screen.
+**Cinematic 6 — Single first-taste.** Pip takes a bite of the dish (combined lefse-and-gravlaks; the bite is generic, not gravlaks-specific). The kitchen shimmers once. A single memory plays.
 
+*Erik memory:* older Henrik teaching a young boy in a different kitchen; face partially seen — turned away, in profile, or in half-shadow. *(See art doc, Cinematic 6, for treatment: critical constraint — Erik's face must not be fully visible; load-bearing for Ch4.)* The boy laughs at something off-screen. Pip does not know who the child is.
+
+The realization block (italic, three lines):
+
+> *Pip understands, for the first time, that food carries the story of the person who made it.*
 > *That every meal is a love letter from someone, to someone.*
 > *That if he can taste enough of them — really taste — he might learn the world.*
 
-The visions fade. Pip is back in the kitchen.
+The memory fades. Pip is back in the kitchen.
 
-> PIP: *I saw… I saw your grandfather. And then I saw — someone teaching a boy. Was that you?*
+> PIP: *I saw… I saw someone. Teaching a boy. Was that you?*
 > HENRIK: *…yes.*
 > PIP: *Who was the boy?*
 > *A pause. Henrik looks at the empty plate.*
@@ -505,7 +510,7 @@ If building Chapter 1 in stages:
 4. **Next:** Grandparents' cabin cinematic and room (with photo and suitcase)
 5. **Next:** Radio room interaction and second ability
 6. **Next:** Dark corridor + janitor puzzle (electricity ability + the "no one can see me" beat)
-7. **Next:** Kitchen room and Henrik cinematic sequence (now with **doubled** first-taste — 6a and 6b)
+7. **Next:** Kitchen room and Henrik cinematic sequence (single first-taste Cinematic 6 — Erik memory only; 6a/6b structure retired Sprint 26 Stage 0)
 8. **Last:** Dock cinematic and Henrik's offer
 
 Each stage is independently testable. The dialogue and cinematic system from the prototype handles all of it.
@@ -532,7 +537,7 @@ Once the chapter is functionally playable end-to-end:
 2. **Talk through speakers.** Beat 7, radio in grandparents' cabin.
 3. **Flicker electricity.** Beat 8, dark corridor, broken sconce.
 4. **Float.** Beat 8, alongside electricity — broken glass on the floor triggers involuntary rise; becomes player-controlled ability from that point.
-5. **Taste-memory.** Beat 11 (Beats 11/6a and 11/6b), kitchen, doubled first-taste with Henrik.
+5. **Taste-memory.** Beat 11 (Cinematic 6, single first-taste), kitchen, Erik memory with Henrik.
 6. **`↓ COLLECT` (the collect verb).** Beat 11b, kitchen, Bamsemums tutorial. This is not a ghostly ability — it is a built-in verb taught here diegetically. Before this beat, `↓` makes Pip squat in place; after this beat, the player understands what the collect aura means and what `↓` does near one.
 
 ---

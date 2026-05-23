@@ -540,8 +540,14 @@ After the line dismisses, a second line auto-plays:
 > HENRIK: *"You will see strange things, Pip. Some of them are stories. Some of them are real. The dead see what the living cannot, and not all of it is gentle."* (roman, spoken) — **NEW**
 >
 > HENRIK: *"Listen carefully. And if you hear violins where there should be no violins — walk the other way."* (roman, spoken) — **NEW**
+>
+> *Henrik pauses.* (roman) — **NEW (Sprint 26 Stage 0)**
+>
+> HENRIK: *"I think I saw it once."* (roman, spoken) — **NEW (Sprint 26 Stage 0)**
+>
+> *He does not say more.* (roman) — **NEW (Sprint 26 Stage 0)**
 
-**Status:** Ten newly-drafted lines. **This is the chapter's largest writing addition — flagged in full for Julia's review.**
+**Status:** Thirteen newly-drafted lines (ten original + three closing lines added Sprint 26 Stage 0). **This is the chapter's largest writing addition — flagged in full for Julia's review.**
 
 **My read on the writing:**
 

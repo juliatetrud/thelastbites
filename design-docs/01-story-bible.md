@@ -323,8 +323,8 @@ The locked arc is **8 chapters**: Ch1 Cabin 646, Ch2 Tallinn, Ch3 Southampton, C
 - Pip wakes in the hallway; visits grandparents' cabin first; the mirror; he learns he's dead; his grandparents leave with his body.
 - Six rooms in play order: hallway → grandparents' cabin → Cabin 646 → dark corridor → kitchen → observation deck. Closes on deck.
 - Five abilities introduced: walk-through-wood, talk-through-speakers, flicker-electricity, float, taste-memory. Ch1 is explicitly the **teaching chapter** for all five: each ability has a specific discovery moment within Ch1, encountered through use rather than granted from a menu. Chapters 2 and beyond assume the player knows these verbs.
-- Doubled first-taste cinematic — gravlaks (6a, Henrik as boy with his grandfather) and lefse (6b, Henrik teaching young Erik, face partially hidden).
-- Henrik tells the Nøkken story after Cinematic 6b, folded into the existing first-taste sequence.
+- ~~Doubled first-taste cinematic — gravlaks (6a, Henrik as boy with his grandfather) and lefse (6b, Henrik teaching young Erik, face partially hidden).~~ **Single first-taste cinematic in Ch1 — Erik memory only** (Erik's face partially hidden, load-bearing for Ch4). The grandfather/gravlaks memory is reserved for Ch4's gravlaks-recipe reveal. *(Superseded Sprint 26 Stage 0, 2026-05-23.)*
+- Henrik tells the Nøkken story after Cinematic 6, folded into the existing first-taste sequence. The story closes with *"I think I saw it once"* — single line carrying the autobiographical weight without explicit reveal. *(Closing line locked Sprint 26 Stage 0.)*
 - Henrik gives Pip the empty journal. Names Tallinn as the next port.
 - Recipe earned: lefse and gravlaks with Norwegian pickles.
 
@@ -358,7 +358,7 @@ The locked arc is **8 chapters**: Ch1 Cabin 646, Ch2 Tallinn, Ch3 Southampton, C
 - Specific Estonian village (Käsmu, Altja, somewhere generic). Pull: small named real village, with a note in the journal entry.
 - Leida's exact age, surname, marital status. Pull: widowed but unsentimental, lived alone a long time.
 - Whether Leida's cottage holds inspectable side-objects that drip lore (a violin in the corner that connects to the Nøkken story?). Worth deciding when the chapter is being built.
-- Whether the closing puzzle uses Pip's journal entries directly. The journal at this point in the game has very few entries — basically the doubled meal-memory from Ch1 (gravlaks 6a + lefse 6b) and the foundational mirror-memory. Per the current spec the puzzle does not draw on the journal cards; if a future revision wants the journal involved, the available entries are sparse.
+- Whether the closing puzzle uses Pip's journal entries directly. The journal at this point in the game has very few entries — basically the single taste-memory from Ch1 (the lefse-and-gravlaks meal, Erik memory) and the foundational mirror-memory. Per the current spec the puzzle does not draw on the journal cards; if a future revision wants the journal involved, the available entries are sparse.
 - Whether Pätu's interior monologue surfaces as readable narration (*"Pätu is staring at the corner. She wants you to see something."*), making her a quiet narrator-collaborator. Pull: yes, lightly.
 
 ---

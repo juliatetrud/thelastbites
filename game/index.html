@@ -2179,7 +2179,8 @@ const rooms = {
     width:       ROOM_W,                      // 960
     pipMaxX:     ROOM_W - PIP_HALF_W,         // 952 — right wall
     pipMinX:     PIP_HALF_W,                  //   8 — left wall (can't exit left)
-    objects:     cabinObjects,
+    // Sprint 25 Stage 2: getter concatenates static objects with dynamic collection inspectables
+    get objects() { return [...cabinObjects, ...getCabinCollectionObjects()]; },
     collectibles: [],                         // Sprint 13: no cabin collectibles yet
     draw:        drawCabin,                   // defined below (hoisted)
     pipEntryX: {
@@ -4693,6 +4694,46 @@ function drawCabin(camX, now) {
   drawCabinCollection(camX, now);
 }
 
+/* Sprint 25 Stage 2: flavor lines for inspecting collected items in Cabin 646.
+   Short italic narration — Pip observing now, not replaying the collection memory.
+   No notebook write. No state change. */
+const COLLECTION_FLAVOR_LINES = {
+  'debug-bamsemums':        'The little foam bears, sitting in a row. Henrik left them where Pip would find them.',
+  'bamsemums':              'The little foam bears, sitting in a row. Henrik left them where Pip would find them.',
+  'smorbukk':               'The Smorbukk wrapper is still sticky. He keeps it anyway.',
+  'skillingsboller':        'Half a cinnamon bun. Wrapped in waxed paper. Someone meant to come back for it.',
+  'observation-deck-treat': 'Whoever forgot it left their warmth in the wrapper.',
+};
+
+// Items that require Pip to be airborne to inspect (float-required, ceiling-tucked)
+const COLLECTION_FLOAT_REQUIRED = new Set(['skillingsboller']);
+
+/* Build dynamic inspectable objects for each item currently in cabinCollection.items.
+   Called each frame from the rooms.cabin.objects getter — kept allocation-cheap by
+   only iterating collected items (typically 0–4 in Ch1). */
+function getCabinCollectionObjects() {
+  return cabinCollection.items
+    .filter(item => COLLECTION_PLACEMENTS[item.id])
+    .map(item => {
+      const placement     = COLLECTION_PLACEMENTS[item.id];
+      const floatRequired = COLLECTION_FLOAT_REQUIRED.has(item.id);
+      const id            = item.id;
+      return {
+        id:        'collection-' + id,
+        x:         placement.x,
+        sparkleY:  placement.y,
+        coolAura:  true,  // cool shimmer rather than warm hum (it's an inspectable, not a collectible)
+        get node() {
+          // Float-required items are unreachable from the floor — return null so no aura/interaction
+          if (floatRequired && pip.float.altitude <= 0) return null;
+          return {
+            lines: [{ speaker: null, text: COLLECTION_FLAVOR_LINES[id] || '...', italic: true }],
+          };
+        },
+      };
+    });
+}
+
 /* Sprint 25 Stage 1: hand-placed collection-item registry for Cabin 646.
    Keyed by item id. Each entry: { x (world-x), y (canvas-y anchor), draw(sx, y, now) }.
    Items render at their fixed world positions regardless of collection order.
@@ -4803,10 +4844,14 @@ function drawObjectAura(camX, now) {
       : 0.15;
     const intensity = distance < 30 ? 1 - (distance / 30) : baseline;
 
+    /* Aura color: warm-amber for standard inspectables; cool-blue for collection items in cabin */
+    const auraRGB    = obj.coolAura ? '140, 200, 255' : '255, 200, 104';
+    const sparkleHex = obj.coolAura ? '#8cc8ff'       : '#ffc868';
+
     /* Radial gradient aura — always visible */
     const auraGrad = ctx.createRadialGradient(screenX, obj.sparkleY, 0, screenX, obj.sparkleY, 20);
-    auraGrad.addColorStop(0, `rgba(255, 200, 104, ${(intensity * 0.35).toFixed(3)})`);
-    auraGrad.addColorStop(1, 'rgba(255, 200, 104, 0)');
+    auraGrad.addColorStop(0, `rgba(${auraRGB}, ${(intensity * 0.35).toFixed(3)})`);
+    auraGrad.addColorStop(1, `rgba(${auraRGB}, 0)`);
     ctx.fillStyle = auraGrad;
     ctx.beginPath();
     ctx.arc(screenX, obj.sparkleY, 20, 0, Math.PI * 2);
@@ -4817,10 +4862,10 @@ function drawObjectAura(camX, now) {
       const drift = Math.sin(now / 1000) * 3;
       const pulse = 0.75 + Math.sin(now / 500) * 0.2;
       ctx.save();
-      ctx.shadowColor = 'rgba(255, 200, 104, 0.9)';
+      ctx.shadowColor = obj.coolAura ? 'rgba(140, 200, 255, 0.9)' : 'rgba(255, 200, 104, 0.9)';
       ctx.shadowBlur  = 12;
       ctx.globalAlpha = pulse;
-      ctx.fillStyle   = '#ffc868'; /* --warm-pool-amber */
+      ctx.fillStyle   = sparkleHex;
       ctx.beginPath();
       ctx.arc(screenX, obj.sparkleY + drift, 3, 0, Math.PI * 2);
       ctx.fill();

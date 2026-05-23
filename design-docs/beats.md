@@ -23,13 +23,13 @@ Chapter 1 has **14 beats**. Most beats are room-mode with a few cinematics inter
 | 8 | The dark corridor (electricity + float + janitor) | Room → puzzle | **Not shipped** — to be built |
 | 9 | The kitchen (Pip arrives, sees food) | Cinematic 4 | **Not shipped** — to be built |
 | 10 | Henrik sits down | Cinematic 5 | **Not shipped** — to be built |
-| 11 | The first taste (Cinematic 6, Erik memory) | Cinematic 6 | **Not shipped** — to be built |
+| 11 | The first taste (Cinematics 6a + 6b — doubled: gravlaks → grandfather memory, lefse → Erik memory) | Cinematic 6a + 6b | **Not shipped** — to be built |
 | 11b | The Bamsemums (collect verb tutorial) | Room | Shipped (Sprint 13) |
 | 11c | The Nøkken story | Room (Henrik inspectable) | **Not shipped** — to be built |
 | 12 | The dock farewell + Nøkken glimpse | Cinematic 7 + scripted | **Not shipped** — to be built |
 | 13 | Henrik's offer (notebook handoff) | Cinematic 8 | **Not shipped** — to be built |
 
-**Cinematic count:** 8 cinematics in Ch1 (1, 2, 3, 4, 5, 6, 7, 8). The old 6a/6b split is collapsed into a single Cinematic 6 (see Beat 11).
+**Cinematic count:** 9 cinematics in Ch1 (1, 2, 3, 4, 5, 6a, 6b, 7, 8). Beat 11 is a doubled first-taste cinematic — 6a (gravlaks → Henrik with his grandfather) and 6b (lefse → Henrik teaching young Erik) play as one continuous cinematic with an internal crossfade. *(The "single memory, single Cinematic 6" framing that appeared in earlier versions of this doc was a drift from the canonical doubled structure in `01-story-bible.md` and `04-chapter-01-cabin-646.md` — retired Sprint 26 Stage 0.)*
 
 ---
 
@@ -552,11 +552,11 @@ The cinematic fades. Pip is at the left edge of the room, facing right. Player h
 
 ---
 
-## Beat 11: The first taste (Cinematic 6 — Erik memory)
+## Beat 11: The first taste (Cinematics 6a + 6b — doubled, canonical)
 
-**Mode:** Cinematic 6 (first taste)
+**Mode:** Cinematic 6a → Cinematic 6b (one continuous first-taste cinematic with internal crossfade)
 
-**Status:** **Not yet shipped.** Per P1 Session 1 decision: **single memory, single cinematic.** The 6a grandfather-with-salmon memory is dropped from Ch1 and reserved for Ch4's gravlaks-recipe reveal.
+**Status:** **Not yet shipped.** The doubled first-taste structure (6a gravlaks → grandfather memory; 6b lefse → Erik memory) is the canonical design, matching `01-story-bible.md` and `04-chapter-01-cabin-646.md`. *(The "single memory, single Cinematic 6" note that appeared in an earlier version of this doc was a drift from canon — retired Sprint 26 Stage 0.)*
 
 **Player inputs allowed during cinematic:**
 - **Space** to advance lines.
@@ -564,31 +564,44 @@ The cinematic fades. Pip is at the left edge of the room, facing right. Player h
 
 **What happens:**
 
-1. Pip takes a bite of the dish (the bite happens off-frame).
-2. The kitchen shimmers. Memory cinematic plays.
-3. **Memory content:** An older Henrik — recognizably grown — teaching a young boy (Erik) to make the same lefse-and-gravlaks. A different kitchen than the present (Henrik's home before the accident). The child's face is partially visible — turned away, in profile, or in half-shadow. Per the critical art note: the player should *feel* they have seen this child before when they reach Chapter 4, but not be able to say where on first pass.
-4. The child laughs at something off-screen.
-5. Dialogue over the memory:
+1. Pip takes a bite of the gravlaks (the bite happens off-frame).
+2. The kitchen shimmers. **Cinematic 6a begins.**
+
+### Cinematic 6a — Gravlaks: Henrik with his grandfather
+
+3. Memory: A young Henrik — a boy, maybe eight — sits at a table in a Norwegian fishing cottage. An older man (Henrik's grandfather) prepares gravlaks across from him. Wide warm light. The scene is still, domestic, unhurried. No faces yet.
+4. The grandfather slides the plate toward young Henrik. Young Henrik takes a piece. Eats. The grandfather watches.
+5. No dialogue over 6a. The image carries.
+6. **Crossfade.** The memory dissolves to a different kitchen — warmer, smaller.
+
+### Cinematic 6b — Lefse: Henrik teaching Erik
+
+7. **Cinematic 6b begins.** An older Henrik — recognizably grown — teaches a young boy (Erik) to make lefse. A different kitchen than the present (Henrik's home before the accident). The child's face is partially visible — turned away, in profile, or in half-shadow. Per the critical art note: the player should *feel* they have seen this child before when they reach Chapter 4, but not be able to say where on first pass.
+8. The child laughs at something off-screen.
+9. Dialogue over 6b (italic, Pip's realization):
    > *And Pip understands, for the first time, that food carries the story of the person who made it.*
    > *That every meal is a love letter from someone, to someone.*
    > *That if he can taste enough of them — really taste — he might learn the world.*
-6. Memory fades. Pip is back in the kitchen.
-7. Dialogue (room-mode style, Henrik on the stool):
-   > PIP: *I saw… I saw someone. Teaching a boy. Was that you?*
-   > *A pause. Henrik looks at the empty plate.*
-   > HENRIK: *…yes.*
-   > PIP: *Who was the boy?*
-   > HENRIK: *Someone I loved.*
-   > *Pip waits. Henrik does not say more.*
-   > PIP: *…how does it work, Henrik? When I taste?*
-   > HENRIK: *Because you needed to. The dead see what they need to see.*
-   > PIP: *Will it always do that?*
-   > HENRIK: *I think, perhaps, yes. I think that is what you are now.*
-8. **Fifth ability earned: taste-memory.**
-9. The notebook gains its first Recipes entry: *Norwegian lefse and gravlaks (with Norwegian pickles).*
-10. Website pop-up notification: *"You've earned a recipe! Check Pip's Notebook."*
+10. Both memories fade. Pip is back in the kitchen.
 
-**Note for Ch4 reveal:** When the player reaches Ch4 and recognizes Erik, the Ch1 lefse-and-gravlaks dish is what allows the recognition. Pip having tasted Erik's-favorite-meal in his first meeting with Henrik is the chapter's secret weight.
+### Post-cinematic kitchen conversation
+
+11. Henrik is on the stool. Pip approaches him.
+    > PIP: *I saw… I saw two things. Someone teaching you. And then you — teaching a boy. Was that you, both times?*
+    > *A pause. Henrik looks at the empty plate.*
+    > HENRIK: *…yes.*
+    > PIP: *Who was the boy?*
+    > HENRIK: *Someone I loved.*
+    > *Pip waits. Henrik does not say more.*
+    > PIP: *…how does it work, Henrik? When I taste?*
+    > HENRIK: *Because you needed to. The dead see what they need to see.*
+    > PIP: *Will it always do that?*
+    > HENRIK: *I think, perhaps, yes. I think that is what you are now.*
+12. **Fifth ability earned: taste-memory.**
+13. The notebook gains its first Recipes entry: *Norwegian lefse and gravlaks (with Norwegian pickles).*
+14. Website pop-up notification: *"You've earned a recipe! Check Pip's Notebook."*
+
+**Note for Ch4 reveal:** When the player reaches Ch4 and recognizes Erik, both memories from Ch1 are load-bearing: the gravlaks (from the grandfather) is the inheritance that explains *why* Henrik makes it; the lefse (Erik's lesson) is the recognition trigger. Ch8 uses the gravlaks memory again — the grandfather → Henrik → Erik → Pip chain is the chapter's emotional weight. The doubled structure makes both available without picking one.
 
 **Exit condition:** Final Henrik line dismisses. Transitions to Beat 11b (Bamsemums).
 
@@ -599,7 +612,7 @@ The cinematic fades. Pip is at the left edge of the room, facing right. Player h
 - Recipe website unlocks lefse-and-gravlaks page.
 
 **Files involved:**
-- `game/index.html` — `CINEMATIC_SCRIPTS.first-taste`, memory rendering function, recipe-grant logic, website-notification trigger.
+- `game/index.html` — `CINEMATIC_SCRIPTS['first-taste-6a']` and `CINEMATIC_SCRIPTS['first-taste-6b']`, internal crossfade logic, memory rendering function, recipe-grant logic, website-notification trigger.
 
 ---
 

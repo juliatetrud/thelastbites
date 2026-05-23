@@ -391,9 +391,7 @@ The janitor takes the cart and exits. No further dialogue from him.
 
 Henrik freezes, stares, slowly crosses himself, whispers in Norwegian (silent — no dialogue line for the whisper, just the visual gesture). Then sits.
 
-> HENRIK: *"…Så. Du er gutten fra hytte 646."* (roman, spoken, Norwegian)
->
-> HENRIK: *"So. You are the boy from cabin 646."* (roman, spoken, English translation)
+> HENRIK: *"…Så. Du er gutten fra hytte 646 — so. You are the boy from cabin 646."* (roman, spoken, Norwegian with inline English translation via em-dash)
 >
 > PIP: *"…you can see me?"* (roman, spoken)
 >
@@ -415,41 +413,51 @@ Henrik freezes, stares, slowly crosses himself, whispers in Norwegian (silent �
 >
 > HENRIK: *"Some questions wait. Eat first."* (roman, spoken)
 
-**Status:** Twelve lines. Per bible. The Norwegian line *"Så. Du er gutten fra hytte 646"* is followed by its English translation as a separate line — the multilingual convention here is *paired translation* (because the player needs to understand what Henrik said). This is different from Babcia's *Babciu, jestem tutaj* (no translation provided). Henrik's later Norwegian utterances (the silent-scream whisper, the Nøkken-story-internal Norwegian, the janitor's mutter elsewhere) get *no translation*. Only Henrik's first introductory line is translated.
-
-**Open question:** Julia, confirm — Henrik's first line gets paired translation; subsequent Norwegian phrases don't. My read: yes, because the introductory line is the player's first encounter with multilingual dialogue and needs an anchor. After that, immersion takes over. Flag for review.
+**Status:** Eleven lines (from twelve — the opening Norwegian + English are now a single inline-translated line per Sprint 26 Stage 0). Henrik's voice pattern locked: English with Norwegian words inline-translated via em-dash within the line (`"…Så. Du er gutten fra hytte 646 — so. You are the boy from cabin 646."`). Subsequent Norwegian utterances (silent-scream whisper, Nøkken-story-internal Norwegian, janitor's mutter) get no translation — immersion takes over after the anchor. Babcia's Polish (*Babciu, jestem tutaj*) remains untranslated per Sprint 19. This is the canonical multilingual register for Henrik throughout the game.
 
 ---
 
-## Beat 11: The first taste (Cinematic 6 — Erik memory)
+## Beat 11: The first taste (Cinematics 6a + 6b — doubled, canonical)
 
-**Status:** **NEW — not yet shipped.** Per P1 Session 1 decision: single memory, single cinematic. The 6a grandfather memory is dropped from Ch1.
+**Status:** **NEW — not yet shipped.** The doubled first-taste structure is canonical per `01-story-bible.md` and `04-chapter-01-cabin-646.md`. *(The "single memory, single cinematic" note that appeared in an earlier version of this section was drift from canon — retired Sprint 26 Stage 0.)*
 
-### Cinematic 6 (`CINEMATIC_SCRIPTS.first-taste`)
+### Cinematic 6a (`CINEMATIC_SCRIPTS['first-taste-6a']`) — Gravlaks: Henrik with his grandfather
 
-The cinematic plays a single shimmer-and-memory sequence. The memory: older Henrik teaching young Erik to make lefse-and-gravlaks. Erik's face is partially visible.
+The cinematic plays on Pip's first bite. No dialogue during 6a — the image carries.
 
-> *Pip takes a bite of the dish.* (roman)
+> *Pip takes a bite of the gravlaks.* (roman)
 >
 > *The kitchen shimmers.* (roman)
 >
-> *A different kitchen, somewhere else. A boy of five or six watches an older man teach him to lay the lefse, to drape the gravlaks. The boy laughs at something off-screen.* (roman)
+> *A different kitchen. Older, quieter. A boy sits across from an older man. The man — Henrik's grandfather — slides a plate of gravlaks toward him. The boy eats. The older man watches.* (roman)
 >
-> *Pip understands, for the first time, that food carries the story of the person who made it.* (italic) — **NEW**
+> *The image holds.* (roman)
+
+**Status:** Four lines. 6a is brief and wordless. The grandfather's face need not be visible — the gesture (sliding the plate) carries the inheritance.
+
+Internal crossfade to 6b. No player input required between them — the crossfade is automatic.
+
+### Cinematic 6b (`CINEMATIC_SCRIPTS['first-taste-6b']`) — Lefse: Henrik teaching young Erik
+
+> *A different kitchen. Warmer, smaller. An older Henrik teaches a young boy to roll the lefse, to lay it flat.* (roman)
+>
+> *The boy's face is turned away. In profile, or half-shadow. He laughs at something off-screen.* (roman)
+>
+> *Pip understands, for the first time, that food carries the story of the person who made it.* (italic) — bible
 >
 > *That every meal is a love letter from someone, to someone.* (italic) — bible
 >
 > *That if he can taste enough of them — really taste — he might learn the world.* (italic) — bible
 >
-> *The memory fades.* (roman)
+> *Both memories fade. Pip is back in the kitchen.* (roman)
 
-**Status:** Seven lines for the memory sequence. The first three are roman (description); the next three are italic (Pip's realization); the seventh is a roman bridge back to the kitchen. The italic block of three is per bible (with one new line opening the realization).
+**Status:** Six lines. The italic realization block (three lines) is per bible, unchanged. The art note for the build sprint: the boy's face must be partially hidden — recognizable in retrospect, not on first pass. When the player reaches Ch4 and sees Erik, they should *feel* they have seen him before without being able to say where.
 
 ### Post-cinematic kitchen conversation (room-mode style within the cinematic frame)
 
-After the memory fades, the camera returns to the kitchen. Henrik is on the stool. Pip can approach him.
+After both memories fade, the camera returns to the kitchen. Henrik is on the stool. Pip approaches him.
 
-> PIP: *"I saw… I saw someone. Teaching a boy. Was that you?"* (roman, spoken)
+> PIP: *"I saw… I saw two things. Someone teaching you. And then you — teaching a boy. Was that you, both times?"* (roman, spoken)
 >
 > *A pause. Henrik looks at the empty plate.* (roman)
 >
@@ -469,7 +477,7 @@ After the memory fades, the camera returns to the kitchen. Henrik is on the stoo
 >
 > HENRIK: *"I think, perhaps, yes. I think that is what you are now."* (roman, spoken)
 
-**Status:** Ten lines. Per bible. **Note:** I changed Pip's first post-memory line from the original bible text *"I saw your grandfather. And then I saw — someone teaching a boy. Was that you?"* to just *"I saw someone. Teaching a boy. Was that you?"* — because the grandfather memory is no longer part of Ch1. Flag for Julia's review.
+**Status:** Ten lines. Pip's opening post-memory line updated to reflect the doubled cinematic — he saw *two things*, not one. The rest is per bible.
 
 ### Recipe entry (auto, notebook update)
 
@@ -540,8 +548,14 @@ After the line dismisses, a second line auto-plays:
 > HENRIK: *"You will see strange things, Pip. Some of them are stories. Some of them are real. The dead see what the living cannot, and not all of it is gentle."* (roman, spoken) — **NEW**
 >
 > HENRIK: *"Listen carefully. And if you hear violins where there should be no violins — walk the other way."* (roman, spoken) — **NEW**
+>
+> *Henrik pauses.* (roman) — **NEW** (Sprint 26 Stage 0 addition)
+>
+> HENRIK: *"I think I saw it once."* (roman, spoken) — **NEW** (Sprint 26 Stage 0 addition)
+>
+> *He does not say more.* (roman) — **NEW** (Sprint 26 Stage 0 addition)
 
-**Status:** Ten newly-drafted lines. **This is the chapter's largest writing addition — flagged in full for Julia's review.**
+**Status:** Thirteen lines (ten from Session 3 draft plus three closing lines added Sprint 26 Stage 0). The final three lines carry the chapter's quietest moment of autobiographical weight — Henrik almost confessing without confessing. The player understands that "I did not always listen to her" and "I think I saw it once" are not separate: one sentence explains the other. The full reveal (his wife and son drowned, a violin played) is reserved for Ch4. **This is the chapter's largest writing addition — flagged in full for Julia's review.**
 
 **My read on the writing:**
 
@@ -553,7 +567,7 @@ After the line dismisses, a second line auto-plays:
 
 ### Next port (auto-plays after the Nøkken story)
 
-> HENRIK: *"The ship docks in Tallinn next. Estonia. There's a chef I want you to meet — her name is Leida. She bakes meatballs. Kodused kotletid."* (roman, spoken) — **NEW**
+> HENRIK: *"The ship docks in Tallinn next. Estonia. There's a chef I want you to meet — her name is Leida. She bakes meatballs. Kodused kotletid — homemade cutlets."* (roman, spoken) — **NEW**
 >
 > HENRIK: *"She does not know about the Nøkken. But she knows about other things."* (roman, spoken) — **NEW**
 >
@@ -636,8 +650,8 @@ These are the lines that **don't yet exist anywhere canonical** and need Julia's
 
 ### Henrik's voice (8 newly-drafted clusters)
 
-1. **Beat 10 — Henrik translates himself.** The pair-translation pattern (*"Så. Du er gutten fra hytte 646" → "So. You are the boy from cabin 646"*). Confirm pattern.
-2. **Beat 11 — Pip's post-memory line.** Changed from bible *"I saw your grandfather. And then I saw — someone teaching a boy"* to *"I saw someone. Teaching a boy."* (because 6a grandfather memory is dropped from Ch1).
+1. **Beat 10 — Henrik's voice pattern locked (Sprint 26 Stage 0).** Inline translation via em-dash within a single line: *"…Så. Du er gutten fra hytte 646 — so. You are the boy from cabin 646."* English with Norwegian inline-translated; no paired-translation lines. Subsequent Norwegian utterances throughout the game get no translation — immersion takes over after this anchor.
+2. **Beat 11 — Pip's post-memory line.** *"I saw… I saw two things. Someone teaching you. And then you — teaching a boy. Was that you, both times?"* — reflects the doubled 6a (gravlaks/grandfather) + 6b (lefse/Erik) cinematic. *(Sprint 26 Stage 0: the earlier single-memory version is retired.)*
 3. **Beat 11c — Nøkken story opening lines.** *"You'll be going on, soon. The ship docks again tonight."* / *"Before you go. Let me tell you a story."*
 4. **Beat 11c — The Nøkken story itself.** 10 lines. The chapter's largest writing addition. The line *"I did not always listen to her"* is the key foreshadow.
 5. **Beat 11c — Next-port handoff.** *"The ship docks in Tallinn next…"* (three lines).

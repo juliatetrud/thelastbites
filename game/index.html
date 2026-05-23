@@ -4649,12 +4649,12 @@ function drawCabin(camX, now) {
     }
   }
 
-  // Door — game-world x=120 (hallway door, entry side left)
+  // Door — game-world x=120 (hallway door, entry side left) — always warm-amber (glow = permeable)
   const doorGX = 120;
   const doorSX = Math.round(doorGX - camX);
   const dw = 32, dh = 110, doorTop = baseboardY - dh;   // 168-110=58
   if (doorSX > -(dw + 6) && doorSX < W + (dw + 6)) {
-    drawDoor(doorSX, doorTop, { w: dw, h: dh, warm: false });
+    drawDoor(doorSX, doorTop, { w: dw, h: dh, warm: true });
   }
 
   // Far door: doctor's exit. Not interactable. Cabin's existing door (entry) is on the left. This door is on the right.

@@ -1324,6 +1324,7 @@ const chapterState = {
   cartFound:           false, // true after janitor's cart inspection
   janitorPaged:        false, // true after Pip pages J. Henriksen via radio
   janitorWalked:       false, // true after janitor's scripted walk completes
+  henrikMet:           false, // true once Cinematic 4 (kitchen-meeting) completes
 };
 
 /* Sprint 24 Stage 3: Cabin 646 collection-room state.
@@ -1521,20 +1522,9 @@ const notebook = {
    Remove or re-gate when the kitchen room is built (see sprint spec §c).
    Canonical kitchen-sprint annotation (replaces this):
      'Bamsemums — from Henrik, in the kitchen.' */
-const hallwayCollectibles = [
-  {
-    id:           'debug-bamsemums',
-    x:            400,             // mid-hallway, accessible after opening sequence
-    type:         'collectible',
-    kind:         'treat',
-    sprite:       'bamsemums',
-    name:         'Bamsemums',
-    annotation:   'Bamsemums \u2014 a small bag, left in the hallway.',
-    stomachValue: 25,
-    collected:    false,
-    tutorialNarrated: false,       // true once the proximity auto-narration has fired
-  },
-];
+/* Sprint 26 Stage 1: debug Bamsemums removed \u2014 canonical collectible moves to the kitchen room.
+   Stage 3 will add kitchenCollectibles with proper Beat 11b gating. */
+const hallwayCollectibles = [];
 
 /* ================================================================
    OPENING SEQUENCE STATE
@@ -2165,6 +2155,39 @@ const darkCorridorObjects = [
 ];
 
 /* ================================================================
+   KITCHEN OBJECTS  (Sprint 26 Stage 1)
+   Plate of lefse-and-gravlaks at world-x 290 — breadcrumb aura,
+   proximity trigger fires Cinematic 4 (kitchen-meeting).
+   Node is non-null pre-cinematic to enable aura; becomes null
+   once henrikMet is set so the aura disappears after the scene.
+   ================================================================ */
+
+const kitchenObjects = [
+  {
+    id:         'kitchen-plate',
+    x:          290,
+    sparkleY:   148,
+    breadcrumb: true,
+    get node() {
+      if (chapterState.henrikMet) return null;
+      return {
+        id:      'kitchen-plate-inspect',
+        lines:   [],
+        choices: null,
+        onEnd() {
+          if (!chapterState.henrikMet) {
+            showCinematic('kitchen-meeting', () => { chapterState.henrikMet = true; });
+          }
+        },
+      };
+    },
+  },
+];
+
+/* Sprint 26 Stage 3 will populate this with the canonical Bamsemums at x=520. */
+const kitchenCollectibles = [];
+
+/* ================================================================
    ROOMS
    Keyed by id. Each room defines its world width, Pip's movement
    clamp (pipMaxX), entry x positions per entry edge, inspectable
@@ -2228,17 +2251,17 @@ const rooms = {
     },
   },
 
-  /* Sprint 20: kitchen placeholder — Beat 9+ is Sprint 21 */
+  /* Sprint 26 Stage 1: kitchen — Beat 9+ */
   kitchen: {
-    width:        W,                           // single-screen, no scroll
-    pipMaxX:      W - PIP_HALF_W,
-    pipMinX:      PIP_HALF_W,
-    objects:      [],
-    collectibles: [],
-    draw:         drawKitchenPlaceholder,      // defined below
+    width:        ROOM_W,                      // 960 — side-scrolling
+    pipMaxX:      ROOM_W - PIP_HALF_W,         // 948
+    pipMinX:      PIP_HALF_W,                  //   8
+    objects:      kitchenObjects,
+    collectibles: kitchenCollectibles,
+    draw:         drawKitchen,                 // defined below
     pipEntryX: {
-      fromLeft:  PIP_HALF_W + 8,
-      fromRight: W - PIP_HALF_W - 8,
+      fromLeft:  PIP_HALF_W + 8,              //  20 — from dark-corridor stairwell
+      fromRight: ROOM_W - PIP_HALF_W - 8,     // 940
     },
   },
 };
@@ -2385,7 +2408,7 @@ const ROOM_MUSIC = {
   hallway:       'main',
   grandparents:  'main',
   darkCorridor:  'main',   // Sprint 20 placeholder; ambient track TBD in sound-design sprint
-  kitchen:       'main',   // Sprint 21: will switch to 'chefs'
+  kitchen:       'chefs',  // Sprint 26 Stage 1: kitchen ships
 };
 
 /* ================================================================
@@ -2785,6 +2808,14 @@ function update(dt) {
   // Sprint 20: on first dark-corridor entry, set darkCorridorEntered flag
   if (currentRoom === 'darkCorridor' && !chapterState.darkCorridorEntered) {
     chapterState.darkCorridorEntered = true;
+  }
+
+  // Sprint 26 Stage 1: kitchen-meeting trigger — approach plate at world-x 290
+  if (currentRoom === 'kitchen' && !chapterState.henrikMet
+      && !cinematic.active && !dialogue.active) {
+    if (Math.abs(pip.x - 290) < 40) {
+      showCinematic('kitchen-meeting', () => { chapterState.henrikMet = true; });
+    }
   }
 
   // Sprint 20: janitor walk trigger — fires once on re-entry after paging
@@ -5203,6 +5234,17 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null,  text: 'The boy in the bed does not move.', italic: false },
     { speaker: null,  text: 'Oh.', italic: true },
   ],
+
+  /* Sprint 26 Stage 1: kitchen-meeting (Cinematic 4 — Beat 9).
+     Pip approaches the plate; takes a bite; food hovers; Henrik freezes mid-scream.
+     Visual driven by drawKitchenMeetingCinematic() + kitchenCin elapsed timer. */
+  'kitchen-meeting': [
+    { speaker: null,     text: 'Pip cannot remember the last time he ate. Maybe he never has, now. Maybe this is the first time.', italic: false },
+    { speaker: null,     text: 'He takes a bite.',                                          italic: false },
+    { speaker: null,     text: 'The food hovers in the air.',                               italic: false },
+    { speaker: null,     text: 'Behind him, a sound. A pan dropped. A man’s voice.',     italic: false },
+    { speaker: 'HENRIK', text: '“AAAAAAAAA—”',                                italic: false },
+  ],
 };
 
 function showCinematic(name, onEnd) {
@@ -5229,6 +5271,9 @@ function showCinematic(name, onEnd) {
   } else if (name === 'bed-reveal') {
     bedRevealCinState.elapsed = 0;
     bedRevealCinState.lastNow = null;
+  } else if (name === 'kitchen-meeting') {
+    kitchenCin.elapsed = 0;
+    kitchenCin.lastNow = null;
   }
 
   showDialogue({
@@ -5341,6 +5386,7 @@ function drawCinematicScene(name, now) {
   else if (name === 'mirror-realization') drawMirrorCinematic(now);
   else if (name === 'bed-reveal')       drawBedRevealCinematic(now);
   else if (name === 'cabin-doctor-exit') drawDoctorExitCinematic(now);
+  else if (name === 'kitchen-meeting')   drawKitchenMeetingCinematic(now);
   // Sprint 11: memory mist opt-in — drawn on top of scene, below dialogue overlay
   if (cinematic.isMemory) drawMemoryMist(now);
 }
@@ -5615,6 +5661,12 @@ function drawDustMotes(now) {
 const mirrorCinState = {
   elapsed: 0,    // seconds since cinematic started, tracked in draw
   lastNow: null, // previous timestamp (ms) for delta calc
+};
+
+/* Sprint 26 Stage 1: per-session timer for kitchen-meeting cinematic. */
+const kitchenCin = {
+  elapsed: 0,
+  lastNow: null,
 };
 
 function drawMirrorCinematic(now) {
@@ -7341,24 +7393,362 @@ function drawEchoMouse(screenX, groundY, now) {
   ctx.restore();
 }
 
-/* ---- Placeholder kitchen room ---- */
-function drawKitchenPlaceholder(camX, now) {
-  ctx.fillStyle = '#060408';
+/* ================================================================
+   KITCHEN ROOM  (Sprint 26 Stage 1)
+   Ship's working kitchen — wider than the hallway, warm amber
+   pendant pool, long dark-wood counter, freezer doorway far right.
+   Contrast with the cool dark corridor above.
+   ================================================================ */
+
+function drawKitchen(camX, now) {
+  // ---- UI zone base fill ----
+  ctx.fillStyle = '#0c0804';
   ctx.fillRect(0, 0, W, H);
 
-  ctx.fillStyle   = 'rgba(255,244,216,0.65)';
-  ctx.font        = '12px "Cormorant Garamond", serif';
-  ctx.textAlign   = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('End of Sprint 20. Kitchen coming in Sprint 21.', W / 2, H / 2 - 10);
-  ctx.fillStyle   = 'rgba(180,160,120,0.45)';
-  ctx.font        = '10px "Cormorant Garamond", serif';
-  ctx.fillText('← Walk left to return to the dark corridor.', W / 2, H / 2 + 14);
-  ctx.textAlign   = 'left';
-  ctx.textBaseline = 'alphabetic';
+  // ---- Wall gradient (warm amber — the chapter's warmest room) ----
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallGrad.addColorStop(0,   '#1a1008');
+  wallGrad.addColorStop(0.5, '#201408');
+  wallGrad.addColorStop(1,   '#1c1208');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
 
-  ctx.fillStyle = 'rgba(40,38,50,0.8)';
+  // ---- Ambient edge darkening ----
+  const edgeGrad = ctx.createRadialGradient(W / 2, FLOOR_Y * 0.45, FLOOR_Y * 0.2, W / 2, FLOOR_Y * 0.45, H * 0.9);
+  edgeGrad.addColorStop(0, 'rgba(0,0,0,0)');
+  edgeGrad.addColorStop(1, 'rgba(8,4,2,0.55)');
+  ctx.fillStyle = edgeGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  const panelTop  = 20;
+  const baseboardH = 12;
+  const baseboardY = FLOOR_Y - baseboardH;  // 168
+  const panelH    = baseboardY - panelTop;  // 148
+
+  // ---- Pendant light (world-x ~475, above counter) ----
+  const pendSX = Math.round(475 - camX);
+  if (pendSX > -140 && pendSX < W + 140) {
+    const pendGrad = ctx.createRadialGradient(pendSX, 36, 0, pendSX, 90, 130);
+    pendGrad.addColorStop(0,   'rgba(220,165,55,0.38)');
+    pendGrad.addColorStop(0.45,'rgba(180,110,28,0.20)');
+    pendGrad.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = pendGrad;
+    ctx.fillRect(0, 0, W, FLOOR_Y);
+    // Fixture
+    ctx.fillStyle = '#3a2808';
+    ctx.fillRect(pendSX - 1, 0, 2, 28);
+    ctx.fillRect(pendSX - 10, 28, 20, 8);
+    ctx.fillRect(pendSX - 14, 36, 28, 4);
+  }
+
+  // ---- Wall panels (warm palette, half-speed parallax) ----
+  const panelSpacing = 120;
+  const panelOffset  = (camX * 0.5) % panelSpacing;
+  for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
+    drawShipPanel(Math.round(px), panelTop, panelSpacing, panelH, {
+      strokeColor: 'rgba(120,80,30,0.18)',
+      rivetColor:  'rgba(140,90,35,0.28)',
+    });
+  }
+
+  // ---- Stairwell opening (world-x 0–140) — dark gap to corridor above ----
+  const stairLeft = Math.round(0 - camX);
+  const stairW    = 140;
+  if (stairLeft < W && stairLeft + stairW > 0) {
+    const sL = Math.max(0, stairLeft);
+    const sR = Math.min(W, stairLeft + stairW);
+    ctx.fillStyle = '#06080e';
+    ctx.fillRect(sL, panelTop, sR - sL, panelH + baseboardH);
+    // Visible stair steps at bottom of opening
+    for (let i = 0; i < 5; i++) {
+      const sy = baseboardY - i * 13;
+      ctx.fillStyle = 'rgba(30,20,10,' + (0.65 - i * 0.10) + ')';
+      ctx.fillRect(stairLeft + 18 + i * 9, sy, stairW - 36 - i * 18, 11);
+    }
+    // Archway frame right edge
+    ctx.fillStyle = '#241808';
+    ctx.fillRect(stairLeft + stairW - 5, panelTop, 5, panelH + baseboardH);
+  }
+
+  // ---- Baseboard ----
+  ctx.fillStyle = '#2a1c0c';
+  ctx.fillRect(0, baseboardY, W, baseboardH);
+  ctx.fillStyle = 'rgba(180,120,50,0.12)';
+  ctx.fillRect(0, baseboardY, W, 1);
+
+  const counterTop = 148;
+  const counterH   = FLOOR_Y - counterTop;  // 32
+
+  // ---- Work counter (world-x 250–620) ----
+  const cStartSX = Math.round(250 - camX);
+  const cEndSX   = Math.round(620 - camX);
+  if (cEndSX > 0 && cStartSX < W) {
+    const cL = Math.max(0, cStartSX);
+    const cR = Math.min(W, cEndSX);
+    const cW = cR - cL;
+    ctx.fillStyle = '#3a2410';
+    ctx.fillRect(cL, counterTop, cW, 4);                      // top surface
+    ctx.fillStyle = '#2e1c0c';
+    ctx.fillRect(cL, counterTop + 4, cW, counterH - 4);       // body
+    ctx.fillStyle = 'rgba(200,140,60,0.15)';
+    ctx.fillRect(cL, counterTop, cW, 1);                      // highlight edge
+    ctx.fillStyle = 'rgba(0,0,0,0.32)';
+    ctx.fillRect(cL, counterTop + 3, cW, 2);                  // front shadow
+  }
+
+  // ---- Plate on counter (world-x 290) — visible until henrikMet ----
+  const plateSX = Math.round(290 - camX);
+  if (!chapterState.henrikMet && plateSX > -30 && plateSX < W + 30) {
+    ctx.fillStyle = 'rgba(225,208,178,0.88)';
+    ctx.beginPath();
+    ctx.ellipse(plateSX, counterTop - 2, 20, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Gravlaks (salmon)
+    ctx.fillStyle = 'rgba(200,118,78,0.78)';
+    ctx.beginPath();
+    ctx.ellipse(plateSX - 4, counterTop - 5, 9, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Lefse (pale)
+    ctx.fillStyle = 'rgba(222,195,152,0.72)';
+    ctx.beginPath();
+    ctx.ellipse(plateSX + 6, counterTop - 5, 8, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ---- Cutting board (world-x 490) ----
+  const cbSX = Math.round(490 - camX);
+  if (cbSX > -22 && cbSX < W + 22) {
+    ctx.fillStyle = '#4a3018';
+    ctx.fillRect(cbSX - 17, counterTop - 7, 34, 6);
+    ctx.fillStyle = 'rgba(200,150,80,0.12)';
+    ctx.fillRect(cbSX - 17, counterTop - 7, 34, 1);
+  }
+
+  // ---- Empty stool (world-x 400) — Henrik sits here Beat 10+ ----
+  const stoolSX = Math.round(400 - camX);
+  if (stoolSX > -20 && stoolSX < W + 20) {
+    ctx.fillStyle = '#4a3418';
+    ctx.fillRect(stoolSX - 9, FLOOR_Y - 28, 18, 4);   // seat
+    ctx.fillRect(stoolSX - 7, FLOOR_Y - 24, 4, 24);   // left leg
+    ctx.fillRect(stoolSX + 3, FLOOR_Y - 24, 4, 24);   // right leg
+    ctx.fillRect(stoolSX - 9, FLOOR_Y - 14, 18, 3);   // rung
+  }
+
+  // ---- Freezer doorway (world-x 700–762) ----
+  const freezSX = Math.round(700 - camX);
+  if (freezSX < W + 65 && freezSX > -65) {
+    ctx.fillStyle = '#1c1408';
+    ctx.fillRect(freezSX, panelTop, 62, panelH + baseboardH);
+    ctx.fillStyle = '#12100a';
+    ctx.fillRect(freezSX + 4, panelTop + 4, 54, panelH - 4);
+    ctx.fillStyle = 'rgba(180,140,60,0.50)';
+    ctx.fillRect(freezSX + 9, panelTop + panelH / 2 - 8, 5, 16);
+    ctx.fillStyle = 'rgba(180,120,40,0.18)';
+    ctx.fillRect(freezSX + 3, panelTop, 1, panelH + baseboardH);
+  }
+
+  // ---- Storage racks (world-x 820–940, background) ----
+  const rackSX = Math.round(820 - camX);
+  if (rackSX < W + 145 && rackSX > -145) {
+    ctx.fillStyle = 'rgba(100,68,28,0.42)';
+    for (let ri = 0; ri < 3; ri++) {
+      const rx = rackSX + ri * 52;
+      if (rx > -40 && rx < W + 40) {
+        ctx.fillRect(rx, panelTop + 28, 4, 58);
+        ctx.fillRect(rx - 2, panelTop + 28, 42, 4);
+      }
+    }
+  }
+
+  // ---- Floor (dark planks) ----
+  const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
+  floorGrad.addColorStop(0, '#201408');
+  floorGrad.addColorStop(1, '#100c06');
+  ctx.fillStyle = floorGrad;
   ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+
+  const plankSpacing = 60;
+  const plankOffset  = (camX * 0.3) % plankSpacing;
+  ctx.strokeStyle = 'rgba(0,0,0,0.32)';
+  ctx.lineWidth   = 1;
+  for (let px = -plankOffset; px < W + plankSpacing; px += plankSpacing) {
+    ctx.beginPath();
+    ctx.moveTo(Math.round(px), FLOOR_Y);
+    ctx.lineTo(Math.round(px), H);
+    ctx.stroke();
+  }
+
+  // ---- Object aura overlay ----
+  drawObjectAura(camX, now);
+}
+
+/* ================================================================
+   KITCHEN-MEETING CINEMATIC  (Sprint 26 Stage 1 — Cinematic 4)
+   Pip approaches the plate, the food hovers, Henrik appears in the
+   freezer doorway and freezes mid-scream.
+   ================================================================ */
+
+function drawHenrikFrozen(screenX, groundY, facing, t) {
+  const cx = Math.round(screenX);
+  const cy = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (facing === 'left') ctx.scale(-1, 1);
+
+  // Chef's toque
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(-7, -86, 14, 4);
+  ctx.fillRect(-5, -98, 10, 14);
+
+  // Head
+  ctx.fillStyle = '#b8805c';
+  ctx.fillRect(-8, -82, 16, 18);
+
+  // Wide-open eyes
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(-8, -77, 5, 4);
+  ctx.fillRect(3, -77, 5, 4);
+  ctx.fillStyle = '#1a1010';
+  ctx.fillRect(-7, -76, 3, 3);
+  ctx.fillRect(4, -76, 3, 3);
+
+  // Open mouth — animates wider as t increases, capped at 10px
+  const mh = Math.min(10, Math.round(t * 18));
+  ctx.fillStyle = '#1c0c0c';
+  ctx.fillRect(-5, -66, 10, Math.max(1, mh));
+
+  // Neck
+  ctx.fillStyle = '#b8805c';
+  ctx.fillRect(-4, -64, 8, 6);
+
+  // Chef jacket (cream/white)
+  ctx.fillStyle = '#dcd8c8';
+  ctx.fillRect(-14, -58, 28, 26);
+  ctx.fillStyle = '#c4c0b0';
+  ctx.fillRect(-2, -55, 4, 22);
+
+  // Arms — slightly raised, alarm pose
+  ctx.fillStyle = '#dcd8c8';
+  ctx.fillRect(-22, -56, 8, 22);
+  ctx.fillRect(14, -58, 8, 22);
+
+  // Trousers
+  ctx.fillStyle = '#38342e';
+  ctx.fillRect(-13, -32, 26, 18);
+  ctx.fillRect(-11, -14, 9, 14);
+  ctx.fillRect(  2, -14, 9, 14);
+
+  // Shoes
+  ctx.fillStyle = '#28201c';
+  ctx.fillRect(-13, -1, 12, 3);
+  ctx.fillRect(  2, -1, 12, 3);
+
+  ctx.restore();
+}
+
+function drawKitchenMeetingCinematic(now) {
+  if (kitchenCin.lastNow !== null) {
+    kitchenCin.elapsed += (now - kitchenCin.lastNow) / 1000;
+  }
+  kitchenCin.lastNow = now;
+
+  const elapsed    = kitchenCin.elapsed;
+  const counterTop = 148;
+
+  // ---- Base fill ----
+  ctx.fillStyle = '#0c0804';
+  ctx.fillRect(0, 0, W, H);
+
+  // ---- Wall gradient ----
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallGrad.addColorStop(0, '#1a1008');
+  wallGrad.addColorStop(1, '#1c1208');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // ---- Pendant light glow — centered ----
+  const pendGrad = ctx.createRadialGradient(W * 0.5, 36, 0, W * 0.5, 90, 130);
+  pendGrad.addColorStop(0,   'rgba(220,165,55,0.42)');
+  pendGrad.addColorStop(0.45,'rgba(180,110,28,0.22)');
+  pendGrad.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = pendGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Pendant fixture
+  ctx.fillStyle = '#3a2808';
+  ctx.fillRect(Math.round(W * 0.5) - 1, 0, 2, 28);
+  ctx.fillRect(Math.round(W * 0.5) - 10, 28, 20, 8);
+  ctx.fillRect(Math.round(W * 0.5) - 14, 36, 28, 4);
+
+  // ---- Counter ----
+  ctx.fillStyle = '#3a2410';
+  ctx.fillRect(40, counterTop, W - 80, 4);
+  ctx.fillStyle = '#2e1c0c';
+  ctx.fillRect(40, counterTop + 4, W - 80, FLOOR_Y - counterTop - 4);
+  ctx.fillStyle = 'rgba(200,140,60,0.15)';
+  ctx.fillRect(40, counterTop, W - 80, 1);
+
+  // ---- Plate / food — floating effect ----
+  const floatAmp = Math.min(1, elapsed * 0.8);  // eases in over ~1.25s
+  const floatOff = Math.sin(elapsed * 2.8) * 4 * floatAmp;
+  const plateX   = Math.round(W * 0.45);
+  const plateY   = counterTop - 2 + floatOff;
+
+  // Warm glow beneath levitating plate
+  const foodGlow = ctx.createRadialGradient(plateX, counterTop + 4, 0, plateX, counterTop + 4, 32);
+  foodGlow.addColorStop(0, 'rgba(220,160,60,0.28)');
+  foodGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = foodGlow;
+  ctx.beginPath();
+  ctx.ellipse(plateX, counterTop + 4, 32, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(225,208,178,0.90)';
+  ctx.beginPath();
+  ctx.ellipse(plateX, plateY, 23, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(200,118,78,0.82)';
+  ctx.beginPath();
+  ctx.ellipse(plateX - 5, plateY - 4 + floatOff * 0.4, 9, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(222,195,152,0.74)';
+  ctx.beginPath();
+  ctx.ellipse(plateX + 6, plateY - 4 + floatOff * 0.4, 8, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ---- Floor ----
+  const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
+  floorGrad.addColorStop(0, '#201408');
+  floorGrad.addColorStop(1, '#100c06');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+
+  // ---- Dropped pan on floor (world-equivalent ~x 0.68 screen, appears after elapsed > 1.5) ----
+  if (elapsed > 1.2) {
+    const panAlpha = Math.min(1, (elapsed - 1.2) / 0.4);
+    ctx.save();
+    ctx.globalAlpha = panAlpha;
+    const panX = Math.round(W * 0.68);
+    const panY = FLOOR_Y + 4;
+    ctx.fillStyle = '#5a4828';
+    ctx.beginPath();
+    ctx.ellipse(panX, panY + 3, 14, 4, 0, 0, Math.PI * 2);  // pan shadow
+    ctx.fill();
+    ctx.fillStyle = '#9a8860';
+    ctx.fillRect(panX - 12, panY - 4, 24, 7);    // pan body
+    ctx.fillRect(panX + 12, panY - 2, 12, 3);    // handle
+    ctx.restore();
+  }
+
+  // ---- Henrik — appears from freezer doorway (right side) after elapsed > 1.5s ----
+  const HENRIK_T = 1.5;
+  if (elapsed > HENRIK_T) {
+    const henrikAlpha = Math.min(1, (elapsed - HENRIK_T) / 0.7);
+    ctx.save();
+    ctx.globalAlpha = henrikAlpha;
+    drawHenrikFrozen(Math.round(W * 0.82), FLOOR_Y, 'left', elapsed - HENRIK_T);
+    ctx.restore();
+  }
 }
 
 /* ================================================================

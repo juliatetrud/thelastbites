@@ -1325,6 +1325,7 @@ const chapterState = {
   janitorPaged:        false, // true after Pip pages J. Henriksen via radio
   janitorWalked:       false, // true after janitor's scripted walk completes
   henrikMet:           false, // true once Cinematic 4 (kitchen-meeting) completes
+  firstTasteSeen:      false, // true once Cinematic 6 (first-taste) completes
 };
 
 /* Sprint 24 Stage 3: Cabin 646 collection-room state.
@@ -2176,7 +2177,7 @@ const kitchenObjects = [
         choices: null,
         onEnd() {
           if (!chapterState.henrikMet) {
-            showCinematic('kitchen-meeting', () => { chapterState.henrikMet = true; });
+            showCinematic('kitchen-meeting', startKitchenSequence);
           }
         },
       };
@@ -2186,6 +2187,18 @@ const kitchenObjects = [
 
 /* Sprint 26 Stage 3 will populate this with the canonical Bamsemums at x=520. */
 const kitchenCollectibles = [];
+
+/* Sprint 26 Stage 2: cinematic chain — Cinematic 4 onEnd calls this.
+   Sets henrikMet then chains 5 → 6 → recipe + firstTasteSeen. */
+function startKitchenSequence() {
+  chapterState.henrikMet = true;
+  showCinematic('henrik-sits-down', () => {
+    showCinematic('first-taste', () => {
+      chapterState.firstTasteSeen = true;
+      addKitchenRecipe();
+    });
+  });
+}
 
 /* ================================================================
    ROOMS
@@ -2810,11 +2823,11 @@ function update(dt) {
     chapterState.darkCorridorEntered = true;
   }
 
-  // Sprint 26 Stage 1: kitchen-meeting trigger — approach plate at world-x 290
+  // Sprint 26: kitchen-meeting trigger — approach plate at world-x 290
   if (currentRoom === 'kitchen' && !chapterState.henrikMet
       && !cinematic.active && !dialogue.active) {
     if (Math.abs(pip.x - 290) < 40) {
-      showCinematic('kitchen-meeting', () => { chapterState.henrikMet = true; });
+      showCinematic('kitchen-meeting', startKitchenSequence);
     }
   }
 
@@ -5235,6 +5248,52 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null,  text: 'Oh.', italic: true },
   ],
 
+
+  /* Sprint 26 Stage 2: henrik-sits-down (Cinematic 5 — Beat 10).
+     Henrik crosses himself, walks to stool, sits. Beat 10 dialogue.
+     Visual: drawHenrikSitsDownCinematic(). */
+  'henrik-sits-down': [
+    { speaker: 'HENRIK', text: '“…Så. Du er gutten fra hytte 646 — so. You are the boy from cabin 646.”', italic: false },
+    { speaker: 'PIP',    text: '“…you can see me?”',                                                         italic: false },
+    { speaker: 'HENRIK', text: '“Yes. Don’t ask why. Not today.”',                                           italic: false },
+    { speaker: null,     text: 'Henrik looks at the food, still hovering.',                                                  italic: false },
+    { speaker: 'HENRIK', text: '“Your grandmother. She told me, last night, in the dining room. She said you would have loved this. That you collected meals like other boys collect stamps.”', italic: false },
+    { speaker: 'HENRIK', text: '“Lefse. Gravlaks. The pickles too — don’t skip the pickles.”',          italic: false },
+    { speaker: 'HENRIK', text: '“Eat. Tell me if it’s as good as she promised.”',                            italic: false },
+    { speaker: null,     text: 'He slides the plate toward Pip.',                                                            italic: false },
+    { speaker: 'PIP',    text: '“…how can you see me, when no one else can?”',                               italic: false },
+    { speaker: null,     text: 'Henrik does not answer immediately. He looks at the food. He looks at Pip.',                italic: false },
+    { speaker: 'HENRIK', text: '“Some questions wait. Eat first.”',                                               italic: false },
+  ],
+
+  /* Sprint 26 Stage 2: first-taste (Cinematic 6 — Beat 11, doubled).
+     Part 1 (6a, lines 0-3): gravlaks bite, grandfather memory.
+     Crossfade at line 4. Part 2 (6b, lines 4-9): lefse bite, Erik memory (face hidden).
+     Post-memory exchange (lines 10-19): returns to present kitchen.
+     Visual: drawFirstTasteCinematic() — phase-based scene crossfades. */
+  'first-taste': [
+    { speaker: null,     text: 'Pip takes a bite of the gravlaks.',                                                                                                                                              italic: false },
+    { speaker: null,     text: 'The kitchen shimmers.',                                                                                                                                                           italic: false },
+    { speaker: null,     text: 'A young Norwegian boy in a cottage kitchen, watching an old man’s hands cure salmon. Sun through a window. The smell of dill. The man is his grandfather.',                 italic: false },
+    { speaker: null,     text: 'And Pip understands, for the first time, that food carries the story of the person who made it.',                                                                                 italic: true  },
+    { speaker: null,     text: 'Pip takes a bite of the lefse.',                                                                                                                                                  italic: false },
+    { speaker: null,     text: 'A different kitchen now. Different time.',                                                                                                                                        italic: false },
+    { speaker: null,     text: 'An older Henrik — recognizably grown — teaching a young boy to make the same lefse. The child’s face is turned away, in profile, in half-shadow. The child laughs at something off-screen.', italic: false },
+    { speaker: null,     text: 'That every meal is a love letter from someone, to someone.',                                                                                                                      italic: true  },
+    { speaker: null,     text: 'That if he can taste enough of them — really taste — he might learn the world.',                                                                                       italic: true  },
+    { speaker: null,     text: 'The memory fades. Pip is back in the kitchen.',                                                                                                                                   italic: false },
+    { speaker: 'PIP',    text: '“…I saw two things. Someone teaching you. And then you — teaching a boy. Was that you, both times?”',                                                        italic: false },
+    { speaker: null,     text: 'A pause. Henrik looks at the empty plate.',                                                                                                                                       italic: false },
+    { speaker: 'HENRIK', text: '“…yes.”',                                                                                                                                                          italic: false },
+    { speaker: 'PIP',    text: '“Who was the boy?”',                                                                                                                                                    italic: false },
+    { speaker: 'HENRIK', text: '“Someone I loved.”',                                                                                                                                                    italic: false },
+    { speaker: null,     text: 'Pip waits. Henrik does not say more.',                                                                                                                                            italic: false },
+    { speaker: 'PIP',    text: '“…how does it work, Henrik? When I taste?”',                                                                                                                       italic: false },
+    { speaker: 'HENRIK', text: '“Because you needed to. The dead see what they need to see.”',                                                                                                          italic: false },
+    { speaker: 'PIP',    text: '“Will it always do that?”',                                                                                                                                             italic: false },
+    { speaker: 'HENRIK', text: '“I think, perhaps, yes. I think that is what you are now.”',                                                                                                            italic: false },
+  ],
+
   /* Sprint 26 Stage 1: kitchen-meeting (Cinematic 4 — Beat 9).
      Pip approaches the plate; takes a bite; food hovers; Henrik freezes mid-scream.
      Visual driven by drawKitchenMeetingCinematic() + kitchenCin elapsed timer. */
@@ -5274,6 +5333,15 @@ function showCinematic(name, onEnd) {
   } else if (name === 'kitchen-meeting') {
     kitchenCin.elapsed = 0;
     kitchenCin.lastNow = null;
+  } else if (name === 'henrik-sits-down') {
+    henrikSitsDownCin.elapsed = 0;
+    henrikSitsDownCin.lastNow = null;
+  } else if (name === 'first-taste') {
+    firstTasteCin.elapsed       = 0;
+    firstTasteCin.lastNow       = null;
+    firstTasteCin.phase         = '6a';
+    firstTasteCin.crossfadeStart = 0;
+    firstTasteCin.prevLineIndex = -1;
   }
 
   showDialogue({
@@ -5386,7 +5454,9 @@ function drawCinematicScene(name, now) {
   else if (name === 'mirror-realization') drawMirrorCinematic(now);
   else if (name === 'bed-reveal')       drawBedRevealCinematic(now);
   else if (name === 'cabin-doctor-exit') drawDoctorExitCinematic(now);
-  else if (name === 'kitchen-meeting')   drawKitchenMeetingCinematic(now);
+  else if (name === 'kitchen-meeting')    drawKitchenMeetingCinematic(now);
+  else if (name === 'henrik-sits-down')  drawHenrikSitsDownCinematic(now);
+  else if (name === 'first-taste')       drawFirstTasteCinematic(now);
   // Sprint 11: memory mist opt-in — drawn on top of scene, below dialogue overlay
   if (cinematic.isMemory) drawMemoryMist(now);
 }
@@ -5667,6 +5737,21 @@ const mirrorCinState = {
 const kitchenCin = {
   elapsed: 0,
   lastNow: null,
+};
+
+/* Sprint 26 Stage 2: per-session timer for henrik-sits-down (Cinematic 5). */
+const henrikSitsDownCin = {
+  elapsed: 0,
+  lastNow: null,
+};
+
+/* Sprint 26 Stage 2: per-session state for first-taste (Cinematic 6 — doubled). */
+const firstTasteCin = {
+  elapsed:        0,
+  lastNow:        null,
+  phase:          '6a',  // '6a' | 'fading-to-6b' | '6b' | 'fading-to-present' | 'present'
+  crossfadeStart: 0,
+  prevLineIndex:  -1,
 };
 
 function drawMirrorCinematic(now) {
@@ -7394,6 +7479,565 @@ function drawEchoMouse(screenX, groundY, now) {
 }
 
 /* ================================================================
+   HENRIK SPRITES  (Sprint 26 Stage 2)
+   drawHenrikStanding — neutral standing pose, used during walk.
+   drawHenrikSitting  — seated pose, body above stool, legs hanging.
+   groundY = FLOOR_Y (180) for both; stool seat at FLOOR_Y-28.
+   ================================================================ */
+
+function drawHenrikStanding(screenX, groundY, facing, now) {
+  const bob = Math.abs(Math.sin(now / 450)) * 1.5;
+  const cx  = Math.round(screenX);
+  const cy  = Math.round(groundY + bob);
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (facing === 'left') ctx.scale(-1, 1);
+
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(-7, -86, 14, 4);
+  ctx.fillRect(-5, -98, 10, 14);
+
+  ctx.fillStyle = '#b8805c';
+  ctx.fillRect(-8, -82, 16, 18);
+
+  ctx.fillStyle = '#1a1010';
+  ctx.fillRect(-7, -76, 4, 3);
+  ctx.fillRect(3, -76, 4, 3);
+
+  ctx.fillStyle = '#1c0c0c';
+  ctx.fillRect(-3, -67, 6, 2);
+
+  ctx.fillStyle = '#b8805c';
+  ctx.fillRect(-4, -64, 8, 6);
+
+  ctx.fillStyle = '#dcd8c8';
+  ctx.fillRect(-14, -58, 28, 26);
+  ctx.fillStyle = '#c4c0b0';
+  ctx.fillRect(-2, -55, 4, 22);
+
+  ctx.fillStyle = '#dcd8c8';
+  ctx.fillRect(-22, -55, 8, 24);
+  ctx.fillRect(14, -55, 8, 24);
+
+  ctx.fillStyle = '#38342e';
+  ctx.fillRect(-13, -32, 26, 18);
+  ctx.fillRect(-11, -14, 9, 14);
+  ctx.fillRect(2, -14, 9, 14);
+
+  ctx.fillStyle = '#28201c';
+  ctx.fillRect(-13, -1, 12, 3);
+  ctx.fillRect(2, -1, 12, 3);
+
+  ctx.restore();
+}
+
+function drawHenrikSitting(screenX, groundY, facing, now) {
+  // groundY = FLOOR_Y; stool seat = FLOOR_Y-28; body above seat, legs hang down
+  const cx = Math.round(screenX);
+  const cy = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (facing === 'left') ctx.scale(-1, 1);
+
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(-7, -86, 14, 4);
+  ctx.fillRect(-5, -98, 10, 14);
+
+  ctx.fillStyle = '#b8805c';
+  ctx.fillRect(-8, -82, 16, 18);
+
+  ctx.fillStyle = '#1a1010';
+  ctx.fillRect(-7, -76, 4, 3);
+  ctx.fillRect(3, -76, 4, 3);
+
+  ctx.fillStyle = '#1c0c0c';
+  ctx.fillRect(-3, -67, 6, 2);
+
+  ctx.fillStyle = '#b8805c';
+  ctx.fillRect(-4, -64, 8, 6);
+
+  ctx.fillStyle = '#dcd8c8';
+  ctx.fillRect(-14, -58, 28, 26);
+  ctx.fillStyle = '#c4c0b0';
+  ctx.fillRect(-2, -55, 4, 22);
+
+  // Arms resting on knees
+  ctx.fillStyle = '#dcd8c8';
+  ctx.fillRect(-22, -36, 8, 12);
+  ctx.fillRect(14, -36, 8, 12);
+
+  // Thighs horizontal (on stool seat at -28)
+  ctx.fillStyle = '#38342e';
+  ctx.fillRect(-14, -32, 28, 10);
+
+  // Lower legs hanging down from seat
+  ctx.fillRect(-12, -22, 9, 22);
+  ctx.fillRect(3, -22, 9, 22);
+
+  // Shoes near floor
+  ctx.fillStyle = '#28201c';
+  ctx.fillRect(-13, -2, 12, 4);
+  ctx.fillRect(2, -2, 12, 4);
+
+  ctx.restore();
+}
+
+/* ================================================================
+   HENRIK-SITS-DOWN CINEMATIC  (Sprint 26 Stage 2 — Cinematic 5)
+   Henrik crosses himself, walks left to the stool, sits.
+   Beat 10 dialogue plays while the walk animation runs.
+   ================================================================ */
+
+function drawHenrikSitsDownCinematic(now) {
+  if (henrikSitsDownCin.lastNow !== null) {
+    henrikSitsDownCin.elapsed += (now - henrikSitsDownCin.lastNow) / 1000;
+  }
+  henrikSitsDownCin.lastNow = now;
+
+  const elapsed    = henrikSitsDownCin.elapsed;
+  const counterTop = 148;
+  const pendX      = Math.round(W * 0.5);
+
+  // ---- Kitchen background ----
+  ctx.fillStyle = '#0c0804';
+  ctx.fillRect(0, 0, W, H);
+
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallGrad.addColorStop(0, '#1a1008');
+  wallGrad.addColorStop(1, '#1c1208');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  const pendGrad = ctx.createRadialGradient(pendX, 36, 0, pendX, 90, 130);
+  pendGrad.addColorStop(0,   'rgba(220,165,55,0.42)');
+  pendGrad.addColorStop(0.45,'rgba(180,110,28,0.22)');
+  pendGrad.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = pendGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#3a2808';
+  ctx.fillRect(pendX - 1, 0, 2, 28);
+  ctx.fillRect(pendX - 10, 28, 20, 8);
+  ctx.fillRect(pendX - 14, 36, 28, 4);
+
+  ctx.fillStyle = '#3a2410';
+  ctx.fillRect(40, counterTop, W - 80, 4);
+  ctx.fillStyle = '#2e1c0c';
+  ctx.fillRect(40, counterTop + 4, W - 80, FLOOR_Y - counterTop - 4);
+  ctx.fillStyle = 'rgba(200,140,60,0.15)';
+  ctx.fillRect(40, counterTop, W - 80, 1);
+
+  // Stool
+  const stoolSX = Math.round(W * 0.42);
+  ctx.fillStyle = '#4a3418';
+  ctx.fillRect(stoolSX - 9, FLOOR_Y - 28, 18, 4);
+  ctx.fillRect(stoolSX - 7, FLOOR_Y - 24, 4, 24);
+  ctx.fillRect(stoolSX + 3, FLOOR_Y - 24, 4, 24);
+  ctx.fillRect(stoolSX - 9, FLOOR_Y - 14, 18, 3);
+
+  // Food hovering
+  const plateX   = Math.round(W * 0.52);
+  const floatOff = Math.sin(elapsed * 2.2) * 3;
+  const plateY   = counterTop - 2 + floatOff;
+  const foodGlow = ctx.createRadialGradient(plateX, counterTop + 4, 0, plateX, counterTop + 4, 28);
+  foodGlow.addColorStop(0, 'rgba(220,160,60,0.25)');
+  foodGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = foodGlow;
+  ctx.beginPath();
+  ctx.ellipse(plateX, counterTop + 4, 28, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(225,208,178,0.90)';
+  ctx.beginPath();
+  ctx.ellipse(plateX, plateY, 22, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(200,118,78,0.82)';
+  ctx.beginPath();
+  ctx.ellipse(plateX - 4, plateY - 4, 8, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(222,195,152,0.74)';
+  ctx.beginPath();
+  ctx.ellipse(plateX + 5, plateY - 4, 7, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Floor
+  const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
+  floorGrad.addColorStop(0, '#201408');
+  floorGrad.addColorStop(1, '#100c06');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+
+  // Dropped pan (stays from Cinematic 4)
+  const panX = Math.round(W * 0.68);
+  ctx.fillStyle = '#5a4828';
+  ctx.beginPath();
+  ctx.ellipse(panX, FLOOR_Y + 3, 14, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#9a8860';
+  ctx.fillRect(panX - 12, FLOOR_Y - 4, 24, 7);
+  ctx.fillRect(panX + 12, FLOOR_Y - 2, 12, 3);
+
+  // Henrik: frozen → walks → sits
+  const WALK_START = 0.8;
+  const WALK_END   = 3.2;
+  const START_X    = Math.round(W * 0.82);
+
+  let henrikX, henrikSits;
+  if (elapsed < WALK_START) {
+    henrikX   = START_X;
+    henrikSits = false;
+  } else if (elapsed < WALK_END) {
+    const t  = (elapsed - WALK_START) / (WALK_END - WALK_START);
+    henrikX  = Math.round(START_X + (stoolSX - START_X) * t);
+    henrikSits = false;
+  } else {
+    henrikX   = stoolSX;
+    henrikSits = true;
+  }
+
+  if (henrikSits) {
+    drawHenrikSitting(henrikX, FLOOR_Y, 'right', now);
+  } else {
+    drawHenrikStanding(henrikX, FLOOR_Y, 'left', now);
+  }
+}
+
+/* ================================================================
+   FIRST-TASTE CINEMATIC  (Sprint 26 Stage 2 — Cinematic 6 doubled)
+   Phase-based: 6a (grandfather memory) → crossfade → 6b (Erik memory)
+   → crossfade → present (post-memory exchange).
+   Scene transitions keyed on dialogue.lineIndex changes.
+   ================================================================ */
+
+function drawFirstTasteCinematic(now) {
+  if (firstTasteCin.lastNow !== null) {
+    firstTasteCin.elapsed += (now - firstTasteCin.lastNow) / 1000;
+  }
+  firstTasteCin.lastNow = now;
+
+  const elapsed  = firstTasteCin.elapsed;
+  const lineIdx  = dialogue.lineIndex;
+  const FADE_DUR = 0.8;
+
+  // Detect line-index transitions to advance phase
+  if (firstTasteCin.prevLineIndex !== lineIdx) {
+    if (firstTasteCin.prevLineIndex < 4 && lineIdx >= 4 && firstTasteCin.phase === '6a') {
+      firstTasteCin.phase        = 'fading-to-6b';
+      firstTasteCin.crossfadeStart = elapsed;
+    }
+    if (firstTasteCin.prevLineIndex < 10 && lineIdx >= 10 &&
+        (firstTasteCin.phase === '6b' || firstTasteCin.phase === 'fading-to-6b')) {
+      firstTasteCin.phase        = 'fading-to-present';
+      firstTasteCin.crossfadeStart = elapsed;
+    }
+    firstTasteCin.prevLineIndex = lineIdx;
+  }
+
+  // Auto-advance completed crossfades
+  if (firstTasteCin.phase === 'fading-to-6b' &&
+      elapsed - firstTasteCin.crossfadeStart >= FADE_DUR) firstTasteCin.phase = '6b';
+  if (firstTasteCin.phase === 'fading-to-present' &&
+      elapsed - firstTasteCin.crossfadeStart >= FADE_DUR) firstTasteCin.phase = 'present';
+
+  // Blend alphas
+  let a6a = 0, a6b = 0, aPre = 0;
+  const phase = firstTasteCin.phase;
+  if (phase === '6a') {
+    a6a = 1;
+  } else if (phase === 'fading-to-6b') {
+    const t = Math.min(1, (elapsed - firstTasteCin.crossfadeStart) / FADE_DUR);
+    a6a = 1 - t;  a6b = t;
+  } else if (phase === '6b') {
+    a6b = 1;
+  } else if (phase === 'fading-to-present') {
+    const t = Math.min(1, (elapsed - firstTasteCin.crossfadeStart) / FADE_DUR);
+    a6b = 1 - t;  aPre = t;
+  } else {
+    aPre = 1;
+  }
+
+  // Draw base (always)
+  ctx.fillStyle = '#100c08';
+  ctx.fillRect(0, 0, W, H);
+
+  // ---- 6a scene: grandfather's sunlit cottage kitchen ----
+  if (a6a > 0) {
+    ctx.save();
+    ctx.globalAlpha = a6a;
+    drawMemory6aScene(elapsed);
+    ctx.restore();
+  }
+
+  // ---- 6b scene: Erik's kitchen ----
+  if (a6b > 0) {
+    ctx.save();
+    ctx.globalAlpha = a6b;
+    drawMemory6bScene(elapsed);
+    ctx.restore();
+  }
+
+  // ---- Present kitchen scene (post-memory) ----
+  if (aPre > 0) {
+    ctx.save();
+    ctx.globalAlpha = aPre;
+    drawPostMemoryScene(elapsed);
+    ctx.restore();
+  }
+
+  // Memory mist during 6a / 6b phases (not present)
+  if (a6a > 0 || a6b > 0) {
+    ctx.save();
+    ctx.globalAlpha = Math.max(a6a, a6b) * 0.5;
+    drawMemoryMist(now);
+    ctx.restore();
+  }
+}
+
+function drawMemory6aScene(elapsed) {
+  // Grandfather's cottage kitchen — sunlit, warm, older style
+  // Warm cream-gold wall
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallGrad.addColorStop(0, '#3c2c10');
+  wallGrad.addColorStop(0.5, '#4a3818');
+  wallGrad.addColorStop(1, '#3a2c12');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Window light from top-right — strong amber-gold
+  const winGrad = ctx.createRadialGradient(W * 0.78, 0, 0, W * 0.78, 60, 160);
+  winGrad.addColorStop(0, 'rgba(255,220,130,0.55)');
+  winGrad.addColorStop(0.4,'rgba(200,160,70,0.28)');
+  winGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = winGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Window frame
+  ctx.fillStyle = 'rgba(200,170,90,0.35)';
+  ctx.fillRect(Math.round(W * 0.68), 12, 46, 48);
+  ctx.fillStyle = 'rgba(255,220,130,0.55)';
+  ctx.fillRect(Math.round(W * 0.70), 14, 42, 44);
+  ctx.fillStyle = 'rgba(80,50,16,0.65)';
+  ctx.fillRect(Math.round(W * 0.68), 12, 3, 48);
+  ctx.fillRect(Math.round(W * 0.71 + 42), 12, 3, 48);
+  ctx.fillRect(Math.round(W * 0.68), 12, 49, 3);
+  ctx.fillRect(Math.round(W * 0.68), 57, 49, 3);
+  ctx.fillRect(Math.round(W * 0.692 + 21), 12, 3, 48);  // centre mullion
+
+  // Counter/table
+  ctx.fillStyle = '#5c3c18';
+  ctx.fillRect(40, 148, W - 80, 4);
+  ctx.fillStyle = '#4a2e10';
+  ctx.fillRect(40, 152, W - 80, FLOOR_Y - 152);
+
+  // Floor
+  ctx.fillStyle = '#2c2010';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+
+  // Grandfather — tall, back mostly to viewer, at counter left side
+  const gpX = Math.round(W * 0.35);
+  ctx.save();
+  ctx.translate(gpX, FLOOR_Y);
+  // Tall figure — old man, slightly stooped
+  ctx.fillStyle = '#5a4028';  // dark wool sweater
+  ctx.fillRect(-8, -82, 16, 28);   // torso
+  ctx.fillRect(-6, -54, 12, 18);   // lower torso
+  ctx.fillStyle = '#6a5030';
+  ctx.fillRect(-7, -110, 14, 30);  // head + some hair
+  // Arms extended forward (working at counter)
+  ctx.fillStyle = '#5a4028';
+  ctx.fillRect(-20, -78, 12, 28);
+  ctx.fillRect(8, -74, 12, 22);
+  // Trousers
+  ctx.fillStyle = '#2e2418';
+  ctx.fillRect(-9, -36, 18, 24);
+  ctx.fillRect(-8, -12, 7, 12);
+  ctx.fillRect(1, -12, 7, 12);
+  ctx.restore();
+
+  // Young Henrik — smaller, to grandfather's right, watching
+  const youngHenrikX = Math.round(W * 0.52);
+  ctx.save();
+  ctx.translate(youngHenrikX, FLOOR_Y);
+  ctx.fillStyle = '#8a6040';   // small head
+  ctx.fillRect(-5, -58, 10, 12);
+  ctx.fillStyle = '#6a5030';
+  ctx.fillRect(-6, -46, 12, 20);  // small torso
+  ctx.fillRect(-10, -44, 6, 14);  // left arm
+  ctx.fillRect(4, -44, 6, 14);
+  ctx.fillStyle = '#483820';
+  ctx.fillRect(-6, -26, 12, 14);
+  ctx.fillRect(-5, -12, 5, 12);
+  ctx.fillRect(0, -12, 5, 12);
+  ctx.restore();
+
+  // Salmon piece on counter (the curing salmon)
+  const salmonX = Math.round(W * 0.43);
+  ctx.fillStyle = 'rgba(200,100,70,0.75)';
+  ctx.beginPath();
+  ctx.ellipse(salmonX, 146, 22, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawMemory6bScene(elapsed) {
+  // Henrik's kitchen, teaching Erik — warmer, more intimate
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallGrad.addColorStop(0, '#2c1e0c');
+  wallGrad.addColorStop(0.5, '#382410');
+  wallGrad.addColorStop(1, '#2a1c0a');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Warm ambient (smaller room, lower ceiling feeling)
+  const ambGrad = ctx.createRadialGradient(W * 0.48, FLOOR_Y * 0.3, 0, W * 0.48, FLOOR_Y * 0.3, 130);
+  ambGrad.addColorStop(0, 'rgba(220,160,60,0.32)');
+  ambGrad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = ambGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Counter
+  ctx.fillStyle = '#4a3018';
+  ctx.fillRect(30, 148, W - 60, 4);
+  ctx.fillStyle = '#382410';
+  ctx.fillRect(30, 152, W - 60, FLOOR_Y - 152);
+
+  // Floor
+  ctx.fillStyle = '#241a0a';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+
+  // Adult Henrik — larger, chef's whites recognizable
+  const adultHenrikX = Math.round(W * 0.42);
+  ctx.save();
+  ctx.translate(adultHenrikX, FLOOR_Y);
+  ctx.fillStyle = '#e0d8c8';   // chef whites
+  ctx.fillRect(-14, -60, 28, 28);
+  ctx.fillStyle = '#b8805c';
+  ctx.fillRect(-8, -82, 16, 18);
+  ctx.fillStyle = '#e8e0d0';   // toque
+  ctx.fillRect(-7, -86, 14, 4);
+  ctx.fillRect(-5, -98, 10, 14);
+  // Arms extended to show young boy
+  ctx.fillStyle = '#e0d8c8';
+  ctx.fillRect(-22, -56, 8, 22);
+  ctx.fillRect(14, -56, 8, 22);
+  ctx.fillStyle = '#38342e';
+  ctx.fillRect(-13, -32, 26, 18);
+  ctx.fillRect(-11, -14, 9, 14);
+  ctx.fillRect(2, -14, 9, 14);
+  ctx.fillStyle = '#28201c';
+  ctx.fillRect(-13, -1, 12, 3);
+  ctx.fillRect(2, -1, 12, 3);
+  ctx.restore();
+
+  // Young Erik — smaller, FACE TURNED AWAY (critical art note)
+  // Only back-of-head and profile visible; face in shadow
+  const erikX = Math.round(W * 0.60);
+  ctx.save();
+  ctx.translate(erikX, FLOOR_Y);
+  // Back-of-head only — facing LEFT (away from viewer)
+  ctx.fillStyle = '#8c6040';
+  ctx.fillRect(-6, -52, 12, 12);   // back of head
+  // Shadow covering face side
+  ctx.fillStyle = 'rgba(20,10,4,0.65)';
+  ctx.fillRect(-6, -52, 8, 12);    // shadow mask on face side
+  ctx.fillStyle = '#7a5438';       // small body
+  ctx.fillRect(-7, -40, 14, 20);
+  ctx.fillRect(-10, -38, 6, 12);   // arms
+  ctx.fillRect(4, -38, 6, 12);
+  ctx.fillStyle = '#3c3028';
+  ctx.fillRect(-6, -20, 12, 14);
+  ctx.fillRect(-5, -6, 5, 10);
+  ctx.fillRect(0, -6, 5, 10);
+  ctx.restore();
+
+  // Lefse on counter
+  const lefseX = Math.round(W * 0.50);
+  ctx.fillStyle = 'rgba(218,192,148,0.72)';
+  ctx.beginPath();
+  ctx.ellipse(lefseX, 146, 18, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawPostMemoryScene(elapsed) {
+  // Present kitchen — Henrik sitting on stool, empty plate, warm pendant
+  const counterTop = 148;
+  const pendX      = Math.round(W * 0.5);
+
+  ctx.fillStyle = '#0c0804';
+  ctx.fillRect(0, 0, W, H);
+
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallGrad.addColorStop(0, '#1a1008');
+  wallGrad.addColorStop(1, '#1c1208');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  const pendGrad = ctx.createRadialGradient(pendX, 36, 0, pendX, 90, 130);
+  pendGrad.addColorStop(0,   'rgba(220,165,55,0.42)');
+  pendGrad.addColorStop(0.45,'rgba(180,110,28,0.22)');
+  pendGrad.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = pendGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#3a2808';
+  ctx.fillRect(pendX - 1, 0, 2, 28);
+  ctx.fillRect(pendX - 10, 28, 20, 8);
+  ctx.fillRect(pendX - 14, 36, 28, 4);
+
+  ctx.fillStyle = '#3a2410';
+  ctx.fillRect(40, counterTop, W - 80, 4);
+  ctx.fillStyle = '#2e1c0c';
+  ctx.fillRect(40, counterTop + 4, W - 80, FLOOR_Y - counterTop - 4);
+  ctx.fillStyle = 'rgba(200,140,60,0.15)';
+  ctx.fillRect(40, counterTop, W - 80, 1);
+
+  // Empty plate (food consumed)
+  const plateX = Math.round(W * 0.50);
+  ctx.fillStyle = 'rgba(215,198,168,0.72)';
+  ctx.beginPath();
+  ctx.ellipse(plateX, counterTop - 2, 20, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Floor
+  const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
+  floorGrad.addColorStop(0, '#201408');
+  floorGrad.addColorStop(1, '#100c06');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+
+  // Stool + Henrik sitting
+  const stoolSX = Math.round(W * 0.42);
+  ctx.fillStyle = '#4a3418';
+  ctx.fillRect(stoolSX - 9, FLOOR_Y - 28, 18, 4);
+  ctx.fillRect(stoolSX - 7, FLOOR_Y - 24, 4, 24);
+  ctx.fillRect(stoolSX + 3, FLOOR_Y - 24, 4, 24);
+  ctx.fillRect(stoolSX - 9, FLOOR_Y - 14, 18, 3);
+
+  drawHenrikSitting(stoolSX, FLOOR_Y, 'right', 0);
+
+  // Dropped pan
+  const panX = Math.round(W * 0.68);
+  ctx.fillStyle = '#5a4828';
+  ctx.beginPath();
+  ctx.ellipse(panX, FLOOR_Y + 3, 14, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#9a8860';
+  ctx.fillRect(panX - 12, FLOOR_Y - 4, 24, 7);
+  ctx.fillRect(panX + 12, FLOOR_Y - 2, 12, 3);
+}
+
+/* addKitchenRecipe — adds lefse-and-gravlaks to notebook, fires brief dialogue. */
+function addKitchenRecipe() {
+  if (notebook.items.some(function(i) { return i.id === 'recipe-lefse-gravlaks'; })) return;
+  notebook.items.push({
+    id:         'recipe-lefse-gravlaks',
+    name:       'Norwegian lefse and gravlaks',
+    annotation: 'Norwegian lefse and gravlaks — with Norwegian pickles.',
+    kind:       'recipe',
+    sprite:     null,
+  });
+  renderNotebookPage();
+}
+
+/* ================================================================
    KITCHEN ROOM  (Sprint 26 Stage 1)
    Ship's working kitchen — wider than the hallway, warm amber
    pendant pool, long dark-wood counter, freezer doorway far right.
@@ -7524,7 +8168,7 @@ function drawKitchen(camX, now) {
     ctx.fillRect(cbSX - 17, counterTop - 7, 34, 1);
   }
 
-  // ---- Empty stool (world-x 400) — Henrik sits here Beat 10+ ----
+  // ---- Stool (world-x 400) — Henrik sits here after Beat 10 ----
   const stoolSX = Math.round(400 - camX);
   if (stoolSX > -20 && stoolSX < W + 20) {
     ctx.fillStyle = '#4a3418';
@@ -7532,6 +8176,9 @@ function drawKitchen(camX, now) {
     ctx.fillRect(stoolSX - 7, FLOOR_Y - 24, 4, 24);   // left leg
     ctx.fillRect(stoolSX + 3, FLOOR_Y - 24, 4, 24);   // right leg
     ctx.fillRect(stoolSX - 9, FLOOR_Y - 14, 18, 3);   // rung
+    if (chapterState.henrikMet && !cinematic.active) {
+      drawHenrikSitting(stoolSX, FLOOR_Y, 'right', now);
+    }
   }
 
   // ---- Freezer doorway (world-x 700–762) ----
@@ -8377,10 +9024,29 @@ function renderNotebookPage() {
   if (notebook.page === 0) {
     leftTitle.textContent  = 'Recipes';
     rightTitle.textContent = 'Memories';
-    leftCont.className     = 'notebook-empty-note';
-    leftCont.textContent   = 'Recipe unlocked after first meal.';
     rightCont.className    = 'notebook-empty-note';
     rightCont.textContent  = 'Memories collected here.';
+    const recipes = notebook.items.filter(function(i) { return i.kind === 'recipe'; });
+    if (recipes.length === 0) {
+      leftCont.className   = 'notebook-empty-note';
+      leftCont.textContent = 'No recipes yet.';
+    } else {
+      leftCont.className = 'notebook-items-grid';
+      leftCont.innerHTML = '';
+      for (const item of recipes) {
+        const card = document.createElement('div');
+        card.className = 'notebook-item-card';
+        const name = document.createElement('div');
+        name.className   = 'notebook-item-name';
+        name.textContent = item.name;
+        card.appendChild(name);
+        const ann = document.createElement('div');
+        ann.className   = 'notebook-item-annotation';
+        ann.textContent = item.annotation;
+        card.appendChild(ann);
+        leftCont.appendChild(card);
+      }
+    }
   } else if (notebook.page === 1) {
     leftTitle.textContent  = 'Monster Moment';
     rightTitle.textContent = 'Meal Moment';

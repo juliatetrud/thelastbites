@@ -942,6 +942,32 @@
   #gate-text.visible {
     opacity: 1;
   }
+
+  /* Sprint 26 Stage 4: end-of-sprint stub screen (kitchen→deck transition placeholder) */
+  #end-sprint-overlay {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 80;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  #end-sprint-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  #end-sprint-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(13px, 1.9vw, 18px);
+    color: var(--text-narration);
+    letter-spacing: 0.12em;
+    text-align: center;
+    font-style: italic;
+  }
 </style>
 </head>
 <body>
@@ -998,6 +1024,12 @@
     <!-- Room transition overlay: full-screen black fade between rooms.
          Opacity animated by startTransition() via CSS transition. -->
     <div id="room-transition"></div>
+
+    <!-- Sprint 26 Stage 4: end-of-sprint stub screen.
+         Shown when Pip reaches the kitchen right edge after nokkenStoryHeard. -->
+    <div id="end-sprint-overlay">
+      <span id="end-sprint-text">End of Sprint 26 — observation deck in Sprint 27.</span>
+    </div>
 
     <!-- Dialogue box: HTML overlay for narration + choices.
          Not canvas-drawn per the display pipeline in 05-tech-architecture.md.
@@ -2865,6 +2897,10 @@ function update(dt) {
     } else if (currentRoom === 'kitchen' && pip.x <= rooms.kitchen.pipMinX + 1) {
       // Return from kitchen placeholder to dark corridor
       startTransition('darkCorridor', 'fromRight', ROOM_W - PIP_HALF_W - 8);
+    } else if (currentRoom === 'kitchen' && pip.x >= rooms.kitchen.pipMaxX - 1
+               && chapterState.nokkenStoryHeard) {
+      // Sprint 26 Stage 4: deck-transition stub — fires only after Nøkken story heard
+      triggerDeckStub();
     }
   }
 
@@ -5207,6 +5243,25 @@ function startTransition(toRoom, entryEdge, entryX) {
       }, 200);  // wait for fade-out transition to complete
     }, 200);  // hold duration
   }, 200);  // wait for fade-in to complete before swapping
+}
+
+/* ================================================================
+   SPRINT 26 STAGE 4: DECK STUB TRANSITION
+   Fade to black + "End of Sprint 26" overlay.
+   Reuses #room-transition for the fade; shows #end-sprint-overlay after.
+   transition.active is set and never cleared — the stub is terminal.
+   ================================================================ */
+
+function triggerDeckStub() {
+  if (transition.active) return;
+  transition.active = true;
+  hideHUD();
+  setControlsStrip('');
+  const fade = document.getElementById('room-transition');
+  fade.style.opacity = '1';
+  setTimeout(() => {
+    document.getElementById('end-sprint-overlay').classList.add('visible');
+  }, 400);
 }
 
 /* ================================================================

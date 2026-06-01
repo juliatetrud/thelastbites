@@ -6408,15 +6408,7 @@ function drawHallway(camX, now) {
     drawDoor(sx, doorTop, { w: doorW, h: doorH, warm });
   }
 
-  // Sprint 16: cabin number plaques — only canonical doors get numbers (GitHub #30).
-  // 644 = grandparents', 646 = Pip's. Decorative doors (636–642) are unlabelled.
-  const CABIN_NUMBERS = { 920: 644, 1180: 646 };
-  for (const [gxStr, num] of Object.entries(CABIN_NUMBERS)) {
-    const gx = Number(gxStr);
-    const sx = Math.round(gx - camX);
-    if (sx > W + doorW + 22 || sx < -doorW - 22) continue;
-    drawCabinNumberPlaque(sx, doorTop + 28, num);
-  }
+  // No cabin number plaques — all doors are unlabelled.
 
   // Far-right dark zone (game-world x 1320–1440)
   const darkStartSx = Math.round(1320 - camX);

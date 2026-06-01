@@ -1326,6 +1326,8 @@ const chapterState = {
   janitorWalked:       false, // true after janitor's scripted walk completes
   henrikMet:           false, // true once Cinematic 4 (kitchen-meeting) completes
   firstTasteSeen:      false, // true once Cinematic 6 (first-taste) completes
+  bamsemumsCollected:  false, // true once kitchen Bamsemums collected
+  nokkenStoryHeard:    false, // true once Henrik's Nøkken story plays to end
 };
 
 /* Sprint 24 Stage 3: Cabin 646 collection-room state.
@@ -2156,12 +2158,36 @@ const darkCorridorObjects = [
 ];
 
 /* ================================================================
-   KITCHEN OBJECTS  (Sprint 26 Stage 1)
+   KITCHEN OBJECTS  (Sprint 26 Stage 1–3)
    Plate of lefse-and-gravlaks at world-x 290 — breadcrumb aura,
    proximity trigger fires Cinematic 4 (kitchen-meeting).
    Node is non-null pre-cinematic to enable aura; becomes null
    once henrikMet is set so the aura disappears after the scene.
+   Henrik (world-x 400) becomes inspectable post-Bamsemums collect.
    ================================================================ */
+
+/* Sprint 26 Stage 3: Nøkken story dialogue lines (13 story lines + 3 Tallinn handoff).
+   Used by the kitchen-henrik inspectable node. */
+const NOKKEN_STORY_LINES = [
+  { speaker: 'HENRIK', text: '“You’ll be going on, soon. The ship docks again tonight.”',                                                                                                                             italic: false },
+  { speaker: 'HENRIK', text: '“Before you go. Let me tell you a story.”',                                                                                                                                                   italic: false },
+  { speaker: 'HENRIK', text: '“There is a thing that lives in dark water.”',                                                                                                                                                italic: false },
+  { speaker: 'HENRIK', text: '“My grandmother told me about it. Her grandmother told her.”',                                                                                                                                italic: false },
+  { speaker: 'HENRIK', text: '“It plays the violin. Beautiful. So beautiful you walk toward the water without knowing you are walking.”',                                                                                   italic: false },
+  { speaker: 'HENRIK', text: '“It is called the Nøkken.”',                                                                                                                                                             italic: false },
+  { speaker: 'HENRIK', text: '“My grandmother said: if you hear violins where there should be no violins, you cover your ears. You walk the other way. You do not look.”',                                                  italic: false },
+  { speaker: null,     text: 'Henrik pauses. He looks at the empty plate.',                                                                                                                                                           italic: true  },
+  { speaker: 'HENRIK', text: '“I did not always listen to her.”',                                                                                                                                                           italic: false, pauseAfter: 1.5 },
+  { speaker: null,     text: 'He says nothing else about that.',                                                                                                                                                                      italic: true  },
+  { speaker: 'HENRIK', text: '“You will see strange things, Pip. Some of them are stories. Some of them are real. The dead see what the living cannot, and not all of it is gentle.”',                                     italic: false },
+  { speaker: 'HENRIK', text: '“Listen carefully. And if you hear violins where there should be no violins — walk the other way.”',                                                                                     italic: false },
+  { speaker: null,     text: 'Henrik pauses.',                                                                                                                                                                                        italic: true  },
+  { speaker: 'HENRIK', text: '“I think I saw it once.”',                                                                                                                                                                    italic: false },
+  { speaker: null,     text: 'He does not say more.',                                                                                                                                                                                 italic: true  },
+  { speaker: 'HENRIK', text: '“The ship docks in Tallinn next. Estonia. There’s a chef I want you to meet — her name is Leida. She bakes meatballs. Kodused kotletid — homemade cutlets.”',                  italic: false },
+  { speaker: 'HENRIK', text: '“She does not know about the Nøkken. But she knows about other things.”',                                                                                                                italic: false },
+  { speaker: 'HENRIK', text: '“Find her. Tell her Henrik sent you.”',                                                                                                                                                       italic: false },
+];
 
 const kitchenObjects = [
   {
@@ -2183,10 +2209,49 @@ const kitchenObjects = [
       };
     },
   },
+
+  /* Sprint 26 Stage 3: Henrik inspectable on the stool — gated on bamsemumsCollected.
+     Returns Nøkken story node on first inspect, repeat node thereafter. */
+  {
+    id:       'kitchen-henrik',
+    x:        400,
+    sparkleY: FLOOR_Y - 50,
+    get node() {
+      if (!chapterState.bamsemumsCollected) return null;
+      if (chapterState.nokkenStoryHeard) {
+        return {
+          id:    'kitchen-henrik-repeat',
+          lines: [{ speaker: null, text: 'Henrik sits quietly on the stool. The kitchen has gone still.', italic: true }],
+          choices: null, onEnd: null,
+        };
+      }
+      return {
+        id:    'kitchen-henrik-noekken',
+        lines: NOKKEN_STORY_LINES,
+        choices: null,
+        onEnd() { chapterState.nokkenStoryHeard = true; },
+      };
+    },
+  },
 ];
 
-/* Sprint 26 Stage 3 will populate this with the canonical Bamsemums at x=520. */
-const kitchenCollectibles = [];
+/* Sprint 26 Stage 3: canonical Bamsemums collectible in the kitchen (world-x 520).
+   Sets bamsemumsCollected on collect, which gates Henrik's inspectable node. */
+const kitchenCollectibles = [
+  {
+    id:               'bamsemums',
+    x:                520,
+    type:             'collectible',
+    kind:             'treat',
+    sprite:           'bamsemums',
+    name:             'Bamsemums',
+    annotation:       'Bamsemums — from Henrik, in the kitchen.',
+    stomachValue:     10,
+    collected:        false,
+    tutorialNarrated: false,
+    onCollect() { chapterState.bamsemumsCollected = true; },
+  },
+];
 
 /* Sprint 26 Stage 2: cinematic chain — Cinematic 4 onEnd calls this.
    Sets henrikMet then chains 5 → 6 → recipe + firstTasteSeen. */
@@ -2319,6 +2384,7 @@ const dialogue = {
   selectedChoice: 0,       // index of highlighted choice
   closing:        false,   // true during the 0.3s fade-out
   _closeTimer:    null,    // pending closeDialogue timeout ID (for cancellation)
+  waitTimer:      0,       // seconds remaining before player can advance (used by pauseAfter lines)
 };
 
 /* ================================================================
@@ -3236,6 +3302,7 @@ function showDialogue(node) {
   dialogue.showingChoices = false;
   dialogue.selectedChoice = 0;
   dialogue.closing        = false;
+  dialogue.waitTimer      = 0;
 
   // Reset choices div
   const choicesEl = document.getElementById('dialogue-choices');
@@ -3289,7 +3356,17 @@ const CHAR_PAUSE = { ',': 0.12, ';': 0.12,  // punctuation extra delays
                      '.': 0.28, '?': 0.28, '!': 0.28 };
 
 function updateDialogue(dt) {
-  if (dialogue.lineComplete || dialogue.showingChoices) return;
+  if (dialogue.showingChoices) return;
+
+  // Post-line wait timer: counts down after a line with pauseAfter completes.
+  // Auto-advances when it reaches zero.
+  if (dialogue.lineComplete) {
+    if (dialogue.waitTimer > 0) {
+      dialogue.waitTimer = Math.max(0, dialogue.waitTimer - dt);
+      if (dialogue.waitTimer <= 0) advanceDialogue();
+    }
+    return;
+  }
 
   dialogue.charTimer -= dt;
 
@@ -3303,6 +3380,7 @@ function updateDialogue(dt) {
     if (dialogue.charIndex >= line.text.length) {
       dialogue.lineComplete = true;
       dialogue.charTimer    = 0;
+      dialogue.waitTimer    = line.pauseAfter || 0;
       // If this was the last line and there are choices, show them
       if (dialogue.lineIndex === dialogue.node.lines.length - 1 && dialogue.node.choices) {
         showChoices();
@@ -3323,6 +3401,7 @@ function skipTypewriter() {
   dialogue.charIndex    = line.text.length;
   dialogue.lineComplete = true;
   dialogue.charTimer    = 0;
+  dialogue.waitTimer    = line.pauseAfter || 0;
   updateDialogueDOM();
   if (dialogue.lineIndex === dialogue.node.lines.length - 1 && dialogue.node.choices) {
     showChoices();
@@ -3332,6 +3411,7 @@ function skipTypewriter() {
 /* ---- Advance to next line, choices, or close ---- */
 function advanceDialogue() {
   if (!dialogue.lineComplete || dialogue.showingChoices) return;
+  if (dialogue.waitTimer > 0) return;  // dramatic post-line pause still counting
   const node = dialogue.node;
 
   if (dialogue.lineIndex < node.lines.length - 1) {
@@ -3340,6 +3420,7 @@ function advanceDialogue() {
     dialogue.charIndex    = 0;
     dialogue.charTimer    = CHAR_BASE;
     dialogue.lineComplete = false;
+    dialogue.waitTimer    = 0;
 
     const line = node.lines[dialogue.lineIndex];
     const speakerEl = document.getElementById('dialogue-speaker');
@@ -3554,6 +3635,7 @@ function pickupCollectible(c) {
       if (c.kind === 'treat') {
         gainStrength(c.stomachValue);
       }
+      if (c.onCollect) c.onCollect();
       autoSave();
     },
   });
@@ -8070,11 +8152,14 @@ function drawKitchen(camX, now) {
   const panelH    = baseboardY - panelTop;  // 148
 
   // ---- Pendant light (world-x ~475, above counter) ----
+  // Dims slightly during the Nøkken story — "the room listens" effect.
+  const nokkenActive = dialogue.active && dialogue.node && dialogue.node.id === 'kitchen-henrik-noekken';
+  const pendDim = nokkenActive ? 0.9 : 1.0;
   const pendSX = Math.round(475 - camX);
   if (pendSX > -140 && pendSX < W + 140) {
     const pendGrad = ctx.createRadialGradient(pendSX, 36, 0, pendSX, 90, 130);
-    pendGrad.addColorStop(0,   'rgba(220,165,55,0.38)');
-    pendGrad.addColorStop(0.45,'rgba(180,110,28,0.20)');
+    pendGrad.addColorStop(0,   `rgba(220,165,55,${(0.38 * pendDim).toFixed(3)})`);
+    pendGrad.addColorStop(0.45,`rgba(180,110,28,${(0.20 * pendDim).toFixed(3)})`);
     pendGrad.addColorStop(1,   'rgba(0,0,0,0)');
     ctx.fillStyle = pendGrad;
     ctx.fillRect(0, 0, W, FLOOR_Y);
@@ -8166,6 +8251,13 @@ function drawKitchen(camX, now) {
     ctx.fillRect(cbSX - 17, counterTop - 7, 34, 6);
     ctx.fillStyle = 'rgba(200,150,80,0.12)';
     ctx.fillRect(cbSX - 17, counterTop - 7, 34, 1);
+  }
+
+  // ---- Bamsemums bag (world-x 520) — visible after first taste, removed on collect ----
+  const bamseSX = Math.round(520 - camX);
+  if (chapterState.firstTasteSeen && !chapterState.bamsemumsCollected
+      && bamseSX > -20 && bamseSX < W + 20) {
+    drawTreatSprite(ctx, 'bamsemums', bamseSX, counterTop - 6);
   }
 
   // ---- Stool (world-x 400) — Henrik sits here after Beat 10 ----

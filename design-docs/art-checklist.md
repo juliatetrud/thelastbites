@@ -46,8 +46,8 @@ Ch1 has 9 cinematics: Cinematics 6a (gravlaks/grandfather) and 6b (lefse/Erik) a
 | 5 | `cin-05-henrik-sits.png` | Beat 10 | Henrik sits on stool, looks at Pip — game's heart turns | **Not built** | Henrik kitchen build sprint. Close two-shot, intimate. Pip in soft focus to the side, listening. |
 | 6a | `cin-06a-gravlaks.png` | Beat 11 | Pip tastes gravlaks; kitchen shimmers; young Henrik (~8) watches grandfather cure salmon | **Shipped procedural** | Sprint 26 Stage 2. First half of the doubled first-taste cinematic. Memory-mist treatment. |
 | 6b | `cin-06b-lefse.png` | Beat 11 | Internal crossfade; Pip tastes lefse; older Henrik teaches Erik (~11) to make lefse | **Shipped procedural** | Sprint 26 Stage 2. **CRITICAL:** Erik's face must be partially visible — turned away, profile, or half-shadow. Erik is ~11 (same age as Pip — deliberate parallel). Recognizable on a second viewing, not on first. |
-| 7 | `cin-07-dock-farewell.png` | Beat 12 | Wide shot — grandparents walk away with coffin; Babcia almost-turns; Pip waving at railing | **Not built** | Henrik kitchen build sprint. Cold blue-gray morning light. Frozen photograph quality. |
-| 8 | `cin-08-henriks-offer.png` | Beat 13 | Two-shot — Henrik offering notebook to Pip on deck at sunset | **Not built** | Henrik kitchen build sprint. Warm orange-pink horizon. Intimate composition. |
+| 7 | `cin-07-dock-farewell.png` | Beat 12 | Wide shot — grandparents walk away with coffin; Babcia almost-turns; Pip waving at railing | **Shipped procedural** | Sprint 29 (`567e82a`). `drawDockFarewellCinematic()`. Cold blue-gray morning. |
+| 8 | `cin-08-henriks-offer.png` | Beat 13 | Two-shot — Henrik offering notebook to Pip on deck at sunset | **Shipped procedural** | Sprint 29 (`567e82a`). `drawHenriksOfferCinematic()`. Warm orange-pink horizon. Notebook prop drawn procedurally inline. |
 
 ### Additional Ch1 cinematic-style sequence (not in registry, scripted)
 
@@ -56,7 +56,7 @@ Ch1 has 9 cinematics: Cinematics 6a (gravlaks/grandfather) and 6b (lefse/Erik) a
 | Mirror cinematic dialogue/melt | (Beat 5) | **Shipped procedural** | Bundled into cin-02. |
 | Bed-reveal cinematic | (Beat 5) | **Shipped procedural** | Sprint 11. Procedural sheets-pulling-back, small still form. The body image lives in the player's head — reverts to pre-reveal state after cinematic. |
 | Panic glide + tear spray | (Beat 5) | **Shipped procedural** | Sprint 11. Scripted animation sequence, not a cinematic registry entry. Tear particles drawn procedurally. |
-| Nøkken glimpse at port | (Beat 12, after Cinematic 7) | **Not built** | Henrik kitchen build sprint. Scripted visual sequence (not a registry cinematic). Dark rooted shape with two amber eyes peering from harbor water. ~3 seconds. Sepia-monochrome painterly register. See visual reference: image 1 from P1 Session 4 conversation (the rooted dark water-shape). **NOT the humanoid form** — that's Ch4+. |
+| Nøkken glimpse at port | (Beat 12, after Cinematic 7) | **Shipped procedural** | Sprint 29 (`567e82a`). `drawNokkenGlimpse()`. Scripted ~3s input-locked sequence. Rooted dark shape + two amber eye-dots + expanding water ring, sepia-monochrome overlay. NOT the humanoid form (Ch4+). |
 
 ---
 
@@ -229,7 +229,7 @@ Per Sprint 12: Ch1 has four treats. One is locked and shipped; three need final 
 | Henrik's pipe + smoke animation | **Designed not built** | Pipe in right hand, drifting smoke per Sprint 09 polish. |
 | Henrik's stool-sit animation | **Not built** | Sit-down animation for transition from doorway to stool. |
 | Echo-mouse (optional, one near freezer) | **Not built** | Single mouse near baseboard. Sparse. |
-| Notebook (Henrik's gift) | **Not built** | Cinematic 8 prop. Small leather-bound. |
+| Notebook (Henrik's gift) | **Shipped procedural** | Sprint 29 (`567e82a`). Small leather-bound with blank pages, drawn inline in `drawHenriksOfferCinematic()`. |
 
 ### Observation deck props (deferred)
 

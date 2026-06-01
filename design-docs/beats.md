@@ -26,8 +26,8 @@ Chapter 1 has **14 beats**. Most beats are room-mode with a few cinematics inter
 | 11 | The first taste (Cinematics 6a + 6b — doubled: gravlaks → grandfather memory, lefse → Erik memory) | Cinematic 6a + 6b | **Not shipped** — to be built |
 | 11b | The Bamsemums (collect verb tutorial) | Room | Shipped (Sprint 13) |
 | 11c | The Nøkken story | Room (Henrik inspectable) | **Not shipped** — to be built |
-| 12 | The dock farewell + Nøkken glimpse | Cinematic 7 + scripted | **Not shipped** — to be built |
-| 13 | Henrik's offer (notebook handoff) | Cinematic 8 | **Not shipped** — to be built |
+| 12 | The dock farewell + Nøkken glimpse | Cinematic 7 + scripted | **Shipped procedural** — Sprint 29 (`567e82a`) |
+| 13 | Henrik's offer (notebook handoff) | Cinematic 8 | **Shipped procedural** — Sprint 29 (`567e82a`) |
 
 **Cinematic count:** 9 cinematics in Ch1 (1, 2, 3, 4, 5, 6a, 6b, 7, 8). Beat 11 is a doubled first-taste cinematic — 6a (gravlaks → Henrik with his grandfather) and 6b (lefse → Henrik teaching young Erik) play as one continuous cinematic with an internal crossfade. *(The "single memory, single Cinematic 6" framing that appeared in earlier versions of this doc was a drift from the canonical doubled structure in `01-story-bible.md` and `04-chapter-01-cabin-646.md` — retired Sprint 26 Stage 0.)*
 
@@ -693,9 +693,9 @@ The cinematic fades. Pip is at the left edge of the room, facing right. Player h
 
 **Mode:** Cinematic 7 (dock farewell) → scripted Nøkken glimpse
 
-**Status:** **Not yet shipped.**
+**Status:** **Shipped procedural — Sprint 29 (`567e82a`).**
 
-**Trigger:** After Beat 11c, Pip drifts/walks toward the observation deck. The cinematic plays when Pip enters the deck space (or a transition fade triggers it before deck entry — TBD in puzzles.md).
+**Trigger:** Pip walks to the observation deck's right edge after the Nøkken story (nokkenStoryHeard). The deck's right-edge trigger fires showCinematic('dock-farewell', onEnd); onEnd starts the Nøkken glimpse.
 
 **Player inputs allowed:**
 - During the dock farewell cinematic: **Space** to advance lines.
@@ -745,9 +745,9 @@ The cinematic fades. Pip is at the left edge of the room, facing right. Player h
 
 **Mode:** Cinematic 8 (Henrik's offer)
 
-**Status:** **Not yet shipped.**
+**Status:** **Shipped procedural — Sprint 29 (`567e82a`).**
 
-**Trigger:** After Beat 12, Pip has room-mode control on the deck. Henrik appears on the deck (he came up from the kitchen after Pip left). Pip approaches Henrik; `↑` triggers Cinematic 8.
+**Trigger:** After Beat 12 (nokkenGlimpsed = true), Henrik appears on the deck at world-x 490 (sitting, inspectable). Pip approaches and presses `↑`; the trigger node fires showCinematic('henriks-offer', onEnd).
 
 **Player inputs allowed:**
 - Standard room-mode controls until Pip approaches Henrik.

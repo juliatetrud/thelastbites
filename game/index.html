@@ -1025,10 +1025,10 @@
          Opacity animated by startTransition() via CSS transition. -->
     <div id="room-transition"></div>
 
-    <!-- Sprint 26 Stage 4: end-of-sprint stub screen.
-         Shown when Pip reaches the kitchen right edge after nokkenStoryHeard. -->
+    <!-- Chapter 1 end-card stub — shown at observation deck right edge.
+         Sprint 29 will replace this with Cinematic 7 (dock farewell). -->
     <div id="end-sprint-overlay">
-      <span id="end-sprint-text">End of Sprint 26 — observation deck in Sprint 27.</span>
+      <span id="end-sprint-text">End of Chapter 1 — Sprint 29 will add the farewell.</span>
     </div>
 
     <!-- Dialogue box: HTML overlay for narration + choices.
@@ -2298,6 +2298,48 @@ function startKitchenSequence() {
 }
 
 /* ================================================================
+   OBSERVATION DECK OBJECTS (Sprint 27)
+   Aurora viewport is the primary inspectable — fires Beat 11c.
+   Centered at world-x 350 so the sparkle draws the player toward
+   the viewport mid-point; interaction radius 18 px applies.
+   ================================================================ */
+
+const observationDeckObjects = [
+  {
+    id:         'aurora-viewport',
+    x:          350,
+    sparkleY:   55,    // canvas-y inside the viewport glass area
+    breadcrumb: true,  // elevated aura pulls player toward the window
+    node: {
+      id:    'aurora-inspect',
+      lines: [
+        { speaker: null, text: 'Pip has never seen the northern lights before. He wonders if he would have, had things gone differently.', italic: true },
+      ],
+      choices: null,
+      onEnd:   null,
+    },
+  },
+];
+
+/* Sprint 27: Kvikk Lunsj — Ch1's fourth and final treat (Decision 3, 2026-06-01).
+   Left by a stargazer near the telescope. tutorialNarrated pre-set to true:
+   the player has already learned ↓ collect from the Bamsemums; no re-tutorial needed. */
+const observationDeckCollectibles = [
+  {
+    id:               'observation-deck-treat',
+    x:                565,    // world-x — near the telescope at ~540
+    type:             'collectible',
+    kind:             'treat',
+    sprite:           'kvikklunsj',
+    name:             'Kvikk Lunsj',
+    annotation:       'Kvikk Lunsj — left by a stargazer.',
+    stomachValue:     10,
+    collected:        false,
+    tutorialNarrated: true,   // suppress Bamsemums-specific tutorial text
+  },
+];
+
+/* ================================================================
    ROOMS
    Keyed by id. Each room defines its world width, Pip's movement
    clamp (pipMaxX), entry x positions per entry edge, inspectable
@@ -2372,6 +2414,21 @@ const rooms = {
     pipEntryX: {
       fromLeft:  PIP_HALF_W + 8,              //  20 — from dark-corridor stairwell
       fromRight: ROOM_W - PIP_HALF_W - 8,     // 940
+    },
+  },
+
+  /* Sprint 27: observation deck — Ch1's final room.
+     Single calm-down space: no NPC, no puzzle, just aurora and quiet wonder. */
+  observationDeck: {
+    width:    700,                             // narrower than hallway — intimate
+    pipMaxX:  700 - PIP_HALF_W,               // 688 — right wall (right edge → chapter 1 end-card)
+    pipMinX:  PIP_HALF_W,                     //   8 — left wall (no return to kitchen)
+    objects:  observationDeckObjects,
+    collectibles: observationDeckCollectibles,
+    draw:     drawObservationDeck,            // defined below
+    pipEntryX: {
+      fromLeft:  PIP_HALF_W + 8,             //  20 — entering from kitchen
+      fromRight: 700 - PIP_HALF_W - 8,       // 680
     },
   },
 };
@@ -2520,6 +2577,7 @@ const ROOM_MUSIC = {
   grandparents:  'main',
   darkCorridor:  'main',   // Sprint 20 placeholder; ambient track TBD in sound-design sprint
   kitchen:       'chefs',  // Sprint 26 Stage 1: kitchen ships
+  observationDeck: 'main', // Sprint 27: observation deck
 };
 
 /* ================================================================
@@ -2905,7 +2963,10 @@ function update(dt) {
       startTransition('darkCorridor', 'fromRight', ROOM_W - PIP_HALF_W - 8);
     } else if (currentRoom === 'kitchen' && pip.x >= rooms.kitchen.pipMaxX - 1
                && chapterState.nokkenStoryHeard) {
-      // Sprint 26 Stage 4: deck-transition stub — fires only after Nøkken story heard
+      // Sprint 27: transition to the real observation deck (replaces Sprint 26.5 stub)
+      startTransition('observationDeck', 'fromLeft');
+    } else if (currentRoom === 'observationDeck' && pip.x >= rooms.observationDeck.pipMaxX - 1) {
+      // Sprint 27: right-edge trigger → Chapter 1 end-card (Sprint 29 will add Cinematic 7)
       triggerDeckStub();
     }
   }
@@ -4973,14 +5034,12 @@ function drawCollectionSkillingsboller(sx, y, now) {
 }
 
 function drawCollectionObsDeckTreat(sx, y, now) {
-  // Wrapper body — warm orange-brown (generic placeholder until observation deck ships)
-  ctx.fillStyle = 'rgba(200, 120, 40, 0.90)';
+  // Kvikk Lunsj — red wrapper, gold foil stripe
+  ctx.fillStyle = 'rgba(200, 30, 30, 0.90)';
   ctx.fillRect(sx - 5, y - 8, 10, 8);
-  // Foil inner stripe
-  ctx.fillStyle = 'rgba(235, 185, 80, 0.70)';
+  ctx.fillStyle = 'rgba(215, 178, 38, 0.72)';
   ctx.fillRect(sx - 3, y - 7, 6, 2);
-  // Crimp ends
-  ctx.fillStyle = 'rgba(175, 100, 30, 0.80)';
+  ctx.fillStyle = 'rgba(170, 16, 16, 0.85)';
   ctx.fillRect(sx - 6, y - 9, 2, 9);
   ctx.fillRect(sx + 4, y - 9, 2, 9);
 }
@@ -5252,10 +5311,10 @@ function startTransition(toRoom, entryEdge, entryX) {
 }
 
 /* ================================================================
-   SPRINT 26 STAGE 4: DECK STUB TRANSITION
-   Fade to black + "End of Sprint 26" overlay.
-   Reuses #room-transition for the fade; shows #end-sprint-overlay after.
-   transition.active is set and never cleared — the stub is terminal.
+   SPRINT 27: CHAPTER 1 END-CARD
+   Shown at the observation deck's right edge. Fades to black then shows
+   the chapter-end placeholder overlay. Sprint 29 replaces this with
+   Cinematic 7 (dock farewell). transition.active stays true — terminal.
    ================================================================ */
 
 function triggerDeckStub() {
@@ -8438,6 +8497,202 @@ function drawHenrikFrozen(screenX, groundY, facing, t) {
   ctx.restore();
 }
 
+/* ================================================================
+   SPRINT 27: OBSERVATION DECK DRAW
+   Ch1's calm-down room — cool palette, no warm light source,
+   slow aurora animation. Aurora is screen-fixed (indifferent to
+   Pip's position). Props are world-positioned and scroll with camX.
+   ================================================================ */
+
+function drawObservationDeck(camX, now) {
+  /* ---- Background wall (cool desaturated blue-grey) ---- */
+  const wallGrad = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallGrad.addColorStop(0,   '#1a2230');
+  wallGrad.addColorStop(0.55,'#1e2638');
+  wallGrad.addColorStop(1,   '#161e2c');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  /* ---- Viewport geometry ---- */
+  const vpTop  = 10;   // top of window glass
+  const vpBot  = 128;  // bottom of window glass (sill)
+  const vpH    = vpBot - vpTop;
+  const frameW = 8;    // frame bar thickness
+
+  /* ---- Sky + aurora (clipped to viewport interior) ---- */
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(frameW, vpTop + frameW, W - frameW * 2, vpH - frameW * 2);
+  ctx.clip();
+
+  // Far layer: deep sky gradient
+  const skyGrad = ctx.createLinearGradient(0, vpTop, 0, vpBot);
+  skyGrad.addColorStop(0,   '#020408');
+  skyGrad.addColorStop(0.6, '#040810');
+  skyGrad.addColorStop(1,   '#05080e');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, vpTop, W, vpH);
+
+  // Seeded stars — deterministic placement, faint slow twinkle
+  for (let i = 0; i < 24; i++) {
+    const sx = Math.round(((i * 137.508 + 47) % 480));
+    const sy = vpTop + frameW + Math.round(((i * 91.3 + 23) % 100) / 100 * (vpH - frameW * 4));
+    const tw  = 0.08 + Math.sin(now * 0.35 + i * 1.73) * 0.04;
+    ctx.fillStyle = `rgba(190,215,255,${tw.toFixed(3)})`;
+    ctx.fillRect(sx, sy, 1, 1);
+  }
+
+  // Aurora ribbons — screen-fixed, independent of camX per design spec
+  // Green ribbon (primary)
+  {
+    const yC = vpTop + vpH * 0.35 + Math.sin(now * 0.012) * 13;
+    const g  = ctx.createLinearGradient(0, yC - 26, 0, yC + 26);
+    g.addColorStop(0,    'rgba(0,0,0,0)');
+    g.addColorStop(0.3,  'rgba(58,112,72,0.20)');
+    g.addColorStop(0.5,  'rgba(90,144,104,0.30)');
+    g.addColorStop(0.7,  'rgba(58,112,72,0.20)');
+    g.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, Math.round(yC - 26), W, 52);
+  }
+  // Violet ribbon
+  {
+    const yC = vpTop + vpH * 0.54 + Math.sin(now * 0.008 + 2.1) * 18;
+    const g  = ctx.createLinearGradient(0, yC - 32, 0, yC + 32);
+    g.addColorStop(0,    'rgba(0,0,0,0)');
+    g.addColorStop(0.3,  'rgba(90,56,120,0.18)');
+    g.addColorStop(0.5,  'rgba(122,72,152,0.28)');
+    g.addColorStop(0.7,  'rgba(90,56,120,0.18)');
+    g.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, Math.round(yC - 32), W, 64);
+  }
+  // Second green ribbon (offset phase)
+  {
+    const yC = vpTop + vpH * 0.68 + Math.sin(now * 0.010 + 4.3) * 10;
+    const g  = ctx.createLinearGradient(0, yC - 18, 0, yC + 18);
+    g.addColorStop(0,    'rgba(0,0,0,0)');
+    g.addColorStop(0.4,  'rgba(48,100,62,0.15)');
+    g.addColorStop(0.6,  'rgba(48,100,62,0.15)');
+    g.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, Math.round(yC - 18), W, 36);
+  }
+
+  ctx.restore();  // end aurora clip
+
+  /* ---- Viewport frame (wooden mullions, brass fittings) ---- */
+  ctx.fillStyle = '#2a1c0c';
+  ctx.fillRect(0,         vpTop, W, frameW);           // top bar
+  ctx.fillRect(0,         vpBot - frameW, W, frameW);  // bottom sill
+  ctx.fillRect(0,         vpTop, frameW, vpH);          // left post
+  ctx.fillRect(W-frameW,  vpTop, frameW, vpH);          // right post
+  ctx.fillRect(W/2 - 2,   vpTop + frameW, 4, vpH - frameW * 2); // center mullion
+  // Horizontal cross-brace
+  ctx.fillRect(frameW,    vpTop + Math.round(vpH * 0.52) - 2, W - frameW*2, 3);
+  // Brass corner fittings
+  ctx.fillStyle = '#604820';
+  const brass = [[4, vpTop+2], [W-10, vpTop+2], [4, vpBot-8], [W-10, vpBot-8]];
+  for (const [bx, by] of brass) { ctx.fillRect(bx, by, 6, 6); }
+
+  /* ---- Aurora light cast on deck interior below viewport ---- */
+  const castGrad = ctx.createLinearGradient(0, vpBot, 0, FLOOR_Y);
+  castGrad.addColorStop(0,   'rgba(48,90,60,0.10)');
+  castGrad.addColorStop(0.5, 'rgba(70,40,88,0.07)');
+  castGrad.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = castGrad;
+  ctx.fillRect(0, vpBot, W, FLOOR_Y - vpBot);
+
+  /* ---- Floor ---- */
+  const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, H);
+  floorGrad.addColorStop(0, '#141820');
+  floorGrad.addColorStop(1, '#0c1018');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  // Plank seams (half-speed parallax)
+  const plankSpacing = 56;
+  const plankOff     = (camX * 0.4) % plankSpacing;
+  ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+  ctx.lineWidth   = 1;
+  for (let px = -plankOff; px < W + plankSpacing; px += plankSpacing) {
+    ctx.beginPath();
+    ctx.moveTo(Math.round(px), FLOOR_Y);
+    ctx.lineTo(Math.round(px), H);
+    ctx.stroke();
+  }
+
+  /* ---- World-positioned props (scroll with camX) ---- */
+
+  // Bench 1 (world-x 160)
+  const b1sx = Math.round(160 - camX);
+  if (b1sx > -40 && b1sx < W + 40) drawDeckBench(b1sx, FLOOR_Y);
+
+  // Coiled rope (world-x 280)
+  const ropeSX = Math.round(280 - camX);
+  if (ropeSX > -20 && ropeSX < W + 20) drawDeckRope(ropeSX, FLOOR_Y);
+
+  // Bench 2 (world-x 460)
+  const b2sx = Math.round(460 - camX);
+  if (b2sx > -40 && b2sx < W + 40) drawDeckBench(b2sx, FLOOR_Y);
+
+  // Telescope (world-x 540)
+  const telSX = Math.round(540 - camX);
+  if (telSX > -30 && telSX < W + 30) drawDeckTelescope(telSX, FLOOR_Y);
+
+  // Kvikk Lunsj treat (world-x 565) — draw only if uncollected
+  const kvikkC = observationDeckCollectibles[0];
+  if (kvikkC && !kvikkC.collected) {
+    const kvikkSX = Math.round(565 - camX);
+    if (kvikkSX > -20 && kvikkSX < W + 20) {
+      drawTreatSprite(ctx, 'kvikklunsj', kvikkSX, FLOOR_Y - 4);
+    }
+  }
+}
+
+/* ---- Deck prop helpers ---- */
+
+function drawDeckBench(sx, groundY) {
+  // Seat and back-rest (dark aged wood)
+  ctx.fillStyle = '#3a2c1c';
+  ctx.fillRect(sx - 18, groundY - 23, 36, 3);  // back rest
+  ctx.fillRect(sx - 18, groundY - 14, 36, 4);  // seat
+  // Legs
+  ctx.fillStyle = '#2a1c0c';
+  ctx.fillRect(sx - 16, groundY - 10, 4, 10);  // left leg
+  ctx.fillRect(sx + 12, groundY - 10, 4, 10);  // right leg
+  // Subtle aurora cast highlight on seat top
+  ctx.fillStyle = 'rgba(80,150,90,0.07)';
+  ctx.fillRect(sx - 18, groundY - 14, 36, 2);
+}
+
+function drawDeckRope(sx, groundY) {
+  // Coiled marine rope — concentric rings
+  ctx.fillStyle = '#504030';
+  ctx.beginPath(); ctx.ellipse(sx, groundY - 5, 11, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#1e1510';
+  ctx.beginPath(); ctx.ellipse(sx, groundY - 5,  7, 3, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#504030';
+  ctx.beginPath(); ctx.ellipse(sx, groundY - 5,  3, 1, 0, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawDeckTelescope(sx, groundY) {
+  // Tripod legs (dark wood)
+  ctx.fillStyle = '#4a3410';
+  ctx.fillRect(sx - 9, groundY - 30, 3, 30);   // left leg
+  ctx.fillRect(sx + 6, groundY - 30, 3, 30);   // right leg
+  ctx.fillRect(sx - 2, groundY - 24, 3, 24);   // center brace
+  // Telescope body (brass, angled slightly upward)
+  ctx.fillStyle = '#a07830';
+  ctx.fillRect(sx - 7, groundY - 34, 18, 5);   // main tube
+  ctx.fillRect(sx - 2, groundY - 42, 9, 10);   // eyepiece end
+  // Objective lens cap (cool blue-tinted glass)
+  ctx.fillStyle = '#5080a0';
+  ctx.fillRect(sx + 9, groundY - 37, 5, 4);
+  // Subtle brass glint
+  ctx.fillStyle = 'rgba(230,185,60,0.40)';
+  ctx.fillRect(sx - 6, groundY - 34, 5, 1);
+}
+
 function drawKitchenMeetingCinematic(now) {
   if (kitchenCin.lastNow !== null) {
     kitchenCin.elapsed += (now - kitchenCin.lastNow) / 1000;
@@ -8906,6 +9161,19 @@ function drawCollectAuras(camX, now) {
 /* Procedural treat sprite placeholder.
    Each treat key gets a simple colored shape until commissioned art arrives. */
 function drawTreatSprite(ctx, key, cx, cy) {
+  // Kvikk Lunsj: iconic Norwegian chocolate biscuit bar — red wrapper, gold foil stripe
+  if (key === 'kvikklunsj') {
+    ctx.fillStyle = '#c82020';                   // red wrapper body
+    ctx.fillRect(cx - 7, cy - 5, 14, 8);
+    ctx.fillStyle = 'rgba(215,178,38,0.88)';     // gold foil stripe
+    ctx.fillRect(cx - 5, cy - 4, 10, 2);
+    ctx.fillStyle = 'rgba(170,16,16,0.90)';      // darker red crimp ends
+    ctx.fillRect(cx - 7, cy - 5, 2, 8);
+    ctx.fillRect(cx + 5, cy - 5, 2, 8);
+    ctx.fillStyle = 'rgba(255,255,255,0.16)';    // shine on top edge
+    ctx.fillRect(cx - 6, cy - 5, 5, 1);
+    return;
+  }
   // Bamsemums: small colorful bag of gummy bears
   if (key === 'bamsemums') {
     // Bag outline

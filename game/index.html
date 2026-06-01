@@ -2888,6 +2888,12 @@ function update(dt) {
     } else if (currentRoom === 'grandparents' && pip.x <= PIP_HALF_W + 1) {
       // Return to hallway at the grandparents' door position (now x=920)
       startTransition('hallway', 'fromRight', 904);
+    } else if (currentRoom === 'grandparents' && pip.x >= rooms.grandparents.pipMaxX - 1
+               && cabinState.beatStage === 'pre-mirror') {
+      // Step 5 (canonical beat order): wall-phase DISCOVERY — shared wall into Cabin 646.
+      // Gate: beatStage === 'pre-mirror' is set by the grandparents' cinematic onEnd (line ~1904).
+      // Return visits use the hallway door (available once beatStage === 'post-bed').
+      startTransition('cabin', 'fromLeft');
     } else if (currentRoom === 'hallway' && pip.x >= 1312 && cabinState.beatStage === 'post-bed') {
       // Sprint 20: hallway far-right staircase to dark corridor (available post-Beat-5)
       startTransition('darkCorridor', 'fromLeft');

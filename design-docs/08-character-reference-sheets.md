@@ -56,7 +56,7 @@ Every named character has one primary color or color cluster that functions as t
 | Beatriz | Faded cotton dress `#a89878` + apron | Ch7 chef. |
 | Pocong | All-white shroud `#f4eee0` against any background | Locked. Knots at base. |
 | Haldjas | `#ffe088` warm gold-amber sparkles | Locked. Sparkle cluster, not humanoid. |
-| Karakoncolos | Dark-furred all-over `#1a1408` / `#0a0408` + eye-glow **[OPEN]** — cold-blue `#88a8c8` or red `#ff5050` | Eye-glow color deferred to Ch4 commission. |
+| Karakoncolos | Dark-furred all-over `#1a1408` / `#0a0408` + eye-glow cold-blue `#88a8c8` **Locked 2026-06-01.** | Eye-glow: cold-blue `#88a8c8`. |
 | Mamlambo | `#7a1418` blood-iron eye/coil | Locked. Water serpent form, not humanoid. |
 | Boitatá | Fire-amber `#ffc868` / `#c87830` body + lantern-eyes | Fire-serpent. Warm-amber locks to existing palette. |
 | Black Shuck | Black-on-black body `#0a0408` + warm-amber glowing eyes `#ffc868` | Large ghost-dog. Low-to-ground silhouette. |
@@ -150,7 +150,7 @@ Individual entries for every named character. Organized by gallery category.
 **Silhouette tell:** Round bald ghost, three soft waves at the base. No hair, no apron, no human particulars. The human-boy form (dark hair, chef's apron, arms and legs) appears *only* in memory cinematics.
 **Movement register:** See Table C.
 
-Pip is a ghost. He died at age 10–12 in Cabin 646 of the *Mnemosyne* on the first night of a global voyage his grandparents had saved for years to take him on. Cause of death: an undiagnosed heart condition. He woke up dead, and is now tethered to the ship until he has tasted enough of the world to understand food — really understood it, not just eaten it.
+Pip is a ghost. He died at age **11** in Cabin 646 of the *Mnemosyne* on the first night of a global voyage his grandparents had saved for years to take him on. Cause of death: an undiagnosed heart condition. He woke up dead, and is now tethered to the ship until he has tasted enough of the world to understand food — really understood it, not just eaten it.
 
 His ghost-form is deliberately spare: two dark eye-dots (`#1a1428`), two pink blush pixels (`#ff9888`), one tiny dark mouth, a cool-white bald shape with three waves. The simplicity is thematic: the human particulars of who he was (hair, apron, the sense of a future) don't belong to the ghost. They belong to memory. The visual gap between ghost-Pip and memory-Pip is a spine of the whole game.
 
@@ -357,7 +357,7 @@ Older, jolly, chaotic — sings while he cooks, talks to himself and the cat. Ca
 
 #### Tirta
 
-**Role:** Chef for Ch6 (Indonesia, TBD specific port).
+**Role:** Chef for Ch6 (Kolonodale, Central Sulawesi). Female. **Not a real-person reference — Tirta is an original character.** (The real-person-reference pattern applies to some chefs, not all; Tirta is original.)
 **Chapter:** Ch6.
 **Door-fraction:** 0.55–0.65.
 **Color signature:** Warung apron + warm-clay accent `#a85838`. See Table A.
@@ -399,8 +399,8 @@ Older, jolly, chaotic — sings while he cooks, talks to himself and the cat. Ca
 
 #### Erik (ghost form)
 
-**Role:** Henrik's son. Died age 12 in a boating accident alongside his mother Henrietta. Returns once a year on his birthday.
-**Chapter:** Ch6 or Ch7 (Erik's birthday beat, TBD which chapter).
+**Role:** Henrik's son. Died age **11** — the same age Pip is. **This parallel is deliberate: two boys dead too young sharpens Pip's empathy for Henrik.** Died in a boating accident alongside his mother Henrietta. Returns once a year on his birthday.
+**Chapter:** Ch7 (Erik's birthday beat). Locked 2026-06-01.
 **Door-fraction:** ~0.40 (~44 px).
 **Color signature:** Warm-amber halo `#ffd8a8`, dark hair `#3a2818`, sweater `#5a4438`. See Table A.
 **Silhouette tell:** Translucent boy-form (not a ghost-blob — human shape with visible hair and clothes). Small dark-hair cluster at crown. Warm glow around the body.
@@ -477,7 +477,7 @@ After Ch2 she does not recur; she stays near Leida's cottage.
 **Role:** Monster for Ch4 (Istanbul). Turkish winter-spirit.
 **Chapter:** Ch4.
 **Door-fraction:** ~0.65–0.75 (~72–82 px). Large and stooped.
-**Color signature:** Dark-furred `#1a1408` / `#0a0408` + eye-glow **[OPEN]** (cold-blue `#88a8c8` or red `#ff5050`, deferred to Ch4 commission). See Table A.
+**Color signature:** Dark-furred `#1a1408` / `#0a0408` + eye-glow cold-blue `#88a8c8`. **Locked 2026-06-01.** See Table A.
 **Silhouette tell:** Very large stooped hairy shape. Frost-cloud around the body. Body very still otherwise.
 **Movement register:** See Table C. Heavy breathing, frost-cloud pulse. Erratic mouth animation — "I don't remember" gibbering.
 
@@ -524,8 +524,8 @@ The omen who can be fed. Resolution: Pip feeds the Black Shuck. He does not figh
 
 #### Capuchin
 
-**Role:** Small primate. Role TBD — Ch6 or Ch7 candidate.
-**Chapter:** TBD.
+**Role:** Small primate. Path guide in Ch7 — leads Pip and Pätu through the forest to Joana and Beatriz's house.
+**Chapter:** Ch7. Locked 2026-06-01.
 **Door-fraction:** ~0.20–0.30 (~22–33 px).
 **Color signature:** Brown body `#5a3a28` + white face/chest `#e8e0d0`. See Table A.
 **Silhouette tell:** Small monkey. White face patch, white ear tips, brown body. Perches high.

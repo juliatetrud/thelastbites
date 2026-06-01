@@ -36,7 +36,7 @@ Two settings, divided by the gangway:
 
 **In Estonia.** A small foggy coastal village. Wooden buildings with sloped roofs. The smell of fish and birch smoke. Leida's cottage sits a little apart from the village — wooden, low-eaved, with a window full of geraniums. Inside: a wood stove, a long pine table, a kettle, dried herbs hanging from the rafters. Outside, near the cottage path: a small altar — a flat stone, a wooden bowl, a faded ribbon — clearly used for years.
 
-**Specific port:** TBD. Real Estonian fishing villages worth considering: Käsmu, Altja, the Lahemaa coast. Smaller is better — village texture, not city.
+**Specific port: Käsmu** (Captain's Village, Lahemaa coast, Estonia). Locked 2026-06-01.
 
 ---
 
@@ -225,7 +225,7 @@ No other new abilities. Pip uses his existing Ch1 abilities (walk through wood, 
 
 ## Open questions to settle when this chapter is built
 
-- The specific Estonian port. Real village name (Käsmu, Altja, etc.) or generic? Pull: real, named, with a small note in the journal entry. Adds texture.
+- ~~The specific Estonian port.~~ **Resolved 2026-06-01: Käsmu (Captain's Village, Lahemaa coast). Locked.**
 - Leida's surname and exact age. Probably TBD until dialogue is being written.
 - Whether Leida is widowed, never-married, or unmarked. **Resolved:** widowed. The taste-memory shows her young husband as the boy on the cold step. He has been gone a long time. Leida is at peace with it.
 - The Haldjas's visual treatment. She is "sparkles in a corner" — but sparkles of what color? Pull: a warm gold-amber, distinct from Pip's cool white and Iris's eventual green-blue. Estonian forest-spirit register.

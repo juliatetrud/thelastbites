@@ -39,7 +39,7 @@ Four settings, sequential:
 
 **On the ship (departure, brief).** Pip leaves the Mnemosyne at dusk. The lower-deck traversal is short — humid, dark, mosquitoes.
 
-**The dock at the Brazilian port (night).** A small wooden dock somewhere on the Amazon — working assumption is a small port on the Tapajós, but the chapter does not name a specific real town. The dock is functional, not picturesque: stacked crates, coiled ropes, a few moored fishing boats, the smell of river water and tar. Beyond the dock, the forest begins immediately. No streetlights. Pip lights a match. The Boitatá unfurls.
+**The dock at the Brazilian port (night).** A small wooden dock in **Alter do Chão, Tapajós**. Locked 2026-06-01. The dock is functional, not picturesque: stacked crates, coiled ropes, a few moored fishing boats, the smell of river water and tar. Beyond the dock, the forest begins immediately. No streetlights. Pip lights a match. The Boitatá unfurls.
 
 **The forest path (night).** After the Boitatá lets Pip pass, the path leads into the trees. Dense canopy. Phosphorescent fungi at the base of trunks. Distant frog-and-insect chorus. A capuchin meets them at a fork in the path and chitters at them until they follow. Light hazards along the way — fallen logs to jump, the occasional mosquito cloud. Pip is nervous, Pätu is alert, the capuchin is unhurried.
 
@@ -486,10 +486,11 @@ The Ch7 meal moment is unusually large because the chapter is unusually large. T
 
 ## Open questions for Ch7
 
+- ~~**Ch7 Brazilian port town — specific name.**~~ **Resolved 2026-06-01: Alter do Chão, Tapajós. Locked.**
 - **Joana and Beatriz's names — final lock.** Working names. Confirm before art commission.
 - **The cooperative's specific product.** Brazil nuts, açaí, or both. Cosmetic but worth deciding.
 - **Joana's mother's specific history.** Explicitly Chico Mendes-movement rubber-tapper, or generalized earlier-generation Amazon activist. Specific is stronger.
-- **The Ch6 banana leaves.** No longer load-bearing in the cooking. Likely they stay in Pip's pocket and surface in Ch8, OR Beatriz wraps a small parcel of leftovers in one of them as Pip leaves. *Pull: pocketed, surface in Ch8.*
+- **The Ch6 banana leaves.** Payoff is the Ch6 Tirta cooking beat itself (Pocong gives them; Pip uses them to wrap lemper with Tirta). Leftover leaves are ordinary cross-chapter inventory continuity. No required Ch7+ beat. Resolved 2026-06-01.
 - **Whether the Boitatá speaks differently across attempts.** The puzzle is more interesting if his dialogue gets progressively more troubled. Worth a small writing pass at implementation time.
 - **Infection flashbacks during the chapter — exact count and placement.** The outline above places two (lower-deck traversal, forest traversal). A third could land during the Boitatá puzzle. Worth deciding before implementation.
 

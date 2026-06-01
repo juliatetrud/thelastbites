@@ -133,13 +133,9 @@ ASSUMPTION: The storage room is narrow enough that the Mamlambo's eye fills the 
 
 ---
 
-### Crew Quarters / Henrik's Quarters
+### Crew Quarters (Henrik's room)
 
-**Visual identity.** Small, simple crew stateroom. Brass fittings, single bed, small desk with a few personal items, porthole. The photograph of Erik on or near the desk. Some salmon or recipe materials nearby (the lefse-and-gravlaks connection). *(`01-story-bible.md`, `ch04-turkiye-outline.md`)*
-
-**Status.** Not yet built. Referenced in Ch4 (Pip sees Henrik with photograph — but in the kitchen, not the quarters), and the photograph is dropped in Ch6 (also in the kitchen). The "earn access to Henrik's quarters" beat may have migrated to the kitchen across the outlines.
-
-OPEN QUESTION: The bible describes Pip earning access to Henrik's quarters in Ch6 or Ch7 to find the photograph and confirm Erik's name. But `ch06-indonesia-outline.md` and `ch07-brazil-outline.md` both place the photograph in the kitchen rather than the quarters. Has the "Henrik's quarters" location been retired in favor of the kitchen setting? See Open Questions list, item #1.
+Henrik's room is within crew quarters. It is a background location — not a playable beat or a plot-reveal location. The photograph of Erik appears/stays in the kitchen across the chapter outlines. *Henrik's Quarters as a locked-door-Pip-earns-access beat is **retired** (Decision 1, 2026-06-01). See `01-story-bible.md` § The Mentor: Henrik.*
 
 ---
 
@@ -213,7 +209,7 @@ Echo-spiders and echo-bats are retired from Ch1 — reserved for future chapters
 
 **Cinematic 6a — First Taste (gravlaks / grandfather memory).** Pip takes a bite of gravlaks. Kitchen shimmers. Young Henrik (~8 years old) in a warm Norwegian cottage kitchen, watching his grandfather's hands cure salmon. Sun through a window. The smell of dill. Past is brighter; present darker. Shimmer-dissolve transition, hand-animated. Memory mist treatment (`cinematic.isMemory = true`). *(`ch01-cabin-646-outline.md`; `01-story-bible.md` Ch1 status)*
 
-**Cinematic 6b — First Taste (lefse / Erik memory).** After internal crossfade. Pip takes a bite of lefse. Older Henrik (recognizably grown) teaching a young boy to make lefse. The child's face: **partially visible — turned away, in profile, in half-shadow. Not occluded, but ambiguous.** Must be recognizable on a Ch4 second viewing (Erik's photograph), not on first pass. Same shimmer-dissolve, same memory mist. *(`03-art-and-aesthetic.md` § Cinematic 6b CRITICAL ART NOTE; `ch01-cabin-646-outline.md`)*
+**Cinematic 6b — First Taste (lefse / Erik memory).** After internal crossfade. Pip takes a bite of lefse. Older Henrik (recognizably grown) teaching a young boy to make lefse. **Erik is ~11 years old — the same age Pip is. This parallel is deliberate (Decision 8, 2026-06-01). He is drawn as he looked at death.** The child's face: **partially visible — turned away, in profile, in half-shadow. Not occluded, but ambiguous.** Must be recognizable on a Ch7 second viewing (when Pip meets Erik's ghost), not on first pass. Same shimmer-dissolve, same memory mist. *(`03-art-and-aesthetic.md` § Cinematic 6b CRITICAL ART NOTE; `ch01-cabin-646-outline.md`)*
 
 **Cinematic 7 — Dock farewell.** Wide shot from the ship's deck. High angle. Grandparents walking away on the dock below with a small wooden box (coffin). Babcia stops, looks up toward the ship, almost catches Pip's eye, then continues. Pip on railing, translucent, waving with one small hand. Cold blue-gray morning light. Still. *(`03-art-and-aesthetic.md` § Cinematic 7)*
 
@@ -221,7 +217,7 @@ Echo-spiders and echo-bats are retired from Ch1 — reserved for future chapters
 
 **Additional scripted sequence (not registry):** Nøkken glimpse at the port (after Cinematic 7). A dark rooted shape with two amber eyes peering from harbor water. ~3 seconds. Sepia-monochrome painterly register. NOT the humanoid Nøkken form — roots and water only. *(`art-checklist.md`)*
 
-OPEN QUESTION: The `art-checklist.md` describes a single Cinematic 6 (Erik memory only, grandfather memory "retired from Ch1 — moved to Ch4") based on a prior "P1 Session 1 decision." But the story bible, `ch01-cabin-646-outline.md`, and Sprint 26 Stage 2 (committed to main as of 2026-05-23) all implement the doubled Cinematic 6a/6b structure with the grandfather memory in Ch1. The art-checklist has not been updated. This doc follows the story bible and Sprint 26 spec as canonical. **The art-checklist needs patching.** See Open Questions, item #2.
+**Resolved (Decision 2, 2026-06-01):** Cinematics 6a and 6b are both canonical Ch1 cinematics (shipped procedurally, Sprint 26 Stage 2). `art-checklist.md` has been updated to reflect the doubled structure. The prior "single Cinematic 6 / 6a retired to Ch4" note in art-checklist is superseded.
 
 ---
 
@@ -230,7 +226,7 @@ OPEN QUESTION: The `art-checklist.md` describes a single Cinematic 6 (Erik memor
 1. **Kitchen counter — Bamsemums** (x=520, Beat 11b). Tutorial treat for `↓ COLLECT` verb. Foam-and-chocolate bear bag, lavender translucent bag body, three colored bear-dot shapes inside. Shipped designed/procedural (Sprint 13). *(`art-checklist.md`)*
 2. **Cabin under-bed drawer — Smørbukk** (ASSUMPTION: yellow wrapper, small caramel toffee). Replay-reward; collect aura visible from chapter start but verb not learned until kitchen. *(`ch01-cabin-646-outline.md`)*
 3. **Dark-corridor cleaning cart — Skillingsboller** (ASSUMPTION: Bergen-style cinnamon bun, half-eaten, waxed paper). Collectable after float + `↓` both learned. *(`ch01-cabin-646-outline.md`)*
-4. OPEN QUESTION: Observation deck treat. Mood-appropriate to open-air aurora. Candidates: Kvikk Lunsj (Norwegian chocolate biscuit), packet of Smørbukk forgotten in the cold. To be locked in Ch1 content sprint. See Open Questions, item #3.
+4. **Kvikk Lunsj** (Norwegian chocolate biscuit, left by a stargazer). **Locked 2026-06-01** (Decision 3).
 
 ---
 
@@ -242,7 +238,7 @@ OPEN QUESTION: The `art-checklist.md` describes a single Cinematic 6 (Erik memor
 
 ### Port / Setting
 
-**Estonian coastal village.** Specific port TBD — candidates are Käsmu (captain's village, strongest visual identity) or Altja (preserved fishing village). Käsmu recommended (ASSUMPTION: real and named, for journal entry texture). Small foggy fishing village: wooden buildings with steep sloped dark-tarred roofs, stone foundations, narrow lanes, birch trees between houses. *(`visual-research-tracker.md` Ch2; `ch02-tallinn-outline.md`)*
+**Estonian coastal village: Käsmu** (Captain's Village, Lahemaa coast). **Locked 2026-06-01** (Decision 11). Small foggy fishing village: wooden buildings with steep sloped dark-tarred roofs, stone foundations, narrow lanes, birch trees between houses. *(`visual-research-tracker.md` Ch2; `ch02-tallinn-outline.md`)*
 
 **Leida's cottage exterior.** Wooden, low-eaved, small windows with red geraniums in pots, set apart from the village. A path leading past a small folk altar (flat stone, wooden bowl, faded ribbon). *(`visual-research-tracker.md` Ch2)*
 
@@ -338,7 +334,7 @@ No chapter outline cinematics specified beyond the taste-memory sequence and the
 
 ### Cinematics
 
-No full-canvas cinematics specified in the outline beyond the taste-memory through Sandy's eyes (Register B). That cinematic: Pip briefly sees the kitchen through Sandy's perspective — color shift, possible viewpoint overlay, warm-amber kitchen, family at the table. OPEN QUESTION: exact visual treatment of the POV shift — overlay, color-temperature change, or brief POV camera change. See Open Questions, item #4.
+No full-canvas cinematics specified in the outline beyond the taste-memory through Sandy's eyes (Register B). That cinematic uses the **house taste-memory pattern: a color-temperature wash in the chef's warm-amber spirit-signature** — the screen shifts to Sandy's warm-amber register, the family table fills the frame. **Locked 2026-06-01** (Decision 4 — house pattern for all taste-memory POV shifts across chapters).
 
 ---
 
@@ -380,7 +376,7 @@ No full-canvas cinematics specified in the outline beyond the taste-memory throu
 
 ### Monster
 
-**The Karakoncolos.** Turkish winter-spirit. Very large, stooped, hairy/cloaked shape (`#1a1408` / `#0a0408`). Frost-cloud surrounding body (pulse animation). Hollow-faced — the visual register is *cold and hollow*, the kind of thing that has forgotten itself. Breath visible in cold air. Body very still except heavy-breathing frost-pulse. Gibbering mouth animation for "I don't remember" line — erratic, more violent than normal speech. Eye-glow color: **OPEN QUESTION** — cold-blue `#88a8c8` or red `#ff5050`. Deferred to Ch4 commission. *(`08-character-reference-sheets.md`)*
+**The Karakoncolos.** Turkish winter-spirit. Very large, stooped, hairy/cloaked shape (`#1a1408` / `#0a0408`). Frost-cloud surrounding body (pulse animation). Hollow-faced — the visual register is *cold and hollow*, the kind of thing that has forgotten itself. Breath visible in cold air. Body very still except heavy-breathing frost-pulse. Gibbering mouth animation for "I don't remember" line — erratic, more violent than normal speech. Eye-glow: **cold-blue `#88a8c8`. Locked 2026-06-01** (Decision 7). *(`08-character-reference-sheets.md`)*
 
 ---
 
@@ -464,7 +460,7 @@ The taste-memory through the muhammara: walnut orchard, two boys, grandmother ga
 
 **Kolonodale, Central Sulawesi.** Small port town on Tomori Bay. Wooden stilt-houses near the water. Coconut palms. The smell of charcoal and clove cigarettes, jackfruit and chili in the air. *(`visual-research-tracker.md` Ch6; `ch06-indonesia-outline.md`)*
 
-OPEN QUESTION: The story bible lists Ch6's port as "Indonesia (TBD specific port)" but both `ch06-indonesia-outline.md` and `visual-research-tracker.md` name Kolonodale, Central Sulawesi. Is Kolonodale now canonical and should the bible be updated? See Open Questions, item #5.
+**Resolved (Decision 5, 2026-06-01):** Kolonodale, Central Sulawesi is canonical. `01-story-bible.md` has been updated.
 
 **Banana grove at edge of town.** Broad-leaved, cool light filtered through canopy. Old graves nearby (Indonesian grave markers, small, weathered). This is the Pocong encounter location. *(`visual-research-tracker.md` Ch6)*
 
@@ -476,7 +472,7 @@ OPEN QUESTION: The story bible lists Ch6's port as "Indonesia (TBD specific port
 
 ### Characters introduced this chapter
 
-**Tirta.** Young Indonesian chef (late twenties, ponytail, apron streaked with chili oil, dish towel over shoulder). Warm, fast-talking, generous, deeply funny. ASSUMPTION: female (ch06 outline uses "she" in places; confirm with Julia). *(`ch06-indonesia-outline.md`)*
+**Tirta.** Young Indonesian chef (late twenties, ponytail, apron streaked with chili oil, dish towel over shoulder). Warm, fast-talking, generous, deeply funny. **Female. Not a real-person reference — original character. Locked 2026-06-01** (Decision 9). *(`ch06-indonesia-outline.md`)*
 
 ---
 
@@ -508,7 +504,7 @@ OPEN QUESTION: The story bible lists Ch6's port as "Indonesia (TBD specific port
 
 ### Port / Setting
 
-**Small Brazilian port town on the Tapajós.** Working assumption: a small port on the Amazon tributary Tapajós. Functional, not picturesque. Stacked crates, coiled ropes, moored fishing boats. River water and tar smell. Forest begins immediately beyond the dock. No streetlights. *(`visual-research-tracker.md` Ch7; `ch07-brazil-outline.md`)*
+**Alter do Chão, Tapajós.** **Locked 2026-06-01** (Decision 12). Functional, not picturesque. Stacked crates, coiled ropes, moored fishing boats. River water and tar smell. Forest begins immediately beyond the dock. No streetlights. *(`visual-research-tracker.md` Ch7; `ch07-brazil-outline.md`)*
 
 **Forest path (night).** Dense canopy. Phosphorescent fungi at trunk bases (ambient warm-green glow, occasional small pools). Dense frog-and-insect chorus atmosphere. *(`ch07-brazil-outline.md`)*
 
@@ -530,7 +526,7 @@ OPEN QUESTION: The story bible lists Ch6's port as "Indonesia (TBD specific port
 
 **The capuchin.** Small primate (~22–33 px). Brown body (`#5a3a28`) + white face/chest/ear tips (`#e8e0d0`). Sharp-eyed. Drops from branch, perches high. Chitters. Acts as path guide between dock and Joana/Beatriz's house. *(`ch07-brazil-outline.md`; `08-character-reference-sheets.md`)*
 
-OPEN QUESTION: `08-character-reference-sheets.md` marks the capuchin as "Ch6 or Ch7 candidate." The character gallery has locked the capuchin to Ch7, which matches `ch07-brazil-outline.md`. The character sheet needs updating. See Open Questions, item #6.
+**Resolved (Decision 6, 2026-06-01):** Capuchin is Ch7. `08-character-reference-sheets.md` updated.
 
 ---
 
@@ -616,35 +612,26 @@ OPEN QUESTION: `08-character-reference-sheets.md` marks the capuchin as "Ch6 or 
 
 ---
 
-## Open Questions (Collected)
+## Open Questions — All Resolved (2026-06-01)
 
-1. **Henrik's quarters beat — location migrated?** The bible describes Pip eventually earning access to Henrik's quarters (with locked door, photograph of Erik inside). But `ch06-indonesia-outline.md` and `ch07-brazil-outline.md` stage the photograph moments in the kitchen, not the quarters. Has the "Henrik's quarters" location been retired in favor of kitchen staging? Or does an unlocked-quarters beat still exist in an unwritten chapter? Julia to clarify. *(Surfaces a discrepancy: `01-story-bible.md` § Henrik's Quarters vs. ch06/ch07 outline staging.)*
+All 14 original open questions from this document were resolved by Julia on 2026-06-01 as part of Sprint 28. Resolutions are recorded inline throughout the doc (marked "Locked 2026-06-01 (Decision N)") and in the Decisions Log (`06-roadmap-and-open-questions.md`).
 
-2. **`art-checklist.md` single vs. doubled Cinematic 6.** The art-checklist says "Cinematic 6a (grandfather memory) is retired from Ch1 — moved to Ch4" and describes a single Cinematic 6 (Erik memory only). The story bible, `ch01-cabin-646-outline.md`, and Sprint 26 Stage 2 (committed 2026-05-23) all implement the doubled structure with both 6a and 6b in Ch1. The art-checklist needs patching. The Sprint 26 Stage 0 doc reconciliation should have addressed this — confirm whether that patch has been applied. *(Discrepancy: art-checklist.md vs. story bible and Sprint 26 implementation.)*
-
-3. **Ch1 observation-deck treat.** Specific treat is TBD. Candidates: Kvikk Lunsj (Norwegian chocolate biscuit), packet of Smørbukk, other. To be locked in the Ch1 content sprint. *(Source: `ch01-cabin-646-outline.md`)*
-
-4. **Sandy's taste-memory POV-shift visual treatment.** When Pip tastes the curry and briefly sees through Sandy's eyes, what does the screen do? Options: a viewpoint shift, a color-temperature change (Sandy's warm-amber filling the frame), a brief overlay. Not yet specified in the outline. *(Source: `ch03-southampton-outline.md` open questions)*
-
-5. **Ch6 port — is Kolonodale canonical?** `01-story-bible.md` says "Indonesia (TBD specific port)" but `ch06-indonesia-outline.md` and `visual-research-tracker.md` both name Kolonodale, Central Sulawesi. If the outline has locked it, the bible's TBD notation should be updated. *(Discrepancy: `01-story-bible.md` Ch6 status vs. `ch06-indonesia-outline.md`)*
-
-6. **Capuchin chapter assignment.** `08-character-reference-sheets.md` lists the capuchin as "Ch6 or Ch7 candidate." `game/character-gallery.html` and `ch07-brazil-outline.md` have locked it to Ch7. The character sheet needs updating. *(Discrepancy: `08-character-reference-sheets.md` vs. gallery and outline.)*
-
-7. **Karakoncolos eye-glow color.** Cold-blue `#88a8c8` or red `#ff5050` — deferred to Ch4 commission in `08-character-reference-sheets.md`. *(Source: `08-character-reference-sheets.md`)*
-
-8. **Erik's birthday and photograph-reveal chapter.** The bible lists both as "Ch6 or Ch7, TBD." `ch07-brazil-outline.md` includes Erik's birthday. But the bible's "photograph reveal" (Pip earning access to Henrik's locked quarters, Erik named explicitly) doesn't appear in either ch06 or ch07 outline. The recognition of Erik via the photograph seems to happen as Pip meets Erik in person (Ch7). Is the "earn access to Henrik's quarters" beat still happening, and if so in which chapter? *(Discrepancy: `01-story-bible.md` § Henrik's Backstory vs. ch06/ch07 outline events.)*
-
-9. **Erik's age in Cinematic 6b (Ch1 kitchen memory).** Sprint 26 dialogue says "five or six." `art-checklist.md` says "~5-7 years old." `design-docs/kitchen.md` says "5-7." Lock a single age at the next Ch1 content sprint. *(Discrepancy: sprint spec vs. art-checklist vs. kitchen.md)*
-
-10. **Sandy Dundee chapter credit in gallery.** `game/character-gallery.html` tags Henrik as "Ch 1, 4–8" — skipping Ch2 and Ch3 where Henrik appears in closing beats. The gallery may be tagging significant/scripted appearances only (not every brief closing-kitchen beat). Confirm whether this is intentional. *(Possible discrepancy or deliberate truncation.)*
-
-11. **Tirta's surname / which real Tirta.** Per the project's real-person-reference pattern, Tirta's specific identity is TBD. To be locked before Ch6 art commission. *(Source: `ch06-indonesia-outline.md` open questions)*
-
-12. **Leida's specific village name.** Candidates: Käsmu, Altja, generic Lahemaa coast. Recommended: Käsmu (strongest visual identity). To be locked before Ch2 build sprint. *(Source: `ch02-tallinn-outline.md` open questions)*
-
-13. **Ch7 Brazilian port town — specific name.** Working assumption is the Tapajós but no specific town is named. To be locked before Ch7 build sprint. *(Source: `visual-research-tracker.md` Ch7)*
-
-14. **Whether leftover Ch6 banana leaves appear in Ch8.** Pull per `ch06-indonesia-outline.md`: pocketed, surface in Ch8. To be confirmed when Ch8 is being built.
+| # | Question | Resolution |
+|---|---|---|
+| 1 | Henrik's quarters — retired or still a beat? | **RETIRED.** Henrik's Quarters as a playable location is retired. Photo/Erik identity surfaces through kitchen encounters (Ch6/Ch7). |
+| 2 | art-checklist single vs. doubled Cinematic 6 | **RESOLVED.** Doubled 6a + 6b both Ch1 canonical. art-checklist patched. |
+| 3 | Ch1 observation-deck treat | **Kvikk Lunsj** (Norwegian chocolate biscuit). |
+| 4 | Sandy's taste-memory POV visual treatment | **Color-temperature wash** in chef's warm-amber spirit-signature. House pattern for all taste-memory POV shifts across chapters. |
+| 5 | Ch6 port — Kolonodale canonical? | **Yes. Kolonodale, Central Sulawesi.** Bible updated. |
+| 6 | Capuchin chapter | **Ch7.** Character sheet updated. |
+| 7 | Karakoncolos eye-glow | **Cold-blue `#88a8c8`.** Character sheet updated. |
+| 8 | Erik's birthday + photo-reveal chapter | **Erik's birthday: Ch7.** Henrik's-quarters-reveal retired. Erik recognized when Pip meets him in person (Ch7). |
+| 9 | Erik's age in Cinematic 6b | **~11 years old — same age as Pip. Deliberate parallel.** art-checklist, character sheet, and this doc all updated. |
+| 10 | Henrik gallery tag — Ch2/Ch3 cameos? | **Ch 1, 4–8 confirmed accurate.** Henrik has no scripted scene in Ch2 or Ch3 outlines. Current tag correct. |
+| 11 | Tirta's surname / real-person reference | **Tirta is an original character, not a real-person reference. Female.** ch06 outline and character sheet updated. |
+| 12 | Leida's specific village | **Käsmu** (Captain's Village, Lahemaa coast). ch02 outline updated. |
+| 13 | Ch7 Brazilian port town | **Alter do Chão, Tapajós.** ch07 outline and this doc updated. |
+| 14 | Ch6 banana leaves cross-chapter payoff | **Payoff is the Ch6 Tirta cooking beat itself.** Leftover leaves are ordinary inventory continuity — no required Ch7+ beat. |
 
 ---
 
@@ -654,7 +641,7 @@ OPEN QUESTION: `08-character-reference-sheets.md` marks the capuchin as "Ch6 or 
 
 - **`08-character-reference-sheets.md`** — The authoritative character visual spec (color signatures, silhouette tells, movement registers). This doc (Doc 10) does not duplicate that content — it places those characters in their chapter and setting context. Where this doc and Doc 08 conflict, Doc 08 takes precedence; flag conflicts to Julia.
 - **`03-art-and-aesthetic.md`** — The authoritative style, palette, and register spec. This doc summarizes it but does not supersede it. The Style Anchors section above is a quick-reference only.
-- **`art-checklist.md`** — The Ch1-specific asset status tracker. As of 2026-06-01, `art-checklist.md` has a known stale note about Cinematic 6 (Open Question #2 above). When `art-checklist.md` and this doc conflict, verify against `01-story-bible.md` and the chapter outlines.
+- **`art-checklist.md`** — The Ch1-specific asset status tracker. Updated in Sprint 28 to reflect the doubled Cinematic 6 structure, Erik's age, and Kvikk Lunsj observation-deck treat.
 - **`visual-research-tracker.md`** — Per-chapter visual research table. This doc pulls from it for period/place details. That tracker is the place to log actual reference links and images when gathered.
 - **`game/character-gallery.html`** — The canonical who-appears-in-which-chapter reference and the gallery of designed characters. Verify design decisions against the gallery as the canonical implemented source.
 - **Chapter outlines (`ch01`–`ch08`)** — The narrative authority for each chapter. This doc distills their visual information; when the outlines have more detail, the outlines win.

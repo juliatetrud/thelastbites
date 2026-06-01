@@ -236,7 +236,7 @@ She is already taking the leaves from him, already moving back to the counter. P
 
 **Tirta is the chapter's tonal medicine.** Fast-talking, generous, deeply funny, completely unfazed by a ghost-boy. The kind of person who responds to the surreal by *getting on with it*. She does not interrogate Pip about being dead. She does ask his name. She does ask if he can taste lemper from the other side of being-alive. She is delighted to find out the answer is yes.
 
-*(Cross-reference: Tirta is a real-person reference per the project's pattern of real chefs. Surname / specific Tirta TBD — see open questions.)*
+*(Tirta is an original character — she is NOT modeled on a real person. The real-person-reference pattern applies to some chefs but not all; Tirta is original and female. Locked 2026-06-01.)*
 
 ---
 
@@ -416,7 +416,7 @@ The pair is unusual — for the first time, the *frightening* memory is one Pip 
 ## Open questions to settle when this chapter is built
 
 - **The Pocong's specific origin story.** Who was he, in life? How long has he been bound? The chapter does not need to spell it out — the implication of *family on the wrong side of a window* is enough — but a one-line working answer will help dialogue. Pull: a fisherman, decades or generations ago, whose body was buried in a hurry during a typhoon and whose ties were never loosened. The orchard-graves at the edge of the clearing are his family's; he could see them through the cloth and not reach them. To be confirmed.
-- **Tirta's surname / which real Tirta this is.** Per the project's pattern of real chefs (Muhittin, Johannes, Sandy). Open.
+- ~~**Tirta's surname / which real Tirta this is.**~~ **Resolved 2026-06-01: Tirta is an original character, not a real-person reference. Female. No surname needed.**
 - **The exact rendering of Knot 3's riddle.** Two drafts exist (the player's "A family walked in a land they knew not" version, and the tightened "Two stood close where the dark pressed in" version). Both work; the latter is more tightly keyed to the parents-at-the-fire image. Pick one when the chapter is built.
 - **Wrong-answer hint texture across all three knots.** Drafted above as samples. Each riddle should have prepared hints for the three or four most-likely-wrong selections (full-coverage hints aren't necessary; the player will get there in two or three tries with reasonable hints).
 - **The Pocong's "sad song" sound effect.** Brief sung note / flute fragment / wind-through-cloth. To be specified during audio pass.

@@ -1025,10 +1025,10 @@
          Opacity animated by startTransition() via CSS transition. -->
     <div id="room-transition"></div>
 
-    <!-- Chapter 1 end-card stub — shown at observation deck right edge.
-         Sprint 29 will replace this with Cinematic 7 (dock farewell). -->
+    <!-- Chapter 1 end-card — shown after Cinematic 8 (Henrik's offer).
+         Chapter 2 does not exist yet; this is the chapter terminus. -->
     <div id="end-sprint-overlay">
-      <span id="end-sprint-text">End of Chapter 1 — Sprint 29 will add the farewell.</span>
+      <span id="end-sprint-text">End of Chapter 1.</span>
     </div>
 
     <!-- Dialogue box: HTML overlay for narration + choices.
@@ -1360,6 +1360,19 @@ const chapterState = {
   firstTasteSeen:      false, // true once Cinematic 6 (first-taste) completes
   bamsemumsCollected:  false, // true once kitchen Bamsemums collected
   nokkenStoryHeard:    false, // true once Henrik's Nøkken story plays to end
+  nokkenGlimpsed:      false, // true once the Nøkken glimpse sequence completes (Beat 12)
+  grandparentsLeft:    false, // true once Cinematic 7 + glimpse complete
+  notebookReceived:    false, // true once Cinematic 8 (Henrik's offer) completes
+  chapter1Complete:    false, // true once Chapter 1 ends cleanly
+};
+
+/* Sprint 29: Nøkken glimpse state — scripted ~3s input-locked sequence
+   after the dock farewell cinematic. Separate from cinematic.active
+   so the room renders underneath while the glimpse draws on top. */
+const nokkenGlimpse = {
+  active:        false,
+  elapsed:       0,
+  narrationShown: false,  // true once the italic line dialogue has been shown
 };
 
 /* Sprint 24 Stage 3: Cabin 646 collection-room state.
@@ -2319,6 +2332,37 @@ const observationDeckObjects = [
       onEnd:   null,
     },
   },
+
+  /* Sprint 29: Henrik on the deck — appears after the Nøkken glimpse (Beat 13).
+     Gated on nokkenGlimpsed; returns null before the glimpse completes.
+     Trigger node uses lines:[] + onEnd to fire Cinematic 8 (henriks-offer). */
+  {
+    id:       'deck-henrik',
+    x:        490,
+    sparkleY: FLOOR_Y - 60,
+    get node() {
+      if (!chapterState.nokkenGlimpsed) return null;
+      if (chapterState.chapter1Complete) {
+        return {
+          id: 'deck-henrik-post',
+          lines: [{ speaker: null, text: 'Henrik stands quietly on the deck. He looks out at the water.', italic: true }],
+          choices: null, onEnd: null,
+        };
+      }
+      return {
+        id: 'deck-henrik-offer',
+        lines: [],
+        choices: null,
+        onEnd() {
+          showCinematic('henriks-offer', () => {
+            chapterState.notebookReceived = true;
+            chapterState.chapter1Complete = true;
+            showChapter1End();
+          });
+        },
+      };
+    },
+  },
 ];
 
 /* Sprint 27: Kvikk Lunsj — Ch1's fourth and final treat (Decision 3, 2026-06-01).
@@ -2919,8 +2963,11 @@ function update(dt) {
   }
 
   // Movement gated by dialogue, room transitions, cinematic hold, opening sequence, panic, AND float discovery
+  // Sprint 29: update Nøkken glimpse scripted sequence
+  updateNokkenGlimpse(dt);
+
   const panicActive = mirrorBeat.panicPhase !== 'none' && mirrorBeat.panicPhase !== 'done';
-  if (!dialogue.active && !transition.active && !cinematic.active && openingSeq.state === 'complete' && !panicActive && !floatDiscovery.active) {
+  if (!dialogue.active && !transition.active && !cinematic.active && openingSeq.state === 'complete' && !panicActive && !floatDiscovery.active && !nokkenGlimpse.active) {
     const left  = movingLeft();
     const right = movingRight();
 
@@ -2965,9 +3012,13 @@ function update(dt) {
                && chapterState.nokkenStoryHeard) {
       // Sprint 27: transition to the real observation deck (replaces Sprint 26.5 stub)
       startTransition('observationDeck', 'fromLeft');
-    } else if (currentRoom === 'observationDeck' && pip.x >= rooms.observationDeck.pipMaxX - 1) {
-      // Sprint 27: right-edge trigger → Chapter 1 end-card (Sprint 29 will add Cinematic 7)
-      triggerDeckStub();
+    } else if (currentRoom === 'observationDeck' && pip.x >= rooms.observationDeck.pipMaxX - 1
+               && !chapterState.grandparentsLeft && !cinematic.active) {
+      // Sprint 29: right-edge fires Cinematic 7 (dock farewell); replaces Sprint 27 placeholder
+      showCinematic('dock-farewell', () => {
+        chapterState.grandparentsLeft = true;
+        startNokkenGlimpse();
+      });
     }
   }
 
@@ -3846,6 +3897,9 @@ function render(now) {
       }
     }
   }
+
+  // Sprint 29: Nøkken glimpse overlay — drawn on top of the room, below dialogue
+  if (nokkenGlimpse.active) drawNokkenGlimpse(now);
 
   // Sprint 13: update and draw pickup tweens on the tween layer
   updateAndDrawTweens(dt, now);
@@ -5330,6 +5384,323 @@ function triggerDeckStub() {
 }
 
 /* ================================================================
+   SPRINT 29: CHAPTER 1 END (called after Cinematic 8 onEnd)
+   ================================================================ */
+
+function showChapter1End() {
+  triggerDeckStub();  // reuses the terminal fade + overlay; text now says "End of Chapter 1."
+}
+
+/* ================================================================
+   SPRINT 29: NØKKEN GLIMPSE — scripted ~3s input-locked sequence
+   Runs after Cinematic 7 (dock-farewell) ends. Pip stays on the deck
+   (not in cinematic mode); the glimpse draws on top of the room.
+   Input blocked via nokkenGlimpse.active in the movement guard.
+   ================================================================ */
+
+function startNokkenGlimpse() {
+  nokkenGlimpse.active         = false;  // reset before activate
+  nokkenGlimpse.elapsed        = 0;
+  nokkenGlimpse.narrationShown = false;
+  nokkenGlimpse.active         = true;
+  hideHUD();
+  setControlsStrip('');
+}
+
+function updateNokkenGlimpse(dt) {
+  if (!nokkenGlimpse.active)        return;
+  if (nokkenGlimpse.narrationShown) return;  // dialogue drives pacing from here
+
+  nokkenGlimpse.elapsed += dt;
+
+  if (nokkenGlimpse.elapsed >= 3.0) {
+    nokkenGlimpse.narrationShown = true;
+    // Show the one italic narration line; release control in onEnd
+    showDialogue({
+      id: 'nokken-glimpse-narration',
+      lines: [
+        { speaker: null, text: 'Pip thinks of Henrik’s story. He does not say its name.', italic: true },
+      ],
+      choices: null,
+      onEnd() {
+        nokkenGlimpse.active      = false;
+        chapterState.nokkenGlimpsed = true;
+        showHUD();
+        setRoomStrip();
+      },
+    });
+  }
+}
+
+function drawNokkenGlimpse(now) {
+  const elapsed = nokkenGlimpse.elapsed;
+
+  // Deep water — near-black base
+  const waterGrad = ctx.createLinearGradient(0, 0, 0, H);
+  waterGrad.addColorStop(0, '#0a0c0e');
+  waterGrad.addColorStop(0.45, '#0c0e12');
+  waterGrad.addColorStop(1,   '#06080a');
+  ctx.fillStyle = waterGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Faint horizon / dock silhouette
+  ctx.fillStyle = 'rgba(28,30,36,0.70)';
+  ctx.fillRect(0, 70, W, 4);
+  ctx.fillStyle = 'rgba(20,22,28,0.50)';
+  ctx.fillRect(0, 0, W, 72);
+
+  // Water surface ripple lines
+  ctx.fillStyle = 'rgba(22,26,32,0.55)';
+  for (let i = 0; i < 5; i++) { ctx.fillRect(0, 90 + i * 18, W, 1); }
+
+  // Shape visibility ramp: 0→0.5s rise, 0.5→2.5s hold, 2.5→3.0s sink
+  let vis;
+  if      (elapsed < 0.5)  vis = elapsed / 0.5;
+  else if (elapsed < 2.5)  vis = 1.0;
+  else                     vis = Math.max(0, 1 - (elapsed - 2.5) / 0.5);
+
+  if (vis > 0.01) {
+    const shapeX = 240;
+    const shapeY = 148;
+    ctx.globalAlpha = vis * 0.90;
+
+    // Rooted dark form — organic silhouette of roots/tendrils, NOT humanoid
+    ctx.fillStyle = '#050506';
+    const parts = [
+      [-4, -36,  8, 36],   // central stem
+      [-12, -24,  6, 22],  // left root branch
+      [  5, -28,  7, 22],  // right root branch
+      [-18, -14,  5, 18],  // far-left tendril
+      [ 13, -16,  5, 18],  // far-right tendril
+      [ -6, -48,  6, 14],  // upper protrusion (partially submerged)
+      [-10,  -6, 22, 12],  // base mass at waterline
+    ];
+    for (const [dx, dy, w, h] of parts) {
+      ctx.fillRect(shapeX + dx, shapeY + dy, w, h);
+    }
+
+    // Two glowing amber eyes
+    const eyeY = shapeY - 34;
+    ctx.fillStyle = '#ffa820';
+    ctx.beginPath(); ctx.ellipse(shapeX - 6, eyeY, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(shapeX + 6, eyeY, 3, 2, 0, 0, Math.PI * 2); ctx.fill();
+    // Soft amber glow around eyes
+    ctx.fillStyle = 'rgba(255,165,30,0.22)';
+    ctx.beginPath(); ctx.ellipse(shapeX - 6, eyeY, 8, 5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(shapeX + 6, eyeY, 8, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+    ctx.globalAlpha = 1;
+  }
+
+  // Water disturbance ring (expands outward, fades)
+  const ringT      = Math.min(elapsed / 2.5, 1);
+  const ringR      = 8 + ringT * 55;
+  const ringAlpha  = Math.max(0, 0.38 * (1 - ringT * 0.9));
+  if (ringAlpha > 0.01) {
+    ctx.globalAlpha  = ringAlpha;
+    ctx.strokeStyle  = 'rgba(55,65,75,0.90)';
+    ctx.lineWidth    = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(240, 158, ringR, ringR * 0.30, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // Sepia-monochrome painterly overlay
+  ctx.fillStyle = 'rgba(55,40,18,0.28)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Vignette
+  const vig = ctx.createRadialGradient(W / 2, H / 2, 55, W / 2, H / 2, W * 0.68);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(4,3,2,0.72)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+}
+
+/* ================================================================
+   SPRINT 29: CINEMATIC DRAW FUNCTIONS — 7 (dock farewell) and 8
+   Both are present-tense, NOT memory cinematics (isMemory = false).
+   ================================================================ */
+
+function drawDockFarewellCinematic(now) {
+  // Cold blue-gray morning sky
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, 70);
+  skyGrad.addColorStop(0, '#18202e');
+  skyGrad.addColorStop(1, '#2a3448');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, 70);
+
+  // Bergen distant shoreline silhouette
+  ctx.fillStyle = '#161a24';
+  ctx.fillRect(0, 52, W, 14);
+
+  // Harbor water
+  const watGrad = ctx.createLinearGradient(0, 66, 0, 130);
+  watGrad.addColorStop(0, '#18223a');
+  watGrad.addColorStop(1, '#12182c');
+  ctx.fillStyle = watGrad;
+  ctx.fillRect(0, 66, W, 64);
+  // Water shimmer strips
+  ctx.fillStyle = 'rgba(160,185,210,0.05)';
+  for (let i = 0; i < 3; i++) { ctx.fillRect(0, 78 + i * 18, W, 2); }
+
+  // Stone dock / quay
+  const dockGrad = ctx.createLinearGradient(0, 130, 0, 230);
+  dockGrad.addColorStop(0, '#24262e');
+  dockGrad.addColorStop(1, '#1c1e26');
+  ctx.fillStyle = dockGrad;
+  ctx.fillRect(0, 130, W, 100);
+  // Dock edge
+  ctx.fillStyle = 'rgba(50,58,74,0.55)';
+  ctx.fillRect(0, 130, W, 3);
+
+  // — Figures on the dock (small, distant — about 10–12 px tall) —
+  const dX = 152;  // group center x
+  const dY = 186;  // dock ground level for figures
+
+  // Wooden coffin / small box
+  ctx.fillStyle = '#5a3820';
+  ctx.fillRect(dX - 14, dY - 6, 16, 9);
+  ctx.fillStyle = 'rgba(100,68,35,0.40)';
+  ctx.fillRect(dX - 14, dY - 6, 16, 2);
+
+  // Dziadek — back to viewer, flat cap, still walking
+  ctx.fillStyle   = '#1c1820';
+  ctx.globalAlpha = 0.90;
+  ctx.fillRect(dX + 4,  dY - 22, 9,  3);  // flat cap
+  ctx.fillRect(dX + 5,  dY - 19, 7,  6);  // head
+  ctx.fillRect(dX + 3,  dY - 13, 9,  9);  // coat body
+  ctx.fillRect(dX + 4,  dY - 4,  3,  5);  // left leg
+  ctx.fillRect(dX + 8,  dY - 4,  3,  5);  // right leg
+  ctx.globalAlpha = 1;
+
+  // Babcia — stopped, turned toward ship (facing roughly toward viewer)
+  ctx.fillStyle   = '#1c1820';
+  ctx.globalAlpha = 0.90;
+  ctx.beginPath(); ctx.arc(dX - 5, dY - 22, 6, 0, Math.PI * 2); ctx.fill(); // kerchief dome
+  ctx.fillRect(dX - 10, dY - 18, 8, 6);   // head/face (looking up)
+  ctx.fillRect(dX - 14, dY - 12, 16, 10); // wide coat
+  ctx.fillRect(dX - 11, dY - 2,  5, 4);   // left leg
+  ctx.fillRect(dX - 5,  dY - 2,  5, 4);   // right leg
+  ctx.globalAlpha = 1;
+
+  // Ship's railing (foreground, bottom of frame)
+  ctx.fillStyle = '#282618';
+  ctx.fillRect(0, 228, W, 9);         // railing bar
+  ctx.fillStyle = '#221e12';
+  for (let px = 0; px < W; px += 26) { ctx.fillRect(px, 198, 5, 38); }  // vertical posts
+  ctx.fillStyle = 'rgba(65,60,38,0.45)';
+  ctx.fillRect(0, 228, W, 2);         // top-edge highlight
+
+  // Pip at the railing — translucent, small hand raised in a wave
+  const pX = W / 2 + 18;
+  const pY = 227;
+  ctx.globalAlpha = 0.68;
+  ctx.fillStyle   = '#ccd4ec';
+  ctx.fillRect(pX - 5, pY - 28, 10, 16);  // ghost body
+  ctx.fillRect(pX - 5, pY - 12,  4,  5);  // wave at base left
+  ctx.fillRect(pX - 1, pY - 10,  4,  5);  // wave center
+  ctx.fillRect(pX + 3, pY - 12,  4,  5);  // wave right
+  // Raised waving arm / hand
+  ctx.fillRect(pX + 5,  pY - 33,  3, 5);  // arm up
+  ctx.fillRect(pX + 8,  pY - 35,  3, 3);  // hand
+  // Eye dots
+  ctx.fillStyle = '#181020';
+  ctx.fillRect(pX - 3, pY - 26, 2, 2);
+  ctx.fillRect(pX + 1, pY - 26, 2, 2);
+  ctx.globalAlpha = 1;
+
+  // Cold morning vignette
+  const vig = ctx.createRadialGradient(W / 2, H / 2, 70, W / 2, H / 2, W * 0.78);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(8,10,18,0.55)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+}
+
+function drawHenriksOfferCinematic(now) {
+  // Warm sunset sky — dark top fading to amber-orange horizon
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.54);
+  skyGrad.addColorStop(0,    '#18142a');
+  skyGrad.addColorStop(0.38, '#3a2038');
+  skyGrad.addColorStop(0.68, '#583220');
+  skyGrad.addColorStop(1,    '#7a4828');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, Math.round(H * 0.54));
+
+  // Horizon glow band
+  const horizY = Math.round(H * 0.52);
+  ctx.fillStyle = 'rgba(195,110,50,0.30)';
+  ctx.fillRect(0, horizY - 5, W, 14);
+
+  // Distant port lights on horizon
+  const lights = [[ 95, horizY - 3], [140, horizY - 6], [192, horizY - 2], [272, horizY - 4], [345, horizY - 5]];
+  for (const [lx, ly] of lights) {
+    ctx.fillStyle = 'rgba(215,170,55,0.70)';
+    ctx.fillRect(lx - 1, ly, 2, 2);
+    ctx.fillStyle = 'rgba(215,170,55,0.18)';
+    ctx.fillRect(lx - 3, ly - 2, 6, 5);
+  }
+
+  // Dark water below horizon with faint sunset reflection
+  const watGrad = ctx.createLinearGradient(0, H * 0.54, 0, H * 0.70);
+  watGrad.addColorStop(0, '#1a1020');
+  watGrad.addColorStop(1, '#130e18');
+  ctx.fillStyle = watGrad;
+  ctx.fillRect(0, Math.round(H * 0.54), W, Math.round(H * 0.16));
+  ctx.fillStyle = 'rgba(170,70,25,0.10)';
+  ctx.fillRect(W * 0.30, Math.round(H * 0.55), W * 0.28, Math.round(H * 0.10));
+
+  // Deck floor
+  ctx.fillStyle = '#181408';
+  ctx.fillRect(0, Math.round(H * 0.70), W, Math.round(H * 0.30));
+  const deckGlow = ctx.createLinearGradient(0, Math.round(H * 0.70), 0, H);
+  deckGlow.addColorStop(0, 'rgba(175,78,28,0.09)');
+  deckGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = deckGlow;
+  ctx.fillRect(0, Math.round(H * 0.70), W, Math.round(H * 0.30));
+
+  // Henrik (right side, sitting pose — world-x ≡ screen 315, floor at 235)
+  const hX = 315;
+  const hY = 235;
+  drawHenrikSitting(hX, hY, 'left', now);
+
+  // Notebook prop — Henrik extends toward Pip (left-ward)
+  const nbX = hX - 28;
+  const nbY = hY - 62;
+  ctx.fillStyle = '#4a2e10';
+  ctx.fillRect(nbX - 12, nbY - 4, 20, 14);   // leather cover
+  ctx.fillStyle = 'rgba(238,228,198,0.88)';
+  ctx.fillRect(nbX - 10, nbY - 2, 16, 10);   // blank pages
+  ctx.fillStyle = '#38200a';
+  ctx.fillRect(nbX - 12, nbY - 4, 3, 14);    // spine
+  ctx.fillStyle = 'rgba(195,155,70,0.22)';
+  ctx.fillRect(nbX - 10, nbY - 2, 16, 2);    // warm cover highlight
+
+  // Pip (left side, smaller ghost silhouette, looking up at Henrik)
+  const pX = 128;
+  const pY = 225;
+  ctx.globalAlpha = 0.76;
+  ctx.fillStyle   = '#ccd4ec';
+  ctx.fillRect(pX - 5, pY - 28, 10, 18);   // body
+  ctx.fillRect(pX - 5, pY - 10,  4,  5);   // base waves
+  ctx.fillRect(pX - 1, pY - 8,   4,  5);
+  ctx.fillRect(pX + 3, pY - 10,  4,  5);
+  ctx.fillStyle = '#181020';
+  ctx.fillRect(pX - 3, pY - 26, 2, 2);     // eyes
+  ctx.fillRect(pX + 1, pY - 26, 2, 2);
+  ctx.globalAlpha = 1;
+
+  // Warm vignette
+  const vig = ctx.createRadialGradient(W / 2, H * 0.60, 65, W / 2, H * 0.60, W * 0.72);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(8,5,15,0.62)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+}
+
+/* ================================================================
    PASSENGER NPC UPDATE
    ================================================================ */
 
@@ -5496,6 +5867,25 @@ const CINEMATIC_SCRIPTS = {
     { speaker: 'HENRIK', text: '“I think, perhaps, yes. I think that is what you are now.”',                                                                                                            italic: false },
   ],
 
+  /* Sprint 29: dock-farewell (Cinematic 7 — Beat 12).
+     Wide deck-down shot. Grandparents walk away with coffin. Babcia stops and looks up.
+     Present-tense, NOT isMemory. Cold blue-gray morning. Visual: drawDockFarewellCinematic(). */
+  'dock-farewell': [
+    { speaker: null, text: 'Babcia stops. She turns. She looks up toward the ship.',         italic: true  },
+    { speaker: null, text: 'Babcia is going to leave him. Pip knows this.',                   italic: true  },
+    { speaker: null, text: 'He waves. He does not know if it is for her or for himself.',     italic: true  },
+  ],
+
+  /* Sprint 29: henriks-offer (Cinematic 8 — Beat 13).
+     Warm sunset two-shot. Henrik offers the empty notebook; chapter ends.
+     Present-tense, NOT isMemory. Visual: drawHenriksOfferCinematic(). */
+  'henriks-offer': [
+    { speaker: 'HENRIK', text: '"This was meant for you. Or someone like you."',           italic: false },
+    { speaker: 'HENRIK', text: '"Fill it. Eat what you can. Listen to what you taste."',   italic: false },
+    { speaker: 'HENRIK', text: '"And come back, if you can. I’ll be in the kitchen."', italic: false },
+    { speaker: null,     text: 'And so the mission begins.',                                italic: true  },
+  ],
+
   /* Sprint 26 Stage 1: kitchen-meeting (Cinematic 4 — Beat 9).
      Pip approaches the plate; takes a bite; food hovers; Henrik freezes mid-scream.
      Visual driven by drawKitchenMeetingCinematic() + kitchenCin elapsed timer. */
@@ -5659,6 +6049,8 @@ function drawCinematicScene(name, now) {
   else if (name === 'kitchen-meeting')    drawKitchenMeetingCinematic(now);
   else if (name === 'henrik-sits-down')  drawHenrikSitsDownCinematic(now);
   else if (name === 'first-taste')       drawFirstTasteCinematic(now);
+  else if (name === 'dock-farewell')     drawDockFarewellCinematic(now);
+  else if (name === 'henriks-offer')     drawHenriksOfferCinematic(now);
   // Sprint 11: memory mist opt-in — drawn on top of scene, below dialogue overlay
   if (cinematic.isMemory) drawMemoryMist(now);
 }
@@ -8645,6 +9037,14 @@ function drawObservationDeck(camX, now) {
     const kvikkSX = Math.round(565 - camX);
     if (kvikkSX > -20 && kvikkSX < W + 20) {
       drawTreatSprite(ctx, 'kvikklunsj', kvikkSX, FLOOR_Y - 4);
+    }
+  }
+
+  // Sprint 29: Henrik on the deck — appears after the Nøkken glimpse (world-x 490, sitting)
+  if (chapterState.nokkenGlimpsed) {
+    const hdeckSX = Math.round(490 - camX);
+    if (hdeckSX > -30 && hdeckSX < W + 30) {
+      drawHenrikSitting(hdeckSX, FLOOR_Y, 'left', now);
     }
   }
 }

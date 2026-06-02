@@ -339,6 +339,40 @@
     transform: translate(-50%, -50%) rotate(-30deg);
   }
 
+  /* Sprint 30: SFX toggle — mirrors the music toggle, sits immediately left of it */
+  #sfx-toggle {
+    position: absolute;
+    top: 16px;
+    right: 56px;   /* 16px margin + 32px music-toggle + 8px gap */
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #a0b0d0;
+    font-size: 16px;
+    line-height: 32px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0.85;
+    z-index: 100;
+    transition: opacity 0.2s ease;
+    font-family: inherit;
+    user-select: none;
+  }
+  #sfx-toggle:hover { opacity: 1; }
+  #sfx-toggle.muted { opacity: 0.35; }
+  #sfx-toggle.muted::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 28px;
+    height: 1.5px;
+    background: currentColor;
+    transform: translate(-50%, -50%) rotate(-30deg);
+  }
+
   /* ============================================================
      ROOM TRANSITION OVERLAY
      Full-screen black div fades in/out during room transitions.
@@ -1115,6 +1149,9 @@
     <button class="touch-btn" id="touch-pause"    data-key="KeyP" title="Pause">⏸</button>
   </div>
 
+  <!-- Sprint 30: SFX toggle — mirrors the music toggle, sits left of it. Mouse-only. -->
+  <button id="sfx-toggle" type="button" title="Sound effects on (click to mute)" aria-label="Sound effects on (click to mute)">🔊</button>
+
   <!-- Music toggle: inside #game-wrap so it appears in fullscreen context.
        position: absolute keeps it at viewport top-right in both windowed and
        fullscreen modes. Keyboard binding: M key (see handleKeyAction). -->
@@ -1512,6 +1549,7 @@ function pulseNotebookIcon() {
   icon.classList.remove('pulse');
   void icon.offsetWidth; // reflow to restart animation
   icon.classList.add('pulse');
+  playNotebookSfx(); // Sprint 30: fires on both collect-arrival and save
 }
 
 /* ================================================================
@@ -2603,6 +2641,33 @@ const music = {
   crossfading: false,
 };
 
+/* ================================================================
+   SPRINT 30: SFX STATE
+   Parallel to the music object. AudioContext is created lazily on
+   the first user gesture (shared unlock gate with music system).
+   All cues route through a single master GainNode; the SFX toggle
+   mutes by ramping that gain to 0 without touching the music graph.
+   ================================================================ */
+
+const sfx = {
+  ctx:       null,    // AudioContext — created lazily in unlockSfx()
+  master:    null,    // master GainNode — every cue connects here
+  on:        true,    // player wants SFX? (read from localStorage on init)
+  unlocked:  false,   // has first gesture fired?
+  baseGain:  1.0,     // master gain when unmuted; cue functions hold their own levels
+};
+
+/* Movement whisper nodes — created once on first move after unlock, then reused. */
+const moveWhisper = {
+  source:  null,   // BufferSourceNode (looping white-noise)
+  filter:  null,   // BiquadFilterNode (lowpass — keeps it breathy, not tonal)
+  gain:    null,   // GainNode — ramped between 0 and whisper level
+  ready:   false,  // true once the graph has been built
+};
+
+/* Tracks whether Pip was moving last frame, for start/stop edge detection. */
+let _sfxWasMoving = false;
+
 /* Logical id → src path (relative to game/index.html). */
 const MUSIC_TRACKS = {
   main:  'assets/audio/stowaway-polka.mp3',
@@ -2967,6 +3032,11 @@ function update(dt) {
   updateNokkenGlimpse(dt);
 
   const panicActive = mirrorBeat.panicPhase !== 'none' && mirrorBeat.panicPhase !== 'done';
+  // Sprint 30: ensure whisper is silenced whenever Pip isn't in free room-mode
+  if ((dialogue.active || transition.active || cinematic.active || panicActive || nokkenGlimpse.active) && _sfxWasMoving) {
+    _sfxWasMoving = false;
+    stopMoveSfx();
+  }
   if (!dialogue.active && !transition.active && !cinematic.active && openingSeq.state === 'complete' && !panicActive && !floatDiscovery.active && !nokkenGlimpse.active) {
     const left  = movingLeft();
     const right = movingRight();
@@ -2980,6 +3050,13 @@ function update(dt) {
       pip.body.facing = 'right';
     }
     // When stationary, facing retains its last value.
+
+    // Sprint 30: movement whisper SFX (soft airy glide — NOT footsteps, ghost physics)
+    const pipMovingNow = (left && !right) || (right && !left);
+    if (pipMovingNow !== _sfxWasMoving) {
+      _sfxWasMoving = pipMovingNow;
+      if (pipMovingNow) startMoveSfx(); else stopMoveSfx();
+    }
 
     // Clamp Pip to current room bounds (uses per-room pipMinX from Sprint 10.7)
     const roomMin = rooms[currentRoom].pipMinX !== undefined ? rooms[currentRoom].pipMinX : PIP_HALF_W;
@@ -2998,6 +3075,7 @@ function update(dt) {
       // Step 5 (canonical beat order): wall-phase DISCOVERY — shared wall into Cabin 646.
       // Gate: beatStage === 'pre-mirror' is set by the grandparents' cinematic onEnd (line ~1904).
       // Return visits use the hallway door (available once beatStage === 'post-bed').
+      playPhaseSfx(); // Sprint 30: descending whoosh on phase-through discovery
       startTransition('cabin', 'fromLeft');
     } else if (currentRoom === 'hallway' && pip.x >= 1312 && cabinState.beatStage === 'post-bed') {
       // Sprint 20: hallway far-right staircase to dark corridor (available post-Beat-5)
@@ -3219,6 +3297,7 @@ function updatePanicSequence(dt) {
         pip.x = rooms.cabin.pipMinX;
         mb.panicPhase = 'wall-phase';
         mb.panicTimer = 0;
+        playPhaseSfx(); // Sprint 30: phase-through whoosh on panic wall-exit
       }
       break;
     }
@@ -3712,6 +3791,7 @@ function tryInspect() {
     const node = obj.node;
     if (!node) continue;   // Sprint 20: null node = not yet interactive (e.g. stairwell)
     if (Math.abs(pip.x - obj.x) < 18) {
+      playInspectSfx(); // Sprint 30: faint shimmer when inspect dialogue opens
       showDialogue(node);
       break;
     }
@@ -3771,6 +3851,9 @@ function pickupCollectible(c) {
   const ex = (nbRect.left + nbRect.width  / 2 - gameRect.left) * scaleX;
   const ey = (nbRect.top  + nbRect.height / 2 - gameRect.top)  * scaleY;
 
+  // Sprint 30: collect blip fires at tween start (the "pick-up" moment)
+  playCollectSfx();
+
   // Enqueue the pickup tween
   activeTweens.push({
     sx, sy, ex, ey,
@@ -3788,6 +3871,7 @@ function pickupCollectible(c) {
       // If treat: chain stomach refill
       if (c.kind === 'treat') {
         gainStrength(c.stomachValue);
+        playEatSfx(); // Sprint 30: eat swell when stomach fills
       }
       if (c.onCollect) c.onCollect();
       autoSave();
@@ -9199,6 +9283,210 @@ function drawKitchenMeetingCinematic(now) {
 }
 
 /* ================================================================
+   SPRINT 30: SFX SYSTEM
+   Synthesized via Web Audio API — no audio files, no dependencies.
+   Shares the music system's first-keypress unlock gate.
+
+   unlockSfx()        — called from unlockMusic() on first gesture.
+   toggleSfx()        — bound to the 🔊 button click.
+   initSfx()          — runs at page load; reads localStorage, wires DOM.
+   playCollectSfx()   — soft two-note rising blip on item collect.
+   playEatSfx()       — warm rounded swell when stomach fills.
+   playNotebookSfx()  — dry tick when notebook icon pulses.
+   playInspectSfx()   — airy high shimmer when inspect dialogue opens.
+   startMoveSfx() /
+   stopMoveSfx()      — soft airy whisper while Pip glides (NOT footsteps).
+   playPhaseSfx()     — descending whoosh on phase-through.
+   ================================================================ */
+
+function unlockSfx() {
+  if (sfx.unlocked) return;
+  try {
+    sfx.ctx    = new (window.AudioContext || window.webkitAudioContext)();
+    sfx.master = sfx.ctx.createGain();
+    sfx.master.gain.value = sfx.on ? sfx.baseGain : 0;
+    sfx.master.connect(sfx.ctx.destination);
+    if (sfx.ctx.state === 'suspended') sfx.ctx.resume();
+    sfx.unlocked = true;
+  } catch (e) { /* Web Audio unavailable — all cue calls are silent no-ops */ }
+}
+
+function toggleSfx() {
+  sfx.on = !sfx.on;
+  localStorage.setItem('tlb-sfx-on', sfx.on ? 'true' : 'false');
+  const btn = document.getElementById('sfx-toggle');
+  if (sfx.on) {
+    btn.classList.remove('muted');
+    btn.title         = 'Sound effects on (click to mute)';
+    btn.setAttribute('aria-label', 'Sound effects on (click to mute)');
+    if (sfx.unlocked && sfx.master) {
+      sfx.master.gain.setTargetAtTime(sfx.baseGain, sfx.ctx.currentTime, 0.02);
+    }
+  } else {
+    btn.classList.add('muted');
+    btn.title         = 'Sound effects off (click to play)';
+    btn.setAttribute('aria-label', 'Sound effects off (click to play)');
+    if (sfx.unlocked && sfx.master) {
+      sfx.master.gain.setTargetAtTime(0, sfx.ctx.currentTime, 0.02);
+    }
+  }
+}
+
+function initSfx() {
+  // Read persisted toggle state (default on)
+  const saved = localStorage.getItem('tlb-sfx-on');
+  sfx.on = saved === null ? true : saved === 'true';
+  // Wire the toggle button and apply initial visual state
+  const btn = document.getElementById('sfx-toggle');
+  btn.addEventListener('click', toggleSfx);
+  if (!sfx.on) {
+    btn.classList.add('muted');
+    btn.title         = 'Sound effects off (click to play)';
+    btn.setAttribute('aria-label', 'Sound effects off (click to play)');
+  }
+}
+
+/* ---- Cue: collect — soft two-note rising blip (~150ms) ---- */
+function playCollectSfx() {
+  if (!sfx.unlocked || !sfx.ctx) return;
+  const now = sfx.ctx.currentTime;
+  const osc = sfx.ctx.createOscillator();
+  const g   = sfx.ctx.createGain();
+  osc.type  = 'sine';
+  osc.frequency.setValueAtTime(440, now);
+  osc.frequency.linearRampToValueAtTime(660, now + 0.10);
+  osc.connect(g); g.connect(sfx.master);
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(0.28, now + 0.015);
+  g.gain.linearRampToValueAtTime(0,    now + 0.14);
+  osc.start(now); osc.stop(now + 0.15);
+}
+
+/* ---- Cue: eat — warm rounded swell (~250ms) ---- */
+function playEatSfx() {
+  if (!sfx.unlocked || !sfx.ctx) return;
+  const now = sfx.ctx.currentTime;
+  const osc = sfx.ctx.createOscillator();
+  const g   = sfx.ctx.createGain();
+  osc.type  = 'sine';
+  osc.frequency.setValueAtTime(220, now);
+  osc.frequency.linearRampToValueAtTime(255, now + 0.12);
+  osc.frequency.linearRampToValueAtTime(235, now + 0.25);
+  osc.connect(g); g.connect(sfx.master);
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(0.22, now + 0.06);
+  g.gain.linearRampToValueAtTime(0,    now + 0.25);
+  osc.start(now); osc.stop(now + 0.26);
+}
+
+/* ---- Cue: notebook pulse — dry tick (~80ms) ---- */
+function playNotebookSfx() {
+  if (!sfx.unlocked || !sfx.ctx) return;
+  const now = sfx.ctx.currentTime;
+  const osc = sfx.ctx.createOscillator();
+  const g   = sfx.ctx.createGain();
+  osc.type             = 'triangle';
+  osc.frequency.value  = 820;
+  osc.connect(g); g.connect(sfx.master);
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(0.16, now + 0.005);
+  g.gain.linearRampToValueAtTime(0,    now + 0.075);
+  osc.start(now); osc.stop(now + 0.08);
+}
+
+/* ---- Cue: inspect — airy high shimmer (~120ms) ---- */
+function playInspectSfx() {
+  if (!sfx.unlocked || !sfx.ctx) return;
+  const now = sfx.ctx.currentTime;
+  const osc = sfx.ctx.createOscillator();
+  const g   = sfx.ctx.createGain();
+  osc.type  = 'sine';
+  osc.frequency.setValueAtTime(1200, now);
+  osc.frequency.linearRampToValueAtTime(1600, now + 0.06);
+  osc.connect(g); g.connect(sfx.master);
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(0.12, now + 0.015);
+  g.gain.linearRampToValueAtTime(0,    now + 0.12);
+  osc.start(now); osc.stop(now + 0.13);
+}
+
+/* ---- Cue: movement whisper — soft airy hush while Pip glides ----
+   Uses a looping white-noise buffer through a lowpass filter.
+   Ghost physics: Pip glides, no footfalls — continuous hush, NOT rhythmic.
+   Graph is created once (lazy) and reused; gain ramps between 0 and the
+   whisper level on start/stop. */
+function _initMoveWhisper() {
+  if (moveWhisper.ready || !sfx.unlocked || !sfx.ctx) return;
+  const rate = sfx.ctx.sampleRate;
+  // 0.5-second looping white-noise buffer
+  const buf  = sfx.ctx.createBuffer(1, rate * 0.5, rate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+  const src    = sfx.ctx.createBufferSource();
+  src.buffer   = buf;
+  src.loop     = true;
+
+  const filt   = sfx.ctx.createBiquadFilter();
+  filt.type    = 'lowpass';
+  filt.frequency.value = 200;
+  filt.Q.value = 0.7;
+
+  const g      = sfx.ctx.createGain();
+  g.gain.value = 0;  // silent until startMoveSfx() ramps it up
+
+  src.connect(filt);
+  filt.connect(g);
+  g.connect(sfx.master);
+  src.start();
+
+  moveWhisper.source = src;
+  moveWhisper.filter = filt;
+  moveWhisper.gain   = g;
+  moveWhisper.ready  = true;
+}
+
+function startMoveSfx() {
+  if (!sfx.unlocked || !sfx.ctx) return;
+  _initMoveWhisper();
+  if (!moveWhisper.gain) return;
+  const now = sfx.ctx.currentTime;
+  moveWhisper.gain.gain.cancelScheduledValues(now);
+  moveWhisper.gain.gain.setValueAtTime(moveWhisper.gain.gain.value, now);
+  moveWhisper.gain.gain.linearRampToValueAtTime(0.055, now + 0.18);  // ~180ms fade-in
+}
+
+function stopMoveSfx() {
+  if (!sfx.unlocked || !sfx.ctx || !moveWhisper.gain) return;
+  const now = sfx.ctx.currentTime;
+  moveWhisper.gain.gain.cancelScheduledValues(now);
+  moveWhisper.gain.gain.setValueAtTime(moveWhisper.gain.gain.value, now);
+  moveWhisper.gain.gain.linearRampToValueAtTime(0, now + 0.22);  // ~220ms fade-out
+}
+
+/* ---- Cue: phase-through — descending whoosh (~400ms) ----
+   Two Ch1 trigger sites already wired (grandparents→cabin discovery,
+   and the panic-glide wall-phase in updatePanicSequence).
+   Future trigger sites (Sprint 23 phase-through beats) will call this
+   function when their shimmer moments are built.
+   // TODO Sprint 23: call playPhaseSfx() at each phase-through shimmer site */
+function playPhaseSfx() {
+  if (!sfx.unlocked || !sfx.ctx) return;
+  const now = sfx.ctx.currentTime;
+  const osc = sfx.ctx.createOscillator();
+  const g   = sfx.ctx.createGain();
+  osc.type  = 'sine';
+  osc.frequency.setValueAtTime(600, now);
+  osc.frequency.exponentialRampToValueAtTime(160, now + 0.36);
+  osc.connect(g); g.connect(sfx.master);
+  g.gain.setValueAtTime(0, now);
+  g.gain.linearRampToValueAtTime(0.20, now + 0.04);
+  g.gain.linearRampToValueAtTime(0.12, now + 0.22);
+  g.gain.linearRampToValueAtTime(0,    now + 0.40);
+  osc.start(now); osc.stop(now + 0.41);
+}
+
+/* ================================================================
    MUSIC SYSTEM
    playMusic(trackId)  — switch to a track, crossfading if needed.
    unlockMusic()       — called on first keypress; starts playback.
@@ -9272,6 +9560,8 @@ function unlockMusic() {
     const activeEl = music.current === 'a' ? music.audioA : music.audioB;
     activeEl.play().catch(() => {});
   }
+  // Sprint 30: also unlock the SFX AudioContext on the same gesture
+  unlockSfx();
 }
 
 function toggleMusic() {
@@ -10711,6 +11001,7 @@ function initTouchControls() {
    ================================================================ */
 
 initMusic();
+initSfx();  // Sprint 30: SFX system — reads localStorage, wires toggle
 initGate();
 initTitleScreen();
 // Gate mode on cold load: no controls strip until first keypress (transitionFromGate sets 'title')

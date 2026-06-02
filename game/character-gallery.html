@@ -339,7 +339,7 @@ const C = {
   bSkin:        '#d0b090',
   // Erik
   eHalo:        '#ffd8a8',
-  eHair:        '#3a2818',
+  eHair:        '#d8b860',   // blond — Decision B 2026-06-02
   eSweater:     '#5a4438',
   eTrousers:    '#3a2818',
   eSkin:        '#d0b890',
@@ -1020,8 +1020,8 @@ function drawErik(ctx, cx, floor, t, speaking) {
   rect(ctx, cx+3, ht+2, 2, 1, C.eHair);
 
   // Eyes — canonical human treatment, slightly larger for child-emphasis (3×3)
-  drawHumanEye(ctx, cx-4, ht+3, 3, 3, '#f0e8d8', '#2a2030');  // left
-  drawHumanEye(ctx, cx+1, ht+3, 3, 3, '#f0e8d8', '#2a2030');  // right
+  drawHumanEye(ctx, cx-4, ht+3, 3, 3, '#f0e8d8', '#2a4878');  // left  — blue pupil, Decision B
+  drawHumanEye(ctx, cx+1, ht+3, 3, 3, '#f0e8d8', '#2a4878');  // right — blue pupil, Decision B
   // Eye shine (liveliness — delighted child)
   px(ctx, cx-4, ht+3, '#ffffff');
   px(ctx, cx+1, ht+3, '#ffffff');

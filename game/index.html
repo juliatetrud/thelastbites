@@ -8621,25 +8621,47 @@ function drawMemory6bScene(elapsed) {
   ctx.fillRect(2, -1, 12, 3);
   ctx.restore();
 
-  // Young Erik — smaller, FACE TURNED AWAY (critical art note)
-  // Only back-of-head and profile visible; face in shadow
+  // Young Erik — ~11 years old, face toward viewer (Decisions B + C, 2026-06-02)
+  // Blond hair #d8b860, blue eyes #2a4878, fair skin #d0b890.
   const erikX = Math.round(W * 0.60);
   ctx.save();
   ctx.translate(erikX, FLOOR_Y);
-  // Back-of-head only — facing LEFT (away from viewer)
-  ctx.fillStyle = '#8c6040';
-  ctx.fillRect(-6, -52, 12, 12);   // back of head
-  // Shadow covering face side
-  ctx.fillStyle = 'rgba(20,10,4,0.65)';
-  ctx.fillRect(-6, -52, 8, 12);    // shadow mask on face side
-  ctx.fillStyle = '#7a5438';       // small body
-  ctx.fillRect(-7, -40, 14, 20);
-  ctx.fillRect(-10, -38, 6, 12);   // arms
-  ctx.fillRect(4, -38, 6, 12);
+
+  // Hair — blond (Decision B: #d8b860)
+  ctx.fillStyle = '#d8b860';
+  ctx.fillRect(-5, -52, 10, 4);    // hair top
+  ctx.fillRect(-6, -49, 2, 3);     // side hair left
+  ctx.fillRect(4,  -49, 2, 3);     // side hair right
+
+  // Face — fair skin (Decision B)
+  ctx.fillStyle = '#d0b890';
+  ctx.fillRect(-5, -48, 10, 10);   // head / face
+
+  // Eyes — blue pupils (Decision B: #2a4878)
+  ctx.fillStyle = '#f0e8d8';
+  ctx.fillRect(-4, -45, 2, 2);     // left eye white
+  ctx.fillRect( 2, -45, 2, 2);     // right eye white
+  ctx.fillStyle = '#2a4878';
+  ctx.fillRect(-3, -45, 1, 1);     // left pupil
+  ctx.fillRect( 3, -45, 1, 1);     // right pupil
+
+  // Mouth with gap-tooth (Decision B)
+  ctx.fillStyle = '#3a2020';
+  ctx.fillRect(-1, -40, 1, 1);     // mouth left (gap in center = gap tooth)
+  ctx.fillRect( 1, -40, 1, 1);     // mouth right
+
+  // Body
+  ctx.fillStyle = '#7a5438';
+  ctx.fillRect(-7, -38, 14, 18);   // torso
+  ctx.fillRect(-11, -36, 4, 12);   // left arm (reaching toward counter)
+  ctx.fillRect(  7, -36, 4, 12);   // right arm
+
+  // Lower body / legs
   ctx.fillStyle = '#3c3028';
   ctx.fillRect(-6, -20, 12, 14);
-  ctx.fillRect(-5, -6, 5, 10);
-  ctx.fillRect(0, -6, 5, 10);
+  ctx.fillRect(-5,  -6,  5, 10);
+  ctx.fillRect( 0,  -6,  5, 10);
+
   ctx.restore();
 
   // Lefse on counter

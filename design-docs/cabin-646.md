@@ -72,6 +72,14 @@ Inspecting a collected item in Cabin 646 fires a short italic narration line. No
 
 Specific coordinates locked when each chapter is implemented.
 
+## Shared sleeping-cabin layout rule (Decision A, 2026-06-02)
+
+All sleeping cabins aboard the Mnemosyne — Cabin 646, Grandparents' Cabin 644, and any future sleeping cabin — use the **same room footprint as the grandparents' cabin**: a compact, single-screen *bedroom*, not a hallway-length corridor segment. The grandparents' cabin is the reference standard for cabin proportions.
+
+Furniture, windows, treats, props, and decor vary freely per cabin. The shared element is the layout/footprint and the "this is a bedroom" read, not the contents.
+
+**Current bug:** Cabin 646 currently renders hallway-shaped — too long, with layout cues that make it read as a corridor. It must read as a compact bedroom. **Locked spatial sequence:** Pip walks in → sees the mirror → the bed is to the right of the mirror. Implementation (recompaction) is Sprint 32.
+
 ## Spatial layout
 
 Single-screen room (no horizontal scroll required). Internal coordinates use `ROOM_W` per the standard room system.
@@ -191,10 +199,10 @@ From `design-docs/visual-research-tracker.md` (Ch1 section):
 
 ## Open questions
 
-1. **The washstand and writing desk** mentioned in the visual research aren't in current code. The cabin has bed, mirror, porthole, child's drawing, two doors — but no other furniture. Should the cabin gain a washstand or desk for fidelity to period? Or does the room read as it should now without them? My read: it works as it is. The emptiness is part of the emotional register. Flag for Julia.
+1. ~~**The washstand and writing desk**~~ **Resolved Sprint 31 (2026-06-02):** Builder's discretion within the shared-bedroom layout (Decision A). Sprint 32 implements the recompaction; furniture choices are fine-tuned in-browser afterward. These specific fixtures are not required — the bedroom read is what matters.
 
-2. **Aurora in the porthole.** The visual research notes "occasional aurora reflection" for the cabin porthole, but the current `ch1-ocean-night` scene only renders stars and water. The aurora is a strong observation-deck moment. Decide: does the cabin porthole get a faint aurora reflection, or is aurora reserved for the deck?
+2. ~~**Aurora in the porthole.**~~ **Resolved Sprint 31 (2026-06-02):** Builder's discretion. A faint aurora reflection in the cabin porthole is acceptable; it does not dilute the observation-deck aurora moment because the deck's aurora is far more prominent and full-layered.
 
-3. **Bedside drawer.** Treat placement assumes a drawer. The bed has no drawer in current code. Add a drawer-detail to bed geometry, or place the treat elsewhere in the cabin (under the bed? on the desk if we add a desk?).
+3. ~~**Bedside drawer.**~~ **Resolved Sprint 31 (2026-06-02):** Builder's discretion. If adding a drawer to the bed geometry is complex, place the Smørbukk treat elsewhere within the shared layout (e.g. on a surface near the bed). Exact placement tuned in-browser after Sprint 32.
 
-4. **Inspectable child's drawing.** Currently ambient. Making it inspectable would surface a small Pip-narration line about Babcia packing it. Worth doing, or leave as decoration? My read: making it inspectable would land emotionally. Even one line — *Babcia made me pin it up. She said I'd want to see Norway in my drawing before I saw it through the window.*
+4. ~~**Inspectable child's drawing.**~~ **Resolved Sprint 31 (2026-06-02):** Builder's discretion. If adding a short inspect narration line ("*Babcia made me pin it up.*") is practical during Sprint 32, include it; otherwise defer to Sprint 34 polish.

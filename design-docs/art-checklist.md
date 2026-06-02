@@ -45,7 +45,7 @@ Ch1 has 9 cinematics: Cinematics 6a (gravlaks/grandfather) and 6b (lefse/Erik) a
 | 4 | `cin-04-kitchen-cracker.png` | Beat 9 | Kitchen meeting — Pip floating with food, Henrik in silent scream | **Not built** | Henrik kitchen build sprint. Bible-described composition: diagonal energy, comic-tragic mood. |
 | 5 | `cin-05-henrik-sits.png` | Beat 10 | Henrik sits on stool, looks at Pip — game's heart turns | **Not built** | Henrik kitchen build sprint. Close two-shot, intimate. Pip in soft focus to the side, listening. |
 | 6a | `cin-06a-gravlaks.png` | Beat 11 | Pip tastes gravlaks; kitchen shimmers; young Henrik (~8) watches grandfather cure salmon | **Shipped procedural** | Sprint 26 Stage 2. First half of the doubled first-taste cinematic. Memory-mist treatment. |
-| 6b | `cin-06b-lefse.png` | Beat 11 | Internal crossfade; Pip tastes lefse; older Henrik teaches Erik (~11) to make lefse | **Shipped procedural** | Sprint 26 Stage 2. **CRITICAL:** Erik's face must be partially visible — turned away, profile, or half-shadow. Erik is ~11 (same age as Pip — deliberate parallel). Recognizable on a second viewing, not on first. |
+| 6b | `cin-06b-lefse.png` | Beat 11 | Internal crossfade; Pip tastes lefse; older Henrik teaches Erik (~11) to make lefse | **Shipped procedural** | Sprint 26 Stage 2. Erik's face is shown **clearly** (Decision C, 2026-06-02 — partial-obscurity retired). Erik: blond hair `#d8b860`, blue eyes, fair skin, age ~11, gap tooth, Norwegian (Decision B, 2026-06-02). Recognition payoff lives in Ch6 photo → Ch7 ghost chain. |
 | 7 | `cin-07-dock-farewell.png` | Beat 12 | Wide shot — grandparents walk away with coffin; Babcia almost-turns; Pip waving at railing | **Shipped procedural** | Sprint 29 (`567e82a`). `drawDockFarewellCinematic()`. Cold blue-gray morning. |
 | 8 | `cin-08-henriks-offer.png` | Beat 13 | Two-shot — Henrik offering notebook to Pip on deck at sunset | **Shipped procedural** | Sprint 29 (`567e82a`). `drawHenriksOfferCinematic()`. Warm orange-pink horizon. Notebook prop drawn procedurally inline. |
 
@@ -112,7 +112,7 @@ These are room-asset updates from Sprint 19 that need implementation when the ca
 | Filename | Character | Beat | Status | Notes |
 |---|---|---|---|---|
 | `sprite-young-henrik-memory.png` | Young Henrik | Beat 11 (Cinematic 6a) | **Not built** | Ch1 Cinematic 6a. Boy ~8 years old in cottage kitchen, watching grandfather's hands cure salmon. *(A prior note here said "retired from Ch1 — moved to Ch4." That is superseded: Cinematic 6a is canonical Ch1, Sprint 26 Stage 2.)* |
-| `sprite-young-erik-memory.png` | Young Erik | Beat 11 (Cinematic 6b) | **Not built** | ~**11 years old — same age as Pip. Deliberate parallel: two boys dead too young.** Face partially visible — turned away, profile, or half-shadow. Must be recognizable on a second viewing (Ch7 reunion), not on first. *(Prior note said "~5-7 years old" — superseded by 2026-06-01 age lock.)* |
+| `sprite-young-erik-memory.png` | Young Erik | Beat 11 (Cinematic 6b) | **Not built** | ~**11 years old — same age as Pip. Deliberate parallel: two boys dead too young.** Face shown **clearly** (Decision C, 2026-06-02 — partial-obscurity retired). Blond hair `#d8b860`, blue eyes, fair skin, gap tooth, Norwegian. *(Prior note said "~5-7 years old" — superseded by 2026-06-01 age lock. Prior "partially visible" requirement — superseded by Decision C.)* |
 | `sprite-henriks-grandfather-memory.png` | Henrik's grandfather | Beat 11 (Cinematic 6a) | **Not built** | Ch1 Cinematic 6a. Old Norwegian man, cottage kitchen, late afternoon sun, work-shirt sleeves rolled, careful hands. *(A prior note said "retired from Ch1 — moved to Ch4." Superseded: Cinematic 6a is canonical Ch1.)* |
 | `sprite-older-henrik-memory.png` | Older Henrik (teaching Erik) | Beat 11 (Cinematic 6) | **Not built** | Henrik recognizably grown — same character as present-day, slightly younger. Teaching Erik to make lefse-and-gravlaks. A different kitchen from his grandfather's. |
 
@@ -391,9 +391,9 @@ For the Henrik kitchen build sprint, the order to tackle assets:
 For when commissioned art replaces procedural drawings, prerequisites are:
 
 1. **Style anchor confirmation.** The first commissioned cinematic should be `cin-02-mirror.png` (the melt) — it's the chapter's most distinctive image and is reused at the Ch8 climax. Get the style right here.
-2. **Erik's face partial obscurity.** Critical for Cinematic 6. Must be recognizable on Ch4 photograph viewing but ambiguous on first pass.
+2. ~~**Erik's face partial obscurity.**~~ **Resolved — Decision C (2026-06-02): Erik's face is shown clearly in Cinematic 6b.** No partial obscurity. Erik: blond, blue eyes, fair skin, age ~11, gap tooth, Norwegian. Commission to this spec.
 3. **Henrik's silhouette.** High contrast (cream apron, black slacks, black button-up, white toque). Pose: sleek-fit, no stoop, pipe in right hand. Authoritative-via-hat, not tall-via-body.
-4. **Erik's face full reveal.** Reserved for Ch4. Should match the partial-obscure design from Cinematic 6 closely — same hair, same general features, with face fully visible.
+4. ~~**Erik's face full reveal. Reserved for Ch4.**~~ **Resolved — Decision C (2026-06-02): Erik's face is clear in Ch1. The recognition chain is Ch6 photo → Ch7 ghost (both using the same blond/blue-eyed appearance). No separate "full reveal" commission needed.**
 5. **Single-light-source discipline.** Every commission must observe the single warm light rule. Reject art that has multiple competing light sources.
 
 ---
@@ -410,7 +410,7 @@ For when commissioned art replaces procedural drawings, prerequisites are:
 
 3. **Procedural Henrik vs. commissioned Henrik.** Build sprint produces procedural sprite. Commissioned art is a later sprint. Confirm procedural ships first.
 
-4. **Erik's face composition.** Suggested compositions in `03-art-and-aesthetic.md`: turned away, profile, half-shadow, hand-in-front. Build sprint picks one. My read: **profile + half-shadow** — the face is visible in profile but the eye-side is in shadow. This is the most ambiguous on first viewing and most recognizable on second.
+4. ~~**Erik's face composition.** Turned away, profile, half-shadow, etc.~~ **N/A — resolved Decision C (2026-06-02).** Face is shown clearly in Cinematic 6b. Composition: Erik faces the scene naturally (as a child learning from his father). No obscuring treatment needed.
 
 5. **Janitor's walk choreography.** Per `puzzles.md` § Puzzle 6D — does the janitor enter from the hallway (offstage), or appear at the dark corridor's left edge? My read: appear at left edge (no transition required). Settle in build sprint.
 

@@ -41,13 +41,15 @@ The ship is a recurring visual environment across all eight chapters. Each locat
 
 **Visual identity.** Mid-range Edwardian liner stateroom (not first-class palatial, not steerage). Bunk or single bed with brass fittings; oval or rectangular wall mirror; porthole; small writing desk; washstand; wood paneling; brass sconce. Warm nightstand lamp is the room's single light source. *(`visual-research-tracker.md` Ch1)*
 
+**Shared sleeping-cabin layout rule (Decision A, 2026-06-02).** All sleeping cabins — Cabin 646, Grandparents' Cabin 644, and any future cabin — use the **same compact bedroom footprint** as the grandparents' cabin. The room must read as a bedroom, not a corridor. Locked spatial sequence: Pip walks in → sees mirror → bed is to the right of the mirror. **Cabin 646 currently renders too long and hallway-shaped; recompaction is Sprint 32.** Furniture/decor vary per cabin; the footprint and "bedroom" read are the shared elements.
+
 **Palette.** Regional moonlit-blue base (`--region-base: #1c2858`) with the nightstand lamp as a single warm amber pool. Cabin is tight and personal — not cold, but not as warm as the kitchen.
 
 **Key props.** Bed (two states: lump-visible / empty post-reveal). Mirror (two states: empty / ghost-face permanent). Porthole (aurora layer, faint). Cabin door (x=120, warm-amber glow indicating permeable — `03-art-and-aesthetic.md` § Permeable surface convention). Far cabin door (x=450, no glow, non-interactable). Writing desk (~x=220). Washstand (~x=340). Under-bed drawer (Smørbukk treat). Child's drawing on wall (~x=160). *(`art-checklist.md` cabin props)*
 
 **Recurring role.** Cabin 646 is the collection room — items Pip collects across all chapters accumulate and display visibly here on return visits. Collection-item inspectables use a cool-blue shimmer (not warm-amber) per the permeable-surface exception. *(`03-art-and-aesthetic.md`)*
 
-**Build status.** Shipped procedural (Sprint 11 visual identity locked; Sprint 19 adds desk, washstand, under-bed drawer, aurora layer — some not yet built as of Sprint 26).
+**Build status.** Shipped procedural (Sprint 11 visual identity locked; Sprint 19 adds desk, washstand, under-bed drawer, aurora layer — some not yet built as of Sprint 26). **Sprint 32 recompacts the room to the shared bedroom footprint.**
 
 ---
 
@@ -67,6 +69,8 @@ The ship is a recurring visual environment across all eight chapters. Each locat
 
 **Visual identity.** Same Edwardian vocabulary as Cabin 646 but slightly larger. Two beds; a wardrobe; a small armchair (Dziadek's coat over it); a radio on a side table; window with four wooden panes showing aurora reflection. Babcia's grief-coded personal effects: coat over chair, kerchief, open half-packed suitcase. Nightstand with lamp is the warm-pool source. *(`art-checklist.md`, `visual-research-tracker.md` Ch1)*
 
+**Shared sleeping-cabin layout rule (Decision A, 2026-06-02).** The grandparents' cabin is the **reference standard** for the shared sleeping-cabin footprint. Cabin 646 (Sprint 32) adopts this bedroom proportions. Furniture and decor differ between the two cabins, but the layout archetype is the same.
+
 **Palette.** Same regional base as hallway. Nightstand lamp warm pool. Window aurora layer (faint green-violet band). Room has a softer atmosphere than Pip's cabin — lived-in rather than haunted.
 
 **Key props.** Babcia on bed (sob-bob animation). Dziadek at window (static, faces left, no mirror). Photograph of Pip on nightstand. Suitcase with pier-recipe card. Window (4-pane wood). Armchair with Dziadek's coat (~x=280). Dziadek's radio (~x=200). *(`art-checklist.md`)*
@@ -79,7 +83,7 @@ The ship is a recurring visual environment across all eight chapters. Each locat
 
 **Visual identity.** Service-deck passage — utilitarian, not passenger-polished. Painted iron walls, exposed pipes overhead. Two states: *dark* (pre-puzzle, only one weak sconce flickers at ~x=240 and natural light from the stairwell end) and *lit* (post-puzzle, all sconces repaired and glowing). Janitor's cart (~x=840): worn metal cart, mop bucket, broom, clipboard "J. Henriksen Maintenance." Fallen/broken sconce with wires at ~x=420. Broken glass on floor below broken sconce. Stairwell descent to kitchen at ~x=880 (right end). *(`art-checklist.md`, `design-docs/dark-corridor.md`)*
 
-**Palette.** Cooler than passenger corridor — deep cool greens/blues with almost no warm. Pre-puzzle: near-black with a single amber flicker. Post-puzzle: amber sconce pools spaced through the corridor. Echo-mice scuttle along the baseboards.
+**Palette.** Cooler than passenger corridor — deep cool greens/blues with almost no warm. **Pre-puzzle: gently dark and navigable — visibly dim but never near-black (Decision D, 2026-06-02; see `dark-corridor.md`).** Post-puzzle: amber sconce pools spaced through the corridor, meaningfully brighter than the pre-puzzle state. Echo-mice scuttle along the baseboards.
 
 **Key beats.** Broken-sconce held-button puzzle (electricity ability earned). Broken-glass float discovery (float ability earned). Janitor's scripted walk (post-puzzle trigger). Stairwell descent transitions to kitchen.
 
@@ -209,7 +213,7 @@ Echo-spiders and echo-bats are retired from Ch1 — reserved for future chapters
 
 **Cinematic 6a — First Taste (gravlaks / grandfather memory).** Pip takes a bite of gravlaks. Kitchen shimmers. Young Henrik (~8 years old) in a warm Norwegian cottage kitchen, watching his grandfather's hands cure salmon. Sun through a window. The smell of dill. Past is brighter; present darker. Shimmer-dissolve transition, hand-animated. Memory mist treatment (`cinematic.isMemory = true`). *(`ch01-cabin-646-outline.md`; `01-story-bible.md` Ch1 status)*
 
-**Cinematic 6b — First Taste (lefse / Erik memory).** After internal crossfade. Pip takes a bite of lefse. Older Henrik (recognizably grown) teaching a young boy to make lefse. **Erik is ~11 years old — the same age Pip is. This parallel is deliberate (Decision 8, 2026-06-01). He is drawn as he looked at death.** The child's face: **partially visible — turned away, in profile, in half-shadow. Not occluded, but ambiguous.** Must be recognizable on a Ch7 second viewing (when Pip meets Erik's ghost), not on first pass. Same shimmer-dissolve, same memory mist. *(`03-art-and-aesthetic.md` § Cinematic 6b CRITICAL ART NOTE; `ch01-cabin-646-outline.md`)*
+**Cinematic 6b — First Taste (lefse / Erik memory).** After internal crossfade. Pip takes a bite of lefse. Older Henrik (recognizably grown) teaching a young boy to make lefse. **Erik is ~11 years old — the same age Pip is. This parallel is deliberate (Decision 8, 2026-06-01).** Erik's face is shown **clearly** (Decision C, 2026-06-02 — partial-obscurity requirement retired). **Erik: blond hair `#d8b860`, blue eyes, fair skin, gap tooth, Norwegian (Decision B, 2026-06-02).** Recognition lives in the Ch6 photo → Ch7 ghost chain: Pip sees the photo clearly in Ch6 but doesn't recognize him (no reason to yet), meets Erik's ghost in Ch7 (recognition fires because photo and ghost face match). Same shimmer-dissolve, same memory mist. *(`03-art-and-aesthetic.md` § Cinematic 6b; `ch01-cabin-646-outline.md`)*
 
 **Cinematic 7 — Dock farewell.** Wide shot from the ship's deck. High angle. Grandparents walking away on the dock below with a small wooden box (coffin). Babcia stops, looks up toward the ship, almost catches Pip's eye, then continues. Pip on railing, translucent, waving with one small hand. Cold blue-gray morning light. Still. *(`03-art-and-aesthetic.md` § Cinematic 7)*
 

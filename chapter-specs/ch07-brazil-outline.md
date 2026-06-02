@@ -23,7 +23,7 @@ Chapter 7 is the **last port chapter** before the climax. The Ch5–Ch6 escalati
 
 ## Emotional arc
 
-**What Pip carries in:** Six abilities through memory-gifting. The journal with six recipes (gravlaks/lefse, kodused kotletid, Sandy's red curry, Muhittin's muhammara, Johannes's potjiekos, Tirta's lemper) plus chef memories and the Iris-family memory. Candle (Ch1), matches (Ch3), switchblade (Ch5), banana leaves (Ch6) in his pocket. **The infection** — involuntary dark memories from the Pocong — quietly present, surfacing as flashbacks. Pätu. A twelve-year-old's worth of grief, mostly under the surface, getting closer to the surface.
+**What Pip carries in:** Six abilities through memory-gifting. The journal with six recipes (gravlaks/lefse, kodused kotletid, Sandy's red curry, Muhittin's muhammara, Johannes's potjiekos, Tirta's lemper) plus chef memories and the Iris-family memory. Candle (Ch1), matches (Ch3), switchblade (Ch5), banana leaves (Ch6) in his pocket. **The infection** — involuntary dark memories from the Pocong — quietly present, surfacing as flashbacks. Pätu. An **eleven**-year-old's worth of grief, mostly under the surface, getting closer to the surface.
 
 **What Pip learns:** Two spirits can read his infection from the outside — first hostilely (the Boitatá), then compassionately (Joana and Beatriz). He is *visibly* carrying something now. The diagnosis introduces three truths he will not fully understand until Ch8: *there are two dark things in him, not one; the shadow has been growing for longer than he's been a ghost; the answer is giving, not escaping.* In the taste-memory, he sees the long chain of cooks-feeding-others stretching back through generations — and understands, without being told, that he is part of that chain. And, in the ship-side beat with Erik and Henrik, he learns the lesson by *doing it* — gifting a memory across a threshold someone couldn't otherwise cross.
 
@@ -320,7 +320,7 @@ Pip floats toward Henrik's kitchen to share his news.
 
 *Pip floats into the doorway.*
 
-*Pip and Erik see each other at the same instant. Erik — eleven, alive-looking, standing behind Henrik with his hand resting on his father's back — looks up. Pip sees him. Pip is still processing what he is seeing.*
+*Pip and Erik see each other at the same instant. Erik — eleven, alive-looking, **blond-haired and blue-eyed, fair-skinned, with a gap tooth** — standing behind Henrik with his hand resting on his father's back — looks up. Pip sees him. Pip is still processing what he is seeing. *(Appearance locked Decision B, 2026-06-02. The recognition fires because Erik's ghost matches the blond/blue-eyed boy in the Ch6 photograph.)*
 
 *Erik's face lights up. He waves with both hands, bouncing on the balls of his feet.*
 

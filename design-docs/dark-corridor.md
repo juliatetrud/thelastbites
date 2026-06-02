@@ -39,15 +39,22 @@ The dark corridor uses the same wall-panel system as the passenger hallway but w
 
 The most lighting-dramatic room in Ch1.
 
-### Pre-puzzle state (dark)
+### Minimum-visibility rule (Decision D, 2026-06-02)
 
-- **Base fill:** very dark, nearly black (`#050810` or darker).
-- **Wall gradient:** disabled or extremely subtle — the wall is essentially invisible.
-- **The one flickering light:** a single working sconce barely flickering somewhere mid-corridor. Casts a tiny weak-amber pool, ~12px radius. Not enough to navigate by.
-- **Pip's own faint glow:** Pip's spectral aura is the player's primary lightsource. The player can see Pip and roughly 30–40px around him.
-- **The fallen sconce:** invisible until Pip approaches it within his aura radius.
+**The dark corridor must be visibly navigable — gently dark and atmospheric, never frustrating-dark.** The player must always be able to see: the room, the cart, the broken sconce, and the path. Atmospheric darkness never costs the player the ability to see where they are and where they're going.
 
-This is a deliberate departure from every other Ch1 room. The dark corridor is the one space where vision itself is the obstacle.
+**Game-wide principle:** *Every level stays fun and visible, even when the mood is dark.* This applies to all rooms in the game that carry a "dark" register.
+
+The pre-puzzle state stays *darker* than the post-puzzle (lit) state — the puzzle still meaningfully changes the lighting — but the floor of visibility rises.
+
+### Pre-puzzle state (gently dark)
+
+- **Base fill:** dark but navigable — suggested `#0e1418` or similar. Visibly dim, not invisible.
+- **Wall gradient:** low but present — the room shape, walls, and floor should be legible without the player squinting.
+- **The one flickering light:** a single working sconce barely flickering mid-corridor. Casts a weak-amber pool, ~12px radius. Together with Pip's aura it gives enough visibility to navigate.
+- **Pip's own faint glow:** Pip's spectral aura supplements the sconce. The player can see Pip, roughly 30–40px around him, *and* the sconce pools.
+- **The fallen sconce:** dimly visible even before Pip approaches — it should be legible at moderate distance so the player understands there is something broken in the room to investigate.
+- **Mood register:** the corridor feels atmospheric and unsettling, but the player is never navigating near-blackness.
 
 ### Post-puzzle state (lights on)
 

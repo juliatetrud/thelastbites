@@ -268,6 +268,8 @@ These are the principles that keep the look consistent. When in doubt, return he
 
 9. **The two registers share a soul.** Pip in a pixel room and Pip in a present-day cinematic close-up must read as the same character — same face (eye-dots, blush, mouth), same proportions, same soft cool glow underneath. The cinematic Pip is just *more pixels of the same ghost*, not a redesign. The apron and hair appear only in memory-Pip (Register B, flashback beats) per the story bible.
 
+10. **Dark rooms stay navigable.** Atmospheric darkness never costs the player the ability to see where they are and where they're going. Every room — even the darkest — must be visibly playable; gently dark, never frustrating-dark. *(Locked Decision D, 2026-06-02. Applies game-wide.)*
+
 ### Memory cinematic visual language
 
 *(Locked in Sprint 11. Defined in `game/index.html`'s `drawMemoryMist()` function. Not used by any cinematic in Sprint 11.)*
@@ -528,9 +530,9 @@ These are the static graphics needed for Cabin 646. Format: 480×270 pixel art.
 **Animation:** The shimmer-dissolve transition. Hand-animated.
 
 ### Cinematic 6b: FIRST TASTE — LEFSE (the son memory)
-**Description:** Pip then tastes the lefse. The kitchen shimmers a second time. Now we see **an older Henrik teaching a young boy (Erik) to make the same lefse, the same gravlaks.** A different kitchen — Henrik's home before the accident. Young Henrik now grown; the child is unfamiliar to Pip, his face partially seen.
+**Description:** Pip then tastes the lefse. The kitchen shimmers a second time. Now we see **an older Henrik teaching a young boy (Erik) to make the same lefse, the same gravlaks.** A different kitchen — Henrik's home before the accident. Young Henrik now grown; the child is Erik.
 
-**CRITICAL ART NOTE:** Erik's face must be **partially visible** — recognizable enough that, in Chapter 4 when the player sees his photograph, they have a moment of recognition. *Not* introduction. But indistinct enough in this Chapter 1 cinematic that no player guesses on a first pass. Suggested treatment: face mostly turned away, or in profile, or in half-shadow. The player should *feel* they have seen this child before, when they reach Chapter 4, even if they can't quite say where. Detailed pixel art makes faces *more* legible than crunchier resolutions, so the obscuring must come from composition (turn, shadow, occlusion) rather than from low-pixel ambiguity.
+**Erik's appearance (locked Decision B/C, 2026-06-02):** Erik is shown **clearly, face visible**: blond hair, blue eyes, fair skin, age ~11 (same age as Pip — the parallel is deliberate), with a gap tooth. Norwegian. The prior partial-obscurity requirement (turned away / profile / half-shadow) is **retired**. The recognition payoff does not depend on hiding the Ch1 face — it lives in the later photo→ghost chain: Pip sees the photograph in Ch6 (face clear, no recognition because Pip doesn't know him yet) and meets Erik's ghost in Ch7 (recognition fires). Showing the face clearly in Ch1 is consistent with this structure.
 
 **Composition:** Same dissolve technique as 6a. The past is bright; the present is dark. The chain of inheritance — grandfather → Henrik → son — is now literal: same dish, three generations.
 
@@ -681,7 +683,7 @@ Here's a clean spec sheet to give any artist. Includes the locked decisions; exp
 
 **Sprite direction (left/right flip).** Pip faces the direction he's moving. Flipping is done at draw time via a horizontal scale transform on the canvas (`ctx.scale(-1, 1)` around the sprite's anchor), not via separate left- and right-facing art. Pip's silhouette and apron have no asymmetric details that would suffer from this. When his sprite is eventually commissioned, the artist should be told: *Pip is drawn facing one direction only; the engine mirrors him.* This rule extends to most NPCs whose silhouette has no asymmetric tells. Exceptions (e.g., a character holding a tool only in their right hand that should never appear in their left) get explicit left/right sprite variants.
 
-**Erik's face in Cinematic 6b.** Partially obscured by composition — profile, half-shadow, hand-in-front, or turned away. Recognizable on a second viewing (Chapter 4 photograph), not on first.
+**Erik's face in Cinematic 6b.** Shown clearly — face visible (Decision C, 2026-06-02). The prior partial-obscurity instruction is retired. Erik: blond hair, blue eyes, fair skin, age ~11, gap tooth, Norwegian (Decision B, 2026-06-02). The recognition payoff lives in the Ch6 photo → Ch7 ghost chain, not in obscuring the Ch1 face.
 
 **Reusable assets.** The melting-mirror image (Cinematic 2) is reused at the climax. Commission it knowing it appears twice. The shadow's interior cinematic memories at climax are sped-up versions of earlier cinematics — no new commissioning needed beyond the speed-up.
 

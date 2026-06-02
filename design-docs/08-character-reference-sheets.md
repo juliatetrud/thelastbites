@@ -17,7 +17,7 @@ Cross-references:
 |---|---|
 | **Living and recently-deceased human characters** | ~2 px cream whites (`#e8e0d0` or warm variant) with a 1 px darker pupil centered within. Eye size scales slightly per character — adults (Henrik, Babcia) get 2–3 px wide × 2 px tall; children (Erik) get a touch more emphasis for sympathy (~3 px wide × 3 px tall). |
 | **Ghost-Pip** | Small dark dots only — **no whites**. Exception by design. His face is still forming; he is new to the ghost-world. Do not apply the canonical treatment to Pip. |
-| **Ghost-children (Iris, Erik)** | Standard human eye treatment, applied at their translucent alpha. They appear as their living selves did. Erik gets warm-cream whites (`#f0e8d8`) over his warm-amber translucent body. |
+| **Ghost-children (Iris, Erik)** | Standard human eye treatment, applied at their translucent alpha. They appear as their living selves did. Erik: warm-cream whites (`#f0e8d8`) with a blue-grey pupil (`#2a4878`) to indicate blue eyes. Applied over his warm-amber translucent body. (Locked Decision B, 2026-06-02.) |
 | **Monsters and folkloric beings** | Per-character treatment chosen to express their nature. **Pocong:** yellow whites (`#ffd838`) + dark pupils + soft yellow glow halo. Future entries (Karakoncolos, Black Shuck, Boitatá, Mamlambo, Haldjas) designed individually at their commission sprint. |
 | **Crying overlay (any character)** | Light-blue pool (`rgba(168,200,232,~0.55)`) under the eyes on cheeks; a single-pixel drip-line trails down 2–3 px, fading at bottom. Cycle ~3.5 s per eye; two eyes slightly out of sync. Composable on top of the standard eye treatment. Available for any character; **Babcia is the first user**. |
 
@@ -38,7 +38,7 @@ Every named character has one primary color or color cluster that functions as t
 | Henrik present-day | **`#e8d8b0` amber-cream apron** + near-black shirt/slacks `#1a1a24` + white chef's toque `#f0f0e8`, gray beard `#aaaaa0` | Tall white toque + cream apron against near-black silhouette. High contrast against moonlit-blue rooms. |
 | Babcia | **`#8a2a2a` kerchief-red** + quilted-square pattern in cream `#e8d8b0` and brown `#5a3820`; dark coat base `#2a1f28` | The kerchief is the silhouette tell. |
 | Dziadek | **`#2a3a5a` wool deep-blue** + dark-charcoal flat cap `#1a1f2a`; carries the same cream/red patch-squares visible on Babcia's coat | The patches carry her with him. |
-| Erik (ghost form) | **`#ffd8a8` warm-amber translucent** glow + dark-brown hair `#3a2818` + Norwegian working-family clothes (sweater `#5a4438`, trousers `#3a2818`) | At-peace warm. Alpha 0.7. |
+| Erik (ghost form) | **`#ffd8a8` warm-amber translucent** glow + **blond hair `#d8b860`** + blue eyes + fair skin + Norwegian working-family clothes (sweater `#5a4438`, trousers `#3a2818`) + gap tooth | At-peace warm. Alpha 0.7. Locked Decision B, 2026-06-02. |
 | Sandy (ghost form) | **`#ffc868` warm-amber translucent** glow + brown hair `#5a3820` + casual rumpled clothes | Q8 logic. Locked. |
 | Iris | `#88b8b0` sea-green-blue translucent glow + pale-pale hair `#f8f4e8` + Edwardian dress mourning-blue `#1f2a4a` | Locked. Glow is the spirit-color; hair is the albino-looking tell. |
 | Janitor | Crew uniform muted slate `#3a4458` + brass name-tag accent `#a08664` | Low-stakes ship character. |
@@ -76,7 +76,7 @@ One-line key tells per character. For full design notes see the individual chara
 | Henrik | Tall adult — tall white chef's toque on top, cream-white apron over near-black shirt and slacks, pipe in right hand, sleek and fit |
 | Babcia | Shorter adult, red kerchief dome on top, wide soft coat with small grid squares |
 | Dziadek | Adult male, flat cap, slightly taller than Babcia, narrower silhouette |
-| Erik (ghost) | Translucent boy with visible hair, small dark-hair cluster at crown |
+| Erik (ghost) | Translucent boy with visible **blond** hair, warm-amber glow, gap tooth |
 | Sandy (ghost) | Adult male ghost, casual clothes, no distinguishing hat — moves confidently |
 | Iris | Girl ghost, Edwardian collar and skirt hem visible, pale hair |
 | Janitor | Uniformed adult, compact, name-tag glint at chest level |
@@ -401,8 +401,9 @@ Older, jolly, chaotic — sings while he cooks, talks to himself and the cat. Ca
 
 **Role:** Henrik's son. Died age **11** — the same age Pip is. **This parallel is deliberate: two boys dead too young sharpens Pip's empathy for Henrik.** Died in a boating accident alongside his mother Henrietta. Returns once a year on his birthday.
 **Chapter:** Ch7 (Erik's birthday beat). Locked 2026-06-01.
+**Appearance (all three contexts — locked Decision B, 2026-06-02):** Blond hair (`#d8b860`), blue eyes, fair skin, age 11, gap tooth. Norwegian. This appearance is consistent across: (1) Cinematic 6b Ch1 (the kitchen memory), (2) the photograph in Ch6 (Pip sees it but does not yet recognize him), and (3) Erik's ghost in Ch7 (recognition fires — his face matches the photo). These three must match.
 **Door-fraction:** ~0.40 (~44 px).
-**Color signature:** Warm-amber halo `#ffd8a8`, dark hair `#3a2818`, sweater `#5a4438`. See Table A.
+**Color signature:** Warm-amber halo `#ffd8a8`, blond hair `#d8b860`, blue eyes, fair skin, sweater `#5a4438`. See Table A.
 **Silhouette tell:** Translucent boy-form (not a ghost-blob — human shape with visible hair and clothes). Small dark-hair cluster at crown. Warm glow around the body.
 **Eyes:** Canonical human treatment, slightly larger for child-emphasis — warm cream whites (`#f0e8d8`, 3 px wide × 3 px tall) with dark grey pupils. Slightly larger than adult eyes (~50% more eye area than Henrik's) to read as a child. White shine pixel for liveliness.
 **Movement register:** See Table C. Fast small bounce; delighted bigger bounce when speaking.

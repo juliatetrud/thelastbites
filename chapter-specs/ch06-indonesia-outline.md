@@ -330,7 +330,7 @@ Pip returns to the Mnemosyne and finds Henrik in the kitchen. Henrik is alone at
 
 Pip floats it back up to him. He looks at it on the way.
 
-**The image:** A boy of roughly twelve. Dark hair, a slight gap between his front teeth, an open expression — the face of someone caught laughing. Standing in a kitchen Pip does not recognize, holding a wooden spoon almost too big for him. *(Erik. The player may suspect; Pip does not yet know.)*
+**The image:** A boy of **eleven**. **Blond hair, blue eyes, fair skin**, a slight gap between his front teeth, an open expression — the face of someone caught laughing. Standing in a kitchen Pip does not recognize, holding a wooden spoon almost too big for him. *(Erik. The player may suspect; Pip does not yet know. Appearance locked Decision B, 2026-06-02. The photo must match Erik's ghost in Ch7 for the recognition to fire.)*
 
 Pip hands the photograph to Henrik. He does not ask. *(He has learned, from Ch4, not to ask.)*
 

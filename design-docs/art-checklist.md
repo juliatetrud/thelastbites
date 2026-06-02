@@ -42,8 +42,8 @@ Ch1 has 9 cinematics: Cinematics 6a (gravlaks/grandfather) and 6b (lefse/Erik) a
 | 2 | `cin-02-mirror.png` | Beat 5 | Pip's face melts in the mirror | **Shipped procedural** | Sprint 11. Liquid-drip primary; pixel-distortion fallback. Reused at Ch8 climax — **commission once, use twice.** |
 | 3 | `cin-03-grandparents-cabin.png` | Beat 6 | Wide shot — Babcia weeping on bed, Dziadek at window, suitcase, photograph | **Shipped procedural** | Sprint 04 / 07. Procedural compositing via `drawGrandparentsCinematic`. Detailed character poses already locked. |
 | 3b | `cin-cabin-doctor-exit.png` | Beat 4 | Doctor walks across cabin and exits through far door — silent | **Shipped procedural** | Sprint 14. No dialogue. Doctor sprite procedural, walks ~3-4s. |
-| 4 | `cin-04-kitchen-cracker.png` | Beat 9 | Kitchen meeting — Pip floating with food, Henrik in silent scream | **Not built** | Henrik kitchen build sprint. Bible-described composition: diagonal energy, comic-tragic mood. |
-| 5 | `cin-05-henrik-sits.png` | Beat 10 | Henrik sits on stool, looks at Pip — game's heart turns | **Not built** | Henrik kitchen build sprint. Close two-shot, intimate. Pip in soft focus to the side, listening. |
+| 4 | `cin-04-kitchen-cracker.png` | Beat 9 | Kitchen meeting — Pip floating with food, Henrik in silent scream | **Shipped procedural** | Sprint 26 Stage 1. `drawKitchenMeetingCinematic()`. *(Checklist previously said "Not built" — corrected Sprint 33.)* |
+| 5 | `cin-05-henrik-sits.png` | Beat 10 | Henrik sits on stool, looks at Pip — game's heart turns | **Shipped procedural** | Sprint 26 Stage 2. `drawHenrikSitsDownCinematic()`. *(Checklist previously said "Not built" — corrected Sprint 33.)* |
 | 6a | `cin-06a-gravlaks.png` | Beat 11 | Pip tastes gravlaks; kitchen shimmers; young Henrik (~8) watches grandfather cure salmon | **Shipped procedural** | Sprint 26 Stage 2. First half of the doubled first-taste cinematic. Memory-mist treatment. |
 | 6b | `cin-06b-lefse.png` | Beat 11 | Internal crossfade; Pip tastes lefse; older Henrik teaches Erik (~11) to make lefse | **Shipped procedural** | Sprint 26 Stage 2. Erik's face is shown **clearly** (Decision C, 2026-06-02 — partial-obscurity retired). Erik: blond hair `#d8b860`, blue eyes, fair skin, age ~11, gap tooth, Norwegian (Decision B, 2026-06-02). Recognition payoff lives in Ch6 photo → Ch7 ghost chain. |
 | 7 | `cin-07-dock-farewell.png` | Beat 12 | Wide shot — grandparents walk away with coffin; Babcia almost-turns; Pip waving at railing | **Shipped procedural** | Sprint 29 (`567e82a`). `drawDockFarewellCinematic()`. Cold blue-gray morning. |
@@ -68,9 +68,9 @@ Ch1 has 9 cinematics: Cinematics 6a (gravlaks/grandfather) and 6b (lefse/Erik) a
 | `room-ch01-hallway.png` | The Hallway | **Shipped procedural** | `rooms.md` § The Hallway. Sprint 16 detail pass complete. Sprint 19 adds bulletin board as real visual asset (not yet drawn), descending staircase at far-right dark zone (not yet drawn), inspectable wall decor. |
 | `room-ch01-grandparents-cabin.png` | Grandparents' Cabin | **Shipped procedural** | `rooms.md` § Grandparents' Cabin. Sprint 04 visual identity locked. Sprint 19 adds armchair with Dziadek's coat (not yet drawn). |
 | `room-ch01-radio-room.png` | — | **Retired** | Per Sprint 19. There is no separate radio room — Dziadek's radio is in the grandparents' cabin. Remove this row from `art-asset-list.md`. |
-| `room-ch01-dark-corridor.png` | Dark Corridor / Stairwell | **Not built** | `rooms.md` § Dark Corridor. Two-state lighting (dark / lit). Service-deck aesthetic — painted iron, exposed pipes, broken sconce, janitor's cart. Bottom of descending staircase visible from hallway. |
-| `room-ch01-kitchen.png` | Kitchen | **Not built** | `rooms.md` § Kitchen. Vast dim industrial galley. Single warm pendant. Hanging copper pots. Stainless steel prep counter. Walk-in freezer doorway. Stool. |
-| `room-ch01-observation-deck.png` | Observation Deck | **Not built — deferred** | `rooms.md` § Observation Deck. Wide curved viewport with aurora. Wooden benches, coiled rope, brass telescope on tripod. Cosmic-lit, not domestic. Sprint 12 locked in chapter; implementation deferred. |
+| `room-ch01-dark-corridor.png` | Dark Corridor / Stairwell | **Shipped procedural** | Sprint 20. `drawDarkCorridor` — two-state lighting (dark/lit), industrial wall panels, pipes, sconces, janitor's cart, echo-mouse, stairwell. *(Checklist previously said "Not built" — corrected Sprint 33.)* |
+| `room-ch01-kitchen.png` | Kitchen | **Shipped procedural** | Sprint 26 Stages 1–3. `drawKitchen` — counter, warm-amber pendant, stairwell opening, plate, cutting board, freezer doorway, stool, storage racks, Bamsemums bag. *(Checklist previously said "Not built" — corrected Sprint 33.)* |
+| `room-ch01-observation-deck.png` | Observation Deck | **Shipped procedural** | Sprint 27. `drawObservationDeck` — layered aurora viewport, two benches, coiled rope, brass telescope, Kvikk Lunsj treat. *(Checklist previously said "Not built — deferred" — corrected Sprint 33.)* |
 
 ### Sprint 19 background-update items
 
@@ -99,22 +99,22 @@ These are room-asset updates from Sprint 19 that need implementation when the ca
 
 | Filename | Character | Status | Notes |
 |---|---|---|---|
-| `sprite-henrik-idle.png` | Henrik | **Designed not built** | `08-character-reference-sheets.md` + Sprint 09 polish. Tall white chef's toque (~14 px), cream-white apron over near-black button-up, black slacks, gray beard, sleek-fit posture (no stoop), pipe in right hand. Body 72 px (~0.65 H); total figure with toque ~86 px (~0.78 H). **High-contrast silhouette intended.** Build sprint needs sprite implementation. |
+| `sprite-henrik-idle.png` | Henrik | **Shipped procedural** | Sprint 26 Stages 1–2. `drawHenrikStanding` + `drawHenrikSitting` + `drawHenrikFrozen` (for cinematic 4). Tall white chef's toque, cream apron, near-black shirt/slacks, gray beard, pipe. *(Checklist previously said "Designed not built" — corrected Sprint 33.)* |
 | `sprite-marta-idle.png` | Babcia (Marta) | **Shipped procedural** | Sprint 04 / Sprint 09 polish. ~60 px tall (~0.55 H). Hunched-on-bed pose. Sob-bob animation (~1500ms period, ~1px amplitude). Crying overlay available (dev-toggleable per `08-character-reference-sheets.md`). |
 | `sprite-jan-idle.png` | Dziadek (Jan) | **Shipped procedural** | Sprint 04 / Sprint 09 polish. ~66-72 px tall (~0.60-0.65 H). Standing-tall, back to player, square shoulders, head tilted slightly down. Flat cap. No animation — stillness is the read. **Faces left only — don't mirror.** |
-| `sprite-janitor-idle.png` | The Janitor (J. Henriksen) | **Designed not built** | `08-character-reference-sheets.md`. Crew uniform, name tag, cap, ~60-72 px (~0.55-0.65 H). Mop and cart. Scripted walk for Beat 8. Build sprint needs sprite + walk animation. |
+| `sprite-janitor-idle.png` | The Janitor (J. Henriksen) | **Shipped procedural** | Sprint 20. `drawJanitor` — crew uniform, cap, ~60 px. Full scripted walk system in `updateJanitorWalk`. *(Checklist previously said "Designed not built" — corrected Sprint 33.)* |
 | `sprite-passenger-idle.png` | The Passenger | **Shipped procedural** | Sprint 03. ~60-72 px tall (~0.55-0.65 H). Evening wear (formal collar, white shirt-front, dark coat). Walks corridor obliviously. |
-| `sprite-doctor-idle.png` | The Doctor | **Stub procedural** | Sprint 14 + Sprint 18 (gallery entry added). Adult NPC scale (0.60-0.65 H). Dark formal coat, cream shirt, small medical bag. Tired posture. Walks across cabin, exits far door. Scripted via `drawDoctor` + `updateDoctorExit`. Gallery placeholder still uses generic box — designed sprite is Sprint 18.1. |
+| `sprite-doctor-idle.png` | The Doctor | **Shipped procedural** | Sprint 14. `drawDoctor` — full draw function (dark suit, white collar, medical bag, walking animation). Not a stub; real implementation present. *(Checklist previously said "Stub procedural" — upgraded Sprint 33.)* |
 | `sprite-pip-in-bed.png` | Pip's body | **Shipped procedural** | Sprint 11. Small still form under sheets, face hidden. Reverts to pre-reveal state after cinematic — body never persists in room geometry. Single one-shot use. |
 
 ### Memory-only character sprites (Ch1 has 2)
 
 | Filename | Character | Beat | Status | Notes |
 |---|---|---|---|---|
-| `sprite-young-henrik-memory.png` | Young Henrik | Beat 11 (Cinematic 6a) | **Not built** | Ch1 Cinematic 6a. Boy ~8 years old in cottage kitchen, watching grandfather's hands cure salmon. *(A prior note here said "retired from Ch1 — moved to Ch4." That is superseded: Cinematic 6a is canonical Ch1, Sprint 26 Stage 2.)* |
-| `sprite-young-erik-memory.png` | Young Erik | Beat 11 (Cinematic 6b) | **Not built** | ~**11 years old — same age as Pip. Deliberate parallel: two boys dead too young.** Face shown **clearly** (Decision C, 2026-06-02 — partial-obscurity retired). Blond hair `#d8b860`, blue eyes, fair skin, gap tooth, Norwegian. *(Prior note said "~5-7 years old" — superseded by 2026-06-01 age lock. Prior "partially visible" requirement — superseded by Decision C.)* |
-| `sprite-henriks-grandfather-memory.png` | Henrik's grandfather | Beat 11 (Cinematic 6a) | **Not built** | Ch1 Cinematic 6a. Old Norwegian man, cottage kitchen, late afternoon sun, work-shirt sleeves rolled, careful hands. *(A prior note said "retired from Ch1 — moved to Ch4." Superseded: Cinematic 6a is canonical Ch1.)* |
-| `sprite-older-henrik-memory.png` | Older Henrik (teaching Erik) | Beat 11 (Cinematic 6) | **Not built** | Henrik recognizably grown — same character as present-day, slightly younger. Teaching Erik to make lefse-and-gravlaks. A different kitchen from his grandfather's. |
+| `sprite-young-henrik-memory.png` | Young Henrik | Beat 11 (Cinematic 6a) | **Shipped procedural inline** | Sprint 26 Stage 2. Rendered inline in `drawMemory6aScene()` inside `drawFirstTasteCinematic`. Boy ~8, cottage kitchen. Not a standalone sprite file. *(Checklist previously said "Not built" — corrected Sprint 33.)* |
+| `sprite-young-erik-memory.png` | Young Erik | Beat 11 (Cinematic 6b) | **Shipped procedural inline — BUG #54** | Sprint 26 Stage 2. Rendered inline in `drawMemory6bScene()`. **BUG: face still turned away AND hair #8c6040 (dark brownish) instead of blond #d8b860 — contradicts Decisions B + C. Filed as issue #54. Fix in Sprint 34.** *(Checklist previously said "Not built" — corrected Sprint 33.)* |
+| `sprite-henriks-grandfather-memory.png` | Henrik's grandfather | Beat 11 (Cinematic 6a) | **Shipped procedural inline** | Sprint 26 Stage 2. Rendered inline in `drawMemory6aScene()`. Old Norwegian man, cottage kitchen. Not a standalone sprite file. *(Checklist previously said "Not built" — corrected Sprint 33.)* |
+| `sprite-older-henrik-memory.png` | Older Henrik (teaching Erik) | Beat 11 (Cinematic 6b) | **Shipped procedural inline** | Sprint 26 Stage 2. Rendered inline in `drawMemory6bScene()`. Henrik recognizably grown, teaching Erik lefse. Not a standalone sprite file. *(Checklist previously said "Not built" — corrected Sprint 33.)* |
 
 ---
 
@@ -124,7 +124,7 @@ Per P1 Session 1 / Sprint 19: **One pest per chapter, each unique. Ch1 = echo-mi
 
 | Filename | Type | Status | Notes |
 |---|---|---|---|
-| `echo-mouse.png` | Echo-creature (Ch1) | **Not built** | `art-asset-list.md` has the row. 10-14 px wide, drained-amber translucent. Scuttles along baseboards in dark corridor. Sparse — one or two visible, never a swarm. The dark corridor is the primary habitat. A single mouse may appear in the kitchen near the freezer doorway. |
+| `echo-mouse.png` | Echo-creature (Ch1) | **Shipped procedural** | Sprint 20. `drawEchoMouse` — drained-amber translucent mouse, scripted proximity system. Called in `drawDarkCorridor` (lit state). *(Checklist previously said "Not built" — corrected Sprint 33.)* |
 | `echo-spider.png` | — | **Retired from Ch1** | Reserved for a future chapter per one-pest rule. |
 | `echo-bat.png` | — | **Retired from Ch1** | Reserved for a future chapter per one-pest rule. |
 
@@ -140,7 +140,7 @@ Per Sprint 12: Ch1 has four treats. One is locked and shipped; three need final 
 | `treat-ch01-cabin.png` | Cabin under-bed drawer | **Not built** | Sprint 19 locks placement. Suggested treat: **Smørbukk** (Norwegian caramel toffee in yellow wrapper). ~10×14 px. Replay-reward (player can't collect until after Beat 11b teaches `↓`). |
 | `treat-ch01-cleaning-cart.png` | Dark corridor — janitor's cart | **Not built** | Suggested treat: **Skillingsboller** (Bergen cinnamon bun, half-eaten, in waxed paper). ~14×16 px. Collectable in a brief window between cart discovery and janitor's walk (or on replay). |
 | `treat-ch01-hallway.png` | Hallway — luggage trolley area | **Not built** | Sprint 19 promotes the debug-Bamsemums to canonical. Specific treat TBD — placement near luggage trolley or bulletin board. Build sprint decision. |
-| `treat-ch01-observation-deck.png` | Observation deck | **Not built — deferred** | **Kvikk Lunsj** (Norwegian chocolate biscuit). Locked 2026-06-01. Left by a stargazer. |
+| `treat-ch01-observation-deck.png` | Observation deck | **Shipped procedural** | Sprint 27. `drawTreatSprite('kvikklunsj')` — red wrapper, gold foil stripe. Kvikk Lunsj locked 2026-06-01. *(Checklist previously said "Not built — deferred" — corrected Sprint 33.)* |
 
 ### Notebook UI for treats
 
@@ -171,15 +171,15 @@ Per Sprint 12: Ch1 has four treats. One is locked and shipped; three need final 
 
 | Asset | Status | Notes |
 |---|---|---|
-| 6 cabin doors (640, 642, 644, 646, 648, 650) | **Shipped procedural** | Sprint 16. Brass plaques centered. 644 + 646 interactive; others decorative. |
-| Brass cabin-number plaques | **Shipped procedural** | Sprint 16 polish. Centered on doors. |
+| 6 cabin doors (unlabelled) | **Shipped procedural** | Sprint 16 (originally with plaques). Sprint 28 / Sprint 30: all door-number plaques removed (commit d40a61a). Doors now unlabelled. 644 + 646 interactive; others decorative. |
+| Brass cabin-number plaques | **Retired** | All door-number plaques removed in commit d40a61a. *(Checklist previously said "Shipped procedural Sprint 16 polish" — corrected Sprint 33.)* |
 | Crimson runner carpet | **Shipped procedural** | Sprint 16. Narrowed per polish 1. |
 | Wall sconces (2, one flickering) | **Shipped procedural** | Sprint 02 + Sprint 16. Flickering one at world-x ~820. |
 | 3 portholes | **Shipped procedural** | Sprint 16. `ch1-ocean-night` scene. Aurora layer per Sprint 19. |
 | Bulletin board | **Stub procedural** | Sprint 02 dialogue, no discrete visual asset. Sprint 19 requires real visual asset at world-x ~260. |
 | Luggage trolley (with bear) | **Shipped procedural** | Sprint 16. World-x ~530. |
 | 5 wall-decor pieces (ship photo, barometer, botanical, map, mirror) | **Shipped procedural** | Sprint 16. Two become inspectable per Sprint 19 (ship photo, navigational chart). |
-| Descending staircase (far-right dark zone) | **Not built** | Sprint 19 addition. Past world-x ~1320. Visible visual signal "this is where you go next." |
+| Descending staircase (far-right dark zone) | **Shipped procedural** | Sprint 20. `drawDescendingStaircase` + Sprint 24 Stage 2 DOWN sign. *(Checklist previously said "Not built" — corrected Sprint 33.)* |
 | Passenger NPC | **Shipped procedural** | Sprint 03. |
 | Hallway canonical treat | **Not built** | Sprint 19 promotion. Specific treat TBD. |
 
@@ -194,55 +194,59 @@ Per Sprint 12: Ch1 has four treats. One is locked and shipped; three need final 
 | Window (4-pane wood) | **Shipped procedural** | Sprint 04. Aurora layer per Sprint 19. |
 | Bed (wide, for Babcia) | **Shipped procedural** | Sprint 04. |
 | Nightstand with lamp | **Shipped procedural** | Sprint 04. The cabin's warm-pool source. |
-| Dziadek's radio | **Not built** | Sprint 19 addition. World-x ~200, on windowsill. 1900s Edwardian wooden-cased. Inspectable + proximity-crackle behavior (passive). |
+| Dziadek's radio | **Shipped procedural** | Sprint 20. `drawDziadekRadio` — 1900s wooden-cased radio with fabric grill, tuning dial, proximity-crackle shimmer. *(Checklist previously said "Not built" — corrected Sprint 33.)* |
 | Armchair with coat | **Not built** | Sprint 19 addition. World-x ~280. Dziadek's wool coat folded over it. Inspectable. |
 | Soft cool-blue glow at left-edge door | **Shipped procedural** | Sprint 14. Static, subtle. |
 
 ### Dark corridor props
 
+*(All previously "Not built" — corrected Sprint 33. All shipped Sprint 20.)*
+
 | Asset | Status | Notes |
 |---|---|---|
-| Painted iron walls | **Not built** | Service-deck aesthetic. Cooler than passenger corridor. |
-| Exposed pipes | **Not built** | Overhead, world-x ~200-760. Ambient. |
-| Working flickering sconce | **Not built** | World-x ~240. Weak amber, erratic flicker. Pre-puzzle only natural light. |
-| Fallen / broken sconce | **Not built** | World-x ~420. Hanging off mounting at angle, wires exposed, sparking. The puzzle target. |
-| Broken glass on floor | **Not built** | World-x ~420, beneath fallen sconce. Triggers float discovery. |
-| Janitor's cart (with cleaning supplies + clipboard) | **Not built** | World-x ~840. Worn metal cart, mop bucket, broom, clipboard with name tag "J. Henriksen Maintenance." |
-| Stairwell descending to kitchen | **Not built** | World-x ~880, right end. Ship-stair style, narrow. |
-| Janitor NPC (scripted walk) | **Not built** | Crew uniform, mutters Norwegian, moves cart. |
-| Echo-mice (sparse) | **Not built** | One or two, near baseboards. |
+| Painted iron walls | **Shipped procedural** | Sprint 20. Industrial-palette wall gradient + riveted panels in `drawDarkCorridor`. |
+| Exposed pipes | **Shipped procedural** | Sprint 20. `drawDarkCorridorPipes` — overhead pipes with joint flanges, two-state visibility. |
+| Working flickering sconce | **Shipped procedural** | Sprint 20. At world-x ~240 in `drawDarkCorridor`, weak-amber flicker, pre-puzzle ambient light. |
+| Fallen / broken sconce | **Shipped procedural** | Sprint 20. Drawn in `drawDarkCorridorProps` — hanging at angle, wires exposed, sparking in dark state. |
+| Broken glass on floor | **Shipped procedural** | Sprint 20. Drawn in `drawDarkCorridorProps` — float-discovery trigger zone. |
+| Janitor's cart (with supplies + clipboard) | **Shipped procedural** | Sprint 20. `drawJanitorCart` — metal cart, mop bucket, clipboard with "J. Henriksen Maintenance." |
+| Stairwell descending to kitchen | **Shipped procedural** | Sprint 20. `drawStairwellDown` in `drawDarkCorridorProps`. |
+| Janitor NPC (scripted walk) | **Shipped procedural** | Sprint 20. `drawJanitor` + scripted walk system in `updateJanitorWalk`. |
+| Echo-mice | **Shipped procedural** | Sprint 20. `drawEchoMouse` — called in `drawDarkCorridor` lit state via `echoMouse` system. |
 
 ### Kitchen props
 
+*(Previously "Not built" entries corrected Sprint 33.)*
+
 | Asset | Status | Notes |
 |---|---|---|
-| Stainless steel prep counter (long) | **Not built** | Center zone. World-x ~250-700. The plate of food sits here in Beat 9. |
-| Hanging copper pots (4-6) | **Not built** | Back wall, world-x ~250-700. Hung from horizontal rack. |
-| Pendant light (overhead, warm amber) | **Not built** | World-x ~450, ceiling. The room's primary warm light source. Visible pulse. |
-| Walk-in freezer doorway | **Not built** | World-x ~880, right side. Heavy metal door, slightly ajar with cool back-light. Henrik enters/exits. |
-| Stool | **Not built** | World-x ~400. Henrik sits here. Tall wooden or metal industrial-period stool. |
-| Bottom of descending stairwell (from dark corridor) | **Not built** | World-x ~80, upper-left. Pip arrives here. |
-| Plate of lefse-and-gravlaks | **Not built** | World-x ~450, on counter. Cinematic trigger then ambient. |
-| Bamsemums bag | **Shipped** (designed per Sprint 13) | World-x ~520, behind cutting board. Tutorial treat. |
-| Cutting board (hides Bamsemums bag pre-discovery) | **Not built** | Wooden cutting board, partially obscures the bag's view from a distance. |
-| Dropped pan (Beat 9 cinematic prop) | **Not built** | World-x ~750, on floor after Henrik drops it. |
-| Henrik's pipe + smoke animation | **Designed not built** | Pipe in right hand, drifting smoke per Sprint 09 polish. |
-| Henrik's stool-sit animation | **Not built** | Sit-down animation for transition from doorway to stool. |
-| Echo-mouse (optional, one near freezer) | **Not built** | Single mouse near baseboard. Sparse. |
+| Stainless steel prep counter (long) | **Shipped procedural** | Sprint 26 Stage 1. Long dark-wood counter in `drawKitchen`. |
+| Hanging copper pots (4-6) | **Partial** | Sprint 26 Stage 1. Storage racks drawn at world-x 820–940 (three horizontal rack rows). Literal hanging copper pots not rendered. Storage racks serve as stand-in. *(Checklist said "Not built" — partially corrected Sprint 33.)* |
+| Pendant light (overhead, warm amber) | **Shipped procedural** | Sprint 26 Stage 1. Warm amber radial gradient + pendant fixture at world-x ~475. |
+| Walk-in freezer doorway | **Shipped procedural** | Sprint 26 Stage 1. Drawn at world-x 700–762 — heavy door frame, cool back-light. |
+| Stool | **Shipped procedural** | Sprint 26 Stage 1. Drawn at world-x ~400 with Henrik sitting post-Beat 10. |
+| Bottom of descending stairwell (from dark corridor) | **Shipped procedural** | Sprint 26 Stage 1. Stairwell opening drawn at world-x 0–140 (stair steps visible). |
+| Plate of lefse-and-gravlaks | **Shipped procedural** | Sprint 26 Stage 1. Ellipse plate drawn at world-x ~290, pre-henrikMet. |
+| Bamsemums bag | **Shipped commissioned** | Sprint 13. World-x ~520, behind cutting board. Tutorial treat. |
+| Cutting board | **Shipped procedural** | Sprint 26 Stage 1. At world-x ~490. |
+| Dropped pan (Beat 9 cinematic prop) | **Shipped procedural** | Sprint 26 Stage 1. Drawn in `drawKitchenMeetingCinematic` on floor at world-x ~750. |
+| Henrik's pipe + smoke animation | **Shipped procedural** | Sprint 26 Stages 1–2. Pipe visible in `drawHenrikStanding` / `drawHenrikSitting`. *(Checklist said "Designed not built" — corrected Sprint 33.)* |
+| Henrik's stool-sit animation | **Shipped procedural** | Sprint 26 Stage 2. `drawHenrikSitsDownCinematic` — Henrik walks to stool and sits. *(Checklist said "Not built" — corrected Sprint 33.)* |
+| Echo-mouse (optional, near freezer) | **Not built** | Not called in `drawKitchen`. Optional; may remain absent. |
 | Notebook (Henrik's gift) | **Shipped procedural** | Sprint 29 (`567e82a`). Small leather-bound with blank pages, drawn inline in `drawHenriksOfferCinematic()`. |
 
-### Observation deck props (deferred)
+### Observation deck props
 
-Sprint 12 locks the room into the chapter; Henrik kitchen build sprint deferred. All listed for reference.
+*(All previously "Not built — deferred" — corrected Sprint 33. All shipped Sprint 27.)*
 
 | Asset | Status | Notes |
 |---|---|---|
-| Wide curved viewport | **Not built — deferred** | Wooden-framed, ship's observation glass. |
-| Aurora animation (full layered) | **Not built — deferred** | Multi-layer parallax. The room's primary visual. ~15-30 second cycle. |
-| Wooden benches (2-3) | **Not built — deferred** | Slatted, weathered, period-appropriate. |
-| Coiled marine rope | **Not built — deferred** | Working ship-detail. |
-| Brass telescope on tripod | **Not built — deferred** | Pointed upward toward aurora. |
-| Observation deck treat | **Not built — deferred** | Specific treat TBD. |
+| Wide curved viewport | **Shipped procedural** | Sprint 27. Wooden mullions + brass fittings + horizontal crossbrace in `drawObservationDeck`. |
+| Aurora animation (full layered) | **Shipped procedural** | Sprint 27. Three LinearGradient ribbon bands (green/violet/green), seeded stars, slow sine drift. Screen-fixed, independent of pip.x. |
+| Wooden benches (2) | **Shipped procedural** | Sprint 27. `drawDeckBench` at world-x 160 and 460. |
+| Coiled marine rope | **Shipped procedural** | Sprint 27. `drawDeckRope` at world-x 280. |
+| Brass telescope on tripod | **Shipped procedural** | Sprint 27. `drawDeckTelescope` at world-x 540. |
+| Observation deck treat (Kvikk Lunsj) | **Shipped procedural** | Sprint 27. `drawTreatSprite('kvikklunsj')` at world-x 565. Locked as Kvikk Lunsj (Decision 3, 2026-06-01). |
 
 ---
 
@@ -300,7 +304,9 @@ These are diegetic, atmospheric, or beat-specific. They build with the beats the
 
 ## Procedural shipped-art summary
 
-For the build sprint to reference at a glance — these procedural draw functions already exist in `game/index.html`:
+*(Updated Sprint 33 to reflect all ships through Sprint 32.)*
+
+These procedural draw functions exist in `game/index.html`:
 
 ```
 drawPip / drawPipMaterializing
@@ -308,81 +314,94 @@ drawBabcia
 drawDziadek
 drawDoctor
 drawPassenger
+drawJanitor / drawJanitorCart         ← Sprint 20 (previously "designed not built")
+drawEchoMouse                         ← Sprint 20 (previously "not built")
+drawHenrikStanding / drawHenrikSitting / drawHenrikFrozen  ← Sprint 26 (previously "designed not built")
 drawCabin / drawCabinObjects
 drawHallway / drawHallwayObjects
 drawGrandparents / drawGrandparentsObjects
+drawDarkCorridor / drawDarkCorridorProps / drawDarkCorridorPipes  ← Sprint 20 (previously "not built")
+drawKitchen                           ← Sprint 26 (previously "not built")
+drawObservationDeck                   ← Sprint 27 (previously "not built — deferred")
 drawGrandparentsCinematic
 drawMirrorCinematic
 drawBedRevealCinematic
 drawDoctorExitCinematic
+drawKitchenMeetingCinematic           ← Sprint 26 (previously "not built")
+drawHenrikSitsDownCinematic           ← Sprint 26 (previously "not built")
+drawFirstTasteCinematic (6a+6b)
+drawDockFarewellCinematic             ← Sprint 29 (previously "not built")
+drawNokkenGlimpse                     ← Sprint 29 (previously "not built")
+drawHenriksOfferCinematic             ← Sprint 29 (previously "not built")
 drawTears (panic glide particles)
 drawPorthole / drawPortholeScene (Sprint 16)
 drawLuggageTrolley
 drawBrassFitting (plaques, handles, kickplates)
 drawSconce
 drawFloorPlanks
-drawMemoryMist (defined, not active in Ch1 yet)
+drawMemoryMist (defined; active for first-taste cinematic 6a/6b)
+drawDescendingStaircase               ← Sprint 20 (previously "not built")
+drawDziadekRadio                      ← Sprint 20 (previously "not built")
+drawDeckBench / drawDeckRope / drawDeckTelescope  ← Sprint 27 (previously "not built")
 ```
 
-The Henrik kitchen build sprint needs **new procedural draw functions** for the kitchen and dark corridor:
+**Still genuinely unbuilt** (as of Sprint 32):
 
-- `drawKitchen` / `drawKitchenObjects`
-- `drawDarkCorridor` / `drawDarkCorridorObjects` (with two-state lighting)
-- `drawHenrik` (designed not built)
-- `drawJanitor` (designed not built)
-- `drawCinematic` extensions for cin-04 through cin-08
-- `drawNokkenGlimpse` (scripted visual for Beat 12)
-- `drawAuroraScene` (new — for cabin/hallway/grandparents porthole/window aurora layer + observation deck full aurora)
-- `drawObservationDeck` / `drawObservationDeckObjects` (deferred to Ch1 content sprint)
+- Chapter-wide aurora porthole layers (hallway + cabin + grandparents windows) — `ch1-ocean-night` has no aurora layer
+- Hanging copper pots in kitchen (storage racks exist as partial stand-in)
+- Echo-mouse near kitchen freezer (optional, not called)
+- Cabin: writing desk, washstand, under-bed drawer
+- Hallway: bulletin board visual asset ("WELCOME ABOARD" header), hallway canonical treat
+- Grandparents' cabin: armchair with Dziadek's coat
 
 ---
 
 ## Build-sprint priority list
 
-For the Henrik kitchen build sprint, the order to tackle assets:
+*(Updated Sprint 33 to reflect completions. Strikethrough = shipped.)*
 
-### Tier 1 — Critical path for the kitchen beat
+### Tier 1 — ~~Critical path for the kitchen beat~~ ✓ All done
 
-1. `drawKitchen` — room layout + counter + pendant + freezer doorway + stool
-2. `drawHenrik` — sprite implementation per Sprint 09 polish
-3. `drawCinematic('kitchen-meeting')` — Cinematic 4
-4. `drawCinematic('henrik-sits-down')` — Cinematic 5
-5. `drawCinematic('first-taste')` — Cinematic 6 with memory mist enabled
-6. Older Henrik + young Erik memory sprites
-7. Lefse-and-gravlaks plate
-8. Henrik's stool
+1. ~~`drawKitchen` — room layout + counter + pendant + freezer doorway + stool~~ ✓ Sprint 26
+2. ~~`drawHenrik` — sprite implementation~~ ✓ Sprint 26
+3. ~~`drawCinematic('kitchen-meeting')` — Cinematic 4~~ ✓ Sprint 26
+4. ~~`drawCinematic('henrik-sits-down')` — Cinematic 5~~ ✓ Sprint 26
+5. ~~`drawCinematic('first-taste')` — Cinematic 6 (6a+6b)~~ ✓ Sprint 26
+6. ~~Older Henrik + young Erik memory sprites (inline)~~ ✓ Sprint 26 (inline in first-taste cinematic; BUG #54 for Erik coloring)
+7. ~~Lefse-and-gravlaks plate~~ ✓ Sprint 26
+8. ~~Henrik's stool~~ ✓ Sprint 26
 
-### Tier 2 — Critical path for the dark corridor
+### Tier 2 — ~~Critical path for the dark corridor~~ ✓ All done
 
-9. `drawDarkCorridor` — room with two-state lighting
-10. Fallen sconce, working sconce (already exists), broken glass
-11. Janitor's cart
-12. `drawJanitor` — sprite implementation
-13. Janitor's scripted walk animation
-14. Echo-mouse sprite
-15. Stairwell descent (visual)
+9. ~~`drawDarkCorridor` — room with two-state lighting~~ ✓ Sprint 20
+10. ~~Fallen sconce, working sconce, broken glass~~ ✓ Sprint 20
+11. ~~Janitor's cart~~ ✓ Sprint 20
+12. ~~`drawJanitor` — sprite implementation~~ ✓ Sprint 20
+13. ~~Janitor's scripted walk animation~~ ✓ Sprint 20
+14. ~~Echo-mouse sprite~~ ✓ Sprint 20
+15. ~~Stairwell descent (visual)~~ ✓ Sprint 20
 
-### Tier 3 — Chapter completion
+### Tier 3 — ~~Chapter completion~~ ✓ All done
 
-16. `drawCinematic('dock-farewell')` — Cinematic 7
-17. `drawNokkenGlimpse` — Beat 12 scripted visual
-18. `drawCinematic('henriks-offer')` — Cinematic 8
-19. Notebook prop for Cinematic 8
+16. ~~`drawCinematic('dock-farewell')` — Cinematic 7~~ ✓ Sprint 29
+17. ~~`drawNokkenGlimpse` — Beat 12 scripted visual~~ ✓ Sprint 29
+18. ~~`drawCinematic('henriks-offer')` — Cinematic 8~~ ✓ Sprint 29
+19. ~~Notebook prop for Cinematic 8~~ ✓ Sprint 29
 
-### Tier 4 — Sprint 19 props (can ship later)
+### Tier 4 — Sprint 19 props (remaining genuinely unbuilt)
 
-20. Cabin desk, washstand, under-bed drawer
-21. Hallway bulletin-board visual asset, descending staircase
-22. Grandparents' cabin armchair + coat, Dziadek's radio
-23. `drawAuroraScene` — chapter-wide aurora layer
+20. Cabin desk, washstand, under-bed drawer — **STILL UNBUILT**
+21. ~~Hallway descending staircase~~ ✓ Sprint 20 | Bulletin-board visual asset — **STILL UNBUILT**
+22. ~~Grandparents' cabin Dziadek's radio~~ ✓ Sprint 20 | Armchair + coat — **STILL UNBUILT**
+23. `drawAuroraScene` — chapter-wide aurora porthole layer — **STILL UNBUILT**
 
-### Tier 5 — Deferred (separate Ch1 content sprint after Henrik kitchen)
+### Tier 5 — ~~Deferred~~ ✓ All done
 
-24. `drawObservationDeck` — entire room
-25. Observation deck treat
-26. Cabin Smørbukk treat (drawer)
-27. Hallway canonical treat (luggage trolley area)
-28. Cleaning-cart Skillingsboller treat
+24. ~~`drawObservationDeck` — entire room~~ ✓ Sprint 27
+25. ~~Observation deck treat (Kvikk Lunsj)~~ ✓ Sprint 27
+26. Cabin Smørbukk treat (drawer) — **STILL UNBUILT** (treat + drawer)
+27. Hallway canonical treat — **STILL UNBUILT**
+28. Cleaning-cart Skillingsboller treat — **STILL UNBUILT**
 
 ---
 

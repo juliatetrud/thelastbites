@@ -49,7 +49,7 @@ The ship is a recurring visual environment across all eight chapters. Each locat
 
 **Recurring role.** Cabin 646 is the collection room — items Pip collects across all chapters accumulate and display visibly here on return visits. Collection-item inspectables use a cool-blue shimmer (not warm-amber) per the permeable-surface exception. *(`03-art-and-aesthetic.md`)*
 
-**Build status.** Shipped procedural (Sprint 11 visual identity locked; Sprint 19 adds desk, washstand, under-bed drawer, aurora layer — some not yet built as of Sprint 26). **Sprint 32 recompacts the room to the shared bedroom footprint.**
+**Build status.** Shipped procedural. Sprint 32 (`0185a8d`) recompacted to 480px compact bedroom. Sprint 19 items still pending: desk, washstand, under-bed drawer, porthole aurora layer.
 
 ---
 
@@ -61,7 +61,7 @@ The ship is a recurring visual environment across all eight chapters. Each locat
 
 **Key interactive objects.** Grandparents' cabin door (x=920, always warm-glow). Cabin 646 door (x=1180, warm-glow after `cabinState.beatStage === 'post-bed'`). Radio on windowsill in grandparents' cabin (triggers talk-through-speakers ability). Descending staircase (DOWN sign) leading to dark corridor.
 
-**Build status.** Shipped procedural (Sprint 16 detail pass). Bulletin board, staircase visual, and hallway canonical treat not yet built.
+**Build status.** Shipped procedural (Sprint 16 detail pass). Staircase visual shipped Sprint 20 (`drawDescendingStaircase` + DOWN sign). Still unbuilt: bulletin board visual asset, hallway canonical treat.
 
 ---
 
@@ -75,7 +75,7 @@ The ship is a recurring visual environment across all eight chapters. Each locat
 
 **Key props.** Babcia on bed (sob-bob animation). Dziadek at window (static, faces left, no mirror). Photograph of Pip on nightstand. Suitcase with pier-recipe card. Window (4-pane wood). Armchair with Dziadek's coat (~x=280). Dziadek's radio (~x=200). *(`art-checklist.md`)*
 
-**Build status.** Shipped procedural. Armchair, coat, and radio not yet built.
+**Build status.** Shipped procedural. Dziadek's radio shipped Sprint 20 (`drawDziadekRadio`). Still unbuilt: armchair with coat.
 
 ---
 
@@ -87,7 +87,7 @@ The ship is a recurring visual environment across all eight chapters. Each locat
 
 **Key beats.** Broken-sconce held-button puzzle (electricity ability earned). Broken-glass float discovery (float ability earned). Janitor's scripted walk (post-puzzle trigger). Stairwell descent transitions to kitchen.
 
-**Build status.** Not yet built (art-checklist.md). Implementation in Sprint 26 Stages 1–3.
+**Build status.** Shipped procedural (Sprint 20). `drawDarkCorridor` — two-state lighting, pipes, sconces, props, stairwell, echo-mouse. *(Was "Not yet built" — corrected Sprint 33.)*
 
 ---
 
@@ -111,7 +111,7 @@ The ship is a recurring visual environment across all eight chapters. Each locat
 
 **Palette.** Night sky: deep indigo going to violet at horizon. Aurora: multi-layer green-violet ribbons with slow drift. The room is cool and open — no warm-amber pool other than a possible treat in a cold-left-behind wrapper.
 
-**Locked in Ch1 but not yet built.** Build scope: Sprint 27.
+**Build status.** Shipped procedural (Sprint 27). `drawObservationDeck` — layered aurora viewport, benches, rope, telescope, Kvikk Lunsj treat. *(Was "not yet built" — corrected Sprint 33.)*
 
 ---
 

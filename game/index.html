@@ -1706,7 +1706,7 @@ const cabinObjects = [
   /* ---- Porthole ---- atmospheric, 2 lines */
   {
     id: 'porthole',
-    x: 380,
+    x: 190,    // Sprint 32: moved to left side of compact room (was 380)
     sparkleY: 90,
     node: {
       id: 'porthole-inspect',
@@ -1726,7 +1726,7 @@ const cabinObjects = [
      Sprint 11: bed uses breadcrumb aura after mirror cinematic completes. */
   {
     id: 'bed',
-    x: 720,
+    x: 400,    // Sprint 32: moved to right side of compact room — center of 360-460 (was 720)
     sparkleY: 165,
     get breadcrumb() {
       return cabinState.beatStage === 'pre-bed' || cabinState.beatStage === 'post-bed';
@@ -2433,16 +2433,16 @@ const observationDeckCollectibles = [
 
 const rooms = {
   cabin: {
-    width:       ROOM_W,                      // 960
-    pipMaxX:     ROOM_W - PIP_HALF_W,         // 952 — right wall
-    pipMinX:     PIP_HALF_W,                  //   8 — left wall (can't exit left)
+    width:       480,                         // Sprint 32: compact bedroom — no camera scroll (Decision A)
+    pipMaxX:     480 - PIP_HALF_W,            // 468 — right (shared) wall with Cabin 644
+    pipMinX:     PIP_HALF_W,                  //  12 — left wall (entry + panic-exit wall)
     // Sprint 25 Stage 2: getter concatenates static objects with dynamic collection inspectables
     get objects() { return [...cabinObjects, ...getCabinCollectionObjects()]; },
     collectibles: [],                         // Sprint 13: no cabin collectibles yet
     draw:        drawCabin,                   // defined below (hoisted)
     pipEntryX: {
-      fromLeft:  PIP_HALF_W + 8,              //  16 — entering from hallway side
-      fromRight: ROOM_W - PIP_HALF_W - 8,     // 944 — entering from initial start (unused currently)
+      fromLeft:  PIP_HALF_W + 8,              //  20 — entering from shared wall (first visit) or hallway door
+      fromRight: 480 - PIP_HALF_W - 8,        // 460 — unused
     },
   },
   hallway: {
@@ -4791,6 +4791,10 @@ function drawDoor(sx, doorTop, opts) {
    ---------------------------------------------------------------- */
 
 function drawCabin(camX, now) {
+  /* Sprint 32: compact 480px bedroom — cabinW replaces ROOM_W inside this function.
+     camX is always 0 (rooms.cabin.width=480=W), so world-x = screen-x throughout. */
+  const cabinW = 480;
+
   // UI zone base fill
   ctx.fillStyle = '#080e20';
   ctx.fillRect(0, 0, W, H);
@@ -4861,8 +4865,8 @@ function drawCabin(camX, now) {
     ctx.restore();
   }
 
-  /* ---- Right wall cap (game-world x=ROOM_W) — closes the right end of the cabin ---- */
-  const rightWallSX = Math.round(ROOM_W - camX);
+  /* ---- Right wall cap (game-world x=cabinW) — closes the right end of the cabin ---- */
+  const rightWallSX = Math.round(cabinW - camX);
   if (rightWallSX > 0) {
     const rwW = 48;
     ctx.fillStyle = '#0a1228';
@@ -4886,8 +4890,8 @@ function drawCabin(camX, now) {
     ctx.strokeRect(rightWallSX - rwW + 4, ply, plW, plH);
   }
 
-  // Porthole — game-world x=380 (the cabin's only window)
-  const phSX = Math.round(380 - camX);
+  // Porthole — game-world x=190 (Sprint 32: moved to left side of compact room; was 380)
+  const phSX = Math.round(190 - camX);
   if (phSX > -24 && phSX < W + 24) {
     drawPorthole(phSX, 58, 18, { moonlight: true, divider: true });
   }
@@ -4975,8 +4979,20 @@ function drawCabin(camX, now) {
     ctx.beginPath(); ctx.arc(dwX + dwW / 2, dwY + 1, 2, 0, Math.PI * 2); ctx.fill();
   }
 
-  // Bed — game-world x=720 (bunk against right wall)
-  const bedGX = 720, bedGW = 100, bedGH = 22, bedGY = FLOOR_Y - bedGH;
+  // Bed — game-world x=360 (Sprint 32: right side of compact room, against shared wall; was 720)
+  // Small nightstand to the left of the bed
+  const nsSX = Math.round(332 - camX);
+  if (nsSX > -20 && nsSX < W + 20) {
+    ctx.fillStyle = '#1c2040';
+    ctx.fillRect(nsSX - 10, FLOOR_Y - 18, 20, 18);    // nightstand surface
+    ctx.fillStyle = 'rgba(60,70,120,0.45)';
+    ctx.fillRect(nsSX - 10, FLOOR_Y - 18, 20, 2);     // surface highlight
+    ctx.fillStyle = '#141830';
+    ctx.fillRect(nsSX - 8, FLOOR_Y - 12, 6, 12);      // left leg
+    ctx.fillRect(nsSX + 2, FLOOR_Y - 12, 6, 12);      // right leg
+  }
+
+  const bedGX = 360, bedGW = 100, bedGH = 22, bedGY = FLOOR_Y - bedGH;
   const bedSX = Math.round(bedGX - camX);
   if (bedSX < W + bedGW && bedSX + bedGW > 0) {
     // Headboard
@@ -5031,8 +5047,9 @@ function drawCabin(camX, now) {
     drawDoor(doorSX, doorTop, { w: dw, h: dh, warm: true });
   }
 
-  // Far door: doctor's exit. Not interactable. Cabin's existing door (entry) is on the left. This door is on the right.
-  const farDoorGX = 450;
+  // Far door: doctor's exit. Not interactable. Recessed in right end-wall; matches DOCTOR_X_DOOR=430.
+  // Sprint 32: moved to x=430 so it reads as an end-wall door, not a mid-corridor door. (Was 450.)
+  const farDoorGX = 430;
   const farDoorSX = Math.round(farDoorGX - camX);
   if (farDoorSX > -(dw + 6) && farDoorSX < W + (dw + 6)) {
     if (doctorExit.doorOpen) {
@@ -5113,12 +5130,14 @@ function getCabinCollectionObjects() {
    Items render at their fixed world positions regardless of collection order.
    'debug-bamsemums' maps alongside 'bamsemums' so the debug hallway treat
    and the future kitchen treat share the same placement spot. */
+/* Sprint 32: all Ch1 collection-item x coordinates reflowed to the compact 480px bedroom footprint.
+   Rationale and intent preserved from cabin-646.md; exact x values chosen to fit the new layout. */
 const COLLECTION_PLACEMENTS = {
-  'debug-bamsemums':        { x: 340, y: FLOOR_Y - 30, draw: drawCollectionBamsemums },
-  'bamsemums':              { x: 340, y: FLOOR_Y - 30, draw: drawCollectionBamsemums },
-  'smorbukk':               { x:  90, y: FLOOR_Y -  4, draw: drawCollectionSmorbukk },
-  'skillingsboller':        { x: 200, y:           40, draw: drawCollectionSkillingsboller },
-  'observation-deck-treat': { x: 690, y: FLOOR_Y - 25, draw: drawCollectionObsDeckTreat },
+  'debug-bamsemums':        { x: 238, y: FLOOR_Y - 30, draw: drawCollectionBamsemums },
+  'bamsemums':              { x: 238, y: FLOOR_Y - 30, draw: drawCollectionBamsemums },  // between porthole (190) and mirror (280)
+  'smorbukk':               { x: 100, y: FLOOR_Y -  4, draw: drawCollectionSmorbukk },   // near entry door, floor level
+  'skillingsboller':        { x: 155, y:           40, draw: drawCollectionSkillingsboller },  // ceiling-tucked near drawing (160)
+  'observation-deck-treat': { x: 345, y: FLOOR_Y - 25, draw: drawCollectionObsDeckTreat },   // nightstand beside the bed (360)
 };
 
 function drawCollectionBamsemums(sx, y, now) {
@@ -5432,6 +5451,12 @@ function startTransition(toRoom, entryEdge, entryX) {
     if (toRoom === 'hallway' && !passenger.hallwayEntered) {
       passenger.hallwayEntered  = true;
       passenger.firstEntryTimer = 1.5;
+    }
+
+    // Sprint 32: fire the doctor-exit cinematic on first cabin entry (cabinState.doctorSeen gate)
+    if (toRoom === 'cabin' && !cabinState.doctorSeen) {
+      cabinState.doctorSeen = true;
+      startDoctorExitCinematic(null);
     }
 
     setRoomStrip();

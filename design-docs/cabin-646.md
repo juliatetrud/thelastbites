@@ -25,25 +25,27 @@ This turns Cabin 646 from "the room where the bad reveal happens" into "the room
 
 Each collected item has a fixed world-x/y position keyed by item id. Returning players always find each item in the same spot. Items are scattered with narrative rationale — placed where they make sense given their source, not grouped by chapter or category.
 
-### Ch1 item placements (locked)
+### Ch1 item placements (reflowed Sprint 32, 2026-06-02)
+
+Room width changed to 480px (single-screen, no scroll) in Sprint 32. All x coordinates below are confirmed built values.
 
 | Item id | World-x | Y | Rationale |
 |---|---|---|---|
-| `smorbukk` | 90 | FLOOR_Y - 4 | On the floor just left of the entry door, as if Pip dropped it on the way in. |
-| `bamsemums` | 340 | FLOOR_Y - 30 | Set on a low surface between the mirror and porthole, the way Henrik left it for him. |
-| `skillingsboller` | 200 | 40 | Ceiling-tucked between the child's drawing and the mirror. Float-required (y <= 80). |
-| `observation-deck-treat` | 690 | FLOOR_Y - 25 | On the nightstand surface just left of the bed (bed frame starts at world-x 720). |
+| `smorbukk` | 100 | FLOOR_Y - 4 | On the floor near the entry door, as if Pip dropped it on the way in. |
+| `bamsemums` | 238 | FLOOR_Y - 30 | Set on a low surface between the porthole (x 190) and mirror (x 280), the way Henrik left it. |
+| `skillingsboller` | 155 | 40 | Ceiling-tucked near the child's drawing (x 160). Float-required (y <= 80). |
+| `observation-deck-treat` | 345 | FLOOR_Y - 25 | On the nightstand beside the bed (bed starts at x 360). |
 
-**Note on observation-deck treat position:** The Sprint 25 spec suggested world-x ~410, citing "near the bed/nightstand." The bed is at world-x 720; x 690 matches the stated rationale (nightstand beside the bed) and avoids the tight gap between porthole (x 398) and doctor-exit door (x 434). Adjusted in Stage 0 report-back; confirmed by Julia before Stage 1.
-
-**Conflict audit (Stage 0):** No writing desk exists in code (Sprint 19 did not add one). All four placements are clear of existing furniture. Confirmed furniture map:
+**Confirmed furniture map (Sprint 32 compact footprint):**
 - Left wall cap: x 0-36
-- Entry door: x 104-136 (world-x 120)
+- Entry door: x 94-126 (world-x 110-ish, center ~120; warm-amber glow)
 - Child's drawing: x 150-170 (world-x 160)
+- Porthole: x 181-199 (world-x 190, radius 18)
 - Mirror: x 268-292 (world-x 280)
-- Porthole: x 362-398 (world-x 380)
-- Doctor-exit door: x 434-466 (world-x 450) -- not interactable
-- Bed: x 720-820 (world-x 720, width 100)
+- Nightstand: x 322-342 (world-x 332, left of bed)
+- Bed: x 360-460 (world-x 360, width 100)
+- Doctor-exit door: x 414-446 (world-x 430; recessed near right wall, not interactable, no glow)
+- Right wall cap: x 432-480
 
 ### Inspectable flavor lines (locked, implemented in Stage 2)
 
@@ -58,17 +60,19 @@ Inspecting a collected item in Cabin 646 fires a short italic narration line. No
 
 `skillingsboller` at y=40 requires Pip to be airborne (`pip.float.altitude > 0`) to inspect. If Pip approaches from the floor, the item sparkles but inspection does nothing.
 
-### Future-chapter zone reservations (not locked -- starting points only)
+### Future-chapter zone reservations (not locked — reflowed Sprint 32)
+
+Coordinates updated to the 480px compact footprint. Starting points only; locked when each chapter is implemented.
 
 | Chapter | Zone description | World-x approx | Notes |
 |---|---|---|---|
-| Ch2 (Tallinn) | Near entry door, floor level | ~120-180 | -- |
-| Ch3 (Southampton) | Bed surface | ~730-800 | On the bed itself |
-| Ch4 (Turkiye) | Floating zone above mirror | ~280, y<=60 | Float-required |
-| Ch5 (South Africa) | Behind bed-leg silhouette | ~720-740, low | Partially obscured |
-| Ch6 (Indonesia) | Porthole sill | ~380 | On the porthole rim |
-| Ch7 (Brazil) | Floating zone, upper-right | ~800-900, y<=60 | Float-required |
-| Ch8 (Greenpoint) | Center floor | ~480 | Deliberate prominence |
+| Ch2 (Tallinn) | Near entry door, floor level | ~120-160 | Left-side floor area |
+| Ch3 (Southampton) | Bed surface | ~370-450 | On the bed itself |
+| Ch4 (Türkiye) | Floating zone above mirror | ~280, y<=60 | Float-required |
+| Ch5 (South Africa) | Behind bed-leg silhouette | ~360-380, low | Partially obscured by bed frame |
+| Ch6 (Indonesia) | Porthole sill | ~190 | On the porthole rim |
+| Ch7 (Brazil) | Floating zone, upper-right | ~430-460, y<=60 | Float-required |
+| Ch8 (Greenpoint) | Center floor | ~240 | Deliberate prominence |
 
 Specific coordinates locked when each chapter is implemented.
 
@@ -82,7 +86,7 @@ Furniture, windows, treats, props, and decor vary freely per cabin. The shared e
 
 ## Spatial layout
 
-Single-screen room (no horizontal scroll required). Internal coordinates use `ROOM_W` per the standard room system.
+Single-screen room. **Camera does not scroll — room width = 480px = canvas width, camX always 0 (Sprint 32).** All world-x coordinates are also screen-x coordinates.
 
 - **First-visit entry — shared wall from grandparents' cabin (Beat 6 continuation):** Pip phases through the shared wall between cabin 644 and cabin 646. He arrives on the left side of the room, facing right. The shared-wall entry point is distinct from the hallway door — there is no visible door frame; it is simply the wall. The doctor-exit cinematic fires immediately on this first entry (`cabinState.doctorSeen` gates it).
 - **Return-visit entry — hallway door at world-x `120`, silent open (Sprint 23 canon):** After Pip has entered and exited Cabin 646, the hallway door at world-x 120 is the return entry point. Width 32, height 110, top at y=58. Brass handle, kickplate. **No dialogue from the hallway side, ever** — no choice menu, no "Listen at the door." Pip walks up to the door from the hallway and it opens silently. The doctor-exit cinematic does not replay (`cabinState.doctorSeen === true`).

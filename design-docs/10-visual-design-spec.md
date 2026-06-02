@@ -49,7 +49,7 @@ The ship is a recurring visual environment across all eight chapters. Each locat
 
 **Recurring role.** Cabin 646 is the collection room — items Pip collects across all chapters accumulate and display visibly here on return visits. Collection-item inspectables use a cool-blue shimmer (not warm-amber) per the permeable-surface exception. *(`03-art-and-aesthetic.md`)*
 
-**Build status.** Shipped procedural. Sprint 32 (`0185a8d`) recompacted to 480px compact bedroom. Sprint 19 items still pending: desk, washstand, under-bed drawer, porthole aurora layer.
+**Build status.** Shipped procedural. Sprint 32 (`0185a8d`) recompacted to 480px compact bedroom. Sprint 35: porthole switched to `drawPortholeScene`; `aurora-faint` layer now rendered. Still pending: desk, washstand, under-bed drawer.
 
 ---
 
@@ -61,7 +61,7 @@ The ship is a recurring visual environment across all eight chapters. Each locat
 
 **Key interactive objects.** Grandparents' cabin door (x=920, always warm-glow). Cabin 646 door (x=1180, warm-glow after `cabinState.beatStage === 'post-bed'`). Radio on windowsill in grandparents' cabin (triggers talk-through-speakers ability). Descending staircase (DOWN sign) leading to dark corridor.
 
-**Build status.** Shipped procedural (Sprint 16 detail pass). Staircase visual shipped Sprint 20 (`drawDescendingStaircase` + DOWN sign). Still unbuilt: bulletin board visual asset, hallway canonical treat.
+**Build status.** Shipped procedural (Sprint 16 detail pass). Staircase visual shipped Sprint 20 (`drawDescendingStaircase` + DOWN sign). Sprint 35: `aurora-faint` layer added to `PORTHOLE_SCENES['ch1-ocean-night']`; all three hallway portholes pick it up automatically. Still unbuilt: bulletin board visual asset, hallway canonical treat.
 
 ---
 
@@ -75,7 +75,7 @@ The ship is a recurring visual environment across all eight chapters. Each locat
 
 **Key props.** Babcia on bed (sob-bob animation). Dziadek at window (static, faces left, no mirror). Photograph of Pip on nightstand. Suitcase with pier-recipe card. Window (4-pane wood). Armchair with Dziadek's coat (~x=280). Dziadek's radio (~x=200). *(`art-checklist.md`)*
 
-**Build status.** Shipped procedural. Dziadek's radio shipped Sprint 20 (`drawDziadekRadio`). Still unbuilt: armchair with coat.
+**Build status.** Shipped procedural. Dziadek's radio shipped Sprint 20 (`drawDziadekRadio`). Sprint 35: faint aurora pass added inline in `drawGrandparents`, clipped to window rect. Still unbuilt: armchair with coat.
 
 ---
 

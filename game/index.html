@@ -4129,9 +4129,16 @@ function drawPipMouthYawn(yawnT) {
    porthole scene. drawHallway passes the room's portholeScene id.
    ================================================================ */
 
+/* Aurora palette — shared between faint porthole aurora (Sprint 35)
+   and the observation deck full aurora (Sprint 27, which uses these
+   same underlying hues inline). Difference is alpha/scale, not color. */
+const AURORA_GREEN_BASE  = '58,112,72';   // #3a7048
+const AURORA_VIOLET_BASE = '90,56,120';   // #5a3878
+
 const PORTHOLE_SCENES = {
   'ch1-ocean-night': {
     layers: [
+      { kind: 'aurora-faint', parallax: 0 },  // Sprint 35: behind stars and water
       { kind: 'sky-stars',    parallax: 0.008 },
       { kind: 'horizon-line', parallax: 0 },
       { kind: 'water-waves',  parallax: 0 },
@@ -4431,6 +4438,29 @@ function drawPortholeScene(x, y, radius, sceneId, camX, now) {
 /* Render one porthole scene layer inside an already-clipped context. */
 function _drawPortholeLayer(cx, cy, ri, layer, camX, now, worldX) {
   switch (layer.kind) {
+    case 'aurora-faint': {
+      // Sprint 35: faint aurora hint in the upper portion of the porthole.
+      // Same palette as observation-deck full aurora; alpha reduced to a hint.
+      // Green band — upper sky
+      const yG = cy - ri * 0.65 + Math.sin(now * 0.011) * 3;
+      const gG = ctx.createLinearGradient(cx, yG - 7, cx, yG + 7);
+      gG.addColorStop(0,   'rgba(0,0,0,0)');
+      gG.addColorStop(0.4, `rgba(${AURORA_GREEN_BASE},0.08)`);
+      gG.addColorStop(0.6, `rgba(${AURORA_GREEN_BASE},0.08)`);
+      gG.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = gG;
+      ctx.fillRect(cx - ri, Math.round(yG - 7), ri * 2, 14);
+      // Violet band — slightly lower, separate slow drift phase
+      const yV = cy - ri * 0.42 + Math.sin(now * 0.008 + 2.1) * 2;
+      const gV = ctx.createLinearGradient(cx, yV - 5, cx, yV + 5);
+      gV.addColorStop(0,   'rgba(0,0,0,0)');
+      gV.addColorStop(0.4, `rgba(${AURORA_VIOLET_BASE},0.06)`);
+      gV.addColorStop(0.6, `rgba(${AURORA_VIOLET_BASE},0.06)`);
+      gV.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = gV;
+      ctx.fillRect(cx - ri, Math.round(yV - 5), ri * 2, 10);
+      break;
+    }
     case 'sky-stars': {
       // Deep indigo sky — upper portion of the porthole
       const sg = ctx.createLinearGradient(cx, cy - ri, cx, cy + 3);
@@ -4890,9 +4920,10 @@ function drawCabin(camX, now) {
   }
 
   // Porthole — game-world x=190 (Sprint 32: moved to left side of compact room; was 380)
+  // Sprint 35: switched to drawPortholeScene so the ch1-ocean-night aurora-faint layer renders here.
   const phSX = Math.round(190 - camX);
   if (phSX > -24 && phSX < W + 24) {
-    drawPorthole(phSX, 58, 18, { moonlight: true, divider: true });
+    drawPortholeScene(phSX, 58, 18, 'ch1-ocean-night', camX, now);
   }
 
   /* ---- Mirror — game-world x=280 (Sprint 11, on the wall opposite the bed) ---- */
@@ -7134,6 +7165,32 @@ function drawGrandparents(camX, now) {
   if (winSX < W + winGW && winSX + winGW > 0) {
     ctx.fillStyle = '#1a2840';
     ctx.fillRect(winSX, winRY, winGW, winRH);
+
+    // Sprint 35: faint aurora in upper portion of window glass — same palette as porthole aurora.
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(winSX, winRY, winGW, winRH);
+    ctx.clip();
+    // Green band
+    const aY1 = winRY + winRH * 0.22 + Math.sin(now * 0.011) * 4;
+    const aG1 = ctx.createLinearGradient(0, aY1 - 14, 0, aY1 + 14);
+    aG1.addColorStop(0,   'rgba(0,0,0,0)');
+    aG1.addColorStop(0.4, `rgba(${AURORA_GREEN_BASE},0.08)`);
+    aG1.addColorStop(0.6, `rgba(${AURORA_GREEN_BASE},0.08)`);
+    aG1.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = aG1;
+    ctx.fillRect(winSX, aY1 - 14, winGW, 28);
+    // Violet band
+    const aY2 = winRY + winRH * 0.38 + Math.sin(now * 0.008 + 2.1) * 3;
+    const aG2 = ctx.createLinearGradient(0, aY2 - 10, 0, aY2 + 10);
+    aG2.addColorStop(0,   'rgba(0,0,0,0)');
+    aG2.addColorStop(0.4, `rgba(${AURORA_VIOLET_BASE},0.06)`);
+    aG2.addColorStop(0.6, `rgba(${AURORA_VIOLET_BASE},0.06)`);
+    aG2.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = aG2;
+    ctx.fillRect(winSX, aY2 - 10, winGW, 20);
+    ctx.restore();
+
     ctx.strokeStyle = 'rgba(80,110,165,0.5)';
     ctx.lineWidth   = 1;
     ctx.beginPath(); ctx.moveTo(winSX + winGW / 2, winRY); ctx.lineTo(winSX + winGW / 2, winRY + winRH); ctx.stroke();

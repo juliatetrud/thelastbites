@@ -265,9 +265,25 @@ Sprint 12 locks the room into the chapter; Henrik kitchen build sprint deferred.
 
 ---
 
-## Audio (Ch1 — not yet implemented)
+## Audio (Ch1)
 
-No audio system exists in code yet. These are flagged for a future sound-design sprint. Build sprint can stub each with `console.log` or skip entirely.
+### Tier-1 Reactive SFX — Sprint 30 (`af6d0fa`) — Shipped
+
+Synthesized via Web Audio API (no audio files). Single shared AudioContext + master GainNode. Separate 🔊 toggle beside ♪. Shares the music system's first-keypress unlock gate.
+
+| Cue | Function | Status | Notes |
+|---|---|---|---|
+| Collect blip | `playCollectSfx()` | **Shipped Sprint 30** | Two-note rising sine ~150ms. Fires at pickup tween start. |
+| Eat swell | `playEatSfx()` | **Shipped Sprint 30** | Warm rounded sine ~250ms. Fires when stomach fills (treat). |
+| Notebook pulse tick | `playNotebookSfx()` | **Shipped Sprint 30** | Dry triangle tick ~80ms. Fires in `pulseNotebookIcon()` (collect + save). |
+| Inspect shimmer | `playInspectSfx()` | **Shipped Sprint 30** | Airy high sine ~120ms. Fires in `tryInspect()` at dialogue open. |
+| Movement whisper | `startMoveSfx()` / `stopMoveSfx()` | **Shipped Sprint 30** | White-noise + lowpass 200Hz; fades in/out with Pip's glide. NOT footsteps — ghost physics honored. |
+| Phase-through whoosh | `playPhaseSfx()` | **Shipped Sprint 30** | Descending sine ~400ms. Two sites wired (grandparents→cabin, panic wall-phase). TODO Sprint 23 for remaining shimmer sites. |
+| Music tracks | all | **Shipped** | Sprint 05 / music sprint. `playMusic()`, `♪` toggle, `tlb-music-on` localStorage. |
+
+### Tier-2 Beat-bound SFX — deferred to respective build sprints
+
+These are diegetic, atmospheric, or beat-specific. They build with the beats they belong to.
 
 | Sound effect | Beat | Status | Notes |
 |---|---|---|---|
@@ -278,9 +294,7 @@ No audio system exists in code yet. These are flagged for a future sound-design 
 | Cart wheels rolling | Beat 8 (janitor walk) | **Not built** | When janitor pushes cart away. |
 | Dripping water (dark corridor ambient) | Beat 8 | **Not built** | Faint periodic drip. Atmospheric. |
 | Dropped pan clatter | Beat 9 (Cinematic 4) | **Not built** | Diegetic crash. |
-| Henrik's silent scream | Beat 9 | **Not built** | The cinematic's *cut to silence* before the scream is "AAAAAAAAA—" but the audio is unclear — should it be a real scream cut off, or pure silence? Build sprint decision. My read: silence, no actual sound. The dialogue line conveys it. |
 | Wind on observation deck | Beat 12 | **Not built** | Soft ambient. |
-| Music tracks | All beats | **Shipped** | Music system exists (Sprint 17 etc.). Per-room music registered. Sprint 05 / music sprint. |
 
 ---
 

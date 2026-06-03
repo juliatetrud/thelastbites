@@ -151,7 +151,7 @@ Two staging types in the dark corridor:
 
 **Float-timing interaction:** The ceiling danglers specifically create the hazard the float ability is designed to navigate. The player learns Float in this room (at the broken glass), then immediately has to use it to avoid bobbing ceiling hazards. This is the chapter's teaching moment for Float as a *timing* skill, not just "hold Space to rise above things."
 
-**Gallery design:** Approved `character-gallery.html` (Sprint 41). Both staging types are shown in the gallery cell. See `drawEchoSpider` / `_spiderUnit`. Port to the game draw code is a later sprint (pairs with the dark-corridor reachability and lighting work).
+**Gallery design:** Approved `character-gallery.html` (Sprint 41). **In-game implementation:** Sprint 46. `echoSpiders` state object (2 floor, 2 ceiling); `updateEchoSpiders(dt)` handles movement + collision; `_drawDCSpider(cx, cy, r, now, phase)` + `drawEchoSpiders(camX, now)` render them. Collision: floor spiders drain 1 strength when `pip.float.altitude < 10`; ceiling danglers drain when Pip floats into their bob height. Visible in both dark and lit states (warm-amber, always-on). **Corridor lighting also fixed Sprint 46:** overlay lowered from 96%→80% black; aura radius 38→55px; 3 ambient candles + 2 small service portholes always visible; stairwell warm-glow hint at world-x 880 even in dark state.
 
 ### The flickering working sconce (pre-puzzle)
 

@@ -1186,7 +1186,7 @@ const HALL_W = 1440;           // hallway width — 3× canvas width
 
 /* Sprint 20: Beat 8 constants */
 const JANITOR_SPEED             = 105;    // px/s — matches passenger speed
-const DARK_CORRIDOR_AURA_R      = 38;     // px radius of Pip's aura in the dark corridor
+const DARK_CORRIDOR_AURA_R      = 55;     // px radius of Pip's aura — Sprint 46: lifted for navigability
 const FLOAT_DISCOVERY_RISE_RATE = 50;     // px/s upward during involuntary float discovery
 const FLOAT_DISCOVERY_FALL_RATE = 50;     // px/s downward after peak
 
@@ -1364,6 +1364,19 @@ const echoMouse = {
 
 /* Sprint 20: audio stubs — no-op until a sound-design sprint ships. */
 function playSound(name) { /* stub — name logged only in dev */ }
+
+/* Sprint 46: echo-spider state — Ch1 dark corridor (floor skitterers + ceiling danglers).
+   Warm-amber translucent, bouncy/mischievous. Pip floats past ceiling ones. */
+const echoSpiders = {
+  floor: [
+    { x: 200, dir: 1, timer: 0,   anchor: 200, range: 55, speed: 45, touched: false, touchTimer: 0 },
+    { x: 680, dir: -1, timer: 1.8, anchor: 680, range: 50, speed: 40, touched: false, touchTimer: 0 },
+  ],
+  ceiling: [
+    { x: 360, bobPhase: 0.0, bobSpeed: 2.05, bobAmp: 12, touched: false, touchTimer: 0 },
+    { x: 620, bobPhase: 1.9, bobSpeed: 1.65, bobAmp: 10, touched: false, touchTimer: 0 },
+  ],
+};
 
 /* Sprint 11 — cinematic / sequence state for mirror beat */
 const mirrorBeat = {
@@ -2151,9 +2164,11 @@ const darkCorridorSkillingsboller = {
   name:             'Skillingsboller',
   annotation:       'Skillingsboller — half a cinnamon bun, someone forgot it on the cart.',
   stomachValue:     10,
-  get x() { return darkCorridor.cartX; },
+  // Sprint 46: x pins to 840 once cart is removed (treat drops to floor, stays findable).
+  get x() { return darkCorridor.cartRemoved ? 840 : darkCorridor.cartX; },
   _collected:       false,
-  get collected()  { return this._collected || darkCorridor.cartRemoved; },
+  // Sprint 46: window no longer closes when cart leaves — treat stays on floor until collected.
+  get collected()  { return this._collected; },
   set collected(v) { this._collected = v; },
   tutorialNarrated: true,
 };
@@ -2418,6 +2433,9 @@ const observationDeckObjects = [
           showCinematic('henriks-offer', () => {
             chapterState.notebookReceived = true;
             chapterState.chapter1Complete = true;
+            // Sprint 46: candle received per Ch1 outline ("the corridors get dark").
+            notebook.items.push({ id: 'candle', name: 'Candle', annotation: 'For the corridors.', kind: 'item', sprite: 'candle' });
+            renderNotebookItems();
             showChapter1End();
           });
         },
@@ -3157,6 +3175,7 @@ function update(dt) {
   updateFloatDiscovery(dt);
   updateJanitorWalk(dt);
   updateEchoMouse(dt);
+  updateEchoSpiders(dt);   // Sprint 46: dark corridor spiders
   updateSconceSparks(dt);
 
   // Sprint 20: float-discovery trigger (broken glass at world-x ~420)
@@ -6375,6 +6394,25 @@ function drawHenriksOfferCinematic(now) {
   ctx.fillStyle = 'rgba(195,155,70,0.22)';
   ctx.fillRect(nbX - 10, nbY - 2, 16, 2);    // warm cover highlight
 
+  // Candle prop — Sprint 46: per Ch1 outline, Henrik also gives Pip a candle.
+  // Small wax candle on the railing beside Henrik.
+  const cdX = hX + 40, cdY = hY - 28;
+  const cf  = 0.80 + Math.sin(now * 0.0055) * 0.15;
+  // Glow
+  const cg = ctx.createRadialGradient(cdX, cdY - 12, 0, cdX, cdY - 12, 16);
+  cg.addColorStop(0, `rgba(255,200,60,${(0.35 * cf).toFixed(3)})`);
+  cg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = cg;
+  ctx.fillRect(cdX - 16, cdY - 28, 32, 32);
+  // Candle body
+  ctx.fillStyle = '#d8c8a8';
+  ctx.fillRect(cdX - 3, cdY - 20, 6, 20);
+  // Flame
+  ctx.fillStyle = `rgba(255,210,60,${(0.92 * cf).toFixed(3)})`;
+  ctx.fillRect(cdX - 1, cdY - 24, 2, 5);
+  ctx.fillStyle = `rgba(255,255,160,${(0.85 * cf).toFixed(3)})`;
+  ctx.fillRect(cdX, cdY - 25, 1, 3);
+
   // Pip (left side, smaller ghost silhouette, looking up at Henrik)
   const pX = 128;
   const pY = 225;
@@ -8467,6 +8505,119 @@ function updateEchoMouse(dt) {
 }
 
 /* ================================================================
+   SPRINT 46: ECHO-SPIDER UPDATE + DRAW
+   Warm-amber translucent. Floor skitterers + ceiling danglers.
+   Pip floats past ceiling ones; bumping floor ones drains strength.
+   ================================================================ */
+
+function updateEchoSpiders(dt) {
+  if (currentRoom !== 'darkCorridor') return;
+
+  // Floor spiders — slow skitter back and forth
+  for (const s of echoSpiders.floor) {
+    if (s.touched) {
+      s.touchTimer -= dt;
+      if (s.touchTimer <= 0) s.touched = false;
+    }
+    s.timer -= dt;
+    if (s.timer <= 0) {
+      s.dir   = -s.dir;
+      s.timer = 1.2 + Math.random() * 1.8;
+    }
+    s.x += s.dir * s.speed * dt;
+    s.x  = Math.max(s.anchor - s.range, Math.min(s.anchor + s.range, s.x));
+    // Collision: floor contact (Pip not floating)
+    if (!s.touched && Math.abs(pip.x - s.x) < 18 && pip.float.altitude < 10) {
+      s.touched    = true;
+      s.touchTimer = 1.5;
+      loseStrength(1);
+    }
+  }
+
+  // Ceiling danglers — bob on threads; hurt Pip only when floating into them
+  for (const s of echoSpiders.ceiling) {
+    if (s.touched) {
+      s.touchTimer -= dt;
+      if (s.touchTimer <= 0) s.touched = false;
+    }
+    // Bob position: thread anchor at y=38, bob amplitude below
+    const spiderY = 38 + s.bobAmp * 0.5 + s.bobAmp * 0.5 * Math.sin(Date.now() * 0.001 * s.bobSpeed + s.bobPhase);
+    s._drawY = spiderY;
+    // Collision: Pip floating at approximately the spider's hanging height
+    const spiderWorldY = FLOOR_Y - spiderY;   // in world-y terms
+    const pipY         = pip.y - pip.float.altitude;
+    if (!s.touched && Math.abs(pip.x - s.x) < 18 && Math.abs(pipY - spiderWorldY) < 20) {
+      s.touched    = true;
+      s.touchTimer = 1.5;
+      loseStrength(1);
+    }
+  }
+}
+
+/* Draw a single echo-spider at (cx, cy) with abdomen radius r. */
+function _drawDCSpider(cx, cy, r, now, phase) {
+  cx = Math.round(cx); cy = Math.round(cy);
+  // Glow halo
+  const gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 3.6);
+  gl.addColorStop(0, 'rgba(255,200,70,0.30)');
+  gl.addColorStop(1, 'rgba(255,200,70,0)');
+  ctx.fillStyle = gl;
+  ctx.fillRect(cx - r * 4, cy - r * 4, r * 8, r * 8);
+  // Legs
+  ctx.strokeStyle = 'rgba(255,183,50,0.70)';
+  ctx.lineWidth   = 1;
+  for (let i = 0; i < 8; i++) {
+    const baseA = (i * 45 + 22) * Math.PI / 180;
+    const wave  = Math.sin(now * 3.0 / 1000 + phase + i * 0.85) * 0.12;
+    const legLen = r * 1.9;
+    const lx = cx + Math.cos(baseA + wave) * legLen;
+    const ly = cy + Math.sin(baseA + wave) * legLen * 0.78;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(baseA) * r * 0.6, cy + Math.sin(baseA) * r * 0.55);
+    ctx.lineTo(Math.round(lx), Math.round(ly));
+    ctx.stroke();
+  }
+  // Abdomen
+  ctx.fillStyle = 'rgba(255,192,58,0.86)';
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  // Cephalothorax
+  const cr  = Math.round(r * 0.64);
+  const hcy = cy - r - cr + 1;
+  ctx.fillStyle = 'rgba(255,214,92,0.90)';
+  ctx.beginPath(); ctx.arc(cx, hcy, cr, 0, Math.PI * 2); ctx.fill();
+  // Specular sheen
+  ctx.fillStyle = 'rgba(255,244,168,0.38)';
+  ctx.beginPath(); ctx.arc(cx - cr * 0.22, hcy - cr * 0.28, cr * 0.38, 0, Math.PI * 2); ctx.fill();
+  // Eyes
+  ctx.fillStyle = 'rgba(255,250,190,0.98)';
+  ctx.fillRect(cx - 1, hcy - 1, 1, 1);
+  ctx.fillRect(cx + 1, hcy - 1, 1, 1);
+  ctx.lineWidth = 1;
+}
+
+function drawEchoSpiders(camX, now) {
+  // Floor spiders (draw at floor level, skittering)
+  for (let i = 0; i < echoSpiders.floor.length; i++) {
+    const s  = echoSpiders.floor[i];
+    const sx = Math.round(s.x - camX);
+    if (sx < -20 || sx > W + 20) continue;
+    _drawDCSpider(sx, FLOOR_Y - 6, 5, now, i * 2.3);
+  }
+  // Ceiling danglers with silk threads
+  for (let i = 0; i < echoSpiders.ceiling.length; i++) {
+    const s    = echoSpiders.ceiling[i];
+    const sx   = Math.round(s.x - camX);
+    if (sx < -20 || sx > W + 20) continue;
+    const bobY = s._drawY || 50;
+    // Thread (silk line from ceiling)
+    ctx.strokeStyle = 'rgba(255,215,100,0.35)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath(); ctx.moveTo(sx, 20); ctx.lineTo(sx, Math.round(bobY - 7)); ctx.stroke();
+    _drawDCSpider(sx, Math.round(bobY), 5, now, i * 1.9 + 1.2);
+  }
+}
+
+/* ================================================================
    SPRINT 20: GRANDPARENTS CABIN — DZIADEK'S RADIO DRAW
    ================================================================ */
 
@@ -8596,7 +8747,8 @@ function drawDarkCorridor(camX, now) {
   ctx.fillRect(0, 0, W, H);
 
   if (!darkCorridor.lit && !lightsOnSequence.active) {
-    // ---- DARK STATE: near-black with Pip's aura ----
+    // ---- DARK STATE — Sprint 46: lifted from 96% to 80% black for navigability. ----
+    // Decision D / Aesthetic Rule 11: always navigable, never frustrating-dark.
     ctx.fillStyle = '#0a0c14';
     ctx.fillRect(0, 0, W, FLOOR_Y);
 
@@ -8604,8 +8756,8 @@ function drawDarkCorridor(camX, now) {
     const sc1SX = Math.round(240 - camX);
     if (sc1SX > -(20 + DARK_CORRIDOR_AURA_R) && sc1SX < W + 20 + DARK_CORRIDOR_AURA_R) {
       ctx.save();
-      ctx.globalAlpha = 0.4;
-      drawSconce(sc1SX, 70, { flicker: true, intensity: 0.35, now });
+      ctx.globalAlpha = 0.55;
+      drawSconce(sc1SX, 70, { flicker: true, intensity: 0.45, now });
       ctx.globalAlpha = 1;
       ctx.restore();
     }
@@ -8619,8 +8771,53 @@ function drawDarkCorridor(camX, now) {
     // Spark particles (during sconce puzzle)
     drawSconceSparks(camX);
 
+    // ---- Atmospheric lights drawn ON TOP of overlay — always visible ----
+    // Sprint 46: small service portholes + candles so the player can always orient.
+
+    // Service portholes (small, reveal Bergen scenery — always visible as ambient glow)
+    const dcPortholes = [{ gx: 310, r: 7 }, { gx: 660, r: 7 }];
+    for (const { gx, r } of dcPortholes) {
+      const px = Math.round(gx - camX);
+      if (px > -(r + 10) && px < W + r + 10) {
+        drawSceneryInPorthole(px, 72, r, now);
+      }
+    }
+
+    // Candles in wall niches — tiny warm glows that orient the player
+    const candles = [{ gx: 148, now: now }, { gx: 510, now: now }, { gx: 802, now: now }];
+    for (const { gx } of candles) {
+      const cx = Math.round(gx - camX);
+      if (cx < -12 || cx > W + 12) continue;
+      const flicker = 0.60 + Math.sin(now * 0.0042 + gx) * 0.20 + Math.sin(now * 0.0071 + gx) * 0.12;
+      // Candle glow
+      const cg = ctx.createRadialGradient(cx, 108, 0, cx, 108, 18);
+      cg.addColorStop(0,   `rgba(255,195,60,${(0.38 * flicker).toFixed(3)})`);
+      cg.addColorStop(0.5, `rgba(200,130,30,${(0.15 * flicker).toFixed(3)})`);
+      cg.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = cg;
+      ctx.fillRect(cx - 18, 90, 36, 36);
+      // Candle body
+      ctx.fillStyle = `rgba(248,228,168,${(0.90 * flicker).toFixed(3)})`;
+      ctx.fillRect(cx - 1, 110, 2, 8);
+      ctx.fillStyle = `rgba(255,230,80,${(0.95 * flicker).toFixed(3)})`;
+      ctx.fillRect(cx - 1, 108, 2, 3);
+    }
+
+    // Stairwell hint — faint warm glow at world-x 880 even in dark state.
+    // Gives the player a distant beacon to walk toward.
+    {
+      const stHintX = Math.round(880 - camX);
+      if (stHintX > -60 && stHintX < W + 60) {
+        const shg = ctx.createRadialGradient(stHintX, FLOOR_Y - 30, 0, stHintX, FLOOR_Y - 30, 40);
+        shg.addColorStop(0,   'rgba(180,120,40,0.22)');
+        shg.addColorStop(1,   'rgba(0,0,0,0)');
+        ctx.fillStyle = shg;
+        ctx.fillRect(stHintX - 40, FLOOR_Y - 70, 80, 70);
+      }
+    }
+
     // Draw floor line (always visible)
-    ctx.strokeStyle = 'rgba(40,48,68,0.45)';
+    ctx.strokeStyle = 'rgba(40,48,68,0.55)';
     ctx.lineWidth   = 1;
     ctx.beginPath(); ctx.moveTo(0, FLOOR_Y); ctx.lineTo(W, FLOOR_Y); ctx.stroke();
 
@@ -8705,6 +8902,9 @@ function drawDarkCorridor(camX, now) {
     if (darkCorridor.lit) {
       drawEchoMouse(echoMouse.x - camX, FLOOR_Y, now);
     }
+
+    // Echo-spiders (both states — always visible as warm-amber hazards)
+    drawEchoSpiders(camX, now);
   }
 }
 
@@ -8748,8 +8948,8 @@ function drawDarkOverlay(camX, now) {
   const pipSX = Math.round(pip.x - camX);
   const pipGY = Math.round(pip.y - pip.float.altitude - PIP_H / 2);
 
-  // Full-screen black overlay
-  ctx.fillStyle = 'rgba(4,6,12,0.96)';
+  // Full-screen black overlay — Sprint 46: lowered from 0.96 to 0.80 for navigability.
+  ctx.fillStyle = 'rgba(4,6,12,0.80)';
   ctx.fillRect(0, 0, W, FLOOR_Y);
 
   // Punch a soft hole at Pip's position using destination-out composite op
@@ -9858,6 +10058,19 @@ function drawKitchen(camX, now) {
 
   // ---- Object aura overlay ----
   drawObjectAura(camX, now);
+
+  // Sprint 46: when nokkenStoryHeard, show warm-amber glow at right wall
+  // (per permeable-surface convention: warm amber = passable).
+  if (chapterState.nokkenStoryHeard) {
+    const rightEdgeSX = Math.round(ROOM_W - camX);
+    if (rightEdgeSX < W + 40 && rightEdgeSX > -40) {
+      const rwg = ctx.createLinearGradient(rightEdgeSX - 30, 0, rightEdgeSX + 5, 0);
+      rwg.addColorStop(0, 'rgba(255,180,80,0)');
+      rwg.addColorStop(1, 'rgba(255,180,80,0.28)');
+      ctx.fillStyle = rwg;
+      ctx.fillRect(Math.max(0, rightEdgeSX - 30), 0, 35, FLOOR_Y);
+    }
+  }
 }
 
 /* ================================================================

@@ -270,6 +270,8 @@ These are the principles that keep the look consistent. When in doubt, return he
 
 10. **Dark rooms stay navigable.** Atmospheric darkness never costs the player the ability to see where they are and where they're going. Every room — even the darkest — must be visibly playable; gently dark, never frustrating-dark. *(Locked Decision D, 2026-06-02. Applies game-wide.)*
 
+11. **Spooky, humorous, and warm — in that order, always together.** The game is gentle horror that never turns cruel. Every scene, prop, NPC, and line of narration should be at least two of these three, and nothing should betray the third. Two guardrails: (a) *keep it gentle* — Pip's chapter is tender; grotesque or mean are both wrong registers; (b) *creative license lives in the how, not the what* — fun ideas that conflict with a locked decision or the established tone should be flagged to Julia, not shipped silently. *(Locked Sprint 37, 2026-06-03.)*
+
 ### Memory cinematic visual language
 
 *(Locked in Sprint 11. Defined in `game/index.html`'s `drawMemoryMist()` function. Not used by any cinematic in Sprint 11.)*

@@ -93,7 +93,7 @@ Pip can walk right through the hallway. The hallway has six doors (636, 638, 640
 | ~1180 | Cabin 646 door | **Not interactable from the hallway side on first encounter** (Sprint 23 — silent set-dressing). Return visits open it silently on approach. See Beat 4. |
 | ~900 | Grandparents' cabin door (644) | *From inside, someone is crying softly. The sound is familiar.* / *Pip reaches for the handle.* See Beat 6 for phase-through trigger. |
 
-**Hallway treat (P1 Session 1):** A canonical hallway treat exists near the luggage trolley or bulletin board area. It emits the warm collect-aura. **Not yet collectable** — Pip hasn't learned `↓` yet (taught in Beat 11b). Replay reward.
+**Hallway treat:** ~~A canonical hallway treat exists near the luggage trolley or bulletin board area.~~ **Retired — Sprint 36 (2026-06-03).** The hallway has no treat. The chapter's four-treat quota (Smørbukk in cabin, Skillingsboller on dark-corridor cart, Bamsemums in kitchen, Kvikk Lunsj on observation deck) is complete. Hallway is a transit room.
 
 **Exit condition:** None — this is the chapter's exploration substrate. Player exits Beat 2 by walking off into another beat (cabin door = Beat 4; grandparents' door = Beat 6; Passenger walk-through = Beat 3 trigger; far-right staircase = blocked until post-Beat-11).
 
@@ -322,29 +322,28 @@ The cinematic fades. Pip is at the left edge of the room, facing right. Player h
 
 **Mode:** Room (hallway)
 
-**Status:** **Not yet shipped.** Spec'd Sprint 23; visual asset and gate logic land in Sprint 24+ as part of the kitchen build.
+**Status:** **Shipped — Sprint 20 (`drawDescendingStaircase`) + Sprint 24 Stage 2 (DOWN sign).** *(Corrected Sprint 37 — prior "Not yet shipped" was stale.)*
 
-**Trigger:** After the Beat 5 panic exit, Pip is in the hallway with player control restored. The hallway's far-right zone (past world-x ~1320), previously visually dark and impassable, now shows a lit "DOWN" sign suspended above a descending staircase. Walking right onto the stairhead (or `↑` at the stairhead) transitions to Beat 8 (the dark corridor).
+**Trigger:** The staircase (including the DOWN sign) renders only when `cabinState.beatStage === 'post-bed'` (set at the end of the bed-reveal cinematic in Beat 5). Before that state, the far-right hallway zone shows only the dark gradient overlay — no staircase visual exists. After `post-bed`, the staircase and DOWN sign appear and Pip can descend.
 
 **Player inputs allowed:**
 - Standard hallway room-mode movement.
-- At the stairhead: walking right (or `↑`) descends.
+- At the stairhead (world-x ~1312): walking right onto it triggers the dark-corridor room transition.
 
 **What happens:**
 
-1. The DOWN sign is lit warm but specific — readable as functional ship signage. Suspended over the stairhead at the far-right hallway terminus.
-2. The descending staircase is visibly accessible (post-panic-exit). Pre-panic-exit it is visible-but-darkened set-dressing (sprint-23 canon — the sign itself stays lit throughout; what changes post-panic is the gate, not the sign).
-3. Pip walks right. At the stairhead, the camera transitions; the screen fades down. Beat 8 begins.
+1. After the panic exit, `cabinState.beatStage === 'post-bed'` is true. The hallway's far-right end (past world-x ~1320) now draws the descending staircase with a warm-amber lit "DOWN" sign above it.
+2. Pip walks right. At world-x ~1312 the room transition fires; the screen fades to the dark corridor. Beat 8 begins.
 
-**No dialogue lines on first descent.** The sign is its own communication. *(An optional italic Pip thought — e.g. *Down.* — is filed in `dialogue.md` as a TBD for the build sprint.)*
+**No dialogue lines on first descent.** The sign is its own communication.
 
-**Exit condition:** Pip descends the stairs. Camera transitions to the dark corridor (Beat 8).
+**Exit condition:** Pip reaches world-x ~1312 in the hallway while `beatStage === 'post-bed'`. Room transitions to the dark corridor.
 
 **State changes:**
-- `chapterState.descendedStairs: false → true` *(new flag, pending Sprint 24 implementation — needed so the staircase trigger doesn't refire if Pip walks back up to the hallway and returns)*
+- The room transition fires the `startTransition('darkCorridor', …)` path. No additional flag needed beyond `beatStage === 'post-bed'` (already set).
 
 **Files involved:**
-- `game/index.html` — DOWN-sign visual at the hallway's far-right end; staircase visual; post-panic-exit gate logic; stairhead trigger that transitions to the dark corridor room.
+- `game/index.html` — `drawDescendingStaircase(screenX)` called from `drawHallway` when `cabinState.beatStage === 'post-bed'`; `drawHallway` stairhead transition trigger at world-x ~1312. *(#26 closed Sprint 37 — doc now matches code.)*
 
 **Note on the prior beat numbering:** This beat is inserted as **6.5** because Beat 7 was already assigned to Dziadek's radio. The chronological order is Beat 5 (panic exit) → Beat 6.5 (DOWN sign, descent) → Beat 8 (dark corridor) → Beat 7 (radio paging, on backtrack to grandparents'). The doc-order placement (after Beat 6 continuation, before Beat 7) is structural — Beat 5/6/6-cont are the cabin-and-grandparents cluster, and Beat 6.5/7/8 are the moving-forward cluster.
 

@@ -77,21 +77,21 @@ Ch1 has 9 cinematics: Cinematics 6a (gravlaks/grandfather) and 6b (lefse/Erik) a
 These are room-asset updates from Sprint 19 that need implementation when the cabin and hallway are next touched (likely Henrik kitchen build sprint):
 
 **Cabin 646:**
-- Desk at world-x ~220 (period-appropriate writing desk).
-- Washstand at world-x ~340 (period-appropriate, near porthole).
-- Under-bed drawer (visible at the foot of the bed; contains Smørbukk treat).
+- ~~Desk at world-x ~220 (period-appropriate writing desk).~~ ✓ Sprint 37 (x=230)
+- ~~Washstand at world-x ~340 (period-appropriate, near porthole).~~ ✓ Sprint 37 (x=308)
+- Under-bed drawer (visible at the foot of the bed) — **retired Sprint 36**: no drawer, Smørbukk on nightstand.
 - Inspectable child's drawing already exists at world-x ~160; gains a narration line.
 - ~~Porthole gains a faint aurora layer (per chapter-wide aurora rule).~~ ✓ Sprint 35
 
 **Hallway:**
-- Bulletin board at world-x ~260 — needs real visual asset with "WELCOME ABOARD THE MNEMOSYNE" header rendered visibly.
-- Descending staircase at far-right (past world-x ~1320) — visible visual asset readable as "this is where you go next."
+- ~~Bulletin board at world-x ~260 — needs real visual asset with "WELCOME ABOARD THE MNEMOSYNE" header rendered visibly.~~ ✓ Sprint 37 (x=130, between door and porthole)
+- ~~Descending staircase at far-right (past world-x ~1320) — visible visual asset readable as "this is where you go next."~~ ✓ Sprint 20/24
 - ~~All three hallway porthole scenes gain a faint aurora layer.~~ ✓ Sprint 35
 
 **Grandparents' cabin:**
-- Armchair at world-x ~280 with Dziadek's coat folded over it.
+- ~~Armchair at world-x ~280 with Dziadek's coat folded over it.~~ ✓ Sprint 37
 - ~~Window gains a faint aurora reflection.~~ ✓ Sprint 35
-- Dziadek's radio at world-x ~200 (small period-appropriate domestic radio, wooden-cased, 1900s-era Edwardian).
+- ~~Dziadek's radio at world-x ~200 (small period-appropriate domestic radio, wooden-cased, 1900s-era Edwardian).~~ ✓ Sprint 20
 
 ---
 
@@ -162,8 +162,8 @@ Per Sprint 12: Ch1 has four treats. One is locked and shipped; three need final 
 | Cabin entry door | **Shipped procedural** | Sprint 02. |
 | Far cabin door (doctor's exit) | **Shipped procedural** | Sprint 14. Non-interactable. |
 | Child's drawing on wall | **Shipped procedural (as ambient)** | Visible in Sprint 11. Becomes inspectable per Sprint 19 — narration line added. |
-| Writing desk | **Not built** | Sprint 19 addition. World-x ~220. Period-appropriate. |
-| Washstand | **Not built** | Sprint 19 addition. World-x ~340. Period-appropriate. |
+| Writing desk | **Shipped procedural** | Sprint 37. World-x 230 (between porthole ~190 and mirror ~280). Dark wood surface, green leather inset, brass inkwell, legs. |
+| Washstand | **Shipped procedural** | Sprint 37. World-x 308 (between mirror ~280 and nightstand ~332). Porcelain basin on wood stand. |
 | Under-bed drawer | **Not built** | Sprint 19 addition. Contains Smørbukk treat. |
 | Doctor sprite (for cinematic) | **Stub procedural** | Sprint 14. `drawDoctor` procedural. Designed sprite is Sprint 18.1. |
 
@@ -176,7 +176,7 @@ Per Sprint 12: Ch1 has four treats. One is locked and shipped; three need final 
 | Crimson runner carpet | **Shipped procedural** | Sprint 16. Narrowed per polish 1. |
 | Wall sconces (2, one flickering) | **Shipped procedural** | Sprint 02 + Sprint 16. Flickering one at world-x ~820. |
 | 3 portholes | **Shipped procedural** | Sprint 16. `ch1-ocean-night` scene. Sprint 35: `aurora-faint` layer added to scene registry; all three portholes pick it up automatically. |
-| Bulletin board | **Stub procedural** | Sprint 02 dialogue, no discrete visual asset. Sprint 19 requires real visual asset at world-x ~260. |
+| Bulletin board | **Shipped procedural** | Sprint 37. World-x 130 (between door at 80 and porthole at 180). Cork board, brass frame, paper notices, red pins. Inspectable x updated to match. |
 | Luggage trolley (with bear) | **Shipped procedural** | Sprint 16. World-x ~530. |
 | 5 wall-decor pieces (ship photo, barometer, botanical, map, mirror) | **Shipped procedural** | Sprint 16. Two become inspectable per Sprint 19 (ship photo, navigational chart). |
 | Descending staircase (far-right dark zone) | **Shipped procedural** | Sprint 20. `drawDescendingStaircase` + Sprint 24 Stage 2 DOWN sign. *(Checklist previously said "Not built" — corrected Sprint 33.)* |
@@ -195,7 +195,7 @@ Per Sprint 12: Ch1 has four treats. One is locked and shipped; three need final 
 | Bed (wide, for Babcia) | **Shipped procedural** | Sprint 04. |
 | Nightstand with lamp | **Shipped procedural** | Sprint 04. The cabin's warm-pool source. |
 | Dziadek's radio | **Shipped procedural** | Sprint 20. `drawDziadekRadio` — 1900s wooden-cased radio with fabric grill, tuning dial, proximity-crackle shimmer. *(Checklist previously said "Not built" — corrected Sprint 33.)* |
-| Armchair with coat | **Not built** | Sprint 19 addition. World-x ~280. Dziadek's wool coat folded over it. Inspectable. |
+| Armchair with coat | **Shipped procedural** | Sprint 37. World-x 280. Small period armchair, burgundy upholstery, Dziadek's wool coat draped over the back. Inspectable added to grandparentsObjects. |
 | Soft cool-blue glow at left-edge door | **Shipped procedural** | Sprint 14. Static, subtle. |
 
 ### Dark corridor props
@@ -221,7 +221,7 @@ Per Sprint 12: Ch1 has four treats. One is locked and shipped; three need final 
 | Asset | Status | Notes |
 |---|---|---|
 | Stainless steel prep counter (long) | **Shipped procedural** | Sprint 26 Stage 1. Long dark-wood counter in `drawKitchen`. |
-| Hanging copper pots (4-6) | **Partial** | Sprint 26 Stage 1. Storage racks drawn at world-x 820–940 (three horizontal rack rows). Literal hanging copper pots not rendered. Storage racks serve as stand-in. *(Checklist said "Not built" — partially corrected Sprint 33.)* |
+| Hanging copper pots (4-6) | **Shipped procedural** | Sprint 37. Three copper pots hang from a rod above the storage racks (world-x 820–940): warm copper ellipses with handles, suspended from hook lines. |
 | Pendant light (overhead, warm amber) | **Shipped procedural** | Sprint 26 Stage 1. Warm amber radial gradient + pendant fixture at world-x ~475. |
 | Walk-in freezer doorway | **Shipped procedural** | Sprint 26 Stage 1. Drawn at world-x 700–762 — heavy door frame, cool back-light. |
 | Stool | **Shipped procedural** | Sprint 26 Stage 1. Drawn at world-x ~400 with Henrik sitting post-Beat 10. |
@@ -348,7 +348,7 @@ drawDeckBench / drawDeckRope / drawDeckTelescope  ← Sprint 27 (previously "not
 **Still genuinely unbuilt** (as of Sprint 32):
 
 - ~~Chapter-wide aurora porthole layers~~ — shipped Sprint 35
-- Hanging copper pots in kitchen (storage racks exist as partial stand-in)
+- ~~Hanging copper pots in kitchen~~ — shipped Sprint 37
 - Echo-mouse near kitchen freezer (optional, not called)
 - Cabin: writing desk, washstand, under-bed drawer
 - Hallway: bulletin board visual asset ("WELCOME ABOARD" header), hallway canonical treat
@@ -392,7 +392,7 @@ drawDeckBench / drawDeckRope / drawDeckTelescope  ← Sprint 27 (previously "not
 
 20. Cabin desk, washstand, under-bed drawer — **STILL UNBUILT**
 21. ~~Hallway descending staircase~~ ✓ Sprint 20 | Bulletin-board visual asset — **STILL UNBUILT**
-22. ~~Grandparents' cabin Dziadek's radio~~ ✓ Sprint 20 | Armchair + coat — **STILL UNBUILT**
+22. ~~Grandparents' cabin Dziadek's radio~~ ✓ Sprint 20 | ~~Armchair + coat~~ ✓ Sprint 37
 23. ~~`drawAuroraScene` — chapter-wide aurora porthole layer~~ ✓ Sprint 35 — `aurora-faint` layer in `PORTHOLE_SCENES['ch1-ocean-night']`; inline pass in grandparents' window
 
 ### Tier 5 — ~~Deferred~~ ✓ All done

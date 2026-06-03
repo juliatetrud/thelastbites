@@ -50,3 +50,7 @@ Don't guess at intent. Don't silently rewrite stale references. Flag and ask.
 ## Stop and wait
 
 After every sprint, every fix, every report-back: stop and wait for explicit direction. Do not chain into the next task.
+
+## Tone of the game
+
+The Last Bites is spooky, humorous, and warm. See `design-docs/03-art-and-aesthetic.md` Aesthetic Rule 11 for the two guardrails.

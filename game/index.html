@@ -1840,11 +1840,13 @@ const cabinObjects = [
    ================================================================ */
 
 const hallwayObjects = [
-  /* ---- Bulletin board ---- atmospheric, 2 lines */
+  /* ---- Bulletin board ---- atmospheric, 2 lines
+     Sprint 37: x moved from 180 to 130 — clear wall between door (80) and porthole (180).
+     Visual asset added in drawHallway at the same x. */
   {
     id: 'hallway-bulletin',
-    x: 180,
-    sparkleY: 95,
+    x: 130,
+    sparkleY: 108,
     node: {
       id: 'hallway-bulletin-inspect',
       lines: [
@@ -2044,6 +2046,23 @@ const grandparentsObjects = [
       lines: [
         { speaker: null, text: 'The suitcase is open. Nothing is folded. A shirt of his is on top \u2014 the one with the boat on it.', italic: false },
         { speaker: null, text: 'They didn\u2019t have time to unpack. They didn\u2019t think they would need to.', italic: false },
+      ],
+      choices: null, onEnd: null,
+    },
+  },
+
+  /* ---- Armchair with Dziadek's coat (Sprint 37) ---- world-x ~280
+     Dziadek's wool coat is folded over the armchair. Between Dziadek (~160) and suitcase (~380).
+     Locked narration from beats.md: he must have meant to wear it. */
+  {
+    id: 'gp-armchair',
+    x: 280,
+    sparkleY: 140,
+    node: {
+      id: 'gp-armchair-inspect',
+      lines: [
+        { speaker: null, text: "Dziadek’s wool coat is folded over the armchair. He must have meant to wear it.", italic: false },
+        { speaker: null, text: 'He hasn’t moved since they were told.', italic: true },
       ],
       choices: null, onEnd: null,
     },
@@ -4962,6 +4981,53 @@ function drawCabin(camX, now) {
     drawPortholeScene(phSX, 58, 18, 'ch1-ocean-night', camX, now);
   }
 
+  // Sprint 37: Writing desk — game-world x=230 (between porthole x=190 and mirror x=280)
+  // Period Edwardian liner writing desk: dark wood surface, fold-up panel, single drawer.
+  const deskSX = Math.round(230 - camX);
+  if (deskSX > -28 && deskSX < W + 28) {
+    // Desk surface (dark mahogany)
+    ctx.fillStyle = '#2a1c0e';
+    ctx.fillRect(deskSX - 13, FLOOR_Y - 18, 26, 4);    // surface top
+    ctx.fillStyle = '#1e140a';
+    ctx.fillRect(deskSX - 13, FLOOR_Y - 14, 26, 14);   // body
+    ctx.fillStyle = 'rgba(180,130,60,0.14)';
+    ctx.fillRect(deskSX - 13, FLOOR_Y - 18, 26, 1);    // surface highlight
+    // Writing surface inset (green leather hint)
+    ctx.fillStyle = 'rgba(30,60,30,0.50)';
+    ctx.fillRect(deskSX - 10, FLOOR_Y - 17, 20, 2);
+    // Brass inkwell — a small cylinder on the surface
+    ctx.fillStyle = '#604820';
+    ctx.fillRect(deskSX + 5, FLOOR_Y - 20, 4, 3);
+    ctx.fillStyle = 'rgba(180,140,50,0.60)';
+    ctx.fillRect(deskSX + 5, FLOOR_Y - 20, 4, 1);
+    // Legs
+    ctx.fillStyle = '#1c1208';
+    ctx.fillRect(deskSX - 12, FLOOR_Y - 8, 3, 8);
+    ctx.fillRect(deskSX + 9,  FLOOR_Y - 8, 3, 8);
+  }
+
+  // Sprint 37: Washstand — game-world x=308 (between mirror x=280 and nightstand x=332)
+  // Small porcelain-basin washstand — the maritime cabin's version of running water.
+  const washSX = Math.round(308 - camX);
+  if (washSX > -20 && washSX < W + 20) {
+    // Stand body (dark wood)
+    ctx.fillStyle = '#241a0c';
+    ctx.fillRect(washSX - 7, FLOOR_Y - 22, 14, 5);     // top rail
+    ctx.fillRect(washSX - 7, FLOOR_Y - 11, 14, 11);    // lower shelf
+    // Porcelain basin (white oval set into the top rail)
+    ctx.fillStyle = 'rgba(210,215,225,0.88)';
+    ctx.beginPath();
+    ctx.ellipse(washSX, FLOOR_Y - 21, 5, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(140,148,165,0.70)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Legs
+    ctx.fillStyle = '#1c1208';
+    ctx.fillRect(washSX - 6, FLOOR_Y - 6, 2, 6);
+    ctx.fillRect(washSX + 4,  FLOOR_Y - 6, 2, 6);
+  }
+
   /* ---- Mirror — game-world x=280 (Sprint 11, on the wall opposite the bed) ---- */
   const mirrorGX = 280;
   const mirrorSX = Math.round(mirrorGX - camX);
@@ -6974,6 +7040,35 @@ function drawHallway(camX, now) {
     drawWallArt(sx, decorY, d.kind);
   }
 
+  // Sprint 37: Bulletin board — game-world x=130 (between door at 80 and porthole at 180).
+  // Cork board with brass frame, "WELCOME ABOARD" header. Ship's daily notice board.
+  {
+    const bbSX = Math.round(130 - camX);
+    if (bbSX > -30 && bbSX < W + 30) {
+      const bbW = 38, bbH = 30, bbX = bbSX - bbW / 2, bbY = 92;
+      // Cork backing
+      ctx.fillStyle = '#8a6a38';
+      ctx.fillRect(bbX, bbY, bbW, bbH);
+      // Brass frame
+      ctx.strokeStyle = '#7a5c28';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(bbX, bbY, bbW, bbH);
+      // Paper notices (three small white rectangles — layered, pinned at angles)
+      ctx.fillStyle = 'rgba(235,228,210,0.85)';
+      ctx.fillRect(bbX + 3, bbY + 3, 18, 22);   // main notice
+      ctx.fillStyle = 'rgba(225,218,198,0.70)';
+      ctx.fillRect(bbX + 16, bbY + 5, 16, 14);  // smaller notice
+      ctx.fillRect(bbX + 5, bbY + 18, 20, 8);   // bottom strip
+      // Red pushpin dots
+      ctx.fillStyle = '#b82020';
+      ctx.beginPath(); ctx.arc(bbX + 11, bbY + 3, 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(bbX + 23, bbY + 5, 1.5, 0, Math.PI * 2); ctx.fill();
+      // Header text strip (darker bar at top of main notice)
+      ctx.fillStyle = 'rgba(80,60,30,0.35)';
+      ctx.fillRect(bbX + 3, bbY + 3, 18, 5);
+    }
+  }
+
   // Wall fixtures — one per gap between the 6 doors, all at y=85.
   // Pattern alternates porthole / sconce / porthole / sconce / porthole.
   // x positions are gap centres (doors at 80,280,480,700,920,1180):
@@ -7235,6 +7330,36 @@ function drawGrandparents(camX, now) {
     ctx.lineWidth   = 2;
     ctx.strokeRect(winSX - 2, winRY - 2, winGW + 4, winRH + 4);
     ctx.lineWidth   = 1;
+  }
+
+  // --- Armchair with Dziadek's coat (Sprint 37) — game-world x=280 ---
+  // Small period armchair between Dziadek (~160) and the suitcase (~380).
+  // Dziadek's wool coat folded over the back — he hasn't moved since they were told.
+  const acSX = Math.round(280 - camX);
+  if (acSX > -28 && acSX < W + 28) {
+    // Chair body (dark burgundy upholstery)
+    ctx.fillStyle = '#3a1a14';
+    ctx.fillRect(acSX - 12, FLOOR_Y - 30, 24, 20);     // seat + lower back
+    ctx.fillRect(acSX - 14, FLOOR_Y - 42, 28, 14);     // back cushion
+    // Armrests
+    ctx.fillStyle = '#2e1410';
+    ctx.fillRect(acSX - 14, FLOOR_Y - 32, 5, 8);
+    ctx.fillRect(acSX + 9,  FLOOR_Y - 32, 5, 8);
+    // Legs (dark turned wood)
+    ctx.fillStyle = '#2a1c0c';
+    ctx.fillRect(acSX - 11, FLOOR_Y - 10, 3, 10);
+    ctx.fillRect(acSX + 8,  FLOOR_Y - 10, 3, 10);
+    // Chair frame outline hint
+    ctx.strokeStyle = 'rgba(100,50,30,0.35)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(acSX - 14, FLOOR_Y - 42, 28, 14);
+    // Dziadek's wool coat draped over back (darker neutral tone, folded loosely)
+    ctx.fillStyle = '#2a2830';
+    ctx.fillRect(acSX - 13, FLOOR_Y - 48, 26, 8);      // coat body over chair-back
+    ctx.fillRect(acSX - 11, FLOOR_Y - 44, 8, 14);      // left lapel drape
+    ctx.fillRect(acSX + 3,  FLOOR_Y - 44, 8, 14);      // right lapel drape
+    ctx.fillStyle = 'rgba(60,55,75,0.50)';
+    ctx.fillRect(acSX - 13, FLOOR_Y - 48, 26, 1);      // coat top edge highlight
   }
 
   // --- Bed (right, game-world x=440–598) ---
@@ -9024,6 +9149,46 @@ function drawKitchen(camX, now) {
         ctx.fillRect(rx - 2, panelTop + 28, 42, 4);
       }
     }
+
+    // Sprint 37: Hanging copper pots — suspended from a rack rod above the storage.
+    // Three pots at slightly different heights; warm copper tones catch the pendant light.
+    const potData = [
+      { ox: 16, hookY: panelTop + 10, potR: 8 },   // left pot — tallest hang
+      { ox: 68, hookY: panelTop + 14, potR: 7 },   // center-left
+      { ox: 118, hookY: panelTop + 8, potR: 9 },   // center-right — largest
+    ];
+    // Horizontal hanging rod
+    const rodX1 = rackSX;
+    const rodX2 = rackSX + 130;
+    if (rodX2 > 0 && rodX1 < W) {
+      ctx.fillStyle = 'rgba(120,80,30,0.60)';
+      ctx.fillRect(Math.max(0, rodX1), panelTop + 6, Math.min(W, rodX2) - Math.max(0, rodX1), 3);
+    }
+    for (const { ox, hookY, potR } of potData) {
+      const px = rackSX + ox;
+      if (px < -20 || px > W + 20) continue;
+      // Hook line
+      ctx.strokeStyle = 'rgba(140,100,40,0.55)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px, panelTop + 9); ctx.lineTo(px, hookY); ctx.stroke();
+      // Pot body — copper reddish-orange
+      ctx.fillStyle = 'rgba(168,88,32,0.82)';
+      ctx.beginPath();
+      ctx.ellipse(px, hookY + potR + 2, potR, potR + 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Pot rim highlight
+      ctx.fillStyle = 'rgba(210,130,55,0.60)';
+      ctx.beginPath();
+      ctx.ellipse(px, hookY + 2, potR, 2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Handle
+      ctx.strokeStyle = 'rgba(190,110,40,0.70)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(px, hookY + potR + 2, potR + 2, Math.PI * 0.6, Math.PI * 1.4);
+      ctx.stroke();
+    }
+    ctx.lineWidth = 1;
   }
 
   // ---- Floor (dark planks) ----

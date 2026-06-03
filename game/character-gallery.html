@@ -1106,6 +1106,333 @@ function drawPocong(ctx, cx, floor, t, speaking) {
 }
 
 /* =============================================================
+   ⑦ DZIADEK (JAN) — ~68px tall (0.62 door-fraction)
+   Sprint 40. Deep-blue wool coat with Babcia's quilted-square
+   patches. Flat cap, grey beard, grieving stillness.
+   Gallery-first design — port to game/index.html separately.
+   ============================================================= */
+function drawDziadek(ctx, cx, floor, t, speaking) {
+  // Almost imperceptible grief-sway: 0.5 px, 7-second period
+  const sway = Math.round(Math.sin(t * 0.9) * 0.5);
+
+  floorGlow(ctx, cx, floor, 16, '#2a3a5a', 0.22);
+
+  // Shoes (dark leather)
+  rect(ctx, cx-7+sway, floor-2, 6, 2, '#1c1818');
+  rect(ctx, cx+1+sway, floor-2, 6, 2, '#1c1818');
+
+  // Trousers (deep-blue wool — legs visible below the long coat)
+  rect(ctx, cx-6+sway, floor-18, 4, 16, '#2a3a5a');
+  rect(ctx, cx+2+sway, floor-18, 4, 16, '#2a3a5a');
+
+  // Coat lower / hem (wider, gathered slightly)
+  rect(ctx, cx-10+sway, floor-32, 20, 14, '#2a3a5a');
+
+  // Coat upper body / torso (shoulders pulled in — the grief-stoop)
+  rect(ctx, cx-9+sway, floor-54, 18, 22, '#2a3a5a');
+  // Coat depth: left/right edge shadow for volume
+  rect(ctx, cx-9+sway, floor-54, 1, 22, '#1e2c48');
+  rect(ctx, cx+8+sway, floor-54, 1, 22, '#1e2c48');
+  // Center coat-front seam
+  rect(ctx, cx-1+sway, floor-50, 1, 18, '#22324e');
+
+  // QUILTED-SQUARE PATCHES — Babcia's stitching, her hand on him every day
+  // Scattered 2×2 squares: cream (#e8d8b0) and warm-brown (#a07848)
+  const patches = [
+    [-6, -47, '#e8d8b0'], [-2, -44, '#a07848'], [ 3, -47, '#e8d8b0'],
+    [ 6, -42, '#a07848'], [-6, -39, '#a07848'], [ 2, -36, '#e8d8b0'],
+    [ 5, -39, '#e8d8b0'], [-3, -32, '#a07848'], [ 4, -33, '#e8d8b0'],
+  ];
+  for (const [dx, dy, col] of patches) {
+    rect(ctx, cx + dx + sway, floor + dy, 2, 2, col);
+  }
+
+  // Arms (coat sleeves — heavy wool, slight droop)
+  rect(ctx, cx-13+sway, floor-52, 4, 20, '#2a3a5a');
+  rect(ctx, cx+9+sway,  floor-52, 4, 20, '#2a3a5a');
+  // Hands clasped in front (quiet, grief-contained)
+  rect(ctx, cx-4+sway, floor-34, 8, 5, '#c8a888');
+
+  // Neck
+  rect(ctx, cx-2+sway, floor-57, 4, 3, '#c8a888');
+
+  // Head — tilted faintly forward (looking down at nothing, or at everything)
+  const hx = cx + sway;
+  const ht = floor - 68;            // top of head
+
+  rect(ctx, hx-4, ht,   9, 4, '#c8a888');   // face top
+  rect(ctx, hx-4, ht+4, 9, 5, '#c8a888');   // face mid
+  rect(ctx, hx-3, ht+9, 7, 2, '#c8a888');   // chin
+
+  // Grey beard — covers lower face and chin, elderly
+  rect(ctx, hx-3, ht+5, 2, 6, '#9a9898');   // left cheek/jaw
+  rect(ctx, hx+1, ht+5, 2, 6, '#9a9898');   // right cheek/jaw
+  rect(ctx, hx-2, ht+9, 5, 2, '#9a9898');   // chin beard
+
+  // Eyes — canonical human, elderly (slightly narrowed under heavy brow)
+  drawHumanEye(ctx, hx-3, ht+2, 2, 2, '#e8e0d0', '#2a2030');
+  drawHumanEye(ctx, hx+1, ht+2, 2, 2, '#e8e0d0', '#2a2030');
+
+  // Brows — heavy, furrowed with contained grief
+  rect(ctx, hx-3, ht+1, 3, 1, '#484038');
+  rect(ctx, hx+1, ht+1, 3, 1, '#484038');
+
+  // Mouth — thin, set: grief does not open his face
+  if (speaking) {
+    drawMouth(ctx, hx, ht+9, t, true, true);
+  } else {
+    rect(ctx, hx-1, ht+9, 3, 1, '#3a2818');
+  }
+
+  // FLAT CAP — the silhouette tell; wide brim, low crown
+  rect(ctx, hx-7, ht-2, 14, 2, '#242830');  // brim (wide)
+  rect(ctx, hx-5, ht-7, 10, 5, '#1a1f2a');  // dome
+  rect(ctx, hx-4, ht-3, 8,  1, '#2e3444');  // dome-brim junction
+}
+
+/* =============================================================
+   ⑧ JANITOR (J. HENRIKSEN) — ~66px tall (0.60 door-fraction)
+   Sprint 40. Slate crew uniform, work cap, brass name-tag glint,
+   weary posture. Works this ship every night; has seen things.
+   ============================================================= */
+function drawJanitor(ctx, cx, floor, t, speaking) {
+  // Purposeful bob — working walk rhythm, even in gallery pose
+  const bob = Math.round(Math.abs(Math.sin(t * 2.0)) * 1.0);
+
+  floorGlow(ctx, cx, floor, 15, '#3a4458', 0.20);
+
+  // Work boots (heavy, dark)
+  rect(ctx, cx-8, floor-3+bob, 7, 3, '#2a1c10');
+  rect(ctx, cx+1, floor-3+bob, 7, 3, '#2a1c10');
+
+  // Uniform trousers (slate)
+  rect(ctx, cx-6, floor-18+bob, 5, 15, '#3a4458');
+  rect(ctx, cx+1, floor-18+bob, 5, 15, '#3a4458');
+
+  // Uniform jacket lower
+  rect(ctx, cx-9, floor-32+bob, 18, 14, '#3a4458');
+
+  // Uniform jacket upper / torso
+  rect(ctx, cx-10, floor-50+bob, 20, 18, '#3a4458');
+  // Shoulder seam line
+  rect(ctx, cx-10, floor-50+bob, 20, 1, '#4a5468');
+  // Breast pocket (left chest — where the name-tag hangs)
+  rect(ctx, cx-8,  floor-44+bob, 5, 6, '#30394c');
+
+  // BRASS NAME-TAG — J. Henriksen; at sprite scale, a glint reads the story
+  rect(ctx, cx-7, floor-43+bob, 6, 4, '#a08664');  // tag plate
+  px (ctx, cx-6, floor-42+bob, '#c8aa80');           // shine top-left
+  px (ctx, cx-2, floor-43+bob, '#c8aa80');           // shine top-right
+
+  // Arms (uniform sleeves, slightly heavy)
+  rect(ctx, cx-14, floor-48+bob, 4, 18, '#3a4458');
+  rect(ctx, cx+10, floor-48+bob, 4, 18, '#3a4458');
+  // Hands
+  rect(ctx, cx-14, floor-30+bob, 4, 5, '#c8a888');
+  rect(ctx, cx+10, floor-30+bob, 4, 5, '#c8a888');
+
+  // Neck
+  rect(ctx, cx-2, floor-53+bob, 4, 3, '#c8a888');
+
+  // Head
+  const hx = cx;
+  const ht = floor - 63 + bob;
+
+  rect(ctx, hx-4, ht,   9, 3, '#c8a888');   // face top
+  rect(ctx, hx-4, ht+3, 9, 5, '#c8a888');   // face mid
+  rect(ctx, hx-3, ht+8, 7, 2, '#c8a888');   // chin
+
+  // Eyes — canonical human; weary, slightly lowered gaze
+  drawHumanEye(ctx, hx-3, ht+2, 2, 2, '#e8e0d0', '#2a2030');
+  drawHumanEye(ctx, hx+1, ht+2, 2, 2, '#e8e0d0', '#2a2030');
+
+  // Heavy brow of exhaustion — not angry, just tired
+  rect(ctx, hx-3, ht+1, 3, 1, '#4a4438');
+  rect(ctx, hx+1, ht+1, 3, 1, '#4a4438');
+  // Subtle under-eye shadow
+  rect(ctx, hx-3, ht+4, 2, 1, 'rgba(80,60,40,0.28)');
+  rect(ctx, hx+1, ht+4, 2, 1, 'rgba(80,60,40,0.28)');
+
+  // Mouth — closed, weary, purposeful
+  if (speaking) {
+    drawMouth(ctx, hx, ht+8, t, true, true);
+  } else {
+    rect(ctx, hx-1, ht+8, 3, 1, '#3a2818');
+  }
+
+  // WORK CAP — flat-top, squared crown (distinct from Dziadek's peaked flat cap)
+  rect(ctx, hx-5, ht-1, 11, 2, '#2a3448');   // cap brim
+  rect(ctx, hx-4, ht-6, 9,  5, '#3a4458');   // crown (uniform slate, reads as crew)
+  rect(ctx, hx-3, ht-2, 7,  1, '#4a5468');   // brim top edge
+  rect(ctx, hx-3, ht-6, 7,  1, '#4a5468');   // crown top
+}
+
+/* =============================================================
+   ⑨ PASSENGER — ~70px tall (0.64 door-fraction with top hat)
+   Sprint 40. Formal evening wear: coat, white shirt-front, top hat.
+   Clearly distinct from the janitor. Oblivious to ghosts and
+   everything else. A touch of dry, expensive indifference.
+   ============================================================= */
+function drawPassenger(ctx, cx, floor, t, speaking) {
+  // Does not speak to Pip. Steady, upright, untroubled.
+  floorGlow(ctx, cx, floor, 14, '#1a1f2a', 0.15);
+
+  // Shoes (patent leather — formal)
+  rect(ctx, cx-8, floor-2, 7, 2, '#0e0e18');
+  rect(ctx, cx+1, floor-2, 7, 2, '#0e0e18');
+
+  // Trousers (evening black, narrow)
+  rect(ctx, cx-5, floor-18, 4, 16, '#1a1f2a');
+  rect(ctx, cx+1, floor-18, 4, 16, '#1a1f2a');
+
+  // Coat tails (formal split below waist)
+  rect(ctx, cx-8, floor-30, 6, 12, '#1a1f2a');
+  rect(ctx, cx+2, floor-30, 6, 12, '#1a1f2a');
+
+  // WHITE SHIRT-FRONT — the silhouette tell of the Passenger
+  // The white front flashes in the dark hallway; the Passenger is unmistakable.
+  rect(ctx, cx-3, floor-46, 6, 18, '#e8e0d0');   // shirt front (tall bright column)
+  // Shirt studs (tiny dark dress buttons)
+  px(ctx, cx,     floor-30, '#3a3050');
+  px(ctx, cx,     floor-35, '#3a3050');
+  px(ctx, cx,     floor-40, '#3a3050');
+
+  // Coat body (frames the shirt — lapels angled in)
+  rect(ctx, cx-10, floor-46, 20, 18, '#1a1f2a');
+  // Left lapel (angled over shirt at coat line)
+  rect(ctx, cx-9,  floor-46, 6, 14, '#1a1f2a');
+  rect(ctx, cx+3,  floor-46, 6, 14, '#1a1f2a');
+
+  // Collar / bow-tie (white collar, formal black bow)
+  rect(ctx, cx-3, floor-46, 6, 3, '#e8e0d0');    // collar
+  rect(ctx, cx-2, floor-45, 4, 2, '#1a1f2a');    // bow-tie
+
+  // Arms (formal coat sleeves)
+  rect(ctx, cx-14, floor-44, 4, 18, '#1a1f2a');
+  rect(ctx, cx+10, floor-44, 4, 18, '#1a1f2a');
+  // White shirt cuffs (the only thing he checks: are the cuffs right?)
+  rect(ctx, cx-14, floor-26, 4, 2, '#e8e0d0');
+  rect(ctx, cx+10, floor-26, 4, 2, '#e8e0d0');
+  // Hands
+  rect(ctx, cx-14, floor-24, 4, 4, '#d0b898');
+  rect(ctx, cx+10, floor-24, 4, 4, '#d0b898');
+
+  // Neck
+  rect(ctx, cx-2, floor-49, 4, 3, '#d0b898');
+
+  // Head — upright, patrician, the mild frown of the unconcerned
+  const hx = cx;
+  const ht = floor - 59;
+
+  rect(ctx, hx-4, ht,   9, 4, '#d0b898');   // face top
+  rect(ctx, hx-5, ht+4, 11, 4, '#d0b898');  // face mid (slightly broad — well-fed)
+  rect(ctx, hx-4, ht+8, 9,  2, '#d0b898');  // chin
+
+  // Eyes — canonical human; brows raised in perpetual mild surprise
+  drawHumanEye(ctx, hx-3, ht+2, 2, 2, '#e8e0d0', '#2a2030');
+  drawHumanEye(ctx, hx+1, ht+2, 2, 2, '#e8e0d0', '#2a2030');
+  // Raised brows (obliviousness reads as gentle superciliousness)
+  rect(ctx, hx-4, ht+1, 3, 1, '#3a2c18');
+  rect(ctx, hx+1, ht+1, 3, 1, '#3a2c18');
+
+  // Mouth — thin, correct, uninvolved
+  rect(ctx, hx-1, ht+8, 3, 1, '#3a2818');
+
+  // TOP HAT — formal evening wear, the silhouette tell
+  // Band at base of crown
+  rect(ctx, hx-6, ht-2, 13, 1, '#2a2f3a');
+  // Brim (wide)
+  rect(ctx, hx-8, ht-3, 17, 2, '#1a1f2a');
+  // Crown body
+  rect(ctx, hx-5, ht-14, 11, 11, '#1a1f2a');
+  // Crown top (slightly narrowed at apex)
+  rect(ctx, hx-4, ht-15,  9,  1, '#2a2f3a');
+}
+
+/* =============================================================
+   ⑩ THE DOCTOR — ~66px tall (0.60 door-fraction)
+   Sprint 40. Dark formal coat, cream shirt, medical bag in hand.
+   Middle-aged, brown hair, tired posture of someone who cared.
+   He is not a villain. He just couldn't save the boy.
+   ============================================================= */
+function drawDoctor(ctx, cx, floor, t, speaking) {
+  // Slight forward lean of exhaustion — 1px head-offset to the right/forward
+  floorGlow(ctx, cx, floor, 15, '#1e2030', 0.20);
+
+  // Shoes (dark)
+  rect(ctx, cx-7, floor-2, 6, 2, '#0e0e14');
+  rect(ctx, cx+1, floor-2, 6, 2, '#0e0e14');
+
+  // Trousers (dark charcoal)
+  rect(ctx, cx-6, floor-18, 4, 16, '#28262e');
+  rect(ctx, cx+2, floor-18, 4, 16, '#28262e');
+
+  // Coat lower hem
+  rect(ctx, cx-9, floor-32, 18, 14, '#1e2030');
+
+  // Coat upper body / torso
+  rect(ctx, cx-9, floor-52, 18, 20, '#1e2030');
+  // Coat edge shadows for depth
+  rect(ctx, cx-9, floor-52, 1, 20, '#141824');
+  rect(ctx, cx+8, floor-52, 1, 20, '#141824');
+
+  // CREAM SHIRT — visible at chest as V below collar (not as dominant as Passenger's)
+  rect(ctx, cx-2, floor-49, 4, 15, '#d8d0b8');  // shirt front
+  // Coat lapels framing the shirt (narrower than Passenger's formal cut)
+  rect(ctx, cx-6, floor-48, 4, 13, '#1e2030');
+  rect(ctx, cx+2, floor-48, 4, 13, '#1e2030');
+
+  // Left arm (free hand, slightly forward — tired but ready)
+  rect(ctx, cx-13, floor-50, 4, 20, '#1e2030');
+  rect(ctx, cx-13, floor-30, 4, 5, '#c8a878');  // left hand
+
+  // Right arm (holds the medical bag — the key tell)
+  rect(ctx, cx+9, floor-50, 4, 20, '#1e2030');
+
+  // MEDICAL BAG — held in right hand; small, leather, worn
+  rect(ctx, cx+9,  floor-30, 9, 7, '#1a1008');   // bag body
+  rect(ctx, cx+11, floor-33, 5, 3, '#2a1a08');   // handle arch
+  rect(ctx, cx+12, floor-34, 3, 2, '#2a1a08');   // handle loop top
+  px (ctx, cx+17,  floor-30, '#c8a864');           // brass clasp
+  px (ctx, cx+10,  floor-29, '#2e1c0c');           // bag shadow
+
+  // Neck
+  rect(ctx, cx-2, floor-55, 4, 3, '#c8a878');
+
+  // Head — forward-inclined 1px (the lean of someone who has delivered hard news)
+  const hx = cx + 1;
+  const ht = floor - 65;
+
+  rect(ctx, hx-4, ht,   9, 3, '#c8a878');   // face top
+  rect(ctx, hx-4, ht+3, 9, 5, '#c8a878');   // face mid
+  rect(ctx, hx-3, ht+8, 7, 2, '#c8a878');   // chin
+
+  // Brown hair — middle-aged, shows on sides and crown
+  rect(ctx, hx-4, ht,   9, 2, '#4a3020');   // crown hair
+  rect(ctx, hx-5, ht+2, 2, 4, '#4a3020');   // left temple hair
+  rect(ctx, hx+3, ht+2, 2, 4, '#4a3020');   // right temple hair
+
+  // Eyes — canonical human; lowered, tired (not cold — kind, just worn)
+  drawHumanEye(ctx, hx-3, ht+3, 2, 2, '#e8e0d0', '#2a2030');
+  drawHumanEye(ctx, hx+1, ht+3, 2, 2, '#e8e0d0', '#2a2030');
+  // Brows — neither raised nor furrowed; level (tired acceptance)
+  rect(ctx, hx-3, ht+2, 2, 1, '#483828');
+  rect(ctx, hx+1, ht+2, 2, 1, '#483828');
+  // Under-eye shadow (years of late calls)
+  rect(ctx, hx-3, ht+5, 2, 1, 'rgba(80,60,40,0.32)');
+  rect(ctx, hx+1, ht+5, 2, 1, 'rgba(80,60,40,0.32)');
+
+  // Mouth — kind but closed; what can you do
+  if (speaking) {
+    drawMouth(ctx, hx, ht+9, t, true, true);
+  } else {
+    rect(ctx, hx-1, ht+9, 3, 1, '#3a2818');
+  }
+
+  // No hat — just the brown hair. This is what distinguishes him from the Passenger.
+}
+
+/* =============================================================
    PLACEHOLDER CELL RENDERER
    Shows character name, silhouette tells, color sig, door-fraction.
    ============================================================= */
@@ -1201,10 +1528,13 @@ const CHARACTERS = [
     canSpeak: true,
   },
   {
-    id: 'dziadek', name: 'Dziadek', chapterTag: 'Ch 1, 8', section: 'greenpoint', designed: true,  // drawDziadek in game/index.html (Sprint 04); gallery entry is placeholder pending gallery sprint
-    frac: 0.60, fracLabel: '0.55–0.65',
-    colorSig: 'wool deep-blue / flat cap',
-    tells: 'flat cap, deep-blue wool, patch squares',
+    id: 'dziadek', name: 'Dziadek', chapterTag: 'Ch 1, 8', section: 'greenpoint', designed: true,
+    colorSig: 'wool deep-blue / flat cap / patch squares', fracLabel: '0.55–0.65',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDziadek(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,  // has a speaking animation per movement register (slow nod)
   },
   {
     id: 'pips-father', name: "Pip's Father", chapterTag: 'Ch 8', section: 'greenpoint', designed: false,
@@ -1221,22 +1551,31 @@ const CHARACTERS = [
 
   // ── THE SHIP ───────────────────────────────────────────────
   {
-    id: 'janitor', name: 'Janitor', chapterTag: 'Ch 1', section: 'ship', designed: true,  // drawJanitor in game/index.html (Sprint 20); gallery entry is placeholder pending gallery sprint
-    frac: 0.60, fracLabel: '0.55–0.65',
-    colorSig: 'crew uniform slate',
-    tells: 'uniform, brass name-tag glint',
+    id: 'janitor', name: 'Janitor', chapterTag: 'Ch 1', section: 'ship', designed: true,
+    colorSig: 'crew uniform slate / brass name-tag', fracLabel: '0.55–0.65',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawJanitor(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,  // weary mouth cycle; walks past, doesn't address Pip
   },
   {
-    id: 'passenger', name: 'Passenger', chapterTag: 'Ch 1', section: 'ship', designed: true,  // drawPassenger in game/index.html (Sprint 03); gallery entry is placeholder pending gallery sprint
-    frac: 0.60, fracLabel: '0.55–0.65',
-    colorSig: 'evening-wear black / white shirt',
-    tells: 'formal collar, white shirt-front',
+    id: 'passenger', name: 'Passenger', chapterTag: 'Ch 1', section: 'ship', designed: true,
+    colorSig: 'evening-wear black / white shirt-front / top hat', fracLabel: '0.55–0.65',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawPassenger(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: false,  // does not speak to Pip — the whole point
   },
   {
-    id: 'doctor', name: 'The Doctor', chapterTag: 'Ch 1', section: 'ship', designed: true,  // drawDoctor in game/index.html (Sprint 14); gallery entry is placeholder pending gallery sprint
-    frac: 0.62, fracLabel: '0.60–0.65',
-    colorSig: 'dark formal coat / cream shirt',
-    tells: 'middle-aged adult, formal coat, small medical bag, tired posture',
+    id: 'doctor', name: 'The Doctor', chapterTag: 'Ch 1', section: 'ship', designed: true,
+    colorSig: 'dark formal coat / cream shirt / medical bag', fracLabel: '0.60–0.65',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoctor(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: false,  // one-shot scripted exit; player overhears but no dialogue with Pip
   },
 
   // ── CHEFS ──────────────────────────────────────────────────

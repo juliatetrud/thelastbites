@@ -81,15 +81,16 @@ const C = {
 // Kept minimal. Locked tokens used where they fit.
 // ================================================================
 const F = {
-  skinBase:   '#c8a070',  // warm skin base (human-Pip, memory register)
-  skinShadow: '#9a6840',  // skin shadow = one value step darker; also the face contour
-  skinLit:    '#e0bc88',  // small warm highlight cluster (lamp side of face)
-  hairDark:   '#2a1808',  // hair shadow (darker than pipHair #4a3020)
-  hairLit:    '#6a4832',  // hair highlight band (lighter than pipHair)
-  mouthLine:  '#7a3828',  // mouth — dark muted red-brown, NOT black (doc-12 doctrine)
+  skinBase:    '#c8a070',  // warm skin base (human-Pip, memory register)
+  skinShadow:  '#9a6840',  // skin shadow = one value step darker; also the face contour
+  skinLit:     '#e0bc88',  // small warm highlight cluster (lamp side of face)
+  hairDark:    '#2a1808',  // hair shadow (darker than pipHair #4a3020)
+  hairLit:     '#6a4832',  // hair highlight band (lighter than pipHair)
+  mouthLine:   '#7a3828',  // mouth — dark muted red-brown, NOT black (doc-12 doctrine)
+  pipEyeGreen: '#4a8068',  // ★ Sprint 51: human-Pip iris — muted sea-green (warm particular; removed by melt)
 };
 // Additional locked tokens used for faces (not new):
-//   pipHair #4a3020  = hair base + hazel iris
+//   pipHair #4a3020  = hair base
 //   pipApron #e8d8b0 = eye sclera (off-white warm)
 //   pipEye #1a1428   = pupil (darkest interior)
 //   pipBlush #ff9888 = blush (CONSTANT across both forms)
@@ -245,7 +246,7 @@ const humanPal = {
   'F': F.skinBase,         // skin base
   'f': F.skinShadow,       // skin shadow / contour (value-step, not outline)
   'G': F.skinLit,          // lit-side cluster
-  'W': C.pipApron,         // eye sclera (off-white #e8d8b0)
+  'W': F.pipEyeGreen,      // ★ iris (muted sea-green warm particular — removed by melt)
   'P': C.pipEye,           // ★ pupil (constant)
   'L': C.pipBlush,         // ★ blush (constant)
   '.': F.skinShadow,       // ★ nose shadow (constant — minor)
@@ -263,7 +264,7 @@ const ghostPal = {
   'G': C.pipBody,          // lit skin → ghost white
   'O': C.pipGlow,          // ghost halo / contour (#a8c0ff)
   'D': C.pipBodyDeep,      // ghost cool shadow (#c8d8ff)
-  'W': C.pipApron,         // ★ sclera — SAME value
+  'W': null,               // iris gone — green was a warm particular; ghost has no iris
   'P': C.pipEye,           // ★ pupil — SAME
   'L': C.pipBlush,         // ★ blush — SAME (faint in cool context)
   '.': C.pipBodyDeep,      // ★ nose vestige — cool shadow
@@ -275,7 +276,7 @@ const ghostPal = {
 // Constant cell coordinates — these persist through the melt unchanged.
 // Stored as a Set of "row,col" strings for fast lookup.
 const CONST_CELLS = new Set([
-  '6,2','6,3','6,7','6,8',   // eyes (W,P left; W,P right)
+  '6,3','6,7',               // eye-dots only (P left; P right) — iris W is a warm particular, melts
   '8,2','8,8',               // blush
   '8,5',                     // nose shadow
   '10,4','10,5','10,6',      // mouth
@@ -447,6 +448,67 @@ function drawMirrorFrame() {
 }
 
 // ================================================================
+// DRAW: GHOST SILHOUETTE (doc-12: round bald head + body + three waves)
+// Called as step 1 of drawMirrorGlass — the form the melt resolves to.
+// Eye-dots, blush, mouth at same screen coords as human face (doc-12 canon).
+// ================================================================
+function drawGhostSilhouette() {
+  const cx      = MGX + MGW / 2;           // 240 — glass center x
+  const hcy     = MGY + 66;                // 85  — head center y
+  const hR      = 56;                      // head radius (px)
+  const bHW     = 50;                      // body half-width (slightly less than hR)
+  const waveTop = MGY + MGH - 70;          // 181 — body→wave transition y
+  const waveBot = MGY + MGH - 8;           // 243 — wave tip y
+
+  const wW = (2 * bHW) / 3;               // ~33.3 — width of each wave segment
+
+  // ── Halo (Technique ⑦ — soft cool surround, not a radial blur) ────
+  ctx.save();
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = C.pipGlow;
+  const hR2 = hR + 8, bHW2 = bHW + 8, wW2 = (2 * bHW2) / 3;
+  ctx.beginPath();
+  ctx.arc(cx, hcy, hR2, Math.PI, 2 * Math.PI);   // wider dome
+  ctx.lineTo(cx + bHW2, waveTop);
+  ctx.quadraticCurveTo(cx + bHW2 - wW2 * 0.5, waveBot + 6, cx + bHW2 - wW2,       waveTop);
+  ctx.quadraticCurveTo(cx + bHW2 - wW2 * 1.5, waveBot + 6, cx + bHW2 - wW2 * 2,   waveTop);
+  ctx.quadraticCurveTo(cx - bHW2 + wW2 * 0.5, waveBot + 6, cx - bHW2,             waveTop);
+  ctx.lineTo(cx - bHW2, hcy);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // ── Ghost body — cool-white, bald dome + body + three downward waves ──
+  ctx.fillStyle = C.pipBody;
+  ctx.beginPath();
+  ctx.arc(cx, hcy, hR, Math.PI, 2 * Math.PI);    // bald dome (left→top→right)
+  ctx.lineTo(cx + bHW, waveTop);                   // right body edge
+  ctx.quadraticCurveTo(cx + bHW - wW * 0.5, waveBot, cx + bHW - wW,       waveTop); // wave 1
+  ctx.quadraticCurveTo(cx + bHW - wW * 1.5, waveBot, cx + bHW - wW * 2,   waveTop); // wave 2
+  ctx.quadraticCurveTo(cx - bHW + wW * 0.5, waveBot, cx - bHW,            waveTop); // wave 3
+  ctx.lineTo(cx - bHW, hcy);                       // left body edge
+  ctx.closePath();
+  ctx.fill();
+
+  // ── Rim light — top dome + left arc (Technique ⑦, lamp is upper-left) ──
+  ctx.save();
+  ctx.globalAlpha = 0.62;
+  ctx.strokeStyle = C.pipGlow;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, hcy, hR + 0.5, Math.PI, 2 * Math.PI);  // upper dome arc
+  ctx.stroke();
+  ctx.restore();
+
+  // ── Eye-dots — same screen coords as human P cells (doc-12 constant) ──
+  // Left P: FOX + 3*FACE_SCALE = 218, FOY + 6*FACE_SCALE = 117
+  // Right P: FOX + 7*FACE_SCALE = 254, FOY + 6*FACE_SCALE = 117
+  ctx.fillStyle = C.pipEye;
+  ctx.fillRect(FOX + 3 * FACE_SCALE, FOY + 6 * FACE_SCALE, FACE_SCALE, FACE_SCALE);
+  ctx.fillRect(FOX + 7 * FACE_SCALE, FOY + 6 * FACE_SCALE, FACE_SCALE, FACE_SCALE);
+}
+
+// ================================================================
 // DRAW: MIRROR GLASS CONTENTS (the animated face melt)
 // t = 0 (human) → 1 (ghost)
 // ================================================================
@@ -468,28 +530,10 @@ function drawMirrorGlass(t) {
   ctx.rect(MGX, MGY, MGW, MGH);
   ctx.clip();
 
-  // ── Step 1: Draw ghost face (always present underneath) ────────
-  drawGrid(GHOST_GRID, FOX, FOY, FACE_SCALE, ghostPal);
+  // ── Step 1: Ghost silhouette (Technique ⑦ — round bald ghost, three waves)
+  drawGhostSilhouette();
 
-  // ── Step 2: Rim light on ghost (Technique ⑦) ─────────────────
-  // A 1px cool pale accent on the top and left edges of the ghost form
-  // (lamp is upper-left → lit edge = top + left of reflection).
-  // Rim light only on cells that HAVE ghost content, not everywhere.
-  ctx.fillStyle = C.pipGlow;
-  // Top edge (row 0-1 of ghost where form exists)
-  for (let col = 3; col <= 7; col++) {
-    ctx.fillRect(FOX + col * FACE_SCALE, FOY + 0 * FACE_SCALE, FACE_SCALE, 1);
-  }
-  for (let col = 2; col <= 8; col++) {
-    ctx.fillRect(FOX + col * FACE_SCALE, FOY + 1 * FACE_SCALE, FACE_SCALE, 1);
-  }
-  // Left edge (rows 2-11 where ghost left col exists)
-  for (let row = 2; row <= 11; row++) {
-    ctx.fillRect(FOX + 0 * FACE_SCALE, FOY + row * FACE_SCALE, 1, FACE_SCALE);
-    ctx.fillRect(FOX + 1 * FACE_SCALE, FOY + row * FACE_SCALE, 1, FACE_SCALE);
-  }
-
-  // ── Step 3: Draw human SURROUND cells (melting row by row) ────
+  // ── Step 2: Draw human SURROUND cells (melting row by row) ────
   // Rows near the top (hair) melt first; lower rows (chin, apron) last.
   // rowMelt: 0=fully human, 1=fully melted (human pixels gone, ghost visible).
   const DRIP = FACE_SCALE * 1.8;  // max pixel sag per row
@@ -522,7 +566,7 @@ function drawMirrorGlass(t) {
     ctx.restore();
   }
 
-  // ── Step 4: Always draw constant cells at full opacity on top ──
+  // ── Step 3: Always draw constant cells at full opacity on top ──
   // They persist through the melt — this is the thematic spine (doc-12).
   for (const key of CONST_CELLS) {
     const [row, col] = key.split(',').map(Number);

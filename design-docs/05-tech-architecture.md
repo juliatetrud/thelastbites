@@ -299,6 +299,80 @@ Fourth pause item. Calls `autoSave()` then `window.location.reload()`. Disabled 
 
 ---
 
+## Parallax Scenery Engine (Sprint 42)
+
+*(Shipped Sprint 42. The single most-reused visual system in the game — every chapter's windows use it.)*
+
+### Overview
+
+The parallax scenery engine renders ship exterior scenery through every room's windows and portholes. All windows in a room reveal the **same unified scenery state** — the world outside is consistent, not a per-porthole mini-scene.
+
+### Architecture
+
+**`shipTravel` state object** (global, driven by game clock):
+- `chapter`: which `SCENERY_SETS` entry to use (e.g. `'ch1-bergen'`)
+- `progress`: 0.0–1.0 scroll position within the current state
+- `stateIdx`: which state in the set's `states` array is active
+- `speed`: progress units per second (slow ambient drift; ~62s per state at default 0.016)
+
+`updateShipTravel(dt)` is called each frame to advance `progress` and transition between states when `progress` reaches 1.0.
+
+**`SCENERY_SETS` registry** (per-chapter swappable data, no engine changes needed):
+```javascript
+SCENERY_SETS['ch1-bergen'] = {
+  states: [
+    { id: 'harbor',     label: 'Bergen harbor — at anchor'       },
+    { id: 'open-water', label: 'Open water — Mnemosyne underway' },
+  ],
+  layers: [
+    { kind: 'sky-base',         parallaxFactor: 0    },  // static deep sky
+    { kind: 'aurora-ch1',       parallaxFactor: 0    },  // faint aurora (static)
+    { kind: 'stars-ch1',        parallaxFactor: 0.04 },  // very slow star drift
+    { kind: 'fjord-silhouette', parallaxFactor: 0.06 },  // distant mountains, slowest
+    { kind: 'midground-bergen', parallaxFactor: 0.16 },  // houses, docks
+    { kind: 'water-ch1',        parallaxFactor: 0.32 },  // foreground water, fastest
+  ],
+};
+```
+
+Layers are ordered back-to-front. `parallaxFactor` scales the effective horizontal scroll per W-of-progress. Factor 0 = static; factor 1 = shifts a full canvas width per state.
+
+**Adding a new chapter** = define a new `SCENERY_SETS` entry. No engine code changes.
+
+### Render order (each frame, room mode)
+
+1. `drawSceneryBackground(now)` — renders the full scenery stack to the full canvas (480×270). Room walls will cover most of this; windows will reveal it.
+2. `rooms[currentRoom].draw(camX, now)` — draws room interior over the scenery background.
+3. For each porthole: `drawSceneryInPorthole(x, y, r, now)` — clips to the circular brass porthole and re-renders the scenery stack inside.
+4. For each rectangular window: `drawSceneryInWindow(x, y, w, h, now)` — clips to the rect and re-renders.
+5. Porthole brass frames and window frames draw after the clip, on top.
+6. Props, Pip, collect auras, etc. draw above everything.
+
+### Window reveal: "cutouts in the wall"
+
+Windows are not independent mini-scenes. They are **cutouts that reveal the same background world**. The scenery renders full-canvas first; the room walls paint over it; porthole/window clip calls re-draw the scenery inside each glass shape. All windows show the same parallax state simultaneously.
+
+### Aurora integration
+
+The Ch1 faint aurora (originally Sprint 35's `aurora-faint` per-porthole layer) is now the `aurora-ch1` layer in the scenery stack. All windows receive it automatically via `_drawSceneryStack`. The `AURORA_GREEN_BASE` / `AURORA_VIOLET_BASE` constants are still used. The observation deck's full aurora (`drawAuroraCurtain`) is a separate dedicated system and is not part of `SCENERY_SETS`.
+
+### State sequencing
+
+Scenery sets define ordered states the ship travels through. `updateShipTravel(dt)` advances `stateIdx` when `progress >= 1.0`. Per-layer rendering can condition on `stateIdx` and `progress` (e.g., the `midground-bergen` layer fades out as the ship leaves harbor). Future port-departure beats will hook into this by adjusting `shipTravel.speed` or triggering a state advance at a story beat.
+
+### Key functions
+
+| Function | Purpose |
+|---|---|
+| `updateShipTravel(dt)` | Advance progress; transition states |
+| `drawSceneryBackground(now)` | Full-canvas back-of-frame draw |
+| `_drawSceneryStack(now, cx, cy, cw, ch)` | Draw all layers into a rect (clip set by caller) |
+| `_drawSceneryLayer(kind, factor, now, cx, cy, cw, ch)` | Draw one layer inside a rect |
+| `drawSceneryInPorthole(x, y, r, now)` | Circular porthole with brass frame + scenery |
+| `drawSceneryInWindow(x, y, w, h, now)` | Rectangular window + scenery (frame by caller) |
+
+---
+
 ## Performance Notes
 
 - Internal canvas resolution is 320×180 — extremely cheap to render.

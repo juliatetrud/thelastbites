@@ -717,20 +717,19 @@ Five artworks distributed along the hallway at world x: 230, 435, 650, 865, 1115
 
 The existing sconce draw function was extended to cast a radial warm-amber gradient pool on the floor directly below each wall bracket. Gradient: `rgba(240,200,152,1)` at center to transparent, radius 38, anchored at `FLOOR_Y`. Alpha at `bracketB * 0.20` (flicker-driven) so the pool breathes with the flame. The low alpha (0.20) keeps the effect atmospheric rather than garish — adjustable if future scenes need stronger pools.
 
-### Porthole scenery system
+### Porthole scenery system → Parallax Scenery Engine (Sprint 42)
 
-Portholes now render live scene layers instead of a static placeholder. Registry: `PORTHOLE_SCENES`, keyed by scene id string. Each entry has a `layers` array; each layer has a `kind` and a `parallax` coefficient.
+**Superseded by Sprint 42.** The per-porthole `PORTHOLE_SCENES` clip approach (Sprint 16) has been replaced by the unified parallax scenery engine. `PORTHOLE_SCENES` is retained in code for reference but its draw calls are migrated to `drawSceneryInPorthole` / `drawSceneryInWindow`.
 
-**Layer kinds (currently implemented):**
-- `sky-stars` — indigo gradient + 9 seeded stars with slow camera-drift
-- `horizon-line` — dark band with slow sine pulse
-- `water-waves` — dark base + 3 drifting streaks + occasional warm-amber shimmer
+**Canonical approach (Sprint 42+):** The scenery renders as a full-canvas background layer (`drawSceneryBackground`) drawn *before* the room. Room walls cover it. Porthole and window clips re-reveal the same scenery state inside each glass shape — windows are cutouts into a single unified world, not independent mini-scenes.
 
-**Parallax values:** Keep star parallax near 0.008 (just perceptible drift as the camera moves). Horizon and water layers at 0 (time-based animation only) — higher parallax values shift content out of the porthole clip region at the extremes of the hallway scroll range.
+**Per-chapter scenery sets** (`SCENERY_SETS`): each chapter defines an ordered list of parallax layers and travel states. A new chapter = a new data entry; no engine changes. Layer parallax factors are relative to `shipTravel.progress` (ship movement, independent of Pip's room position).
 
-**Chapter 1 scene:** `'ch1-ocean-night'` — three layers (sky-stars/horizon-line/water-waves). Add new scene ids per chapter in the `PORTHOLE_SCENES` registry without modifying the rendering code.
+**Aurora integration:** The Ch1 faint aurora (Sprint 35) is now the `aurora-ch1` layer inside the `SCENERY_SETS['ch1-bergen']` layer stack. All windows and portholes receive it automatically. The observation deck's full aurora (`drawAuroraCurtain`) is a separate dedicated system and is NOT part of `SCENERY_SETS`.
 
-**Clip region:** `drawPortholeScene` clips all layer rendering inside the inner porthole radius using `ctx.save() / ctx.clip() / ctx.restore()`. The brass frame is drawn *after* the clip restore so it always sits on top.
+**Brass frames and window frames** still draw on top of the revealed scenery, unchanged.
+
+**Scenery is always cool/ambient** — it never becomes a room's dominant light. The single warm-light-per-scene rule applies to room interiors; scenery is background atmosphere only. See `05-tech-architecture.md` § Parallax Scenery Engine for the full data structure and API.
 
 ### Luggage trolley
 

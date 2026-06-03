@@ -3195,6 +3195,9 @@ function update(dt) {
     pip.squatTimer = Math.max(0, pip.squatTimer - dt);
   }
 
+  // Sprint 42: advance ship-travel progress (drives all window scenery)
+  updateShipTravel(dt);
+
   // Sprint 13: blink-back update
   updateBlinkBack(dt);
 
@@ -3994,6 +3997,10 @@ function render(now) {
     // Cinematic mode: draw the cinematic scene only; dialogue HTML overlay renders on top
     drawCinematicScene(cinematic.name, now);
   } else {
+    // Sprint 42: scenery background renders first — room walls paint over it;
+    // porthole/window clips re-reveal it.
+    drawSceneryBackground(now);
+
     rooms[currentRoom].draw(camX, now);
 
     // Sprint 13: collect auras (warm hum) for collectibles in current room
@@ -4190,16 +4197,291 @@ function drawPipMouthYawn(yawnT) {
 const AURORA_GREEN_BASE  = '58,112,72';   // #3a7048
 const AURORA_VIOLET_BASE = '90,56,120';   // #5a3878
 
+/* PORTHOLE_SCENES is superseded by the Sprint 42 parallax scenery engine below.
+   Kept for reference; drawPortholeScene calls are replaced by drawSceneryInPorthole. */
 const PORTHOLE_SCENES = {
   'ch1-ocean-night': {
     layers: [
-      { kind: 'aurora-faint', parallax: 0 },  // Sprint 35: behind stars and water
+      { kind: 'aurora-faint', parallax: 0 },
       { kind: 'sky-stars',    parallax: 0.008 },
       { kind: 'horizon-line', parallax: 0 },
       { kind: 'water-waves',  parallax: 0 },
     ],
   },
 };
+
+/* ================================================================
+   SPRINT 42: PARALLAX SCENERY ENGINE
+   Renders ship exterior scenery through all windows and portholes.
+   Architecture: a full-canvas background layer (drawSceneryBackground)
+   draws first each frame; room walls cover it; porthole/window clips
+   re-reveal it with the same unified scenery state.
+
+   Adding a new chapter = define a new SCENERY_SETS entry. No engine changes.
+   ================================================================ */
+
+/* Ship-travel global state. Drives all window scenery, independent of Pip's position. */
+const shipTravel = {
+  chapter:   'ch1-bergen',  // which SCENERY_SETS entry to use
+  progress:  0,             // 0.0–1.0 within current state
+  stateIdx:  0,             // index into the set's states array
+  speed:     0.016,         // progress units per second (ambient drift; ~62s per state)
+};
+
+/* Per-chapter scenery sets. One entry per chapter/port.
+   layers: back-to-front order. parallaxFactor: how much the layer shifts per W of progress.
+   states: ordered states the ship travels through (harbor → open water → etc.). */
+const SCENERY_SETS = {
+  'ch1-bergen': {
+    states: [
+      { id: 'harbor',     label: 'Bergen harbor — at anchor'          },
+      { id: 'open-water', label: 'Open water — Mnemosyne underway'    },
+    ],
+    layers: [
+      // Fold of Sprint 35 aurora-faint: now part of the scenery layer stack.
+      // parallaxFactor 0 = static (aurora does not depend on ship travel position).
+      { kind: 'sky-base',         parallaxFactor: 0    },
+      { kind: 'aurora-ch1',       parallaxFactor: 0    },
+      { kind: 'stars-ch1',        parallaxFactor: 0.04 },
+      { kind: 'fjord-silhouette', parallaxFactor: 0.06 },
+      { kind: 'midground-bergen', parallaxFactor: 0.16 },
+      { kind: 'water-ch1',        parallaxFactor: 0.32 },
+    ],
+  },
+};
+
+function updateShipTravel(dt) {
+  const set = SCENERY_SETS[shipTravel.chapter];
+  if (!set) return;
+  shipTravel.progress += shipTravel.speed * dt;
+  if (shipTravel.progress >= 1.0 && shipTravel.stateIdx < set.states.length - 1) {
+    shipTravel.stateIdx++;
+    shipTravel.progress = 0;
+  }
+  shipTravel.progress = Math.min(shipTravel.progress, 1.0);
+}
+
+/* Compute horizontal scroll offset for one layer.
+   Each state represents W=480px of effective travel; parallaxFactor scales it. */
+function _sceneryScrollX(parallaxFactor) {
+  return (shipTravel.stateIdx + shipTravel.progress) * W * parallaxFactor;
+}
+
+/* Draw one scenery layer into the rectangle (cx, cy, cw, ch).
+   Caller has already set up the clip; this function only fills. */
+function _drawSceneryLayer(kind, parallaxFactor, now, cx, cy, cw, ch) {
+  const scrollX = _sceneryScrollX(parallaxFactor);
+
+  switch (kind) {
+    case 'sky-base': {
+      // Deep night-sky gradient — the foundation of every window view
+      const g = ctx.createLinearGradient(cx, cy, cx, cy + ch);
+      g.addColorStop(0,    '#020408');
+      g.addColorStop(0.60, '#040810');
+      g.addColorStop(1,    '#060c14');
+      ctx.fillStyle = g;
+      ctx.fillRect(cx, cy, cw, ch);
+      break;
+    }
+
+    case 'aurora-ch1': {
+      // Faint aurora — same hues as Sprint 35 (AURORA_GREEN_BASE / AURORA_VIOLET_BASE),
+      // now driven from the scenery stack rather than per-porthole layers.
+      const skyFrac = 0.55;  // aurora lives in upper 55% of window
+      const aH = ch * skyFrac;
+
+      const yG = cy + aH * 0.38 + Math.sin(now * 0.011) * ch * 0.04;
+      const gG = ctx.createLinearGradient(cx, yG - 8, cx, yG + 8);
+      gG.addColorStop(0,   'rgba(0,0,0,0)');
+      gG.addColorStop(0.4, `rgba(${AURORA_GREEN_BASE},0.07)`);
+      gG.addColorStop(0.6, `rgba(${AURORA_GREEN_BASE},0.07)`);
+      gG.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = gG;
+      ctx.fillRect(cx, Math.round(yG - 8), cw, 16);
+
+      const yV = cy + aH * 0.55 + Math.sin(now * 0.008 + 2.1) * ch * 0.03;
+      const gV = ctx.createLinearGradient(cx, yV - 6, cx, yV + 6);
+      gV.addColorStop(0,   'rgba(0,0,0,0)');
+      gV.addColorStop(0.4, `rgba(${AURORA_VIOLET_BASE},0.05)`);
+      gV.addColorStop(0.6, `rgba(${AURORA_VIOLET_BASE},0.05)`);
+      gV.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = gV;
+      ctx.fillRect(cx, Math.round(yV - 6), cw, 12);
+      break;
+    }
+
+    case 'stars-ch1': {
+      // 10 seeded stars in upper sky, slow drift with ship travel
+      const drift = scrollX % cw;
+      ctx.fillStyle = '#dde4f0';
+      const seed = 7919;
+      for (let i = 0; i < 10; i++) {
+        const h0 = ((seed ^ (i * 1237)) * 2654435761 >>> 0) & 0xFFFF;
+        const h1 = ((seed ^ (i * 2053 + 7)) * 2654435761 >>> 0) & 0xFFFF;
+        const sx = cx + ((h0 / 65535 * cw * 1.5 - drift + cw * 2) % cw);
+        const sy = cy + (h1 / 65535) * ch * 0.50;
+        ctx.globalAlpha = 0.40 + (h0 % 50) / 120;
+        ctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+
+    case 'fjord-silhouette': {
+      // Two blocky fjord/mountain silhouettes — rough placeholder.
+      // Scroll slowly: distant mountains barely move.
+      const horizY = cy + ch * 0.60;
+      const s = scrollX % (cw * 2);
+
+      ctx.fillStyle = '#0c1018';
+      // Left mountain mass
+      const m1X = cx + ((-s + cw * 0.1 + cw * 4) % (cw * 2));
+      ctx.fillRect(Math.round(m1X), Math.round(horizY - ch * 0.24), Math.round(cw * 0.52), Math.round(ch * 0.24 + ch));
+      // Right mountain mass (offset, lower peak)
+      const m2X = cx + ((cw * 0.48 - s + cw * 4) % (cw * 2));
+      ctx.fillRect(Math.round(m2X), Math.round(horizY - ch * 0.16), Math.round(cw * 0.58), Math.round(ch * 0.16 + ch));
+      // Dark horizon band
+      ctx.fillStyle = '#080c12';
+      ctx.fillRect(cx, Math.round(horizY), cw, Math.round(ch * 0.05));
+      break;
+    }
+
+    case 'midground-bergen': {
+      // Simple dock/house shapes visible only in harbor state, fading as ship leaves.
+      const stateAlpha = shipTravel.stateIdx === 0
+        ? Math.max(0, 1 - shipTravel.progress * 2.2)
+        : 0;
+      if (stateAlpha < 0.01) break;
+      ctx.globalAlpha = stateAlpha;
+
+      const mgY   = cy + ch * 0.61;
+      const s     = scrollX % (cw * 2);
+
+      // Dock pillars
+      ctx.fillStyle = '#182028';
+      for (let i = 0; i < 5; i++) {
+        const px = cx + ((i * cw * 0.24 - s + cw * 4) % (cw * 2));
+        ctx.fillRect(Math.round(px), Math.round(mgY), 2, Math.round(ch * 0.07));
+      }
+
+      // Tiny house blobs with warm window-light
+      for (let i = 0; i < 3; i++) {
+        const hx = cx + ((i * cw * 0.36 - s * 0.75 + cw * 4) % (cw * 2));
+        const hh = ch * 0.09;
+        ctx.fillStyle = '#141c28';
+        ctx.fillRect(Math.round(hx), Math.round(mgY - hh), 7, Math.round(hh));
+        // Warm window dot — a little harbour-light warmth
+        ctx.fillStyle = 'rgba(255,200,80,0.55)';
+        ctx.fillRect(Math.round(hx + 2), Math.round(mgY - hh + 2), 2, 2);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+
+    case 'water-ch1': {
+      // Dark water in lower portion of window. Fastest-moving layer.
+      const waterY = cy + ch * 0.62;
+      const waterH = cy + ch - waterY;
+
+      // Base water fill
+      ctx.fillStyle = '#040810';
+      ctx.fillRect(cx, Math.round(waterY), cw, Math.ceil(waterH));
+
+      // Moonlight glint — cool blue-white column
+      const glintG = ctx.createLinearGradient(cx, waterY, cx, cy + ch);
+      glintG.addColorStop(0, 'rgba(100,140,200,0.12)');
+      glintG.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glintG;
+      ctx.fillRect(cx, Math.round(waterY), cw, Math.ceil(waterH));
+
+      // Slow wave streaks (time-based, not scroll-based — always present)
+      for (let i = 0; i < 3; i++) {
+        const wY = waterY + 3 + i * 3 + Math.sin(now / (8000 + i * 1500) + i * 2.1) * 2;
+        ctx.globalAlpha = 0.04 + i * 0.008;
+        ctx.fillStyle   = '#2a3858';
+        ctx.fillRect(cx, Math.round(wY), cw, 1);
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+  }
+}
+
+/* Render the full scenery layer stack into the rectangle (cx, cy, cw, ch).
+   Caller is responsible for ctx.save() / ctx.clip() / ctx.restore(). */
+function _drawSceneryStack(now, cx, cy, cw, ch) {
+  const set = SCENERY_SETS[shipTravel.chapter];
+  if (!set) return;
+  for (const layer of set.layers) {
+    _drawSceneryLayer(layer.kind, layer.parallaxFactor, now, cx, cy, cw, ch);
+  }
+}
+
+/* Draw the full-canvas scenery background. Called once per frame BEFORE the room draw.
+   Room walls paint over it; porthole/window clips then re-reveal it. */
+function drawSceneryBackground(now) {
+  _drawSceneryStack(now, 0, 0, W, H);
+}
+
+/* Draw a circular brass porthole revealing the ship scenery.
+   Replaces drawPortholeScene for cabin and hallway portholes.
+   x, y = center (screen coords); r = outer brass radius. */
+function drawSceneryInPorthole(x, y, r, now) {
+  const ri = r - 3;   // inner glass edge (inside brass ring)
+
+  // Outer bevel
+  ctx.strokeStyle = 'rgba(50,35,15,0.6)';
+  ctx.lineWidth   = 2;
+  ctx.beginPath(); ctx.arc(x, y, r + 2, 0, Math.PI * 2); ctx.stroke();
+
+  // Brass ring
+  ctx.strokeStyle = '#8a6c3c';
+  ctx.lineWidth   = 3;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+
+  // Scene interior — clipped to inner radius
+  ctx.save();
+  ctx.beginPath(); ctx.arc(x, y, ri, 0, Math.PI * 2); ctx.clip();
+
+  // Dark glass base
+  ctx.fillStyle = '#0a0d1f';
+  ctx.beginPath(); ctx.arc(x, y, ri, 0, Math.PI * 2); ctx.fill();
+
+  // Unified scenery stack
+  _drawSceneryStack(now, x - ri, y - ri, ri * 2, ri * 2);
+
+  // Pane divider within clip
+  ctx.strokeStyle = 'rgba(40,60,110,0.22)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(x - ri, y); ctx.lineTo(x + ri, y);
+  ctx.moveTo(x, y - ri); ctx.lineTo(x, y + ri);
+  ctx.stroke();
+
+  ctx.restore();
+
+  // Brass ring highlight (drawn after restore so it's on top)
+  ctx.strokeStyle = 'rgba(185,155,85,0.45)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath(); ctx.arc(x, y, r - 1, Math.PI, Math.PI * 1.75); ctx.stroke();
+}
+
+/* Draw a rectangular window revealing the ship scenery (grandparents' cabin wood window).
+   x, y = top-left of glass area; w, h = glass dimensions.
+   Window frame and pane dividers are drawn by the caller AFTER this returns. */
+function drawSceneryInWindow(x, y, w, h, now) {
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+
+  // Dark glass base
+  ctx.fillStyle = '#1a2840';
+  ctx.fillRect(x, y, w, h);
+
+  // Unified scenery stack
+  _drawSceneryStack(now, x, y, w, h);
+
+  ctx.restore();
+}
 
 /* drawShipPanel — one riveted metal wall panel.
    Strokes the panel outline; places 2×2 rivet dots at all four
@@ -4975,10 +5257,10 @@ function drawCabin(camX, now) {
   }
 
   // Porthole — game-world x=190 (Sprint 32: moved to left side of compact room; was 380)
-  // Sprint 35: switched to drawPortholeScene so the ch1-ocean-night aurora-faint layer renders here.
+  // Sprint 42: migrated to drawSceneryInPorthole (unified scenery engine).
   const phSX = Math.round(190 - camX);
   if (phSX > -24 && phSX < W + 24) {
-    drawPortholeScene(phSX, 58, 18, 'ch1-ocean-night', camX, now);
+    drawSceneryInPorthole(phSX, 58, 18, now);
   }
 
   // Sprint 37: Writing desk — game-world x=230 (between porthole x=190 and mirror x=280)
@@ -7081,13 +7363,12 @@ function drawHallway(camX, now) {
   const portholeR  = 17;   // bottom edge 85+17=102; doorTop is now 58
   const PORTHOLES  = [180, 600, 1050];
   const SCONCES    = [390, 810];   // 810 flickers
-  const hallScene  = rooms.hallway.portholeScene;
 
-  // Sprint 16: portholes now render a clipped ocean-at-night scene
+  // Sprint 42: migrated to drawSceneryInPorthole (unified scenery engine).
   for (const gx of PORTHOLES) {
     const sx = Math.round(gx - camX);
     if (sx < -(portholeR + 5) || sx > W + portholeR + 5) continue;
-    drawPortholeScene(sx, fixtureY, portholeR, hallScene, camX, now);
+    drawSceneryInPorthole(sx, fixtureY, portholeR, now);
   }
 
   for (const gx of SCONCES) {
@@ -7291,42 +7572,20 @@ function drawGrandparents(camX, now) {
   }
 
   // --- Window (left, game-world x=80–138) ---
+  // Sprint 42: migrated to drawSceneryInWindow (unified scenery engine).
+  // Aurora is now a layer inside the scenery stack; Sprint 35 inline code removed.
   const winGX = 80, winGW = 58, winRH = 90, winRY = 24;
   const winSX = Math.round(winGX - camX);
   if (winSX < W + winGW && winSX + winGW > 0) {
-    ctx.fillStyle = '#1a2840';
-    ctx.fillRect(winSX, winRY, winGW, winRH);
+    // Scenery fills the glass area (base fill + aurora + stars + fjords + water)
+    drawSceneryInWindow(winSX, winRY, winGW, winRH, now);
 
-    // Sprint 35: faint aurora in upper portion of window glass — same palette as porthole aurora.
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(winSX, winRY, winGW, winRH);
-    ctx.clip();
-    // Green band
-    const aY1 = winRY + winRH * 0.22 + Math.sin(now * 0.011) * 4;
-    const aG1 = ctx.createLinearGradient(0, aY1 - 14, 0, aY1 + 14);
-    aG1.addColorStop(0,   'rgba(0,0,0,0)');
-    aG1.addColorStop(0.4, `rgba(${AURORA_GREEN_BASE},0.08)`);
-    aG1.addColorStop(0.6, `rgba(${AURORA_GREEN_BASE},0.08)`);
-    aG1.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = aG1;
-    ctx.fillRect(winSX, aY1 - 14, winGW, 28);
-    // Violet band
-    const aY2 = winRY + winRH * 0.38 + Math.sin(now * 0.008 + 2.1) * 3;
-    const aG2 = ctx.createLinearGradient(0, aY2 - 10, 0, aY2 + 10);
-    aG2.addColorStop(0,   'rgba(0,0,0,0)');
-    aG2.addColorStop(0.4, `rgba(${AURORA_VIOLET_BASE},0.06)`);
-    aG2.addColorStop(0.6, `rgba(${AURORA_VIOLET_BASE},0.06)`);
-    aG2.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = aG2;
-    ctx.fillRect(winSX, aY2 - 10, winGW, 20);
-    ctx.restore();
-
+    // Pane dividers and wood frame — drawn on top of the scenery
     ctx.strokeStyle = 'rgba(80,110,165,0.5)';
     ctx.lineWidth   = 1;
     ctx.beginPath(); ctx.moveTo(winSX + winGW / 2, winRY); ctx.lineTo(winSX + winGW / 2, winRY + winRH); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(winSX, winRY + winRH * 0.5); ctx.lineTo(winSX + winGW, winRY + winRH * 0.5); ctx.stroke();
-    ctx.strokeStyle = '#3a2c14';   // lifted from #241808 — visible warm frame
+    ctx.strokeStyle = '#3a2c14';   // warm wood frame — visible against the night sky
     ctx.lineWidth   = 2;
     ctx.strokeRect(winSX - 2, winRY - 2, winGW + 4, winRH + 4);
     ctx.lineWidth   = 1;

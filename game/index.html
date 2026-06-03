@@ -1601,14 +1601,8 @@ const notebook = {
             sprite, name, annotation, stomachValue, collected }
    ================================================================ */
 
-/* --- DEBUG HALLWAY COLLECTIBLE ---
-   Temporary: a Bamsemums placed in the hallway for testing the collect
-   system before the kitchen room exists.
-   Remove or re-gate when the kitchen room is built (see sprint spec §c).
-   Canonical kitchen-sprint annotation (replaces this):
-     'Bamsemums — from Henrik, in the kitchen.' */
-/* Sprint 26 Stage 1: debug Bamsemums removed \u2014 canonical collectible moves to the kitchen room.
-   Stage 3 will add kitchenCollectibles with proper Beat 11b gating. */
+/* Sprint 36: debug Bamsemums removed Sprint 26 Stage 1 (closed #25 resolved-by-removal).
+   Hallway has no canonical treat — it is a transit room (locked decision, Sprint 36). */
 const hallwayCollectibles = [];
 
 /* ================================================================
@@ -1651,6 +1645,24 @@ const openingSeq = {
      node      — dialogue node (see showDialogue() for the node shape)
    Proximity threshold: 18 game-world pixels, matching the prototype.
    ================================================================ */
+
+/* Sprint 36: Cabin Smørbukk — Norwegian caramel toffee on the nightstand.
+   Sits at world-x 332 (the Sprint 32 nightstand prop). Collectable only after ↓ is
+   taught in the kitchen (requiresVerbLearned gate in tryCollect). After collection it
+   appears at x=100 in the collection-room display via getCabinCollectionObjects. */
+const cabinSmorbukk = {
+  id:               'smorbukk',
+  type:             'collectible',
+  kind:             'treat',
+  sprite:           'smorbukk',
+  name:             'Smørbukk',
+  annotation:       'Smørbukk — on the nightstand in cabin 646.',
+  stomachValue:     10,
+  x:                332,
+  collected:        false,
+  tutorialNarrated: true,       // Beat 11b narration belongs to the kitchen Bamsemums only
+  requiresVerbLearned: true,    // ↓ collect not taught until kitchen; natural replay gate
+};
 
 const cabinObjects = [
   /* ---- Door ---- interactive, 3 choices */
@@ -2134,6 +2146,25 @@ const grandparentsObjects = [
    the echoMouse state object (not an inspectable object).
    ================================================================ */
 
+/* Sprint 36: Skillingsboller — half a Bergen cinnamon bun on the janitor's cart.
+   x follows darkCorridor.cartX so the treat moves with the cart when the janitor
+   pushes it off-screen. Collected getter returns true once either collected OR
+   the cart is removed (player missed the window). */
+const darkCorridorSkillingsboller = {
+  id:               'skillingsboller',
+  type:             'collectible',
+  kind:             'treat',
+  sprite:           'skillingsboller',
+  name:             'Skillingsboller',
+  annotation:       'Skillingsboller — half a cinnamon bun, someone forgot it on the cart.',
+  stomachValue:     10,
+  get x() { return darkCorridor.cartX; },
+  _collected:       false,
+  get collected()  { return this._collected || darkCorridor.cartRemoved; },
+  set collected(v) { this._collected = v; },
+  tutorialNarrated: true,
+};
+
 const darkCorridorObjects = [
   /* ---- Broken sconce + wires ---- world-x ~420 */
   {
@@ -2437,7 +2468,7 @@ const rooms = {
     pipMinX:     PIP_HALF_W,                  //  12 — left wall (entry + panic-exit wall)
     // Sprint 25 Stage 2: getter concatenates static objects with dynamic collection inspectables
     get objects() { return [...cabinObjects, ...getCabinCollectionObjects()]; },
-    collectibles: [],                         // Sprint 13: no cabin collectibles yet
+    collectibles: [cabinSmorbukk],            // Sprint 36: Smørbukk on nightstand (x 332)
     draw:        drawCabin,                   // defined below (hoisted)
     pipEntryX: {
       fromLeft:  PIP_HALF_W + 8,              //  20 — entering from shared wall (first visit) or hallway door
@@ -2449,7 +2480,7 @@ const rooms = {
     pipMaxX:      1312,                        // 1320 − PIP_HALF_W — stops before dark zone
     pipMinX:      PIP_HALF_W + 4,              //   16 — left wall (Sprint 10.7: visible wall added)
     objects:      hallwayObjects,
-    collectibles: hallwayCollectibles,         // Sprint 13: debug Bamsemums for testing
+    collectibles: hallwayCollectibles,         // Sprint 36: empty — hallway has no canonical treat
     draw:         drawHallway,                 // defined below (hoisted)
     portholeScene: 'ch1-ocean-night',          // Sprint 16: porthole scenery system
     pipEntryX: {
@@ -2476,7 +2507,7 @@ const rooms = {
     pipMaxX:     ROOM_W - PIP_HALF_W,         // 948 — right wall (stairwell beyond 880)
     pipMinX:     PIP_HALF_W,                  //  12 — left edge
     objects:     darkCorridorObjects,
-    collectibles: [],
+    collectibles: [darkCorridorSkillingsboller],  // Sprint 36: Skillingsboller on janitor's cart
     draw:        drawDarkCorridor,            // defined below
     pipEntryX: {
       fromLeft:       PIP_HALF_W + 8,         //  20 — entering from hallway staircase
@@ -3804,6 +3835,11 @@ function tryCollect() {
   if (!room.collectibles) { pip.squatTimer = SQUAT_DURATION; return; }
   for (const c of room.collectibles) {
     if (!c.collected && Math.abs(pip.x - c.x) < 18) {
+      // Sprint 36: gate treats that require the collect verb to be taught first
+      if (c.requiresVerbLearned && !chapterState.bamsemumsCollected) {
+        pip.squatTimer = SQUAT_DURATION;
+        return;
+      }
       pickupCollectible(c);
       return;
     }
@@ -9981,6 +10017,30 @@ function drawTreatSprite(ctx, key, cx, cy) {
       ctx.fillStyle = col;
       ctx.fillRect(cx + dx, cy + dy - 3, 2, 2);
     }
+    return;
+  }
+  // Smørbukk: Norwegian caramel toffee log — yellow wrapper, crimped ends
+  if (key === 'smorbukk') {
+    ctx.fillStyle = 'rgba(230,200,40,0.92)';
+    ctx.fillRect(cx - 4, cy - 7, 8, 7);
+    ctx.fillStyle = 'rgba(180,130,20,0.76)';
+    ctx.fillRect(cx - 2, cy - 5, 4, 4);
+    ctx.fillStyle = 'rgba(210,175,30,0.82)';
+    ctx.fillRect(cx - 5, cy - 8, 3, 2);
+    ctx.fillRect(cx + 2, cy - 8, 3, 2);
+    ctx.fillRect(cx - 5, cy - 1, 3, 2);
+    ctx.fillRect(cx + 2, cy - 1, 3, 2);
+    return;
+  }
+  // Skillingsboller: Bergen cinnamon bun on waxed paper
+  if (key === 'skillingsboller') {
+    ctx.fillStyle = 'rgba(225,200,155,0.90)';
+    ctx.beginPath(); ctx.arc(cx, cy - 4, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(140,80,30,0.72)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy - 4, 3, 0.5, Math.PI * 1.8); ctx.stroke();
+    ctx.fillStyle = 'rgba(235,225,195,0.65)';
+    ctx.fillRect(cx - 5, cy + 2, 10, 3);
     return;
   }
   // Generic fallback: warm amber diamond

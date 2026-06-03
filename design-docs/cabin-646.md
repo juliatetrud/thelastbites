@@ -172,9 +172,10 @@ If we want to add ambient life later — drifting dust, a slow gravitational dri
 
 **One treat lives here:** a cabin treat — early in the chapter, accessible as a replay-reward.
 
-- **Status:** TBD specific treat per Sprint 12 decision. Suggested: Smørbukk (Norwegian caramel toffee), tucked in the bedside drawer.
-- **Visibility:** the aura is visible from chapter start, but Pip cannot collect it on first playthrough — `↓ COLLECT` hasn't been taught yet (it's taught in the kitchen with Bamsemums). On replay (or return after kitchen), it becomes collectible.
-- **Position:** to be settled in Ch1 content sprint. The bedside drawer is the working assumption; a small drawer-detail would need adding to the bed geometry.
+- **Status: Shipped Sprint 36.** Smørbukk (Norwegian caramel toffee log, yellow wrapper) sits on the nightstand surface at world-x **332** — the nightstand prop Sprint 32 added.
+- **Visibility:** the warm collect-aura is visible from chapter start. The treat is not collectible until `↓ COLLECT` is taught in the kitchen with Bamsemums (`requiresVerbLearned` gate in `tryCollect`). On replay, the player returns and presses ↓ to collect it.
+- **No under-bed drawer.** OQ #3 is retired — the drawer is not built; the nightstand is the canonical origin (locked decision, Sprint 36).
+- **After collection:** the Smørbukk appears in the collection-room display at world-x 100, FLOOR_Y−4 (near the entry door, "as if Pip dropped it on the way in") via `getCabinCollectionObjects`. Flavor line: *"The Smørbukk wrapper is still sticky. He keeps it anyway."*
 
 ## Porthole scene
 
@@ -207,6 +208,6 @@ From `design-docs/visual-research-tracker.md` (Ch1 section):
 
 2. ~~**Aurora in the porthole.**~~ **Resolved Sprint 31 (2026-06-02):** Builder's discretion. A faint aurora reflection in the cabin porthole is acceptable; it does not dilute the observation-deck aurora moment because the deck's aurora is far more prominent and full-layered.
 
-3. ~~**Bedside drawer.**~~ **Resolved Sprint 31 (2026-06-02):** Builder's discretion. If adding a drawer to the bed geometry is complex, place the Smørbukk treat elsewhere within the shared layout (e.g. on a surface near the bed). Exact placement tuned in-browser after Sprint 32.
+3. ~~**Bedside drawer.**~~ **Resolved Sprint 36 (2026-06-03):** No drawer. Smørbukk sits on the nightstand (world-x 332) — locked decision. Sprint 31 authorized "elsewhere within the shared layout"; Sprint 36 locked the nightstand specifically.
 
 4. ~~**Inspectable child's drawing.**~~ **Resolved Sprint 31 (2026-06-02):** Builder's discretion. If adding a short inspect narration line ("*Babcia made me pin it up.*") is practical during Sprint 32, include it; otherwise defer to Sprint 34 polish.

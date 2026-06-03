@@ -131,14 +131,7 @@ The hallway feels alive in a quiet way. None of the animation is fast enough to 
 
 ## Treat placement
 
-**No treat in the hallway during first playthrough.** The hallway has historically held a **debug Bamsemums** for testing the collect verb, but per Sprint 12 this isn't a canonical treat — it's a developer artifact. Flag for cleanup or repositioning.
-
-If we want to add a real hallway treat for replay value:
-- It would need to be tucked in the luggage trolley (in the bear's pocket? wrapped in a sleeve of clothing visible in the trolley?)
-- Or behind one of the wall decor pieces (the barometer? the map?)
-- Or on a side table near the bulletin board
-
-**My read:** the hallway doesn't need a treat. It's a transit room. The Bamsemums tutorial happens in the kitchen, and the cabin/dark-corridor/observation-deck treats fill the chapter's quota. Flag for Julia.
+**No treat in the hallway. Locked decision (Sprint 36, 2026-06-03).** The hallway is a transit room. Ch1's treat quota (Smørbukk in cabin, Skillingsboller in dark corridor, Bamsemums in kitchen, Kvikk Lunsj on observation deck) is complete. The debug Bamsemums that lived here for collect-verb testing was removed in Sprint 26 Stage 1 and is not replaced.
 
 ## Porthole scenes
 
@@ -178,7 +171,7 @@ From `design-docs/visual-research-tracker.md` (Ch1 section):
 
 1. **Echo-vermin in the hallway.** The visual research tracker calls for ghost-spiders along sconces, ghost-mice along baseboards, ghost-bats up near the deckhead. Current code shows no echo-vermin in the hallway. Are they an addition we want, or are they reserved for the dark corridor (Beat 8)? My read: the hallway should stay clean — the dark corridor is where ambient wrongness escalates. Vermin belong there, not here.
 
-2. **Debug Bamsemums cleanup.** A developer Bamsemums has been in the hallway for testing the collect verb. Per Sprint 12 it's not canonical. Flag: remove it, or formally promote it to a real hallway treat (with placement and lore)?
+2. ~~**Debug Bamsemums cleanup.**~~ **Resolved Sprint 36 (2026-06-03):** Removed — no canonical hallway treat. The debug Bamsemums was stripped from `hallwayCollectibles` in Sprint 26 Stage 1; Sprint 36 confirmed removal and locked "no hallway treat" as a design decision. GitHub issue #25 (proximity auto-stop) closed resolved-by-removal.
 
 3. **Wall decor inspectability.** Currently five wall-decor pieces are pure decoration. Making one or two inspectable would surface small character moments (the ship photograph showing the Mnemosyne's launch; the navigational chart showing Bergen circled). Worth it for replay/notebook value, or keep them decorative?
 

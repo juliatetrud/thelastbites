@@ -159,7 +159,7 @@ Per Sprint 12: Ch1 has four treats. One is locked and shipped; three need final 
 |---|---|---|
 | Bed (with lump pre-reveal) | **Shipped procedural** | Sprint 10.7. Two-state: lump-visible / post-reveal-empty. |
 | Mirror (with frame + reflective surface) | **Shipped procedural** | Sprint 11. Two-state: empty / ghost-face-permanent. |
-| Porthole | **Shipped procedural** | Sprint 16 porthole-scenery system. Sprint 35: switched to `drawPortholeScene`; `aurora-faint` layer now rendered. |
+| Porthole | **Shipped procedural** | Sprint 16 porthole-scenery system. Sprint 35: aurora added. Sprint 42: migrated to `drawSceneryInPorthole` (unified engine). Sprint 43: finished Bergen night scenery (fjords, moonlit water, aurora, stars, skerries, lighthouse). |
 | Cabin entry door | **Shipped procedural** | Sprint 02. |
 | Far cabin door (doctor's exit) | **Shipped procedural** | Sprint 14. Non-interactable. |
 | Child's drawing on wall | **Shipped procedural (as ambient)** | Visible in Sprint 11. Becomes inspectable per Sprint 19 — narration line added. |
@@ -176,7 +176,7 @@ Per Sprint 12: Ch1 has four treats. One is locked and shipped; three need final 
 | Brass cabin-number plaques | **Retired** | All door-number plaques removed in commit d40a61a. *(Checklist previously said "Shipped procedural Sprint 16 polish" — corrected Sprint 33.)* |
 | Crimson runner carpet | **Shipped procedural** | Sprint 16. Narrowed per polish 1. |
 | Wall sconces (2, one flickering) | **Shipped procedural** | Sprint 02 + Sprint 16. Flickering one at world-x ~820. |
-| 3 portholes | **Shipped procedural** | Sprint 16. `ch1-ocean-night` scene. Sprint 35: `aurora-faint` layer added to scene registry; all three portholes pick it up automatically. |
+| 3 portholes | **Shipped procedural** | Sprint 16. Sprint 35: aurora. Sprint 42: migrated to `drawSceneryInPorthole`. Sprint 43: finished Bergen night scenery — all three hallway portholes reveal the same unified view. |
 | Bulletin board | **Shipped procedural** | Sprint 37. World-x 130 (between door at 80 and porthole at 180). Cork board, brass frame, paper notices, red pins. Inspectable x updated to match. |
 | Luggage trolley (with bear) | **Shipped procedural** | Sprint 16. World-x ~530. |
 | 5 wall-decor pieces (ship photo, barometer, botanical, map, mirror) | **Shipped procedural** | Sprint 16. Two become inspectable per Sprint 19 (ship photo, navigational chart). |
@@ -350,6 +350,7 @@ drawDeckBench / drawDeckRope / drawDeckTelescope  ← Sprint 27 (previously "not
 
 - ~~Chapter-wide aurora porthole layers~~ — shipped Sprint 35
 - ~~Hanging copper pots in kitchen~~ — shipped Sprint 37
+- ~~Ch1 interior window scenery~~ — shipped Sprint 43 (Bergen night sea, fjords, moonlit water)
 - Echo-mouse near kitchen freezer (optional, not called)
 - Cabin: writing desk, washstand, under-bed drawer
 - Hallway: bulletin board visual asset ("WELCOME ABOARD" header), hallway canonical treat

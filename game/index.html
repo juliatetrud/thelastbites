@@ -4232,14 +4232,15 @@ const shipTravel = {
    layers: back-to-front order. parallaxFactor: how much the layer shifts per W of progress.
    states: ordered states the ship travels through (harbor → open water → etc.). */
 const SCENERY_SETS = {
+  // Sprint 43: finished Bergen scenery — Norwegian night sea, fjords receding, moonlit water.
+  // Decision (a): the harbor is the Sprint 44 cold-open; interior play begins open-sea.
+  // Single state: open-sea. Shore-light glimmer fades on progress (poignant last glimpse).
   'ch1-bergen': {
     states: [
-      { id: 'harbor',     label: 'Bergen harbor — at anchor'          },
-      { id: 'open-water', label: 'Open water — Mnemosyne underway'    },
+      { id: 'open-sea', label: 'Norwegian night sea — Mnemosyne underway' },
     ],
     layers: [
-      // Fold of Sprint 35 aurora-faint: now part of the scenery layer stack.
-      // parallaxFactor 0 = static (aurora does not depend on ship travel position).
+      // Aurora-faint folded in from Sprint 35; parallaxFactor 0 (static relative to travel).
       { kind: 'sky-base',         parallaxFactor: 0    },
       { kind: 'aurora-ch1',       parallaxFactor: 0    },
       { kind: 'stars-ch1',        parallaxFactor: 0.04 },
@@ -4267,43 +4268,61 @@ function _sceneryScrollX(parallaxFactor) {
   return (shipTravel.stateIdx + shipTravel.progress) * W * parallaxFactor;
 }
 
+/* Sprint 43: fjord profile helper — deterministic organic ridge silhouette.
+   xNorm: position within one tile (0.0–1.0). phaseOff: per-rank phase offset.
+   Returns a value in ~[0.15, 0.85]; caller scales to pixel height. */
+function _fjordProfile(xNorm, phaseOff) {
+  const t = xNorm * Math.PI * 2 + phaseOff;
+  return 0.50
+    + 0.23 * Math.sin(t * 2.05 + 0.30)    // large mountain waves
+    + 0.13 * Math.sin(t * 4.70 + 1.10)    // secondary ridges
+    + 0.07 * Math.sin(t * 9.10 + 0.80)    // small peaks
+    + 0.04 * Math.sin(t * 16.3 + 2.40)    // fine ridge detail
+    + 0.02 * Math.sin(t * 27.1 + 1.85);   // texture
+}
+
 /* Draw one scenery layer into the rectangle (cx, cy, cw, ch).
-   Caller has already set up the clip; this function only fills. */
+   Sprint 43: replaced placeholder blocks with finished Bergen night scenery. */
 function _drawSceneryLayer(kind, parallaxFactor, now, cx, cy, cw, ch) {
   const scrollX = _sceneryScrollX(parallaxFactor);
 
   switch (kind) {
+
     case 'sky-base': {
-      // Deep night-sky gradient — the foundation of every window view
+      // Norwegian night sky: near-black zenith → deep indigo → cold violet at horizon.
+      // The bed that all other layers sit against; never warms the room.
       const g = ctx.createLinearGradient(cx, cy, cx, cy + ch);
-      g.addColorStop(0,    '#020408');
-      g.addColorStop(0.60, '#040810');
-      g.addColorStop(1,    '#060c14');
+      g.addColorStop(0,    '#010306');   // near-black zenith
+      g.addColorStop(0.28, '#030a14');   // deep indigo
+      g.addColorStop(0.58, '#060f22');   // cold blue-indigo mid-sky
+      g.addColorStop(0.80, '#07102a');   // faint violet undertone
+      g.addColorStop(0.92, '#060d24');
+      g.addColorStop(1,    '#040a1c');   // just above the horizon
       ctx.fillStyle = g;
       ctx.fillRect(cx, cy, cw, ch);
       break;
     }
 
     case 'aurora-ch1': {
-      // Faint aurora — same hues as Sprint 35 (AURORA_GREEN_BASE / AURORA_VIOLET_BASE),
-      // now driven from the scenery stack rather than per-porthole layers.
-      const skyFrac = 0.55;  // aurora lives in upper 55% of window
+      // Faint aurora (Sprint 35 palette, same AURORA_GREEN_BASE / AURORA_VIOLET_BASE).
+      // Slightly lifted alpha vs. placeholder — more visible against the deeper sky.
+      const skyFrac = 0.54;
       const aH = ch * skyFrac;
 
-      const yG = cy + aH * 0.38 + Math.sin(now * 0.011) * ch * 0.04;
-      const gG = ctx.createLinearGradient(cx, yG - 8, cx, yG + 8);
+      const yG = cy + aH * 0.36 + Math.sin(now * 0.011) * ch * 0.04;
+      const gG = ctx.createLinearGradient(cx, yG - 9, cx, yG + 9);
       gG.addColorStop(0,   'rgba(0,0,0,0)');
-      gG.addColorStop(0.4, `rgba(${AURORA_GREEN_BASE},0.07)`);
-      gG.addColorStop(0.6, `rgba(${AURORA_GREEN_BASE},0.07)`);
+      gG.addColorStop(0.4, `rgba(${AURORA_GREEN_BASE},0.09)`);
+      gG.addColorStop(0.6, `rgba(${AURORA_GREEN_BASE},0.09)`);
       gG.addColorStop(1,   'rgba(0,0,0,0)');
       ctx.fillStyle = gG;
-      ctx.fillRect(cx, Math.round(yG - 8), cw, 16);
+      ctx.fillRect(cx, Math.round(yG - 9), cw, 18);
 
-      const yV = cy + aH * 0.55 + Math.sin(now * 0.008 + 2.1) * ch * 0.03;
+      const yV = cy + aH * 0.54 + Math.sin(now * 0.008 + 2.1) * ch * 0.03;
       const gV = ctx.createLinearGradient(cx, yV - 6, cx, yV + 6);
       gV.addColorStop(0,   'rgba(0,0,0,0)');
-      gV.addColorStop(0.4, `rgba(${AURORA_VIOLET_BASE},0.05)`);
-      gV.addColorStop(0.6, `rgba(${AURORA_VIOLET_BASE},0.05)`);
+      gV.addColorStop(0.4, `rgba(${AURORA_VIOLET_BASE},0.06)`);
+      gV.addColorStop(0.6, `rgba(${AURORA_VIOLET_BASE},0.06)`);
       gV.addColorStop(1,   'rgba(0,0,0,0)');
       ctx.fillStyle = gV;
       ctx.fillRect(cx, Math.round(yV - 6), cw, 12);
@@ -4311,16 +4330,29 @@ function _drawSceneryLayer(kind, parallaxFactor, now, cx, cy, cw, ch) {
     }
 
     case 'stars-ch1': {
-      // 10 seeded stars in upper sky, slow drift with ship travel
-      const drift = scrollX % cw;
-      ctx.fillStyle = '#dde4f0';
-      const seed = 7919;
-      for (let i = 0; i < 10; i++) {
-        const h0 = ((seed ^ (i * 1237)) * 2654435761 >>> 0) & 0xFFFF;
-        const h1 = ((seed ^ (i * 2053 + 7)) * 2654435761 >>> 0) & 0xFFFF;
-        const sx = cx + ((h0 / 65535 * cw * 1.5 - drift + cw * 2) % cw);
-        const sy = cy + (h1 / 65535) * ch * 0.50;
-        ctx.globalAlpha = 0.40 + (h0 % 50) / 120;
+      // Cold-white stars: two brightness groups (bright+dim), slow twinkle, sparse.
+      const drift = scrollX % (cw * 1.5);
+      const SEED1 = 7919, SEED2 = 31337;
+
+      // Bright group (7 stars)
+      for (let i = 0; i < 7; i++) {
+        const h0 = ((SEED1 ^ (i * 1237)) * 2654435761 >>> 0) & 0xFFFF;
+        const h1 = ((SEED1 ^ (i * 2053 + 7)) * 2654435761 >>> 0) & 0xFFFF;
+        const sx = cx + ((h0 / 65535 * cw * 1.5 - drift + cw * 3) % cw);
+        const sy = cy + (h1 / 65535) * ch * 0.40;
+        const tw = 0.55 + Math.sin(now * (0.75 + (h0 & 15) * 0.04) + i * 1.73) * 0.24;
+        ctx.globalAlpha = tw;
+        ctx.fillStyle   = '#e8ecff';
+        ctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
+      }
+      // Dim group (9 stars)
+      for (let i = 0; i < 9; i++) {
+        const h0 = ((SEED2 ^ (i * 1553)) * 2654435761 >>> 0) & 0xFFFF;
+        const h1 = ((SEED2 ^ (i * 3079 + 11)) * 2654435761 >>> 0) & 0xFFFF;
+        const sx = cx + ((h0 / 65535 * cw * 1.8 - drift * 0.6 + cw * 3) % cw);
+        const sy = cy + (h1 / 65535) * ch * 0.46;
+        ctx.globalAlpha = 0.22 + (h0 & 31) / 128;
+        ctx.fillStyle   = '#c8d4f0';
         ctx.fillRect(Math.round(sx), Math.round(sy), 1, 1);
       }
       ctx.globalAlpha = 1;
@@ -4328,78 +4360,159 @@ function _drawSceneryLayer(kind, parallaxFactor, now, cx, cy, cw, ch) {
     }
 
     case 'fjord-silhouette': {
-      // Two blocky fjord/mountain silhouettes — rough placeholder.
-      // Scroll slowly: distant mountains barely move.
-      const horizY = cy + ch * 0.60;
-      const s = scrollX % (cw * 2);
+      // Three depth ranks of Norwegian fjord silhouettes — the signature layer.
+      // Each rank uses a different tile width and scroll multiplier for independent depth.
+      // Far: haziest, lowest, most blue. Near: darkest, tallest, most defined.
+      const horizY = cy + ch * 0.61;   // horizon line
 
-      ctx.fillStyle = '#0c1018';
-      // Left mountain mass
-      const m1X = cx + ((-s + cw * 0.1 + cw * 4) % (cw * 2));
-      ctx.fillRect(Math.round(m1X), Math.round(horizY - ch * 0.24), Math.round(cw * 0.52), Math.round(ch * 0.24 + ch));
-      // Right mountain mass (offset, lower peak)
-      const m2X = cx + ((cw * 0.48 - s + cw * 4) % (cw * 2));
-      ctx.fillRect(Math.round(m2X), Math.round(horizY - ch * 0.16), Math.round(cw * 0.58), Math.round(ch * 0.16 + ch));
-      // Dark horizon band
-      ctx.fillStyle = '#080c12';
-      ctx.fillRect(cx, Math.round(horizY), cw, Math.round(ch * 0.05));
+      // Draw one silhouette rank: profile path from left to right, filled below.
+      const drawRank = (maxH, tileW, scrollMult, color, alpha, phaseOff) => {
+        const rankScroll = scrollX * scrollMult;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle   = color;
+        ctx.beginPath();
+        const steps = Math.ceil(cw) + 2;
+        for (let px = 0; px <= steps; px++) {
+          const xInTile = ((px + rankScroll) % tileW) / tileW;
+          const peak    = _fjordProfile(xInTile, phaseOff);
+          const ridgeY  = horizY - peak * maxH;
+          if (px === 0) ctx.moveTo(cx + px, ridgeY);
+          else          ctx.lineTo(cx + px, ridgeY);
+        }
+        ctx.lineTo(cx + steps, cy + ch);
+        ctx.lineTo(cx,         cy + ch);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      };
+
+      // Far ridges — paler, hazier, low: a wash of dark blue-grey
+      drawRank(ch * 0.11, 420, 0.65, '#0f1c2e', 0.65, 0.00);
+      // Mid ridges — more defined, slightly taller
+      drawRank(ch * 0.19, 310, 0.90, '#080f1e', 0.88, 2.10);
+      // Near ridges — darkest, tallest, most character: the Norwegian coast
+      drawRank(ch * 0.28, 230, 1.20, '#040810', 0.99, 4.70);
+
+      // Subtle horizon-glow: cold blue-white line where sea meets sky
+      const hGrad = ctx.createLinearGradient(cx, horizY - 2, cx, horizY + 5);
+      hGrad.addColorStop(0,   'rgba(25,45,82,0)');
+      hGrad.addColorStop(0.4, 'rgba(25,45,82,0.22)');
+      hGrad.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = hGrad;
+      ctx.fillRect(cx, Math.round(horizY - 2), cw, 7);
       break;
     }
 
     case 'midground-bergen': {
-      // Simple dock/house shapes visible only in harbor state, fading as ship leaves.
-      const stateAlpha = shipTravel.stateIdx === 0
-        ? Math.max(0, 1 - shipTravel.progress * 2.2)
-        : 0;
-      if (stateAlpha < 0.01) break;
-      ctx.globalAlpha = stateAlpha;
+      // Near-coast detail: skerries, lighthouse blink, fading Bergen shore-light.
+      // Shore-light: fades quickly on progress (brief last glimpse, then open sea).
+      const s       = scrollX % (cw * 3);
+      const mgY     = cy + ch * 0.62;
 
-      const mgY   = cy + ch * 0.61;
-      const s     = scrollX % (cw * 2);
-
-      // Dock pillars
-      ctx.fillStyle = '#182028';
-      for (let i = 0; i < 5; i++) {
-        const px = cx + ((i * cw * 0.24 - s + cw * 4) % (cw * 2));
-        ctx.fillRect(Math.round(px), Math.round(mgY), 2, Math.round(ch * 0.07));
+      // Bergen shore-light glimmer — warm distant haze, fades by progress~0.36
+      const shoreA = Math.max(0, 1 - shipTravel.progress * 2.75);
+      if (shoreA > 0.005) {
+        ctx.globalAlpha = shoreA;
+        const bgX = cx + ((cw * 1.4 - s * 0.28 + cw * 6) % (cw * 3));
+        // Diffuse warm glow — Bergen's lights on the retreating horizon
+        const bgGrad = ctx.createRadialGradient(bgX, mgY, 0, bgX, mgY - ch * 0.06, cw * 0.16);
+        bgGrad.addColorStop(0,   'rgba(255,190,70,0.45)');
+        bgGrad.addColorStop(0.4, 'rgba(240,160,50,0.18)');
+        bgGrad.addColorStop(1,   'rgba(0,0,0,0)');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(Math.round(bgX - cw * 0.18), Math.round(mgY - ch * 0.12),
+                     Math.round(cw * 0.36), Math.round(ch * 0.14));
+        // A scatter of individual lights within the glow
+        ctx.fillStyle = 'rgba(255,215,100,0.52)';
+        for (let i = 0; i < 4; i++) {
+          const ldx = (i - 1.5) * cw * 0.04;
+          const ldy = (i % 2) * ch * 0.015;
+          ctx.fillRect(Math.round(bgX + ldx), Math.round(mgY - ch * 0.06 + ldy), 1, 1);
+        }
+        ctx.globalAlpha = 1;
       }
 
-      // Tiny house blobs with warm window-light
-      for (let i = 0; i < 3; i++) {
-        const hx = cx + ((i * cw * 0.36 - s * 0.75 + cw * 4) % (cw * 2));
-        const hh = ch * 0.09;
-        ctx.fillStyle = '#141c28';
-        ctx.fillRect(Math.round(hx), Math.round(mgY - hh), 7, Math.round(hh));
-        // Warm window dot — a little harbour-light warmth
-        ctx.fillStyle = 'rgba(255,200,80,0.55)';
-        ctx.fillRect(Math.round(hx + 2), Math.round(mgY - hh + 2), 2, 2);
+      // Skerries — small dark rocky islands/islets close to the near shore
+      const skerryOffsets = [0.10, 0.47, 0.83];
+      for (let i = 0; i < skerryOffsets.length; i++) {
+        const skX = cx + ((skerryOffsets[i] * cw * 3 - s + cw * 6) % (cw * 3));
+        if (skX < cx - cw * 0.08 || skX > cx + cw + cw * 0.08) continue;
+        const skW = ch * 0.042 + i * ch * 0.018;
+        const skH = ch * 0.022 + i * ch * 0.010;
+        // Hump silhouette via arc path
+        ctx.fillStyle = '#040810';
+        ctx.beginPath();
+        ctx.ellipse(Math.round(skX), Math.round(mgY), Math.round(skW), Math.round(skH),
+                    0, Math.PI, 0, false);
+        ctx.fill();
       }
-      ctx.globalAlpha = 1;
+
+      // Lighthouse blink — single pixel, 3.2s cycle, brief warm-white flash
+      const lhX = cx + ((cw * 2.1 - s * 0.55 + cw * 9) % (cw * 3));
+      if (lhX >= cx - 1 && lhX <= cx + cw + 1) {
+        const blinkT = (now / 3200) % 1;
+        const blinkA = blinkT < 0.07 ? blinkT / 0.07 * 0.7 :
+                       blinkT < 0.14 ? (0.14 - blinkT) / 0.07 * 0.7 : 0;
+        if (blinkA > 0.01) {
+          ctx.globalAlpha = blinkA;
+          ctx.fillStyle   = '#fffef0';
+          ctx.fillRect(Math.round(lhX), Math.round(mgY - ch * 0.025), 1, 1);
+          ctx.globalAlpha = 1;
+        }
+      }
       break;
     }
 
     case 'water-ch1': {
-      // Dark water in lower portion of window. Fastest-moving layer.
+      // Dark northern sea: moonlit swell, cold shimmer, slow waves.
       const waterY = cy + ch * 0.62;
       const waterH = cy + ch - waterY;
 
-      // Base water fill
-      ctx.fillStyle = '#040810';
+      // Base water — cold dark navy
+      const waterBase = ctx.createLinearGradient(cx, waterY, cx, cy + ch);
+      waterBase.addColorStop(0,   '#05091c');  // lighter at surface
+      waterBase.addColorStop(0.3, '#030810');
+      waterBase.addColorStop(1,   '#020408');  // darkest at bottom
+      ctx.fillStyle = waterBase;
       ctx.fillRect(cx, Math.round(waterY), cw, Math.ceil(waterH));
 
-      // Moonlight glint — cool blue-white column
-      const glintG = ctx.createLinearGradient(cx, waterY, cx, cy + ch);
-      glintG.addColorStop(0, 'rgba(100,140,200,0.12)');
-      glintG.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = glintG;
+      // Moonlight path — cool blue-white vertical band, very slowly drifting
+      const moonCX = cx + cw * 0.48 + Math.sin(now * 0.00012) * cw * 0.05;
+      const moonW  = cw * 0.26;
+      const moonG  = ctx.createRadialGradient(moonCX, waterY, 0, moonCX, cy + ch, moonW * 1.4);
+      moonG.addColorStop(0,    'rgba(175,205,245,0.20)');
+      moonG.addColorStop(0.30, 'rgba(135,175,225,0.11)');
+      moonG.addColorStop(0.62, 'rgba(95,145,210,0.05)');
+      moonG.addColorStop(1,    'rgba(0,0,0,0)');
+      ctx.fillStyle = moonG;
       ctx.fillRect(cx, Math.round(waterY), cw, Math.ceil(waterH));
 
-      // Slow wave streaks (time-based, not scroll-based — always present)
-      for (let i = 0; i < 3; i++) {
-        const wY = waterY + 3 + i * 3 + Math.sin(now / (8000 + i * 1500) + i * 2.1) * 2;
-        ctx.globalAlpha = 0.04 + i * 0.008;
-        ctx.fillStyle   = '#2a3858';
+      // Swell: five wave bands — different periods, phases, depths
+      const waves = [
+        { yf: 0.07, period: 11200, amp: 1.4, a: 0.07, col: '#182840' },
+        { yf: 0.20, period: 8600,  amp: 1.1, a: 0.08, col: '#182840' },
+        { yf: 0.36, period: 14500, amp: 1.6, a: 0.06, col: '#1e304e' },
+        { yf: 0.54, period: 9100,  amp: 1.0, a: 0.09, col: '#182840' },
+        { yf: 0.73, period: 6800,  amp: 0.7, a: 0.07, col: '#1e304e' },
+      ];
+      for (const w of waves) {
+        const wY = waterY + waterH * w.yf + Math.sin(now / w.period) * w.amp;
+        ctx.globalAlpha = w.a;
+        ctx.fillStyle   = w.col;
         ctx.fillRect(cx, Math.round(wY), cw, 1);
+      }
+
+      // Moonpath sparkle — sparse cold glints on the swell, fade in/out slowly
+      for (let i = 0; i < 3; i++) {
+        const spPhase = (now / 3800 + i * 1.35) % 1;
+        const spA     = Math.sin(spPhase * Math.PI) * 0.22;
+        if (spA < 0.01) continue;
+        const spX = moonCX + Math.sin(i * 2.3 + now * 0.00009) * moonW * 0.38;
+        const spY = waterY + waterH * (0.12 + i * 0.28) + Math.sin(now / 7200 + i * 1.6) * 2;
+        ctx.globalAlpha = spA;
+        ctx.fillStyle   = '#d8e8ff';
+        ctx.fillRect(Math.round(spX), Math.round(spY), 1, 1);
       }
       ctx.globalAlpha = 1;
       break;

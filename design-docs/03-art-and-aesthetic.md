@@ -731,6 +731,8 @@ The existing sconce draw function was extended to cast a radial warm-amber gradi
 
 **Scenery is always cool/ambient** — it never becomes a room's dominant light. The single warm-light-per-scene rule applies to room interiors; scenery is background atmosphere only. See `05-tech-architecture.md` § Parallax Scenery Engine for the full data structure and API.
 
+**Ch1 Bergen scenery — the reference example** *(Sprint 43, 2026-06-03)*: The finished `SCENERY_SETS['ch1-bergen']` is the canonical reference for how to author a chapter's scenery set. It has one state (open-sea — per decision (a), the docked harbor is the Sprint 44 cold-open, never shown through interior windows). Six layers: sky-base (near-black zenith → cold violet horizon), aurora-ch1 (faint green/violet bands, same locked palette), stars-ch1 (two brightness groups with twinkle), fjord-silhouette (three depth ranks via `_fjordProfile` — far/mid/near in decreasing transparency and increasing height — the signature layer), midground-bergen (skerries, lighthouse blink, Bergen shore-light that fades on progress ~22s after interior play begins), water-ch1 (dark sea, moonlight path, five-wave swell, moonpath sparkle). Tone: quiet wonder shaded with melancholy — Norway at night is beautiful and Pip is leaving it forever.
+
 ### Luggage trolley
 
 A single ambient prop at world x=530 (just outside Pip's cabin door). Rendered via `drawLuggageTrolley(x, groundY)`: two small wheels, a metal frame, a lower rigid suitcase, an upper soft bag with clasp, and an upright handle. Gives the corridor a lived-in, in-transit feeling. Use sparingly — one trolley per corridor section to avoid clutter.

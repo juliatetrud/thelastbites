@@ -5659,20 +5659,17 @@ function drawCabin(camX, now) {
     }
   }
 
-  // Sprint 45: cabin door removed — room is a bedroom, not a corridor.
-  // Functional exit via pip.x <= pipMinX is still in the update loop.
-  // Draw a plain wall section where the door was (matching the left wall cap).
-  {
-    const dw = 32, dh = 110, doorTop = baseboardY - dh;
-    const doorSX = Math.round(120 - camX);
-    if (doorSX > -(dw + 6) && doorSX < W + (dw + 6)) {
-      ctx.fillStyle = '#0a1228';
-      ctx.fillRect(doorSX - 4, doorTop, dw + 8, dh);
-    }
-  }
+  // Sprint 49: dw/dh/doorTop declared at outer scope so the far-door code can use them.
+  // (Sprint 45 erroneously block-scoped these with {}, causing a ReferenceError every frame
+  // that crashed drawCabin before drawPip was called — Pip became invisible in the cabin.)
+  const dw = 32, dh = 110, doorTop = baseboardY - dh;
 
-  // Far door: doctor's exit. Not interactable. Recessed in right end-wall; matches DOCTOR_X_DOOR=430.
-  // Sprint 32: moved to x=430 so it reads as an end-wall door, not a mid-corridor door. (Was 450.)
+  // Sprint 45 removed the cabin entry door (x=120). Sprint 49 fix: don't paint a dark
+  // rectangle there — render normal wall panels instead (the sprint-45 #0a1228 fill was
+  // the black hole Julia saw, AND the ReferenceError above was the Pip-invisible bug).
+  // The functional exit (pip.x <= pipMinX) still works without any door visual.
+
+  // Far door: doctor's exit. Not interactable. Recessed in right end-wall.
   const farDoorGX = 430;
   const farDoorSX = Math.round(farDoorGX - camX);
   if (farDoorSX > -(dw + 6) && farDoorSX < W + (dw + 6)) {
@@ -7209,102 +7206,102 @@ function drawMirrorCinematic(now) {
   // Melt progress: 0 during hold, 0→1 during melt
   const meltT = Math.max(0, Math.min(1, (elapsed - HOLD_T) / MELT_T));
 
-  // --- Human face (drawn using simple pixel-block face, then shifted downward) ---
+  // Mirror glass base — drawn FIRST so everything renders over it.
+  // (Sprint 49 fix: this was previously drawn LAST, covering the face during the hold phase.)
+  ctx.fillStyle = '#0a1020';
+  ctx.fillRect(msX, msY, msW, msH);
+  // Subtle glass shimmer — gives a reflective surface feel before the face appears
+  const shimmerGrad = ctx.createLinearGradient(msX, msY, msX + msW, msY + msH);
+  shimmerGrad.addColorStop(0,   'rgba(80,110,180,0.08)');
+  shimmerGrad.addColorStop(0.5, 'rgba(120,160,220,0.12)');
+  shimmerGrad.addColorStop(1,   'rgba(60,90,160,0.06)');
+  ctx.fillStyle = shimmerGrad;
+  ctx.fillRect(msX, msY, msW, msH);
+
+  // --- Human face, visible clearly during the hold phase ---
   const faceCX = msX + msW / 2;
   const faceCY = msY + msH * 0.38;
   const humanShift = meltT * msH * 0.55;   // pixels face drips downward
 
   if (meltT < 1) {
-    const fAlpha = 1 - meltT * 0.85;  // face fades as it melts
+    const fAlpha = 1 - meltT * 0.88;
     ctx.globalAlpha = fAlpha;
 
-    // Face background fill (flesh-like neutral tone for human Pip)
-    ctx.fillStyle = '#d8b888';
+    // Face ellipse — clearly warm/human before the melt
+    ctx.fillStyle = '#d4a870';
     ctx.beginPath();
-    ctx.ellipse(faceCX, faceCY + humanShift * 0.6, 28, 34, 0, 0, Math.PI * 2);
+    ctx.ellipse(faceCX, faceCY + humanShift * 0.6, 26, 32, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Subtle inner face lighter area (gives the face dimensionality)
+    ctx.fillStyle = '#e0bb90';
+    ctx.beginPath();
+    ctx.ellipse(faceCX - 3, faceCY - 4 + humanShift * 0.5, 16, 18, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Eyes (drip slightly faster)
+    // Eyes — drip slightly faster than face center
     const eyeShift = humanShift * 1.1;
-    ctx.fillStyle = '#3a2818';
-    ctx.beginPath(); ctx.ellipse(faceCX - 8, faceCY - 6 + eyeShift, 4, 3.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(faceCX + 8, faceCY - 6 + eyeShift, 4, 3.5, 0, 0, Math.PI * 2); ctx.fill();
-    // Eye glint
-    ctx.fillStyle = '#f0f0f0';
-    ctx.beginPath(); ctx.arc(faceCX - 7, faceCY - 7 + eyeShift, 1.5, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(faceCX + 9, faceCY - 7 + eyeShift, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2a1810';
+    ctx.beginPath(); ctx.ellipse(faceCX - 8, faceCY - 8 + eyeShift, 4, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(faceCX + 8, faceCY - 8 + eyeShift, 4, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#f8f0e8';
+    ctx.beginPath(); ctx.arc(faceCX - 7, faceCY - 9 + eyeShift, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(faceCX + 9, faceCY - 9 + eyeShift, 1.5, 0, Math.PI * 2); ctx.fill();
 
-    // Nose (drips faster than eyes)
-    const noseShift = humanShift * 1.25;
-    ctx.fillStyle = '#c09060';
-    ctx.beginPath();
-    ctx.moveTo(faceCX, faceCY + noseShift);
-    ctx.lineTo(faceCX - 4, faceCY + 8 + noseShift);
-    ctx.lineTo(faceCX + 4, faceCY + 8 + noseShift);
-    ctx.closePath();
-    ctx.fill();
-
-    // Mouth (drips fastest — jaw drips)
-    const mouthShift = humanShift * 1.4;
-    ctx.fillStyle = '#b07048';
-    ctx.beginPath();
-    ctx.ellipse(faceCX, faceCY + 14 + mouthShift, 8, 3, 0, 0, Math.PI);
-    ctx.fill();
-
-    // Drip streaks during melt — vertical liquid strands
-    if (meltT > 0.1) {
-      ctx.globalAlpha = fAlpha * meltT * 0.7;
-      ctx.strokeStyle = '#d8b888';
-      ctx.lineWidth = 1.5;
-      const dripSeeds = [faceCX - 12, faceCX - 4, faceCX + 2, faceCX + 10, faceCX + 18];
+    // Drip streaks — thicker and more visible
+    if (meltT > 0.08) {
+      ctx.globalAlpha = fAlpha * meltT * 0.90;
+      ctx.strokeStyle = '#d4a870';
+      ctx.lineWidth = 2.5;
+      const dripSeeds = [faceCX - 16, faceCX - 6, faceCX, faceCX + 8, faceCX + 16];
       for (let d = 0; d < dripSeeds.length; d++) {
-        const dripLen = meltT * msH * 0.45 * (0.6 + (d % 3) * 0.2);
+        const dripLen = meltT * msH * 0.50 * (0.5 + (d % 3) * 0.25);
         ctx.beginPath();
-        ctx.moveTo(dripSeeds[d], faceCY + 18);
-        ctx.lineTo(dripSeeds[d] + (d % 2 === 0 ? 1 : -1), faceCY + 18 + dripLen);
+        ctx.moveTo(dripSeeds[d], faceCY + 16 + humanShift * 0.3);
+        ctx.lineTo(dripSeeds[d] + (d % 2 === 0 ? 1.5 : -1.5), faceCY + 16 + dripLen + humanShift * 0.3);
         ctx.stroke();
       }
+      ctx.lineWidth = 1;
     }
-
     ctx.globalAlpha = 1;
   }
 
-  // --- Ghost face resolves as melt progresses ---
-  if (meltT > 0.3) {
-    const ghostAlpha = Math.min(1, (meltT - 0.3) / 0.7);
+  // --- Ghost face resolves as the melt completes ---
+  if (meltT > 0.25) {
+    const ghostAlpha = Math.min(1, (meltT - 0.25) / 0.75);
     ctx.globalAlpha = ghostAlpha;
-    // Ghost-face: cool white, same design as Pip's sprite but scaled up
-    ctx.fillStyle = '#dce8f8';   // spirit-pip cool white
+
+    // Cool ghost glow behind the form
+    const ghostGlow = ctx.createRadialGradient(faceCX, faceCY, 0, faceCX, faceCY, 38);
+    ghostGlow.addColorStop(0, 'rgba(160,210,255,0.22)');
+    ghostGlow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = ghostGlow;
+    ctx.fillRect(msX, msY, msW, msH);
+
+    // Ghost body — Pip's classic silhouette: round head, three bumps at base
+    ctx.fillStyle = '#dce8f8';
+    ctx.shadowColor = 'rgba(180,220,255,0.70)';
+    ctx.shadowBlur  = 14;
     ctx.beginPath();
-    ctx.arc(faceCX, faceCY, 26, Math.PI, 0);  // head arc top
-    // Wavy ghost bottom (3 bumps)
-    const ghostBase = faceCY + 26;
-    const bumpW = 17;
-    ctx.lineTo(faceCX + 26, ghostBase);
-    ctx.quadraticCurveTo(faceCX + 26 - bumpW * 0.25, ghostBase + 10, faceCX + 26 - bumpW * 0.5, ghostBase);
-    ctx.quadraticCurveTo(faceCX + 26 - bumpW * 0.75, ghostBase + 10, faceCX + 26 - bumpW, ghostBase);
-    ctx.quadraticCurveTo(faceCX + 26 - bumpW * 1.25, ghostBase + 10, faceCX + 26 - bumpW * 1.5, ghostBase);
-    ctx.lineTo(faceCX - 26, ghostBase);
+    ctx.arc(faceCX, faceCY - 4, 28, Math.PI, 0);   // head arc (round top)
+    const ghostBase = faceCY + 24;
+    ctx.lineTo(faceCX + 28, ghostBase);
+    // Three wavy bumps at the bottom — Pip's ghost tail
+    ctx.quadraticCurveTo(faceCX + 19, ghostBase + 12, faceCX + 10, ghostBase);
+    ctx.quadraticCurveTo(faceCX +  2, ghostBase + 12, faceCX -  8, ghostBase);
+    ctx.quadraticCurveTo(faceCX - 18, ghostBase + 12, faceCX - 28, ghostBase);
     ctx.closePath();
     ctx.fill();
-    // Ghost eyes — large, cool-tinted
-    const bEyeOpenness = 1.0;
-    ctx.fillStyle = '#0a1828';
-    const eyeH = 5 * bEyeOpenness;
-    ctx.beginPath(); ctx.ellipse(faceCX - 8, faceCY - 6, 4.5, eyeH, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(faceCX + 8, faceCY - 6, 4.5, eyeH, 0, 0, Math.PI * 2); ctx.fill();
-    // Eye glow
-    ctx.fillStyle = 'rgba(200,228,255,0.55)';
-    ctx.beginPath(); ctx.arc(faceCX - 7, faceCY - 7, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(faceCX + 9, faceCY - 7, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-  }
+    ctx.shadowBlur = 0;
 
-  // Mirror surface background — cool dark tint
-  if (meltT < 0.3) {
-    ctx.fillStyle = '#0e1830';
-    ctx.globalAlpha = 0.6;
-    ctx.fillRect(msX, msY, msW, msH);
+    // Ghost eyes — dark, hollow, the truth of what Pip has become
+    ctx.fillStyle = '#080e1c';
+    ctx.beginPath(); ctx.ellipse(faceCX - 8, faceCY - 8, 5, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(faceCX + 8, faceCY - 8, 5, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+    // Cool eye glints
+    ctx.fillStyle = 'rgba(180,225,255,0.60)';
+    ctx.beginPath(); ctx.arc(faceCX - 7, faceCY - 9, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(faceCX + 9, faceCY - 9, 2, 0, Math.PI * 2); ctx.fill();
+
     ctx.globalAlpha = 1;
   }
 

@@ -206,14 +206,15 @@ The mirror cinematic plays — a close-up of Pip's face in the mirror, melting o
 **State changes:**
 - `cabinState.mirrorRevealed: false → true`
 - `cabinState.bedRevealed: false → true`
+- **`pip.float.unlocked: false → true`** — *(Sprint 45 canon change: float unlocks at the bed reveal, not at Beat 8. Discovering his own body is the moment Pip gains the power. Before the bed reveal, Space does nothing. After it, holding Space floats Pip ~1.5 character-heights. The dark corridor will use float but does not teach it.)*
+- `chapterState.floatUnlocked: false → true`
 - The mirror's reflective surface permanently shows a cool-white tint with a Pip-ghost outline inside (per Sprint 11 post-cinematic state).
 - The bed's lump-under-covers is no longer drawn.
-- Bed and mirror both gain breadcrumb-elevated auras (~0.45 pulse) signaling "come back to this" if Pip leaves and returns. *(This direction is reversed in current chapter logic — see Open Questions in `rooms.md` § Cabin 646.)*
 
 **New hint after Beat 5:** *"Find Babcia."*
 
 **Files involved:**
-- `game/index.html` — `CINEMATIC_SCRIPTS.mirror`, mirror inspectable in `cabinObjects`, panic-glide animation, tear particle system.
+- `game/index.html` — `CINEMATIC_SCRIPTS.mirror`, mirror inspectable in `cabinObjects`, panic-glide animation, tear particle system, float unlock in bed-reveal onEnd.
 
 ---
 
@@ -387,7 +388,11 @@ The cinematic fades. Pip is at the left edge of the room, facing right. Player h
 
 ---
 
-## Beat 8: The dark corridor (electricity + float + janitor)
+## Beat 8: The dark corridor (electricity + janitor)
+
+*(Sprint 45 canon change: float is no longer unlocked or taught in Beat 8. Float unlocked at Beat 5 bed reveal. The dark corridor uses float as a navigation tool for ceiling-spider avoidance; it does not re-teach it.)*
+
+<!-- original title preserved below for reference:  Beat 8: The dark corridor (electricity + float + janitor) -->
 
 **Mode:** Room → puzzle interaction → scripted NPC walk
 

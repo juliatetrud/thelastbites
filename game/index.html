@@ -1584,6 +1584,17 @@ const blinkBack = {
 
 const activeTweens = [];
 
+/* Sprint 45: treat wrapper flash — brief full-screen wrapper display before notebook tween. */
+const treatFlash = {
+  active:   false,
+  sprite:   null,
+  elapsed:  0,
+  DURATION: 0.50,   // seconds the wrapper is shown large on screen
+  startX:   0,      // canvas position where the treat was picked up
+  startY:   0,
+  _pending: null,   // pickupCollectible calls store the tween params here
+};
+
 /* ================================================================
    SPRINT 13: NOTEBOOK STATE
    ================================================================ */
@@ -1665,67 +1676,20 @@ const cabinSmorbukk = {
   requiresVerbLearned: true,    // ↓ collect not taught until kitchen; natural replay gate
 };
 
+/* Sprint 45: cabin rework. Door and porthole + their dialogue removed.
+   Only interactive: big scenic window, mirror, Smørbukk (collectibles), bed. */
 const cabinObjects = [
-  /* ---- Door ---- interactive, 3 choices */
+  /* ---- Big scenic window — replaces porthole. Reveals Bergen fjord scenery. */
   {
-    id: 'door',
-    x: 120,
-    sparkleY: 128,
+    id: 'cabin-window',
+    x: 145,
+    sparkleY: 70,
     node: {
-      id: 'door-inspect',
+      id: 'cabin-window-inspect',
       lines: [
-        { speaker: null, text: 'From the other side of this door, Pip can hear a man talking. It sounds like bad news.', italic: false },
-      ],
-      choices: [
-        {
-          id: 'try-handle',
-          text: 'Try the handle.',
-          onSelect() {
-            showDialogue({
-              id: 'door-handle',
-              lines: [{ speaker: null, text: 'Pip reaches for the handle. His hand passes through it.', italic: false }],
-              choices: null, onEnd: null,
-            });
-          },
-        },
-        {
-          id: 'press-ear',
-          text: 'Press his ear to the door.',
-          onSelect() {
-            showDialogue({
-              id: 'door-ear',
-              lines: [{ speaker: null, text: 'Through the door, a man says, \u201cThere was nothing we could do. He\u2019s gone.\u201d', italic: false }],
-              choices: null, onEnd: null,
-            });
-          },
-        },
-        {
-          id: 'wait',
-          text: 'Wait.',
-          onSelect() {
-            showDialogue({
-              id: 'door-wait',
-              lines: [{ speaker: null, text: 'Pip listens. A sob breaks through the air.', italic: false }],
-              choices: null, onEnd: null,
-            });
-          },
-        },
-      ],
-      onEnd: null,
-    },
-  },
-
-  /* ---- Porthole ---- atmospheric, 2 lines */
-  {
-    id: 'porthole',
-    x: 190,    // Sprint 32: moved to left side of compact room (was 380)
-    sparkleY: 90,
-    node: {
-      id: 'porthole-inspect',
-      lines: [
-        { speaker: null,  text: 'Through the porthole, dark water sparkles and dances in the lights of a far shore. Norway, the brochure had said. The first stop.', italic: false },
-        { speaker: 'PIP', text: '\u201cI never even got to see it.\u201d', italic: false },
-        { speaker: null,  text: 'Next port, I\u2019m determined to visit.', italic: true },
+        { speaker: null,  text: 'Through the glass, Norway passes in the dark — fjord walls rising black against the sky, a scatter of shore lights fading behind.', italic: false },
+        { speaker: 'PIP', text: '“It’s beautiful.”', italic: false },
+        { speaker: null,  text: 'He watches until the lights are gone. Just the water, and the dark, and the far mountains.', italic: true },
       ],
       choices: null,
       onEnd: null,
@@ -1753,9 +1717,13 @@ const cabinObjects = [
           onEnd() {
             // Start bed-reveal cinematic
             showCinematic('bed-reveal', () => {
-              // After cinematic, set flag and start panic sequence
-              cabinState.bedRevealed   = true;
-              cabinState.beatStage     = 'post-bed';
+              // After cinematic, set flag and start panic sequence.
+              // Sprint 45: float unlocks HERE (bed reveal = Pip gains the power).
+              cabinState.bedRevealed        = true;
+              cabinState.beatStage          = 'post-bed';
+              pip.float.unlocked            = true;
+              chapterState.floatUnlocked    = true;
+              setRoomStrip();   // update controls strip to show SPACE float
               startPanicSequence();
             });
           },
@@ -1848,13 +1816,18 @@ const hallwayObjects = [
     id: 'hallway-bulletin',
     x: 130,
     sparkleY: 108,
-    node: {
-      id: 'hallway-bulletin-inspect',
-      lines: [
-        { speaker: null, text: 'A bulletin board sits near the stairwell to let the passengers know the ship\u2019s itinerary.', italic: false },
-        { speaker: null, text: 'It says, \u201cThe Mnemosyne (Nem-OSS-uh-nee) welcomes you aboard. Today\u2019s port: Bergen.\u201d', italic: false },
-      ],
-      choices: null, onEnd: null,
+    // Sprint 45: gated behind the passenger walk-through beat so it can't
+    // interrupt the "they didn't see me" moment (Beat 3).
+    get node() {
+      if (!passenger.thoughtBeatFired) return null;
+      return {
+        id: 'hallway-bulletin-inspect',
+        lines: [
+          { speaker: null, text: 'A bulletin board sits near the stairwell to let the passengers know the ship\u2019s itinerary.', italic: false },
+          { speaker: null, text: 'It says, \u201cThe Mnemosyne (Nem-OSS-uh-nee) welcomes you aboard. Today\u2019s port: Bergen.\u201d', italic: false },
+        ],
+        choices: null, onEnd: null,
+      };
     },
   },
 
@@ -3227,6 +3200,20 @@ function update(dt) {
   // Sprint 42: advance ship-travel progress (drives all window scenery)
   updateShipTravel(dt);
 
+  // Sprint 45: treat wrapper flash timer
+  if (treatFlash.active) {
+    treatFlash.elapsed += dt;
+    if (treatFlash.elapsed >= treatFlash.DURATION && treatFlash._pending) {
+      // Flash done — launch the notebook tween
+      const p = treatFlash._pending;
+      treatFlash.active   = false;
+      treatFlash._pending = null;
+      activeTweens.push({ sx: p.sx, sy: p.sy, ex: p.ex, ey: p.ey,
+        t: 0, duration: 0.55, sprite: p.sprite, kind: p.kind,
+        stomachValue: p.stomachValue, onComplete: p.onComplete });
+    }
+  }
+
   // Sprint 13: blink-back update
   updateBlinkBack(dt);
 
@@ -3922,12 +3909,10 @@ function pickupCollectible(c) {
   });
 
   // Compute canvas positions for the tween
-  // Start: collectible world position → canvas position
   const camX = getCameraX();
   const sx = c.x - camX;
-  const sy = FLOOR_Y - 30;   // approximate sprite y on canvas
+  const sy = FLOOR_Y - 30;
 
-  // End: notebook icon DOM position → canvas position
   const notebookEl = document.getElementById('notebook-icon');
   const gameEl     = document.getElementById('game');
   const gameRect   = gameEl.getBoundingClientRect();
@@ -3937,34 +3922,36 @@ function pickupCollectible(c) {
   const ex = (nbRect.left + nbRect.width  / 2 - gameRect.left) * scaleX;
   const ey = (nbRect.top  + nbRect.height / 2 - gameRect.top)  * scaleY;
 
-  // Sprint 30: collect blip fires at tween start (the "pick-up" moment)
+  // Sprint 45: wrapper flash — show the treat large for 0.5s, then tween to notebook.
+  // Plays a celebratory horn at the moment of pickup.
   playCollectSfx();
+  _playCelebratoryHorn();
 
-  // Enqueue the pickup tween
-  activeTweens.push({
+  treatFlash.active   = true;
+  treatFlash.sprite   = c.sprite;
+  treatFlash.elapsed  = 0;
+  treatFlash.startX   = sx;
+  treatFlash.startY   = sy;
+  treatFlash._pending = {
     sx, sy, ex, ey,
-    t: 0,
-    duration: 0.6,
     sprite: c.sprite,
     kind:   c.kind,
     stomachValue: c.stomachValue || 0,
     onComplete() {
-      // Pulse the notebook icon
       const icon = document.getElementById('notebook-icon');
       icon.classList.remove('pulse');
-      void icon.offsetWidth; // reflow to restart animation
+      void icon.offsetWidth;
       icon.classList.add('pulse');
-      // If treat: chain stomach refill
       if (c.kind === 'treat') {
         gainStrength(c.stomachValue);
-        playEatSfx(); // Sprint 30: eat swell when stomach fills
+        playEatSfx();
       }
       if (c.onCollect) c.onCollect();
       autoSave();
     },
-  });
+  };
 
-  // Lock input during tween
+  // Lock input during flash + tween
   setControlsStrip('');
 }
 
@@ -4078,6 +4065,28 @@ function render(now) {
   // Sprint 29: Nøkken glimpse overlay — drawn on top of the room, below dialogue
   if (nokkenGlimpse.active) drawNokkenGlimpse(now);
 
+  // Sprint 45: draw treat wrapper flash (large sprite shown briefly before notebook tween)
+  if (treatFlash.active && treatFlash.sprite) {
+    const progress = Math.min(1, treatFlash.elapsed / treatFlash.DURATION);
+    const flashAlpha = progress < 0.15 ? progress / 0.15 :
+                       progress > 0.80 ? 1 - (progress - 0.80) / 0.20 : 1;
+    ctx.save();
+    ctx.globalAlpha = flashAlpha * 0.92;
+    // Draw wrapper large at screen center
+    const fcx = W / 2, fcy = H / 2 - 10;
+    // Glow halo
+    const fg = ctx.createRadialGradient(fcx, fcy, 0, fcx, fcy, 50);
+    fg.addColorStop(0, 'rgba(255,240,160,0.35)');
+    fg.addColorStop(1, 'rgba(255,240,160,0)');
+    ctx.fillStyle = fg;
+    ctx.fillRect(fcx - 50, fcy - 50, 100, 100);
+    // Draw the treat sprite large (3× scale via transform)
+    ctx.translate(fcx, fcy);
+    ctx.scale(3.5, 3.5);
+    drawTreatSprite(ctx, treatFlash.sprite, 0, 0);
+    ctx.restore();
+  }
+
   // Sprint 13: update and draw pickup tweens on the tween layer
   updateAndDrawTweens(dt, now);
 
@@ -4093,18 +4102,27 @@ render._lastNow = null;
    ---------------------------------------------------------------- */
 
 function drawTears(camX) {
+  // Sprint 45: cartoon teardrops — big, clear, expressive. Each tear is a visible
+  // oval/teardrop shape with a highlight, so they read unmistakably as cartoon tears.
   ctx.save();
   for (const t of mirrorBeat.tears) {
-    const alpha = Math.max(0, 1 - t.age / t.maxAge) * 0.85;
+    const alpha = Math.max(0, 1 - t.age / t.maxAge) * 0.90;
+    if (alpha < 0.02) continue;
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = '#c0d8ff';
-    const sx = t.x - camX;
-    const sy = t.y;
-    // 2×3 teardrop — taller than wide, rounded top
+    const sx = Math.round(t.x - camX);
+    const sy = Math.round(t.y);
+    // Teardrop body: wide oval dropping to a point
+    ctx.fillStyle = '#8ec8ff';
     ctx.beginPath();
-    ctx.moveTo(sx, sy + 3);
-    ctx.quadraticCurveTo(sx - 1.5, sy, sx, sy - 3);
-    ctx.quadraticCurveTo(sx + 1.5, sy, sx, sy + 3);
+    ctx.moveTo(sx, sy + 8);                          // bottom point
+    ctx.quadraticCurveTo(sx - 5, sy + 2, sx - 4, sy - 3);  // left curve
+    ctx.arc(sx, sy - 3, 4, Math.PI, 0, false);       // round top
+    ctx.quadraticCurveTo(sx + 5, sy + 2, sx, sy + 8);   // right curve
+    ctx.fill();
+    // Highlight (inner lighter area)
+    ctx.fillStyle = 'rgba(200,230,255,0.70)';
+    ctx.beginPath();
+    ctx.ellipse(sx - 1, sy - 2, 2, 3, -0.3, 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
@@ -5401,11 +5419,22 @@ function drawCabin(camX, now) {
     ctx.strokeRect(rightWallSX - rwW + 4, ply, plW, plH);
   }
 
-  // Porthole — game-world x=190 (Sprint 32: moved to left side of compact room; was 380)
-  // Sprint 42: migrated to drawSceneryInPorthole (unified scenery engine).
-  const phSX = Math.round(190 - camX);
-  if (phSX > -24 && phSX < W + 24) {
-    drawSceneryInPorthole(phSX, 58, 18, now);
+  // Sprint 45: Big scenic window — replaces the porthole. Rectangular, reveals Bergen fjord scenery.
+  // World-x ~100–190 (left wall area). Wood frame, four panes, wider than old porthole.
+  {
+    const wX = Math.round(60 - camX), wY = 24, wW = 78, wH = 96;
+    if (wX < W + wW && wX + wW > 0) {
+      drawSceneryInWindow(wX, wY, wW, wH, now);
+      // Four-pane wood frame
+      ctx.strokeStyle = '#3a2c1a';
+      ctx.lineWidth   = 3;
+      ctx.strokeRect(wX - 2, wY - 2, wW + 4, wH + 4);
+      ctx.lineWidth   = 1;
+      ctx.strokeStyle = 'rgba(80,110,165,0.5)';
+      // Vertical and horizontal mullions
+      ctx.beginPath(); ctx.moveTo(wX + wW / 2, wY); ctx.lineTo(wX + wW / 2, wY + wH); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(wX, wY + wH * 0.5); ctx.lineTo(wX + wW, wY + wH * 0.5); ctx.stroke();
+    }
   }
 
   // Sprint 37: Writing desk — game-world x=230 (between porthole x=190 and mirror x=280)
@@ -5551,25 +5580,29 @@ function drawCabin(camX, now) {
     ctx.fillRect(nsSX + 2, FLOOR_Y - 12, 6, 12);      // right leg
   }
 
+  // Sprint 45: bed colors lifted for visibility against the wall gradient.
   const bedGX = 360, bedGW = 100, bedGH = 22, bedGY = FLOOR_Y - bedGH;
   const bedSX = Math.round(bedGX - camX);
   if (bedSX < W + bedGW && bedSX + bedGW > 0) {
-    // Headboard
-    ctx.fillStyle = '#2a2448';
-    ctx.fillRect(bedSX + bedGW - 10, bedGY - 14, 10, bedGH + 14);
-    ctx.strokeStyle = 'rgba(60,70,140,0.42)';
+    // Headboard (warm dark wood — lifted from near-invisible dark blue)
+    ctx.fillStyle = '#3a2e50';
+    ctx.fillRect(bedSX + bedGW - 10, bedGY - 18, 10, bedGH + 18);
+    ctx.strokeStyle = 'rgba(120,100,180,0.50)';
     ctx.lineWidth   = 1;
-    ctx.strokeRect(bedSX + bedGW - 10, bedGY - 14, 10, bedGH + 14);
-    // Bed frame
-    ctx.fillStyle = '#1e2040';
+    ctx.strokeRect(bedSX + bedGW - 10, bedGY - 18, 10, bedGH + 18);
+    // Bed frame (darker, but distinct from wall)
+    ctx.fillStyle = '#2c2850';
     ctx.fillRect(bedSX, bedGY, bedGW, bedGH);
-    ctx.strokeStyle = 'rgba(60,70,140,0.36)';
+    ctx.strokeStyle = 'rgba(100,90,160,0.55)';
     ctx.strokeRect(bedSX, bedGY, bedGW, bedGH);
-    // Bedding (rumpled, noticeably lighter than frame)
-    ctx.fillStyle = '#363c66';
-    ctx.fillRect(bedSX + 2, bedGY + 3, bedGW - 14, 10);
-    ctx.fillStyle = '#404470';
-    ctx.fillRect(bedSX + 6, bedGY + 3, 28, 8);
+    // Bedding — cream-white with cool tint (clearly lighter than frame and wall)
+    ctx.fillStyle = '#c8c4e0';
+    ctx.fillRect(bedSX + 2, bedGY + 2, bedGW - 14, 13);
+    ctx.fillStyle = '#d8d4ec';
+    ctx.fillRect(bedSX + 6, bedGY + 2, 30, 10);
+    // Pillow hint at right end
+    ctx.fillStyle = '#e0ddf4';
+    ctx.fillRect(bedSX + bedGW - 22, bedGY + 2, 14, 10);
 
     // Lump-in-bed overlay (Sprint 10.7) — visible until Sprint 11 bed-reveal
     // A soft body-shaped bump under the covers. Implied, not detailed.
@@ -5598,12 +5631,16 @@ function drawCabin(camX, now) {
     }
   }
 
-  // Door — game-world x=120 (hallway door, entry side left) — always warm-amber (glow = permeable)
-  const doorGX = 120;
-  const doorSX = Math.round(doorGX - camX);
-  const dw = 32, dh = 110, doorTop = baseboardY - dh;   // 168-110=58
-  if (doorSX > -(dw + 6) && doorSX < W + (dw + 6)) {
-    drawDoor(doorSX, doorTop, { w: dw, h: dh, warm: true });
+  // Sprint 45: cabin door removed — room is a bedroom, not a corridor.
+  // Functional exit via pip.x <= pipMinX is still in the update loop.
+  // Draw a plain wall section where the door was (matching the left wall cap).
+  {
+    const dw = 32, dh = 110, doorTop = baseboardY - dh;
+    const doorSX = Math.round(120 - camX);
+    if (doorSX > -(dw + 6) && doorSX < W + (dw + 6)) {
+      ctx.fillStyle = '#0a1228';
+      ctx.fillRect(doorSX - 4, doorTop, dw + 8, dh);
+    }
   }
 
   // Far door: doctor's exit. Not interactable. Recessed in right end-wall; matches DOCTOR_X_DOOR=430.
@@ -5905,14 +5942,6 @@ function drawPipBody() {
   ctx.fill();
 
   ctx.shadowBlur = 0;
-
-  /* Apron — faint horizontal band. Pip always wears the oversized
-     chef's apron Babcia gave him. */
-  ctx.globalAlpha = 0.28;
-  ctx.fillStyle   = '#d4c89a';
-  ctx.fillRect(-8, topY + 23, 17, 8);
-  ctx.fillStyle = '#b8a87a';
-  ctx.fillRect(-2, topY + 22,  3, 3);
 
   /* Cool underglow beneath Pip */
   ctx.globalAlpha = 0.12;
@@ -7023,8 +7052,8 @@ function drawMirrorCinematic(now) {
   }
   mirrorCinState.lastNow = now;
 
-  const HOLD_T  = 1.5;   // seconds showing face before melt
-  const MELT_T  = 2.0;   // melt duration
+  const HOLD_T  = 1.8;   // seconds showing face before melt (longer hold — let it land)
+  const MELT_T  = 2.2;   // melt duration
   const elapsed = mirrorCinState.elapsed;
 
   // Dark base
@@ -7205,7 +7234,7 @@ function drawBedRevealCinematic(now) {
   }
   bedRevealCinState.lastNow = now;
 
-  const SHEET_T = 0.6;   // sheet pull duration
+  const SHEET_T = 1.2;   // sheet pull duration — slower, more dread
   const sheetT  = Math.min(1, bedRevealCinState.elapsed / SHEET_T);
 
   // Dark base
@@ -7236,24 +7265,31 @@ function drawBedRevealCinematic(now) {
   ctx.strokeStyle = 'rgba(50,60,120,0.5)';
   ctx.strokeRect(bX, bY, bW, bH);
 
-  // ---- Body underneath — small still form ----
-  // Face is turned away (toward headboard/right). Body implied not detailed.
-  const bodyX = bX + bW * 0.3, bodyY = bY + 12;
-  const bodyW  = bW * 0.6,     bodyH  = bH - 22;
-  // Hair (soft brown, visible)
-  ctx.fillStyle = '#6a4820';
+  // ---- Body underneath — small still form, only revealed as sheets pull back ----
+  // Face turned away (toward headboard/right). Small — a child. Seen only partly.
+  const bodyReveal = Math.max(0, sheetT - 0.3) / 0.7;  // reveals after sheets move
+  const bodyX = bX + bW * 0.25, bodyY = bY + 10;
+  const bodyW  = bW * 0.65,     bodyH  = bH - 18;
+
+  ctx.globalAlpha = bodyReveal * 0.85;
+  // Hair — dark, turned away, small head suggesting a child
+  ctx.fillStyle = '#4a3010';
   ctx.beginPath();
-  ctx.ellipse(bX + bW * 0.82, bodyY + 8, 14, 10, 0, 0, Math.PI * 2);
+  ctx.ellipse(bX + bW * 0.80, bodyY + 6, 16, 11, 0.2, 0, Math.PI * 2);
   ctx.fill();
-  // Body shape — pale, slight, curved like a sleeping child
-  ctx.fillStyle = '#c8c0d8';
-  ctx.globalAlpha = 0.65;
+  // Body outline — the small curved form under thin sheets
+  ctx.fillStyle = '#b8b0cc';
   ctx.beginPath();
   ctx.moveTo(bodyX, bodyY + bodyH);
-  ctx.quadraticCurveTo(bodyX + bodyW * 0.2, bodyY + 4, bodyX + bodyW * 0.55, bodyY + 6);
-  ctx.quadraticCurveTo(bodyX + bodyW * 0.75, bodyY + 3, bodyX + bodyW, bodyY + 8);
+  ctx.quadraticCurveTo(bodyX + bodyW * 0.15, bodyY + 5, bodyX + bodyW * 0.50, bodyY + 7);
+  ctx.quadraticCurveTo(bodyX + bodyW * 0.72, bodyY + 5, bodyX + bodyW, bodyY + 10);
   ctx.lineTo(bodyX + bodyW, bodyY + bodyH);
   ctx.closePath();
+  ctx.fill();
+  // Shoulder hint (the stillness of it)
+  ctx.fillStyle = '#c8bcd8';
+  ctx.beginPath();
+  ctx.ellipse(bodyX + bodyW * 0.72, bodyY + 8, 18, 9, -0.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 1;
 
@@ -7632,34 +7668,91 @@ function drawPassenger(screenX, groundY, now) {
   ctx.restore();
 }
 
-/* ---- Passenger body layer ----
-   Local coords: (0,0) = center/foot. Default facing right; caller
-   applies ctx.scale(-1,1) to face left. All in #2a2438, no glow. */
+/* ---- Passenger body layer — Sprint 45: ported from approved gallery design.
+   Local coords: (0,0) = center/foot. caller applies ctx.scale(-1,1) to face left.
+   Evening wear: top hat, white shirt-front, formal coat, raised-brow obliviousness. */
 function drawPassengerBody() {
-  ctx.fillStyle   = '#2a2438';
-  ctx.globalAlpha = 0.96;
-  ctx.shadowBlur  = 0;
+  // Shoes (patent leather)
+  ctx.fillStyle = '#0e0e18';
+  ctx.fillRect(-8, -2, 7, 2);
+  ctx.fillRect( 1, -2, 7, 2);
 
-  // Top hat crown (15×11px)
-  ctx.fillRect( -7, -62, 15, 11);
-  // Hat brim     (27×4px — widest point)
-  ctx.fillRect(-13, -51, 27,  4);
-  // Head         (13×13px)
-  ctx.fillRect( -7, -47, 13, 13);
-  // Collar       (9×4px)
-  ctx.fillRect( -4, -34,  9,  4);
-  // Coat body    (20×13px)
-  ctx.fillRect( -9, -30, 20, 13);
-  // Coat tails   (15×7px, slightly narrower)
-  ctx.fillRect( -7, -17, 15,  7);
-  // Legs         (4×7px each)
-  ctx.fillRect( -7,  -9,  4,  7);
-  ctx.fillRect(  2,  -9,  4,  7);
-  // Shoes        (7×2px each)
-  ctx.fillRect( -9,  -2,  7,  2);
-  ctx.fillRect(  2,  -2,  7,  2);
+  // Trousers (evening black, narrow)
+  ctx.fillStyle = '#1a1f2a';
+  ctx.fillRect(-5, -18, 4, 16);
+  ctx.fillRect( 1, -18, 4, 16);
 
-  ctx.globalAlpha = 1;
+  // Coat tails (formal split below waist)
+  ctx.fillRect(-8, -30, 6, 12);
+  ctx.fillRect( 2, -30, 6, 12);
+
+  // WHITE SHIRT-FRONT — the silhouette tell of the Passenger
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(-3, -46, 6, 18);
+  // Shirt studs
+  ctx.fillStyle = '#3a3050';
+  ctx.fillRect( 0, -30, 1, 1);
+  ctx.fillRect( 0, -35, 1, 1);
+  ctx.fillRect( 0, -40, 1, 1);
+
+  // Coat body (frames the shirt — lapels angled in)
+  ctx.fillStyle = '#1a1f2a';
+  ctx.fillRect(-10, -46, 20, 18);
+  ctx.fillRect( -9, -46,  6, 14);   // left lapel
+  ctx.fillRect(  3, -46,  6, 14);   // right lapel
+
+  // Collar / bow-tie
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(-3, -46, 6, 3);      // collar
+  ctx.fillStyle = '#1a1f2a';
+  ctx.fillRect(-2, -45, 4, 2);      // bow-tie
+
+  // Arms (formal coat sleeves)
+  ctx.fillStyle = '#1a1f2a';
+  ctx.fillRect(-14, -44, 4, 18);
+  ctx.fillRect( 10, -44, 4, 18);
+  // White shirt cuffs
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(-14, -26, 4, 2);
+  ctx.fillRect( 10, -26, 4, 2);
+  // Hands
+  ctx.fillStyle = '#d0b898';
+  ctx.fillRect(-14, -24, 4, 4);
+  ctx.fillRect( 10, -24, 4, 4);
+
+  // Neck
+  ctx.fillStyle = '#d0b898';
+  ctx.fillRect(-2, -49, 4, 3);
+
+  // Head — upright, patrician
+  ctx.fillRect(-4, -59, 9, 4);     // face top
+  ctx.fillRect(-5, -55, 11, 4);    // face mid
+  ctx.fillRect(-4, -51, 9, 2);     // chin
+
+  // Eyes (canonical human: cream whites + dark pupils)
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(-3, -57, 2, 2);     // left eye white
+  ctx.fillRect( 1, -57, 2, 2);     // right eye white
+  ctx.fillStyle = '#2a2030';
+  ctx.fillRect(-2, -56, 1, 1);     // left pupil
+  ctx.fillRect( 2, -56, 1, 1);     // right pupil
+  // Raised brows (obliviousness reads as gentle superciliousness)
+  ctx.fillStyle = '#3a2c18';
+  ctx.fillRect(-4, -58, 3, 1);
+  ctx.fillRect( 1, -58, 3, 1);
+
+  // Mouth — thin, correct, uninvolved
+  ctx.fillStyle = '#3a2818';
+  ctx.fillRect(-1, -51, 3, 1);
+
+  // TOP HAT
+  ctx.fillStyle = '#2a2f3a';
+  ctx.fillRect(-6, -61, 13, 1);    // band at crown base
+  ctx.fillStyle = '#1a1f2a';
+  ctx.fillRect(-8, -63, 17, 2);    // brim
+  ctx.fillRect(-5, -74, 11, 11);   // crown body
+  ctx.fillStyle = '#2a2f3a';
+  ctx.fillRect(-4, -75,  9,  1);   // crown top
 }
 
 /* ================================================================
@@ -7714,6 +7807,31 @@ function drawGrandparents(camX, now) {
       strokeColor: 'rgba(80,58,22,0.20)',
       rivetColor:  'rgba(90,65,25,0.38)',
     });
+  }
+
+  // Sprint 45: framed painting on the wall (between window and armchair area)
+  // A small gilt-framed seascape — period detail, gives the room a lived-in warmth.
+  {
+    const picX = Math.round(220 - camX);
+    if (picX > -30 && picX < W + 30) {
+      const pW = 32, pH = 22, pY = 55;
+      // Gilt frame
+      ctx.fillStyle = '#7a5820';
+      ctx.fillRect(picX - pW/2 - 2, pY - 2, pW + 4, pH + 4);
+      // Painting: a simple seascape matching the night palette
+      ctx.fillStyle = '#060e1e';
+      ctx.fillRect(picX - pW/2, pY, pW, pH);
+      // Sky gradient in painting
+      ctx.fillStyle = '#0a1428';
+      ctx.fillRect(picX - pW/2, pY, pW, Math.floor(pH * 0.5));
+      // Tiny horizon glow
+      ctx.fillStyle = 'rgba(25,45,80,0.40)';
+      ctx.fillRect(picX - pW/2, pY + Math.floor(pH*0.45), pW, 3);
+      // Frame inner bevel
+      ctx.strokeStyle = 'rgba(200,160,70,0.38)';
+      ctx.lineWidth   = 1;
+      ctx.strokeRect(picX - pW/2 - 1, pY - 1, pW + 2, pH + 2);
+    }
   }
 
   // --- Window (left, game-world x=80–138) ---
@@ -7823,28 +7941,65 @@ function drawGrandparents(camX, now) {
     ctx.fillRect(nsSX - 5, FLOOR_Y - 26, 10, 7);
   }
 
-  // --- Open suitcase (game-world x=380) ---
+  // --- Open suitcase (game-world x=380) — Sprint 45: reads as a real suitcase ---
   const scSX = Math.round(380 - camX);
   if (scSX > -40 && scSX < W + 40) {
-    const scW2 = 54, scH2 = 13, scY2 = FLOOR_Y - scH2;
-    ctx.fillStyle = '#3e3018';   // lifted from #2a2010
+    const scW2 = 56, scH2 = 14, scY2 = FLOOR_Y - scH2;
+    // Suitcase body
+    ctx.fillStyle = '#3e3018';
     ctx.fillRect(scSX - scW2 / 2, scY2, scW2, scH2);
-    ctx.strokeStyle = 'rgba(130,100,48,0.55)';
+    ctx.strokeStyle = 'rgba(130,100,48,0.65)';
     ctx.lineWidth   = 1;
     ctx.strokeRect(scSX - scW2 / 2, scY2, scW2, scH2);
-    // Open lid
-    ctx.fillStyle = '#382814';   // lifted from #241808
+    // Lid seam (horizontal line across the middle of body)
+    ctx.strokeStyle = 'rgba(180,140,60,0.45)';
+    ctx.beginPath(); ctx.moveTo(scSX - scW2/2, scY2 + 5); ctx.lineTo(scSX + scW2/2, scY2 + 5); ctx.stroke();
+    // Brass latches (two small rectangles on the front)
+    ctx.fillStyle = '#a07838';
+    ctx.fillRect(scSX - 12, scY2 + 3, 5, 4);
+    ctx.fillRect(scSX +  7, scY2 + 3, 5, 4);
+    ctx.fillStyle = '#c8a050';
+    ctx.fillRect(scSX - 11, scY2 + 4, 3, 2);
+    ctx.fillRect(scSX +  8, scY2 + 4, 3, 2);
+    // Handle (curved line above top edge)
+    ctx.strokeStyle = '#5a4010';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(scSX, scY2 - 3, 10, Math.PI, 0);
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    // Open lid (angled back)
+    ctx.fillStyle = '#382814';
     ctx.beginPath();
     ctx.moveTo(scSX - scW2 / 2, scY2);
     ctx.lineTo(scSX + scW2 / 2, scY2);
-    ctx.lineTo(scSX + scW2 / 2 - 4, scY2 - 14);
-    ctx.lineTo(scSX - scW2 / 2 + 4, scY2 - 14);
+    ctx.lineTo(scSX + scW2 / 2 - 5, scY2 - 16);
+    ctx.lineTo(scSX - scW2 / 2 + 5, scY2 - 16);
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(130,100,48,0.45)';
+    ctx.strokeStyle = 'rgba(130,100,48,0.50)';
     ctx.stroke();
-    // Shirt — more visible after lift
-    ctx.fillStyle = 'rgba(80,110,165,0.38)';
+    // Contents: shirt visible
+    ctx.fillStyle = 'rgba(80,110,165,0.45)';
     ctx.fillRect(scSX - scW2 / 2 + 3, scY2 + 2, scW2 - 6, 4);
+    // TEDDY BEAR — sticking out from the contents (Pip recognises it from grandparents)
+    const bX = scSX + 10, bY = scY2 - 4;
+    // Bear body
+    ctx.fillStyle = '#c8a870';
+    ctx.beginPath(); ctx.arc(bX, bY, 5, 0, Math.PI * 2); ctx.fill();
+    // Bear head
+    ctx.beginPath(); ctx.arc(bX, bY - 7, 4, 0, Math.PI * 2); ctx.fill();
+    // Ears
+    ctx.beginPath(); ctx.arc(bX - 3, bY - 10, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bX + 3, bY - 10, 2, 0, Math.PI * 2); ctx.fill();
+    // Bear eyes (tiny dark dots)
+    ctx.fillStyle = '#3a2010';
+    ctx.fillRect(bX - 2, bY - 8, 1, 1);
+    ctx.fillRect(bX + 1, bY - 8, 1, 1);
+    // Bear nose
+    ctx.fillRect(bX - 1, bY - 6, 2, 1);
+    // Bear snout (lighter)
+    ctx.fillStyle = '#d8b880';
+    ctx.beginPath(); ctx.arc(bX, bY - 6, 2, 0, Math.PI * 2); ctx.fill();
   }
 
   // Floor surface
@@ -7884,65 +8039,153 @@ function drawGrandparents(camX, now) {
   }
 }
 
-/* ---- Babcia: hunched seated figure on bed. ----
+/* ---- Babcia: seated on bed. Sprint 45: ported from approved gallery design.
    groundY = top of bed surface. Sob-bob ~1500ms period, ~1px amp.
-   One-piece silhouette; no sprite rig. */
+   Kerchief-red signature, dark coat with structure, human eyes, grief. */
 function drawBabcia(screenX, groundY, now) {
-  const bob = Math.sin(now / 1500) * 1;
-  const cx  = Math.round(screenX);
-  const cy  = Math.round(groundY + bob);
+  const t      = now / 1000;
+  const bob    = Math.sin(now / 1500) * 1;
+  const swayX  = Math.round(Math.sin(t * 1.4) * 0.5);
+  const cx     = Math.round(screenX);
+  const cy     = Math.round(groundY + bob);
+  const handsClosed = (t % 2.5 / 2.5) < 0.5;
 
   ctx.save();
   ctx.translate(cx, cy);
-  ctx.fillStyle   = '#2a2030';
-  ctx.globalAlpha = 0.90;
-  ctx.shadowBlur  = 0;
 
-  // Hair bun
-  ctx.beginPath();
-  ctx.arc(7, -53, 7, 0, Math.PI * 2);
-  ctx.fill();
-  // Head (bowed forward)
-  ctx.fillRect(-10, -48, 19, 17);
-  // Hunched upper torso
-  ctx.fillRect(-17, -31, 34, 19);
-  // Apron hint
-  ctx.globalAlpha = 0.40;
-  ctx.fillStyle   = '#4a3820';
-  ctx.fillRect(-12, -24, 24, 12);
-  ctx.globalAlpha = 0.90;
-  ctx.fillStyle   = '#2a2030';
-  // Lap / skirt (wide, seated)
-  ctx.fillRect(-22, -12, 43, 12);
+  // Slippers (small, at seat height — seated so feet near bed surface)
+  ctx.fillStyle = '#4a3828';
+  ctx.fillRect(-8 + swayX, -3, 7, 3);
+  ctx.fillRect( 1 + swayX, -3, 7, 3);
 
-  ctx.globalAlpha = 1;
+  // Full coat — dark base, reads as a coat
+  ctx.fillStyle = '#2a1f28';
+  ctx.fillRect(-11 + swayX, -55, 23, 52);
+  // Coat structure: faint vertical shading bands
+  ctx.fillStyle = '#332838';
+  ctx.fillRect( -1 + swayX, -50, 1, 32);   // center front seam
+  ctx.fillRect( -6 + swayX, -50, 1, 32);   // left panel
+  ctx.fillRect(  6 + swayX, -50, 1, 32);   // right panel
+  // Sleeve breaks at shoulder
+  ctx.fillRect(-11 + swayX, -53, 4, 1);
+  ctx.fillRect(  8 + swayX, -53, 4, 1);
+
+  // Hands clasped/parted at chest
+  ctx.fillStyle = '#d0b090';
+  if (handsClosed) {
+    ctx.fillRect(-3 + swayX, -34, 6, 4);
+  } else {
+    ctx.fillRect(-6 + swayX, -34, 4, 4);
+    ctx.fillRect( 2 + swayX, -34, 4, 4);
+  }
+
+  // Neck stub
+  ctx.fillStyle = '#d0b090';
+  ctx.fillRect(-2 + swayX, -57, 4, 2);
+
+  // Head — slightly forward (grief)
+  const hx = swayX;
+  ctx.fillStyle = '#d0b090';
+  ctx.fillRect(hx - 4, -58, 9, 4);   // face
+  ctx.fillRect(hx - 3, -54, 7, 2);   // chin
+
+  // Eyes (canonical human: cream whites + dark pupils)
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(hx - 3, -57, 2, 2);
+  ctx.fillRect(hx + 1, -57, 2, 2);
+  ctx.fillStyle = '#2a1f28';
+  ctx.fillRect(hx - 2, -56, 1, 1);
+  ctx.fillRect(hx + 2, -56, 1, 1);
+
+  // Mouth
+  ctx.fillStyle = '#3a2018';
+  ctx.fillRect(hx - 1, -53, 3, 1);
+
+  // KERCHIEF — the silhouette tell; drawn over head
+  ctx.fillStyle = '#8a2a2a';
+  ctx.fillRect(hx - 5, -64, 11, 2);   // brim row
+  ctx.fillRect(hx - 4, -66,  9, 2);
+  ctx.fillRect(hx - 3, -68,  7, 2);
+  ctx.fillRect(hx - 2, -70,  5, 2);
+  ctx.fillRect(hx - 1, -72,  3, 2);
+  ctx.fillRect(hx - 6, -64,  2, 8);   // left fall
+  ctx.fillRect(hx + 4, -64,  2, 8);   // right fall
+
   ctx.restore();
 }
 
-/* ---- Dziadek: standing, back to player, facing left (window). ----
-   Completely still — no bob. One-piece silhouette. */
+/* ---- Dziadek: back to camera, facing the window. Sprint 45: ported from
+   gallery design colors/palette. Deep-blue wool, flat cap, quilted patches,
+   grey hair visible at sides. Grief-stoop. Back view, no face. */
 function drawDziadek(screenX, groundY, now) {
-  const cx = Math.round(screenX);
+  const t    = now / 1000;
+  const sway = Math.round(Math.sin(t * 0.9) * 0.5);
+  const cx   = Math.round(screenX);
 
   ctx.save();
   ctx.translate(cx, groundY);
-  ctx.scale(-1, 1);   // face left (toward window)
-  ctx.fillStyle   = '#2a2030';
-  ctx.globalAlpha = 0.90;
-  ctx.shadowBlur  = 0;
+  // Back to camera: we draw him with back toward us (no face features)
+  // ctx.scale(-1,1) is kept for left-facing direction
 
-  ctx.fillRect(-11, -66, 24,  7);  // flat cap
-  ctx.fillRect( -9, -59, 18,  4);  // cap top
-  ctx.fillRect( -9, -55, 18, 15);  // head
-  ctx.fillRect( -4, -40,  9,  4);  // neck
-  ctx.fillRect(-15, -35, 31, 22);  // coat body
-  ctx.fillRect(-11, -13, 22,  7);  // coat lower
-  ctx.fillRect( -9,  -7,  7,  7);  // left leg
-  ctx.fillRect(  2,  -7,  7,  7);  // right leg
-  ctx.fillRect(-11,   0,  9,  2);  // left shoe
-  ctx.fillRect(  2,   0,  9,  2);  // right shoe
+  // Shoes (dark leather)
+  ctx.fillStyle = '#1c1818';
+  ctx.fillRect(-7 + sway, -2, 6, 2);
+  ctx.fillRect( 1 + sway, -2, 6, 2);
 
-  ctx.globalAlpha = 1;
+  // Legs/trousers (deep-blue, back view shows the backs of trousers)
+  ctx.fillStyle = '#2a3a5a';
+  ctx.fillRect(-6 + sway, -18, 4, 16);
+  ctx.fillRect( 2 + sway, -18, 4, 16);
+
+  // Coat lower hem (back view)
+  ctx.fillRect(-10 + sway, -32, 20, 14);
+
+  // Coat back body (shoulders pulled in — grief stoop)
+  ctx.fillStyle = '#2a3a5a';
+  ctx.fillRect(-9 + sway, -54, 18, 22);
+  // Edge shadows for volume
+  ctx.fillStyle = '#1e2c48';
+  ctx.fillRect(-9 + sway, -54, 1, 22);
+  ctx.fillRect( 8 + sway, -54, 1, 22);
+  // Back coat centre seam
+  ctx.fillStyle = '#22324e';
+  ctx.fillRect(-1 + sway, -50, 1, 18);
+
+  // QUILTED-SQUARE PATCHES on the coat back — Babcia's stitching
+  const patches = [
+    [-6, -47, '#e8d8b0'], [-2, -44, '#a07848'], [ 3, -47, '#e8d8b0'],
+    [ 6, -42, '#a07848'], [-6, -39, '#a07848'], [ 2, -36, '#e8d8b0'],
+    [ 5, -39, '#e8d8b0'], [-3, -32, '#a07848'],
+  ];
+  for (const [dx, dy, col] of patches) {
+    ctx.fillStyle = col;
+    ctx.fillRect(dx + sway, dy, 2, 2);
+  }
+
+  // Arms (coat sleeves, back view — heavy wool)
+  ctx.fillStyle = '#2a3a5a';
+  ctx.fillRect(-13 + sway, -52, 4, 20);
+  ctx.fillRect(  9 + sway, -52, 4, 20);
+
+  // Neck (just visible above collar)
+  ctx.fillStyle = '#c8a888';
+  ctx.fillRect(-2 + sway, -57, 4, 3);
+
+  // Back of head — rounded, no face features
+  ctx.fillStyle = '#c8a888';
+  ctx.fillRect(-4 + sway, -66, 8, 9);   // head
+  // Grey hair at sides and crown (visible from back)
+  ctx.fillStyle = '#9a9898';
+  ctx.fillRect(-4 + sway, -66, 2, 4);   // left side hair
+  ctx.fillRect( 2 + sway, -66, 2, 4);   // right side hair
+  ctx.fillRect(-3 + sway, -66, 6, 2);   // crown hair
+
+  // FLAT CAP (from the back — wider brim visible, low dome)
+  ctx.fillStyle = '#242830';
+  ctx.fillRect(-7 + sway, -67, 14, 2);  // brim (wide, back view)
+  ctx.fillStyle = '#1a1f2a';
+  ctx.fillRect(-5 + sway, -72, 10, 5);  // dome
+
   ctx.restore();
 }
 
@@ -10068,6 +10311,27 @@ function playCollectSfx() {
   g.gain.linearRampToValueAtTime(0.28, now + 0.015);
   g.gain.linearRampToValueAtTime(0,    now + 0.14);
   osc.start(now); osc.stop(now + 0.15);
+}
+
+/* ---- Sprint 45: Celebratory horn — two rising tones, short fanfare on treat collect ---- */
+function _playCelebratoryHorn() {
+  if (!sfx.unlocked || !sfx.ctx) return;
+  const ac  = sfx.ctx;
+  const now = ac.currentTime;
+  // Three short ascending notes: a cheerful little fanfare
+  const notes = [330, 440, 550];
+  notes.forEach((freq, i) => {
+    const osc = ac.createOscillator();
+    const g   = ac.createGain();
+    osc.type  = 'triangle';
+    osc.frequency.setValueAtTime(freq, now);
+    osc.connect(g); g.connect(sfx.master);
+    const t0 = now + i * 0.10;
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(0.22, t0 + 0.04);
+    g.gain.linearRampToValueAtTime(0,    t0 + 0.16);
+    osc.start(t0); osc.stop(t0 + 0.18);
+  });
 }
 
 /* ---- Cue: eat — warm rounded swell (~250ms) ---- */

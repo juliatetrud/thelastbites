@@ -126,7 +126,7 @@ Dialogue (Sprint 11):
 
 The cinematic fades out. The cabin returns to room mode. **The bed reverts to its pre-reveal appearance — the body is not shown in the room after the cinematic ends.** The image lives in the player's head, not on screen.
 
-**Part 3: Panic float.** Immediately after the bed-reveal dialogue closes, Pip's sprite involuntarily floats upward ~30 px, hangs briefly (~0.5s), then drops back to the floor. Player has no input control during this sequence. **This does NOT unlock the float ability** — space bar continues to do nothing for the player. This is a scripted one-shot foreshadowing Beat 8. *(See `06-roadmap-and-open-questions.md` Decisions Log, 2026-05-14: "Involuntary panic-float locked as foreshadowing for Beat 8.")*
+**Part 3: Panic float + float unlock.** Immediately after the bed-reveal dialogue closes, Pip's sprite involuntarily floats upward ~30 px, hangs briefly (~0.5s), then drops back to the floor. Player has no input control during this sequence. **Sprint 45 canon change: float IS NOW UNLOCKED here** — after the bed reveal, holding Space bar floats Pip ~1.5 character-heights. Before the bed reveal, Space does nothing. This supersedes the prior "panic-float is foreshadowing only; float unlocks at Beat 8" canon. *(See Decisions Log: "Float unlocks at the bed reveal, Sprint 45.")*
 
 **Part 4: Panic glide + tear spray.** Once Pip's feet touch the floor, his sprite glides toward the cabin's exit at 1.8× normal walk speed. Small cool-white teardrop particles arc backward from his eyes, fading within ~0.4s (~6 drops/second). The tears stop once he arrives in the hallway.
 

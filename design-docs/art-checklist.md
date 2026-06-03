@@ -38,6 +38,7 @@ Ch1 has 9 cinematics: Cinematics 6a (gravlaks/grandfather) and 6b (lefse/Erik) a
 
 | # | Filename | Beat | Description | Status | Notes |
 |---|---|---|---|---|---|
+| 0 | `cin-00-departure.png` | Cinematic 0 (cold open) | Bergen departure — *Mnemosyne* at pier, horn + smoke, ship pulls away, porthole push to interior | **Shipped procedural** | Sprint 44. `drawDepartureCinematic()`. Reuses `drawTitleMnemosyne` + title-smoke system. Synth horn (sawtooth 148Hz + fifth) + rumble (lowpass noise) via Sprint 30 SFX system. Skippable with Space. Gated on `chapterState.departurePlayed` (plays once; returning saves skip). |
 | 1 | `cin-01-wakeup.png` | Beat 1 | Pip materializes in hallway, yawn, sleepy register | **Shipped procedural** | Sprint 10.7. Pixel-by-pixel reveal-mask. Yawn animation runs concurrently. Hand-animated via `drawPipMaterializing`. |
 | 2 | `cin-02-mirror.png` | Beat 5 | Pip's face melts in the mirror | **Shipped procedural** | Sprint 11. Liquid-drip primary; pixel-distortion fallback. Reused at Ch8 climax — **commission once, use twice.** |
 | 3 | `cin-03-grandparents-cabin.png` | Beat 6 | Wide shot — Babcia weeping on bed, Dziadek at window, suitcase, photograph | **Shipped procedural** | Sprint 04 / 07. Procedural compositing via `drawGrandparentsCinematic`. Detailed character poses already locked. |

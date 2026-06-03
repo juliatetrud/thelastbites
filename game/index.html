@@ -1382,6 +1382,7 @@ const mirrorBeat = {
    Verified: mirror cinematic and bed-reveal cinematic both have isMemory = false. */
 
 const chapterState = {
+  departurePlayed: false, // Sprint 44: true after the Bergen departure cold-open plays once
   openingPlayed: false, // true once the materialization/yawn/narration sequence completes
 
   /* Sprint 20: Beat 7 + Beat 8 state flags */
@@ -2663,6 +2664,23 @@ const titleSmoke = {
   ],
 };
 
+/* ================================================================
+   SPRINT 44: DEPARTURE COLD-OPEN (CINEMATIC 0)
+   Bergen night — the Mnemosyne pulls away from the pier, horn sounds,
+   camera pushes through a lit porthole into the interior, Pip wakes.
+   Phases: hold → horn → move → push → dissolve → done.
+   Gated on chapterState.departurePlayed (play once; skip on continue).
+   ================================================================ */
+const departureCin = {
+  active:       false,
+  elapsed:      0,        // seconds within current phase
+  phase:        'hold',   // 'hold'|'horn'|'move'|'push'|'dissolve'|'done'
+  shipOffX:     0,        // horizontal ship drift (px) — increases as ship pulls away
+  dissolveAlpha: 0,       // 0→1 white/cool-light dissolve through porthole
+  zoomScale:    1.0,      // camera zoom toward porthole during 'push'
+  hornFired:    false,    // ensures horn synth fires exactly once
+};
+
 /* Aurora animation phases — accumulated each frame in updateTitleScene. */
 const titleAurora = {
   phase1:      0,   // green band horizontal drift (14s period)
@@ -2856,6 +2874,12 @@ function handleKeyAction(code) {
 
   // Sprint 20: suppress key actions during float discovery sequence
   if (floatDiscovery.active) return;
+
+  // Sprint 44: Space/Escape during departure cold-open — skip to dissolve
+  if (departureCin.active && (code === 'Space' || code === 'Escape')) {
+    skipDepartureCinematic();
+    return;
+  }
 
   // ESC during cinematic — always skippable, regardless of dialogue state
   if (cinematic.active && code === 'Escape') {
@@ -3069,6 +3093,11 @@ function update(dt) {
       cinematic.holdTimer = 0;
       startCinematicFadeOut();
     }
+  }
+
+  // Sprint 44: departure cold-open tick
+  if (departureCin.active) {
+    updateDepartureCinematic(dt);
   }
 
   // Sprint 14: doctor-exit animation tick
@@ -3993,7 +4022,10 @@ function render(now) {
     return;
   }
 
-  if (cinematic.active) {
+  // Sprint 44: departure cold-open draws its own scene while active
+  if (departureCin.active) {
+    drawDepartureCinematic(now);
+  } else if (cinematic.active) {
     // Cinematic mode: draw the cinematic scene only; dialogue HTML overlay renders on top
     drawCinematicScene(cinematic.name, now);
   } else {
@@ -11212,9 +11244,19 @@ function startTitleToGameplay() {
       // Screen is black — switch to gameplay
       gameMode = 'gameplay';
       document.getElementById('title-screen').style.display = 'none';
-      playMusic('main');
       showHUD();
-      setControlsStrip('');   // opening sequence will set strip when narration fires
+      setControlsStrip('');
+
+      // Sprint 44: play Bergen departure cold-open on a fresh start; skip on continue
+      if (!chapterState.departurePlayed) {
+        startDepartureCinematic(() => {
+          chapterState.departurePlayed = true;
+          playMusic('main');   // music starts after the cinematic
+          // Hallway opening sequence runs naturally once departure is done
+        });
+      } else {
+        playMusic('main');
+      }
 
       // Hold briefly, then fade from black (restore CSS transition for normal room use)
       setTimeout(() => {
@@ -11315,6 +11357,332 @@ function updateTitleScene(dt) {
       titleSmoke.plumes.splice(i, 1);
     }
   }
+}
+
+/* ================================================================
+   SPRINT 44: DEPARTURE CINEMATIC IMPLEMENTATION
+   Bergen departure — Cinematic 0, the chapter's overture.
+   Phases (seconds each): hold 1.8 → horn 2.0 → move 1.5 → push 1.2 → dissolve 0.6
+   ================================================================ */
+
+function startDepartureCinematic(onEnd) {
+  departureCin.active       = true;
+  departureCin.elapsed      = 0;
+  departureCin.phase        = 'hold';
+  departureCin.shipOffX     = 0;
+  departureCin.dissolveAlpha = 0;
+  departureCin.zoomScale    = 1.0;
+  departureCin.hornFired    = false;
+  departureCin._onEnd       = onEnd || null;
+  // Seed titleSmoke with initial plumes so smoke is already present on hold
+  _prewarmDepartureSmoke();
+  hideHUD();
+  setControlsStrip('cinematic');
+}
+
+function _prewarmDepartureSmoke() {
+  // Spawn a few aging plumes so there's smoke from the start
+  for (let i = 0; i < 5; i++) {
+    const ch = titleSmoke.chimneys[i % 3];
+    titleSmoke.plumes.push({
+      x:        ch.x + (Math.random() - 0.5) * 3,
+      y:        ch.y - 12 - i * 8,
+      vx:       -(0.5 + Math.random() * 0.8),
+      vy:       -(8 + Math.random() * 5),
+      radius:   4 + i * 5,
+      age:      0.4 + i * 0.3,
+      lifetime: 3.5 + Math.random() * 1.5,
+    });
+  }
+}
+
+function skipDepartureCinematic() {
+  departureCin.phase   = 'dissolve';
+  departureCin.elapsed = 0;
+}
+
+function _endDepartureCinematic() {
+  departureCin.active = false;
+  departureCin.phase  = 'done';
+  showHUD();
+  setRoomStrip();
+  titleSmoke.plumes = [];   // clear smoke so it doesn't bleed into gameplay
+  const cb = departureCin._onEnd;
+  departureCin._onEnd = null;
+  if (cb) cb();
+}
+
+function updateDepartureCinematic(dt) {
+  const d = departureCin;
+  // Advance titleAurora phases during the cinematic so aurora animates
+  titleAurora.phase1      += dt * (2 * Math.PI / 14);
+  titleAurora.phase2      += dt * (2 * Math.PI / 11);
+  titleAurora.brightPhase += dt * (2 * Math.PI / 7.5);
+  titleAurora.edgePhase   += dt * (2 * Math.PI / 5);
+
+  // Advance smoke plumes independently (spawn-timer handled inline during 'horn' phase)
+  _updateSmoke(dt);
+
+  d.elapsed += dt;
+
+  switch (d.phase) {
+    case 'hold':
+      if (d.elapsed >= 1.8) { d.phase = 'horn'; d.elapsed = 0; }
+      break;
+
+    case 'horn':
+      if (!d.hornFired) {
+        d.hornFired = true;
+        _playDepartureHorn();
+        _playDepartureRumble();
+        // Heavier smoke bursts from all three funnels for the horn moment
+        for (const ch of titleSmoke.chimneys) {
+          for (let k = 0; k < 3; k++) {
+            titleSmoke.plumes.push({
+              x: ch.x + (Math.random() - 0.5) * 4, y: ch.y,
+              vx: -(1.2 + Math.random() * 1.0), vy: -(12 + Math.random() * 6),
+              radius: 3, age: 0, lifetime: 4 + Math.random() * 1.5,
+            });
+          }
+        }
+      }
+      if (d.elapsed >= 2.0) { d.phase = 'move'; d.elapsed = 0; }
+      break;
+
+    case 'move':
+      // Ship drifts rightward (bow into open water) at increasing speed
+      d.shipOffX += dt * (6 + d.elapsed * 4);
+      if (d.elapsed >= 1.5) { d.phase = 'push'; d.elapsed = 0; }
+      break;
+
+    case 'push': {
+      // Zoom toward the lit porthole at hull center ~(220, 178 + shipOffX)
+      const t = Math.min(1, d.elapsed / 1.2);
+      d.zoomScale = 1 + t * 2.8;            // 1.0 → 3.8x zoom
+      d.shipOffX  += dt * (10 + t * 20);    // ship keeps drifting during push
+      if (d.elapsed >= 1.2) { d.phase = 'dissolve'; d.elapsed = 0; }
+      break;
+    }
+
+    case 'dissolve':
+      d.dissolveAlpha = Math.min(1, d.elapsed / 0.6);
+      if (d.elapsed >= 0.6) _endDepartureCinematic();
+      break;
+  }
+}
+
+function _updateSmoke(dt) {
+  // Advance existing plumes independently of titleSmoke's spawn-timer logic
+  for (const p of titleSmoke.plumes) {
+    p.age += dt;
+    p.x   += p.vx * dt;
+    p.y   += p.vy * dt;
+    p.vy  *= 0.985;
+    p.radius = 2.5 + p.age * 6;
+  }
+  for (let i = titleSmoke.plumes.length - 1; i >= 0; i--) {
+    if (titleSmoke.plumes[i].age >= titleSmoke.plumes[i].lifetime) {
+      titleSmoke.plumes.splice(i, 1);
+    }
+  }
+}
+
+function _playDepartureHorn() {
+  if (!sfx.unlocked || !sfx.ctx) return;
+  const ac = sfx.ctx;
+
+  // Low fundamental — ship's horn, mournful and sustained
+  const hornGain = ac.createGain();
+  hornGain.gain.setValueAtTime(0, ac.currentTime);
+  hornGain.gain.linearRampToValueAtTime(0.32, ac.currentTime + 0.7);  // slow swell
+  hornGain.gain.setValueAtTime(0.32, ac.currentTime + 2.0);
+  hornGain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 4.5);
+  hornGain.connect(sfx.master);
+
+  const osc1 = ac.createOscillator();
+  osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(148, ac.currentTime);
+  osc1.frequency.linearRampToValueAtTime(143, ac.currentTime + 4.5);  // slight fall, melancholy
+  osc1.connect(hornGain);
+  osc1.start(); osc1.stop(ac.currentTime + 4.5);
+
+  // A fifth above — gives body and horn-like timbre
+  const fifth = ac.createOscillator();
+  fifth.type = 'sine';
+  fifth.frequency.setValueAtTime(222, ac.currentTime);
+  fifth.frequency.linearRampToValueAtTime(215, ac.currentTime + 4.5);
+  const fifthGain = ac.createGain();
+  fifthGain.gain.setValueAtTime(0.12, ac.currentTime);
+  fifth.connect(fifthGain);
+  fifthGain.connect(sfx.master);
+  fifth.start(); fifth.stop(ac.currentTime + 4.5);
+}
+
+function _playDepartureRumble() {
+  if (!sfx.unlocked || !sfx.ctx) return;
+  const ac = sfx.ctx;
+
+  // Low-frequency noise — engine room rumble
+  const bufLen = Math.floor(ac.sampleRate * 0.12);
+  const buf    = ac.createBuffer(1, bufLen, ac.sampleRate);
+  const data   = buf.getChannelData(0);
+  for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  src.loop   = true;
+
+  const lp = ac.createBiquadFilter();
+  lp.type      = 'lowpass';
+  lp.frequency.value = 55;
+
+  const rGain = ac.createGain();
+  rGain.gain.setValueAtTime(0, ac.currentTime);
+  rGain.gain.linearRampToValueAtTime(0.14, ac.currentTime + 0.5);
+  rGain.gain.setValueAtTime(0.14, ac.currentTime + 2.8);
+  rGain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 5.0);
+
+  src.connect(lp);
+  lp.connect(rGain);
+  rGain.connect(sfx.master);
+  src.start(); src.stop(ac.currentTime + 5.0);
+}
+
+function drawDepartureCinematic(now) {
+  const d = departureCin;
+
+  // Base: same night sky as title screen — consistent exterior palette
+  drawTitleSky(now);
+  drawTitleAurora(now);
+
+  // Fjord silhouettes (Sprint 43 palette — coordinated with interior scenery)
+  _drawDepartureFjords();
+
+  drawTitleHorizon(now);
+
+  // Bergen pier (left of ship, drawn before ship so ship is on top)
+  _drawBergenPier(d.shipOffX);
+
+  // Mnemosyne — translate by shipOffX so it drifts right during 'move'/'push'
+  ctx.save();
+  if (d.zoomScale > 1.001) {
+    // Zoom toward lit porthole at approximately hull-center porthole (ship-relative x=220, y=178)
+    const portholeX = 220 + d.shipOffX;
+    const portholeY = 178;
+    ctx.translate(portholeX, portholeY);
+    ctx.scale(d.zoomScale, d.zoomScale);
+    ctx.translate(-portholeX, -portholeY);
+  }
+  ctx.translate(d.shipOffX, 0);
+  drawTitleMnemosyne(now);
+  ctx.restore();
+
+  // Smoke — uses the same titleSmoke plume system
+  ctx.save();
+  ctx.translate(d.shipOffX, 0);
+  drawTitleSmoke(now);
+  ctx.restore();
+
+  // Water + porthole reflections
+  drawTitleWater(now);
+
+  // Cool-light dissolve overlay — light blooming through the porthole
+  if (d.dissolveAlpha > 0) {
+    ctx.fillStyle = `rgba(200,218,248,${d.dissolveAlpha.toFixed(3)})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function _drawDepartureFjords() {
+  // Coordinated with Sprint 43 interior palette (three depth ranks, _fjordProfile)
+  const horizY = 202;
+
+  const drawRank = (maxH, tileW, scrollX, color, alpha, phaseOff) => {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle   = color;
+    ctx.beginPath();
+    for (let px = 0; px <= W + 1; px++) {
+      const xInTile = ((px + scrollX) % tileW) / tileW;
+      const peak    = _fjordProfile(xInTile, phaseOff);
+      const ridgeY  = horizY - peak * maxH;
+      if (px === 0) ctx.moveTo(px, ridgeY);
+      else          ctx.lineTo(px, ridgeY);
+    }
+    ctx.lineTo(W + 1, H);
+    ctx.lineTo(0, H);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  };
+
+  // Use a fixed scroll offset (ship is docked, fjords stationary)
+  drawRank(22, 420, 180, '#0f1c2e', 0.60, 0.00);
+  drawRank(36, 310, 220, '#080f1e', 0.84, 2.10);
+  drawRank(52, 230, 260, '#040810', 0.96, 4.70);
+
+  // Horizon glow
+  const hg = ctx.createLinearGradient(0, horizY - 2, 0, horizY + 5);
+  hg.addColorStop(0,   'rgba(25,45,82,0)');
+  hg.addColorStop(0.4, 'rgba(25,45,82,0.20)');
+  hg.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = hg;
+  ctx.fillRect(0, Math.round(horizY - 2), W, 7);
+}
+
+function _drawBergenPier(shipOffX) {
+  // Bergen dock — pier structure to the left of the ship stern
+  // Pier sits at waterline y=208, ship stern at x=75+shipOffX
+  const pierRight = 75 + shipOffX - 5;   // pier ends just at the stern
+  const pierLeft  = Math.max(0, pierRight - 80);
+  const WL        = 208;
+
+  if (pierRight < 0) return;   // pier has scrolled off-screen
+
+  // Pier deck — dark planked surface
+  ctx.fillStyle = '#0e1420';
+  ctx.fillRect(Math.round(pierLeft), WL - 4, Math.round(pierRight - pierLeft), 5);
+
+  // Pier support piles below waterline
+  ctx.fillStyle = '#0a1018';
+  const pileCount = Math.ceil((pierRight - pierLeft) / 14);
+  for (let i = 0; i < pileCount; i++) {
+    const px = Math.round(pierLeft + i * 14 + 5);
+    if (px < 0 || px > W) continue;
+    ctx.fillRect(px, WL + 1, 3, 12);
+  }
+
+  // Dock lights — warm amber points along the pier edge
+  const lightCount = Math.floor((pierRight - pierLeft) / 28);
+  for (let i = 0; i <= lightCount; i++) {
+    const lx = Math.round(pierLeft + i * 28 + 14);
+    if (lx < 0 || lx > W) continue;
+    const lg = ctx.createRadialGradient(lx, WL - 6, 0, lx, WL - 6, 7);
+    lg.addColorStop(0, 'rgba(255,200,80,0.55)');
+    lg.addColorStop(1, 'rgba(255,200,80,0)');
+    ctx.fillStyle = lg;
+    ctx.fillRect(lx - 7, WL - 13, 14, 14);
+    ctx.fillStyle = '#f0c878';
+    ctx.fillRect(lx, WL - 7, 2, 2);
+  }
+
+  // Gangway — angled line from pier to ship hull (only while docked / in hold+horn phases)
+  if (pierRight > 20 && shipOffX < 30) {
+    const gangwayAlpha = Math.max(0, 1 - shipOffX / 20);
+    ctx.globalAlpha = gangwayAlpha;
+    ctx.strokeStyle = '#2a2820';
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(Math.round(pierRight - 2), WL - 2);
+    ctx.lineTo(Math.round(pierRight + 18), WL - 14);
+    ctx.stroke();
+    ctx.lineWidth   = 1;
+    ctx.globalAlpha = 1;
+  }
+
+  // Waterline foam where pier meets water
+  ctx.fillStyle = 'rgba(70,90,130,0.12)';
+  ctx.fillRect(Math.round(pierLeft), WL, Math.round(pierRight - pierLeft + 2), 2);
 }
 
 /* ---- Six parallax draw layers ---- */

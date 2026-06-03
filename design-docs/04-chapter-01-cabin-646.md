@@ -28,7 +28,9 @@ This paragraph is the source-of-truth for the chapter's first-half play order. T
 
 ## Chapter Arc Summary
 
-Pip wakes in his cabin not knowing he's dead. Through the mirror, the truth lands. He explores the ship's hallway — passing two living people who can't see him, establishing the rule he expects to apply universally. He sees his grieving grandparents, discovers his ghostly abilities, makes his way to the kitchen, and is unexpectedly *seen* by Henrik the chef. Henrik becomes his mentor, gives him his first taste-memory experiences (a doubled cinematic — gravlaks then lefse), and sets up the journey ahead. The chapter closes at the dock as Pip's grandparents disembark with his body.
+Chapter 1 opens with a wordless establishing cold-open (Cinematic 0, Sprint 44): the *Mnemosyne* at the Bergen pier at night, a low synthesized horn, smoke from the funnels, the ship pulling away — then the camera pushes through a lit porthole into the interior.
+
+Pip wakes in the *hallway* — his neutral plane — not knowing he is dead. *(Sprint 44 doc drift fix: the prior line said "wakes in his cabin," which is wrong. Pip wakes in the hallway; the cabin doors 636–646 are off the hallway. Per `01-story-bible.md` § Neutral planes, newly-dead spirits do not wake in their own beds; they wake in spaces of habit and transit.)* Through the mirror in Cabin 646, the truth lands. He explores the ship's hallway — passing two living people who can't see him, establishing the rule he expects to apply universally. He sees his grieving grandparents, discovers his ghostly abilities, makes his way to the kitchen, and is unexpectedly *seen* by Henrik the chef. Henrik becomes his mentor, gives him his first taste-memory experiences (a doubled cinematic — gravlaks then lefse), and sets up the journey ahead. The chapter closes at the dock as Pip's grandparents disembark with his body.
 
 ---
 

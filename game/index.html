@@ -1855,7 +1855,8 @@ const hallwayObjects = [
       id: 'hallway-luggage-inspect',
       lines: [
         { speaker: null, text: 'Hmm. Looks like someone packed in a hurry\u2026', italic: true },
-        { speaker: null, text: 'A stuffed bear sticks out of the top of the suitcase.', italic: false },
+        // Sprint 48: removed "A stuffed bear sticks out of the top of the suitcase." \u2014 the
+        // grandparents'-cabin suitcase now shows the bear visually; the text is redundant.
         { speaker: null, text: 'That looks just like the bear Babcia gave me\u2026', italic: true },
       ],
       choices: null, onEnd: null,
@@ -8058,65 +8059,91 @@ function drawGrandparents(camX, now) {
     ctx.fillRect(nsSX - 5, FLOOR_Y - 26, 10, 7);
   }
 
-  // --- Open suitcase (game-world x=380) — Sprint 45: reads as a real suitcase ---
+  // --- Open suitcase (game-world x=380) — Sprint 48 art fix: unmistakably a suitcase ---
+  // Silhouette: horizontal case (wider than tall), lid seam, handle, latches, steamer feel.
+  // Bear head + ears clearly above the case top — reads as "suitcase with a bear" at a glance.
   const scSX = Math.round(380 - camX);
   if (scSX > -40 && scSX < W + 40) {
-    const scW2 = 56, scH2 = 14, scY2 = FLOOR_Y - scH2;
-    // Suitcase body
-    ctx.fillStyle = '#3e3018';
-    ctx.fillRect(scSX - scW2 / 2, scY2, scW2, scH2);
-    ctx.strokeStyle = 'rgba(130,100,48,0.65)';
+    const scW2 = 72, scH2 = 22, scY2 = FLOOR_Y - scH2;
+
+    // ── Case body ────────────────────────────────────────────────
+    // Main body (bottom 14px, darker — the case interior/base)
+    ctx.fillStyle = '#3a2812';
+    ctx.fillRect(scSX - scW2/2, scY2 + 8, scW2, scH2 - 8);
+
+    // Lid zone (top 8px, slightly lighter — the lid panel)
+    ctx.fillStyle = '#4a3618';
+    ctx.fillRect(scSX - scW2/2, scY2, scW2, 8);
+
+    // Case outline
+    ctx.strokeStyle = 'rgba(185,145,60,0.72)';
     ctx.lineWidth   = 1;
-    ctx.strokeRect(scSX - scW2 / 2, scY2, scW2, scH2);
-    // Lid seam (horizontal line across the middle of body)
-    ctx.strokeStyle = 'rgba(180,140,60,0.45)';
-    ctx.beginPath(); ctx.moveTo(scSX - scW2/2, scY2 + 5); ctx.lineTo(scSX + scW2/2, scY2 + 5); ctx.stroke();
-    // Brass latches (two small rectangles on the front)
-    ctx.fillStyle = '#a07838';
-    ctx.fillRect(scSX - 12, scY2 + 3, 5, 4);
-    ctx.fillRect(scSX +  7, scY2 + 3, 5, 4);
-    ctx.fillStyle = '#c8a050';
-    ctx.fillRect(scSX - 11, scY2 + 4, 3, 2);
-    ctx.fillRect(scSX +  8, scY2 + 4, 3, 2);
-    // Handle (curved line above top edge)
-    ctx.strokeStyle = '#5a4010';
+    ctx.strokeRect(scSX - scW2/2, scY2, scW2, scH2);
+
+    // Lid seam — the primary "suitcase" read: strong horizontal joint line
+    ctx.strokeStyle = 'rgba(210,165,65,0.90)';
+    ctx.beginPath(); ctx.moveTo(scSX - scW2/2, scY2 + 8); ctx.lineTo(scSX + scW2/2, scY2 + 8); ctx.stroke();
+
+    // Horizontal leather strap (steamer-trunk character)
+    ctx.strokeStyle = 'rgba(165,120,48,0.40)';
+    ctx.beginPath(); ctx.moveTo(scSX - scW2/2 + 4, scY2 + 15); ctx.lineTo(scSX + scW2/2 - 4, scY2 + 15); ctx.stroke();
+
+    // Brass corner fittings (all four corners — unmistakably luggage)
+    ctx.fillStyle = '#b88040';
+    ctx.fillRect(scSX - scW2/2,      scY2,            4, 4);
+    ctx.fillRect(scSX + scW2/2 - 4,  scY2,            4, 4);
+    ctx.fillRect(scSX - scW2/2,      scY2 + scH2 - 4, 4, 4);
+    ctx.fillRect(scSX + scW2/2 - 4,  scY2 + scH2 - 4, 4, 4);
+
+    // Brass latches (two, at seam level — front face)
+    ctx.fillStyle = '#b88040';
+    ctx.fillRect(scSX - 20, scY2 + 6, 7, 5);
+    ctx.fillRect(scSX + 13, scY2 + 6, 7, 5);
+    ctx.fillStyle = '#d8b060';
+    ctx.fillRect(scSX - 19, scY2 + 7, 5, 3);
+    ctx.fillRect(scSX + 14, scY2 + 7, 5, 3);
+
+    // Handle — small arch centered on lid, clearly above
+    ctx.strokeStyle = '#5a3618';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(scSX, scY2 - 3, 10, Math.PI, 0);
+    ctx.moveTo(scSX - 9, scY2);
+    ctx.bezierCurveTo(scSX - 9, scY2 - 8, scSX + 9, scY2 - 8, scSX + 9, scY2);
     ctx.stroke();
     ctx.lineWidth = 1;
-    // Open lid (angled back)
-    ctx.fillStyle = '#382814';
-    ctx.beginPath();
-    ctx.moveTo(scSX - scW2 / 2, scY2);
-    ctx.lineTo(scSX + scW2 / 2, scY2);
-    ctx.lineTo(scSX + scW2 / 2 - 5, scY2 - 16);
-    ctx.lineTo(scSX - scW2 / 2 + 5, scY2 - 16);
-    ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(130,100,48,0.50)';
-    ctx.stroke();
-    // Contents: shirt visible
-    ctx.fillStyle = 'rgba(80,110,165,0.45)';
-    ctx.fillRect(scSX - scW2 / 2 + 3, scY2 + 2, scW2 - 6, 4);
-    // TEDDY BEAR — sticking out from the contents (Pip recognises it from grandparents)
-    const bX = scSX + 10, bY = scY2 - 4;
-    // Bear body
+    // Handle studs
+    ctx.fillStyle = '#b88040';
+    ctx.fillRect(scSX - 11, scY2 - 2, 3, 3);
+    ctx.fillRect(scSX + 8,  scY2 - 2, 3, 3);
+
+    // ── TEDDY BEAR — head and ears clearly above the case top ────
+    // Positioned left-of-center (clear of the handle). Bear is sticking out.
+    const bX = scSX - 16;
+    const bTopY = scY2;   // top of suitcase = where bear emerges from
+
+    // Bear body (small — just the top peeking out)
     ctx.fillStyle = '#c8a870';
-    ctx.beginPath(); ctx.arc(bX, bY, 5, 0, Math.PI * 2); ctx.fill();
-    // Bear head
-    ctx.beginPath(); ctx.arc(bX, bY - 7, 4, 0, Math.PI * 2); ctx.fill();
-    // Ears
-    ctx.beginPath(); ctx.arc(bX - 3, bY - 10, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(bX + 3, bY - 10, 2, 0, Math.PI * 2); ctx.fill();
-    // Bear eyes (tiny dark dots)
-    ctx.fillStyle = '#3a2010';
-    ctx.fillRect(bX - 2, bY - 8, 1, 1);
-    ctx.fillRect(bX + 1, bY - 8, 1, 1);
-    // Bear nose
-    ctx.fillRect(bX - 1, bY - 6, 2, 1);
-    // Bear snout (lighter)
+    ctx.beginPath(); ctx.arc(bX, bTopY + 1, 5, 0, Math.PI * 2); ctx.fill();
+
+    // Bear head (above suitcase — prominent, clearly round)
+    ctx.beginPath(); ctx.arc(bX, bTopY - 8, 6, 0, Math.PI * 2); ctx.fill();
+
+    // Bear ears (the unmistakable silhouette tell — two round nubs above head)
+    ctx.beginPath(); ctx.arc(bX - 5, bTopY - 13, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bX + 5, bTopY - 13, 3, 0, Math.PI * 2); ctx.fill();
+
+    // Inner ear detail
+    ctx.fillStyle = '#b89060';
+    ctx.beginPath(); ctx.arc(bX - 5, bTopY - 13, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bX + 5, bTopY - 13, 1.5, 0, Math.PI * 2); ctx.fill();
+
+    // Bear face: eyes + snout + nose
     ctx.fillStyle = '#d8b880';
-    ctx.beginPath(); ctx.arc(bX, bY - 6, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(bX, bTopY - 7, 2.5, 0, Math.PI * 2); ctx.fill();   // snout
+    ctx.fillStyle = '#3a2010';
+    ctx.fillRect(bX - 2, bTopY - 10, 1, 1);   // left eye
+    ctx.fillRect(bX + 1, bTopY - 10, 1, 1);   // right eye
+    ctx.fillRect(bX - 1, bTopY -  7, 2, 1);   // nose
   }
 
   // Floor surface

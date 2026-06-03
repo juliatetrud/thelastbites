@@ -51,11 +51,9 @@ This doc supersedes the dialogue captured in `ch01-content-audit.docx` where the
 
 > *Hmm. Looks like someone packed in a hurry…* (italic)
 >
-> *A stuffed bear sticks out of the top of the suitcase.* (roman)
->
 > *That looks just like the bear Babcia gave me…* (italic)
 
-**Status:** Three lines. Shipped. The first and third lines are italic (Pip's thought); the middle line is roman (narration).
+**Status:** Two lines. Sprint 48: removed "A stuffed bear sticks out of the top of the suitcase." — the grandparents'-cabin suitcase now shows the bear visually; the text was redundant. Julia to revise the remaining two lines as part of the dialogue pass.
 
 ### Flickering sconce / oil lamp (`hallway-sconce-inspect`, world-x ~820)
 

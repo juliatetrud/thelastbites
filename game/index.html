@@ -1459,7 +1459,7 @@ function buildSaveObject() {
     chapterState:    { ...chapterState },
     darkCorridor:    { lit: darkCorridor.lit, cartRemoved: darkCorridor.cartRemoved, cartX: darkCorridor.cartX },
     cinematicPlayed: Array.from(cinematic.played),
-    passenger:       { thoughtBeatFired: passenger.thoughtBeatFired },
+    passenger:       { thoughtBeatFired: passenger.thoughtBeatFired, passBeatComplete: passenger.passBeatComplete },
     notebookItems:      notebook.items.map(i => ({ ...i })),
     cabinCollection:    { items: cabinCollection.items.map(i => ({ ...i })) },
   };
@@ -1523,6 +1523,7 @@ function applySave(data) {
 
   // Restore passenger state; re-arm spawn timer if still pending
   passenger.thoughtBeatFired = data.passenger.thoughtBeatFired;
+  passenger.passBeatComplete = data.passenger.passBeatComplete || false;
   if (currentRoom === 'hallway') {
     passenger.hallwayEntered = true;
     if (!passenger.thoughtBeatFired) {
@@ -1829,10 +1830,11 @@ const hallwayObjects = [
     id: 'hallway-bulletin',
     x: 130,
     sparkleY: 108,
-    // Sprint 45: gated behind the passenger walk-through beat so it can't
-    // interrupt the "they didn't see me" moment (Beat 3).
+    // Sprint 47: gated behind passBeatComplete — set AFTER the "they didn't see me"
+    // dialogue fully completes. thoughtBeatFired fires mid-walk; passBeatComplete
+    // fires only once the player dismisses the dialogue.
     get node() {
-      if (!passenger.thoughtBeatFired) return null;
+      if (!passenger.passBeatComplete) return null;
       return {
         id: 'hallway-bulletin-inspect',
         lines: [
@@ -2764,6 +2766,9 @@ const passenger = {
   speed:            105,    // px/s — slightly faster than Pip's 90
   aftermathPending: false,  // true after exit, until aftermath dialogue fires
   thoughtBeatFired: false,  // one-shot mid-walk thought (suppresses aftermath)
+  // Sprint 47: separate flag set only after the "they didn't see me" dialogue COMPLETES.
+  // Used to gate the bulletin board so it can't fire until the beat fully resolves.
+  passBeatComplete: false,
 };
 
 /* Sprint 10.7: game starts in the hallway, so arm the passenger flag here.
@@ -3482,6 +3487,9 @@ function updateBlink(dt) {
 
 function updateOpeningSequence(dt) {
   if (openingSeq.state === 'complete') return;
+  // Sprint 47: don't advance during the departure cold-open — yawn fires only after
+  // the porthole dissolve has landed and Pip is visible in the hallway.
+  if (departureCin.active) return;
 
   if (openingSeq.state === 'materializing') {
     openingSeq.elapsed += dt;
@@ -6469,7 +6477,9 @@ function updatePassenger(dt) {
         id: 'passenger-thought',
         lines: [{ speaker: 'PIP', text: '\u2026they didn\u2019t see me.', italic: true }],
         choices: null,
-        onEnd: () => { pip.body.facing = savedFacing; },
+        // Sprint 47: passBeatComplete set AFTER dialogue completes \u2014 this is the gate the
+        // bulletin board checks. thoughtBeatFired (set above) only suppresses the aftermath.
+        onEnd: () => { pip.body.facing = savedFacing; passenger.passBeatComplete = true; },
       });
     }
 
@@ -6964,8 +6974,55 @@ function drawGrandparentsCinematic(now) {
   drawDustMotes(now);
 }
 
-/* Dziadek in cinematic — taller than room sprite, facing left (window) */
+/* Dziadek in cinematic — Sprint 47: updated to Sprint 45 design colors/palette.
+   Back to camera, facing left (window). Deep-blue wool, patches, flat cap. */
 function drawCinDziadek(cx, groundY) {
+  ctx.save();
+  ctx.translate(Math.round(cx), groundY);
+  // Draw back-to-camera (no ctx.scale flip — back view)
+
+  // Shoes
+  ctx.fillStyle = '#1c1818';
+  ctx.fillRect(-5, -2, 4, 2);
+  ctx.fillRect( 1, -2, 4, 2);
+
+  // Deep-blue wool trousers
+  ctx.fillStyle = '#2a3a5a';
+  ctx.fillRect(-4, -14, 3, 12);
+  ctx.fillRect( 1, -14, 3, 12);
+
+  // Coat back body
+  ctx.fillRect(-6, -38, 13, 24);
+  ctx.fillStyle = '#1e2c48';
+  ctx.fillRect(-6, -38, 1, 24);
+  ctx.fillRect( 6, -38, 1, 24);
+
+  // Quilted patches (cream + warm-brown)
+  ctx.fillStyle = '#e8d8b0'; ctx.fillRect(-4, -33, 2, 2);
+  ctx.fillStyle = '#a07848'; ctx.fillRect( 1, -31, 2, 2);
+  ctx.fillStyle = '#e8d8b0'; ctx.fillRect(-3, -26, 2, 2);
+  ctx.fillStyle = '#a07848'; ctx.fillRect( 2, -24, 2, 2);
+
+  // Back of head (grey hair)
+  ctx.fillStyle = '#c8a888';
+  ctx.fillRect(-3, -44, 6, 6);
+  ctx.fillStyle = '#9a9898';
+  ctx.fillRect(-3, -44, 2, 3);
+  ctx.fillRect( 1, -44, 2, 3);
+  ctx.fillRect(-2, -44, 4, 1);
+
+  // Flat cap (back view)
+  ctx.fillStyle = '#242830';
+  ctx.fillRect(-5, -45, 10, 2);   // brim
+  ctx.fillStyle = '#1a1f2a';
+  ctx.fillRect(-3, -50, 7, 5);    // dome
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+/* OLD drawCinDziadek preserved below for reference — removed Sprint 47 */
+function _drawCinDziadek_old(cx, groundY) {
   ctx.save();
   ctx.translate(Math.round(cx), groundY);
   ctx.scale(-1, 1);
@@ -6991,32 +7048,54 @@ function drawCinDziadek(cx, groundY) {
   ctx.restore();
 }
 
-/* Babcia in cinematic — hunched-seated figure, slightly more detail */
+/* Babcia in cinematic — Sprint 47: updated to Sprint 45 design (kerchief, coat, human eyes).
+   Seated on bed, hunched, head bowed into hands (grief pose matching narration).
+   groundY = bed surface (y = bedY + sob). */
 function drawCinBabcia(cx, groundY) {
-  ctx.save();
-  ctx.translate(cx, groundY);
-  ctx.fillStyle   = '#2a2030';
-  ctx.globalAlpha = 0.90;
-  ctx.shadowBlur  = 0;
+  const t = performance.now() / 1000;
+  const swayX = Math.round(Math.sin(t * 1.4) * 0.5);
 
-  // Hair bun
-  ctx.beginPath();
-  ctx.arc(3, -28, 3, 0, Math.PI * 2);
-  ctx.fill();
-  // Head (bowed forward)
-  ctx.fillRect(-4, -26,  9,  7);
-  // Upper torso / hunched
-  ctx.fillRect(-7, -19, 15,  8);
-  // Apron hint (faint lighter band)
-  ctx.globalAlpha = 0.42;
-  ctx.fillStyle   = '#4a3820';
-  ctx.fillRect(-6, -15, 12,  5);
-  ctx.globalAlpha = 0.90;
-  ctx.fillStyle   = '#2a2030';
-  // Lap / skirt (wide, seated)
-  ctx.fillRect(-10, -11, 20,  11);
-  // Hands folded
-  ctx.fillRect(-3,  -13,  6,   3);
+  ctx.save();
+  ctx.translate(Math.round(cx), groundY);
+
+  // Full dark coat (seated — no feet visible, coat falls to lap level)
+  ctx.fillStyle = '#2a1f28';
+  ctx.fillRect(-9 + swayX, -42, 18, 42);    // coat body from lap to shoulders
+  // Coat seam detail
+  ctx.fillStyle = '#332838';
+  ctx.fillRect(-1 + swayX, -38, 1, 24);     // center seam
+  ctx.fillRect(-5 + swayX, -38, 1, 24);     // left panel
+
+  // Lap / skirt base (wide)
+  ctx.fillStyle = '#2a1f28';
+  ctx.fillRect(-12 + swayX, -10, 24, 10);
+
+  // Neck
+  ctx.fillStyle = '#d0b090';
+  ctx.fillRect(-2 + swayX, -44, 4, 2);
+
+  // Head bowed forward into hands (grief)
+  const hx = swayX;
+  ctx.fillStyle = '#d0b090';
+  ctx.fillRect(hx - 3, -52, 7, 4);    // face (bowed sharply forward)
+  ctx.fillRect(hx - 2, -48, 5, 2);    // chin
+  // Hands covering/framing face (head in hands)
+  ctx.fillRect(hx - 5, -50, 4, 5);    // left hand over left side of face
+  ctx.fillRect(hx + 1, -50, 4, 5);    // right hand over right side of face
+
+  // Eyes barely visible between hands (down-cast)
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(hx - 2, -50, 2, 1);    // left eye glimpse
+  ctx.fillRect(hx + 1, -50, 2, 1);    // right eye glimpse
+
+  // KERCHIEF — the silhouette tell; drawn over bowed head
+  ctx.fillStyle = '#8a2a2a';
+  ctx.fillRect(hx - 4, -56, 9,  2);   // brim
+  ctx.fillRect(hx - 3, -58, 7,  2);
+  ctx.fillRect(hx - 2, -60, 5,  2);
+  ctx.fillRect(hx - 1, -62, 3,  2);   // peak
+  ctx.fillRect(hx - 5, -56, 2,  7);   // left fall
+  ctx.fillRect(hx + 3, -56, 2,  7);   // right fall
 
   ctx.globalAlpha = 1;
   ctx.restore();
@@ -8077,80 +8156,71 @@ function drawGrandparents(camX, now) {
   }
 }
 
-/* ---- Babcia: seated on bed. Sprint 45: ported from approved gallery design.
+/* ---- Babcia: seated on bed, hunched, head in hands, sobbing. Sprint 47 pose fix.
    groundY = top of bed surface. Sob-bob ~1500ms period, ~1px amp.
-   Kerchief-red signature, dark coat with structure, human eyes, grief. */
+   Narration: Babcia is on the bed with her head in her hands. She is sobbing.
+   Sprint 45 design (kerchief, coat); Sprint 47 corrects the standing-on-bed pose. */
 function drawBabcia(screenX, groundY, now) {
   const t      = now / 1000;
   const bob    = Math.sin(now / 1500) * 1;
-  const swayX  = Math.round(Math.sin(t * 1.4) * 0.5);
+  const swayX  = Math.round(Math.sin(t * 1.4) * 0.4);
   const cx     = Math.round(screenX);
   const cy     = Math.round(groundY + bob);
-  const handsClosed = (t % 2.5 / 2.5) < 0.5;
 
   ctx.save();
   ctx.translate(cx, cy);
 
-  // Slippers (small, at seat height — seated so feet near bed surface)
-  ctx.fillStyle = '#4a3828';
-  ctx.fillRect(-8 + swayX, -3, 7, 3);
-  ctx.fillRect( 1 + swayX, -3, 7, 3);
-
-  // Full coat — dark base, reads as a coat
+  // Coat body — seated, so no feet visible; coat falls from lap to shoulders.
   ctx.fillStyle = '#2a1f28';
-  ctx.fillRect(-11 + swayX, -55, 23, 52);
-  // Coat structure: faint vertical shading bands
+  ctx.fillRect(-9 + swayX, -44, 18, 44);
   ctx.fillStyle = '#332838';
-  ctx.fillRect( -1 + swayX, -50, 1, 32);   // center front seam
-  ctx.fillRect( -6 + swayX, -50, 1, 32);   // left panel
-  ctx.fillRect(  6 + swayX, -50, 1, 32);   // right panel
-  // Sleeve breaks at shoulder
-  ctx.fillRect(-11 + swayX, -53, 4, 1);
-  ctx.fillRect(  8 + swayX, -53, 4, 1);
+  ctx.fillRect(-1 + swayX, -40, 1, 26);
+  ctx.fillRect(-5 + swayX, -40, 1, 26);
+  ctx.fillRect( 5 + swayX, -40, 1, 26);
+  ctx.fillRect(-9 + swayX, -43, 4, 1);
+  ctx.fillRect( 6 + swayX, -43, 4, 1);
 
-  // Hands clasped/parted at chest
+  // Wide seated lap at base
+  ctx.fillStyle = '#2a1f28';
+  ctx.fillRect(-12 + swayX, -10, 24, 10);
+
+  // Neck
   ctx.fillStyle = '#d0b090';
-  if (handsClosed) {
-    ctx.fillRect(-3 + swayX, -34, 6, 4);
-  } else {
-    ctx.fillRect(-6 + swayX, -34, 4, 4);
-    ctx.fillRect( 2 + swayX, -34, 4, 4);
-  }
+  ctx.fillRect(-2 + swayX, -46, 4, 2);
 
-  // Neck stub
-  ctx.fillStyle = '#d0b090';
-  ctx.fillRect(-2 + swayX, -57, 4, 2);
-
-  // Head — slightly forward (grief)
+  // Head bowed sharply into hands
   const hx = swayX;
   ctx.fillStyle = '#d0b090';
-  ctx.fillRect(hx - 4, -58, 9, 4);   // face
-  ctx.fillRect(hx - 3, -54, 7, 2);   // chin
+  ctx.fillRect(hx - 3, -54, 7, 4);
+  ctx.fillRect(hx - 2, -50, 5, 2);
 
-  // Eyes (canonical human: cream whites + dark pupils)
-  ctx.fillStyle = '#e8e0d0';
-  ctx.fillRect(hx - 3, -57, 2, 2);
-  ctx.fillRect(hx + 1, -57, 2, 2);
+  // Hands raised, covering face (head in hands — the grief pose)
+  ctx.fillRect(hx - 6, -52, 4, 6);
+  ctx.fillRect(hx + 2, -52, 4, 6);
+  // Arms rising from lap to face
   ctx.fillStyle = '#2a1f28';
-  ctx.fillRect(hx - 2, -56, 1, 1);
-  ctx.fillRect(hx + 2, -56, 1, 1);
+  ctx.fillRect(hx - 8, -44, 4, 8);
+  ctx.fillRect(hx + 4, -44, 4, 8);
 
-  // Mouth
-  ctx.fillStyle = '#3a2018';
-  ctx.fillRect(hx - 1, -53, 3, 1);
+  // Eyes barely visible between hands (cast down)
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(hx - 2, -53, 2, 1);
+  ctx.fillRect(hx + 1, -53, 2, 1);
 
-  // KERCHIEF — the silhouette tell; drawn over head
+  // KERCHIEF — the silhouette tell; over bowed head
   ctx.fillStyle = '#8a2a2a';
-  ctx.fillRect(hx - 5, -64, 11, 2);   // brim row
-  ctx.fillRect(hx - 4, -66,  9, 2);
-  ctx.fillRect(hx - 3, -68,  7, 2);
-  ctx.fillRect(hx - 2, -70,  5, 2);
-  ctx.fillRect(hx - 1, -72,  3, 2);
-  ctx.fillRect(hx - 6, -64,  2, 8);   // left fall
-  ctx.fillRect(hx + 4, -64,  2, 8);   // right fall
+  ctx.fillRect(hx - 4, -60, 9,  2);
+  ctx.fillRect(hx - 3, -62, 7,  2);
+  ctx.fillRect(hx - 2, -64, 5,  2);
+  ctx.fillRect(hx - 1, -66, 3,  2);
+  ctx.fillRect(hx,     -68, 1,  2);
+  ctx.fillRect(hx - 5, -60, 2,  8);
+  ctx.fillRect(hx + 3, -60, 2,  8);
 
+  ctx.globalAlpha = 1;
   ctx.restore();
 }
+
 
 /* ---- Dziadek: back to camera, facing the window. Sprint 45: ported from
    gallery design colors/palette. Deep-blue wool, flat cap, quilted patches,

@@ -555,18 +555,53 @@ The omen who can be fed. Resolution: Pip feeds the Black Shuck. He does not figh
 
 ### Echo-creatures
 
+*Per-chapter roster locked Sprint 41 (2026-06-03). Confirmed from chapter outlines.*
+
+| Chapter | Echo creature(s) | Tier | Notes |
+|---|---|---|---|
+| Ch1 | **Echo-spiders** (floor skitter + bobbing ceiling danglers) | Ambient | Dark corridor. Two staging types. Float-avoidance timing hazard. |
+| Ch2 | **Echo-mice** (baseboards) | Ambient | Lower decks during wordless traversal. |
+| Ch3 | **Echo-fish** (cod, haddock, plaice) + **Echo-deer** (streets) | Visible | Fish drift mid-air (ship-side traversal); deer cross Bevois Street. |
+| Ch4 | **Echo-cats** (alley) | Visible | Stray-cat alley traversal. Pätu spooks at them. |
+| Ch5 | **Echo-rats** (lower deck) | Ambient | Stalled lower-deck passage. |
+| Ch6 | **Echo-tarsiers** (ceiling pipes) | Ambient | Pygmy tarsiers, huge reflective eyes, sequential blinking. |
+| Ch7 | **Echo-mosquitoes** (cloud swarms) | Ambient | Humid Amazon approach; swarm Pätu. |
+| Ch8 | **Urban vermin** (cockroaches, bedbugs, rats; + comedy turkey) | Ambient | Greenpoint streets. The turkey is the chapter's only dark comedy. |
+
+**Cross-chapter rule:** All echo-creatures are **warm-amber translucent** — the ship's (or environment's) residue reads as warm, never cold. They drain a small breath of strength on contact. They do not speak or acknowledge Pip. Designed individually at their chapter's commission sprint; only the echo-spider has a full gallery design as of Sprint 41.
+
+---
+
+#### Echo-spider (Ch1)
+
+**Tier:** Ambient echo-creature (with two named staging types).
+**Chapter:** Ch1 (dark corridor and stairwell).
+**Door-fraction:** 0.06–0.14 (~7–16 px). Tiny — vermin-scale.
+**Color signature:** Warm-amber translucent `#ffc868` at low alpha. Ghost-residue spider, a little see-through.
+**Silhouette tell:** Round abdomen + smaller cephalothorax, 8 legs radiating, two tiny glinting eyes.
+**Tone:** Bouncy and mischievous — not a horror spider. Warm-amber softening is what keeps it from reading as creepy.
+**Gallery design:** Approved in `character-gallery.html` (Sprint 41). See `drawEchoSpider` + `_spiderUnit`.
+**Staging types (locked Sprint 41):**
+- **Floor spiders:** skitter along baseboards in the dark corridor.
+- **Ceiling spiders:** hang from silk threads and **bob up and down** (vertical hazard). Pip floating up must time his rise between the bobbing spiders — Float is a timing choice, not a blanket "rise above everything."
+**Density:** Sparse — the corridor is unattended, not infested. One or two per staging type at most.
+
+---
+
 #### Echo-fish (cod, haddock, plaice)
 
 **Tier:** Visible echo-creature (see `03-art-and-aesthetic.md` Scale Anchor).
+**Chapter:** Ch3 (Southampton ship traversal).
 **Door-fraction:** 0.25–0.30 (~28–33 px).
 **Color signature:** Warm-amber translucent at low alpha. Fish-shaped silhouette.
-**Notes:** Echo-fish are the ghostly residue of fish that died for fish-and-chips. They drift mid-air through corridors. First seen in the wordless traversal of Ch3.
+**Notes:** Echo-fish are the ghostly residue of fish that died for fish-and-chips. They drift mid-air through lower-deck corridors.
 
 ---
 
 #### Echo-deer
 
 **Tier:** Visible echo-creature.
+**Chapter:** Ch3 (Bevois Street, Southampton).
 **Door-fraction:** 0.35–0.40 (~40–44 px).
 **Color signature:** Warm-amber translucent. Deer silhouette — recognizable as deer, recognizable as echo.
 **Notes:** Cross streets during traversal beats.
@@ -576,15 +611,16 @@ The omen who can be fed. Resolution: Pip feeds the Black Shuck. He does not figh
 #### Echo-cats
 
 **Tier:** Visible echo-creature.
+**Chapter:** Ch4 (Istanbul stray-cat alley).
 **Door-fraction:** 0.20–0.22 (~22–24 px).
 **Color signature:** Warm-amber translucent. Cat silhouette.
 **Notes:** Alley scenes, Ch4 traversal. Pätu spooks at them — they were her family once (held without saying).
 
 ---
 
-#### Ambient vermin (spiders, mice, cockroaches)
+#### Echo-mice (Ch2), Echo-rats (Ch5), Echo-tarsiers (Ch6), Echo-mosquitoes (Ch7), Urban vermin (Ch8)
 
 **Tier:** Ambient echo-creature.
-**Door-fraction:** 0.06–0.14 (~7–16 px). Tiny.
+**Door-fraction:** 0.04–0.14 (~5–16 px). Tiny.
 **Color signature:** Warm-amber translucent at very low alpha. Often barely visible.
-**Notes:** Texture, not characters. Skitter at floor level. First seen in Ch2 traversal (mice along baseboards).
+**Notes:** Each species gets its own design sprint when its chapter is built. Until then, these are ambient texture — skitter, swarm, or cling per their movement register. Design priority order: Ch2 mice (next chapter) → Ch5 rats → Ch6 tarsiers → Ch7 mosquitoes → Ch8 urban mix. See the per-chapter roster table above for assignments.

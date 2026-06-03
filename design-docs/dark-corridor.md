@@ -137,15 +137,21 @@ After Pip uses electricity on the wiring, the sconces buzz back on. The room tra
 
 The dark corridor escalates ambient wrongness. This is where the visual research tracker's echo-vermin belong (deferred from the hallway).
 
-### Echo-creatures (deferred from hallway)
+### Echo-creatures — echo-spiders only (locked Sprint 41, 2026-06-03)
 
-Per visual research, the dark corridor should feature ghost-vermin treatment:
+Ch1's echo creature is the **echo-spider** — warm-amber translucent, mischievous, bouncy, never creepy. Echo-mice and echo-bats are NOT in the Ch1 dark corridor. Mice belong to Ch2; bats are unassigned as of Sprint 41. The prior visual-research note listing all three is superseded.
 
-- **Echo-spiders along the sconces and ceiling edges** — drained-amber translucent, 10px tall. Scuttle slowly. Pip's strength reduces slightly on contact (per echo-creature canonical behavior).
-- **Echo-mice along the baseboards** — drained-amber translucent, 12px tall. Skitter in straight lines along the floor edge.
-- **Echo-bats up near the deckhead** — drained-amber translucent, 18px wingspan. Hang from the exposed pipes.
+Two staging types in the dark corridor:
 
-**Open question:** how many of each species? My read: keep it sparse — one or two of each at most, placed deliberately. The dark corridor isn't meant to feel infested; it's meant to feel unattended. The vermin are the chapter's only "small wrongness" beyond the cinematics.
+**Floor spiders:** One or two spiders skittering along the baseboards at floor level. Low-to-floor, scuttle with a start-stop rhythm. Drains a small breath of strength on contact.
+
+**Ceiling danglers:** One or two spiders hanging from silk threads attached to the overhead pipes, **bobbing up and down on their threads**. This makes Float a timing choice rather than a blanket "rise above everything" — Pip floating up must time his rise between the bobbing spiders, threading the gaps. The bobbing phases should be staggered so the spiders don't sync up (mischievously independent). Drains strength if Pip floats into one.
+
+**Density:** Sparse — one or two per staging type at most, placed deliberately. The dark corridor is unattended, not infested. The spiders are the chapter's only ambient wrongness; they should read as a discovery, not a swarm. *(OQ #6 resolved here.)*
+
+**Float-timing interaction:** The ceiling danglers specifically create the hazard the float ability is designed to navigate. The player learns Float in this room (at the broken glass), then immediately has to use it to avoid bobbing ceiling hazards. This is the chapter's teaching moment for Float as a *timing* skill, not just "hold Space to rise above things."
+
+**Gallery design:** Approved `character-gallery.html` (Sprint 41). Both staging types are shown in the gallery cell. See `drawEchoSpider` / `_spiderUnit`. Port to the game draw code is a later sprint (pairs with the dark-corridor reachability and lighting work).
 
 ### The flickering working sconce (pre-puzzle)
 
@@ -210,7 +216,7 @@ From `design-docs/visual-research-tracker.md` (Ch1 section):
 
 5. **Janitor's muttered Norwegian line.** Currently not written. Suggested: *"Hvor i alle dager…"* ("Where in the world…") or similar under-breath confusion. Native speakers can refine. **Flag for `dialogue.md`.**
 
-6. **Echo-vermin density.** How many spiders/mice/bats? My read: sparse — one or two of each. The dark corridor should feel unattended, not infested. Settle in art-checklist.md.
+6. ~~**Echo-vermin density.**~~ **Resolved Sprint 41 (2026-06-03):** Echo-spiders only (no mice, no bats). Density: sparse — one or two floor skitters, one or two ceiling danglers. Resolved in the Ambient life section above.
 
 7. **Audio support for dripping water.** Atmospheric audio cue isn't wired. Flag for sound-design pass.
 

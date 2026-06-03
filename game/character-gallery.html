@@ -1433,6 +1433,95 @@ function drawDoctor(ctx, cx, floor, t, speaking) {
 }
 
 /* =============================================================
+   ⑪ ECHO-SPIDER — Ch1's echo creature. Door-fraction 0.06–0.14.
+   Sprint 41. Warm-amber translucent ghost-residue spider; bouncy
+   and mischievous, never horror. Two staging types in one cell:
+   ceiling danglers (bobbing on threads) + floor skitter.
+   Gallery-first design — port to game separately (float-avoidance
+   sprint will wire the in-game hazard).
+   ============================================================= */
+
+/* Render a single spider body + legs at (cx, cy) with abdomen radius r.
+   phase: offset for leg wave so multi-spider poses look independent. */
+function _spiderUnit(ctx, cx, cy, r, t, phase) {
+  cx = Math.round(cx); cy = Math.round(cy);
+
+  // Warm-amber glow halo — the echo-creature signature
+  const gl = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 3.6);
+  gl.addColorStop(0, 'rgba(255,200,70,0.34)');
+  gl.addColorStop(1, 'rgba(255,200,70,0)');
+  ctx.fillStyle = gl;
+  ctx.fillRect(cx - r * 4, cy - r * 4, r * 8, r * 8);
+
+  // 8 legs radiating from a junction between the two body segments.
+  // Even angles shifted 22° so no leg points straight down (more natural).
+  ctx.strokeStyle = 'rgba(255,183,50,0.72)';
+  ctx.lineWidth   = 1;
+  for (let i = 0; i < 8; i++) {
+    const baseA  = (i * 45 + 22) * Math.PI / 180;
+    const wave   = Math.sin(t * 3.0 + phase + i * 0.85) * 0.12;
+    const legLen = r * 1.9;
+    const lx = cx + Math.cos(baseA + wave) * legLen;
+    const ly = cy + Math.sin(baseA + wave) * legLen * 0.78;  // slightly foreshortened vertically
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(baseA) * r * 0.6, cy + Math.sin(baseA) * r * 0.55);
+    ctx.lineTo(Math.round(lx), Math.round(ly));
+    ctx.stroke();
+  }
+
+  // Abdomen (larger, warmer amber)
+  ctx.fillStyle = 'rgba(255,192,58,0.86)';
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+
+  // Cephalothorax (smaller, slightly lighter — the front segment)
+  const cr  = Math.round(r * 0.64);
+  const hcy = cy - r - cr + 1;  // just above abdomen, 1px overlap
+  ctx.fillStyle = 'rgba(255,214,92,0.90)';
+  ctx.beginPath(); ctx.arc(cx, hcy, cr, 0, Math.PI * 2); ctx.fill();
+
+  // Specular sheen on cephalothorax (keeps it from reading flat)
+  ctx.fillStyle = 'rgba(255,244,168,0.40)';
+  ctx.beginPath(); ctx.arc(cx - cr * 0.22, hcy - cr * 0.28, cr * 0.38, 0, Math.PI * 2); ctx.fill();
+
+  // Eyes — two tiny warm-white glints. The mischief lives here.
+  ctx.fillStyle = 'rgba(255,250,190,0.98)';
+  ctx.fillRect(cx - 1, hcy - 1, 1, 1);
+  ctx.fillRect(cx + 1, hcy - 1, 1, 1);
+}
+
+function drawEchoSpider(ctx, cx, floor, t) {
+  /* Two staging types:
+     TOP — ceiling danglers on silk threads (bob in opposite phases —
+           the timing hazard when Pip tries to float past).
+     BOTTOM — floor skitter (ambient baseboard presence). */
+
+  // ── CEILING DANGLERS ──────────────────────────────────────────
+  const h1x = cx - 17, h1y = 26;   // thread anchor 1
+  const h2x = cx + 11, h2y = 21;   // thread anchor 2
+
+  // Out-of-phase bobs — intentionally staggered so they never sync
+  const bob1 = Math.sin(t * 2.05) * 12;
+  const bob2 = Math.sin(t * 1.60 + 2.1) * 10;
+
+  const sp1y = h1y + 40 + bob1;    // spider 1 body-centre y
+  const sp2y = h2y + 46 + bob2;    // spider 2 body-centre y
+
+  // Silk threads (very fine, translucent amber)
+  ctx.strokeStyle = 'rgba(255,215,100,0.38)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath(); ctx.moveTo(h1x, h1y); ctx.lineTo(h1x, Math.round(sp1y - 8)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(h2x, h2y); ctx.lineTo(h2x, Math.round(sp2y - 6)); ctx.stroke();
+
+  _spiderUnit(ctx, h1x, sp1y, 7, t, 0.0);   // larger dangler
+  _spiderUnit(ctx, h2x, sp2y, 5, t, 1.9);   // smaller dangler, different bob-phase
+
+  // ── FLOOR SKITTER ─────────────────────────────────────────────
+  // Horizontal sway suggests the darting, stop-start skitter along baseboards.
+  const skX = cx + Math.round(Math.sin(t * 2.4) * 5);
+  _spiderUnit(ctx, skX, floor - 7, 5, t, 3.4);
+}
+
+/* =============================================================
    PLACEHOLDER CELL RENDERER
    Shows character name, silhouette tells, color sig, door-fraction.
    ============================================================= */
@@ -1753,11 +1842,22 @@ const CHARACTERS = [
   },
 
   // ── ECHO-CREATURES ─────────────────────────────────────────
+  // Per-chapter roster (locked Sprint 41):
+  // Ch1=spiders, Ch2=mice, Ch3=fish+deer, Ch4=cats, Ch5=rats, Ch6=tarsiers, Ch7=mosquitoes, Ch8=urban vermin
   {
-    id: 'ambient-vermin', name: 'Ambient vermin', chapterTag: 'Ch 2, 5, 7–8', section: 'echoes', designed: false,
+    id: 'echo-spider', name: 'Echo-spider', chapterTag: 'Ch 1', section: 'echoes', designed: true,
+    colorSig: 'warm-amber translucent / mischievous bob', fracLabel: '0.06–0.14',
+    drawFn: (ctx, t, _speaking) => {
+      drawCellBackground(ctx);
+      drawEchoSpider(ctx, CHAR_CX, FLOOR_Y, t);
+    },
+    canSpeak: false,
+  },
+  {
+    id: 'ambient-vermin', name: 'Ambient vermin', chapterTag: 'Ch 2, 5, 8', section: 'echoes', designed: false,
     frac: 0.10, fracLabel: '0.06–0.14',
     colorSig: 'warm-amber very low alpha',
-    tells: 'tiny; spiders/mice/cockroaches at floor level',
+    tells: 'mice (Ch2 baseboards), rats (Ch5 lower deck), cockroaches/bedbugs/rats/turkey (Ch8 urban)',
   },
   {
     id: 'echo-mosquitoes', name: 'Echo-mosquitoes', chapterTag: 'Ch 7, 8', section: 'echoes', designed: false,

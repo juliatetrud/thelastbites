@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<!--
+  demos/mirror-craft-demo.html
+  Sprint 48: Mirror-Scene Craft Demo — The Last Bites
+
+  Sandboxed standalone demo. Does NOT import from or modify game/index.html.
+  Single file, vanilla JS, no dependencies except Google Fonts CDN.
+
+  Scene: Ch1 mirror cinematic (Register B close-up) — Pip's human face
+  melts into his ghost reflection, framed by a slice of cabin wall.
+  Demonstrates doc-11 techniques: clusters, dithering, selective AA,
+  noise texture, single-warm-light modeling.
+
+  Controls: R = replay melt | L = toggle technique legend
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Last Bites — Mirror Craft Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: #000;
+  font-family: 'Cormorant Garamond', serif;
+  overflow: hidden;
+  user-select: none;
+}
+
+#wrap {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#stage {
+  width: min(96vw, calc(96vh * 16/9));
+  height: min(96vh, calc(96vw * 9/16));
+  position: relative;
+}
+
+canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#controls {
+  font-family: 'Special Elite', monospace;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: #5a5040;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* Technique legend overlay */
+#legend {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(8, 10, 22, 0.88);
+  border: 1px solid rgba(100, 130, 200, 0.30);
+  padding: 10px 14px;
+  font-family: 'Special Elite', monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: #8a9ab8;
+  text-transform: uppercase;
+  line-height: 1.9;
+  max-width: 200px;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+#legend.hidden { opacity: 0; }
+
+#legend h3 {
+  color: #ffc868;
+  font-size: 9px;
+  margin-bottom: 6px;
+  letter-spacing: 0.3em;
+}
+
+#legend .tag {
+  display: inline-block;
+  color: #a8c0ff;
+  margin-right: 4px;
+}
+
+#legend .desc {
+  color: #5a6878;
+}
+</style>
+</head>
+<body>
+
+<div id="wrap">
+  <div id="stage">
+    <canvas id="c" width="480" height="270"></canvas>
+
+    <div id="legend">
+      <h3>Techniques · Doc 11</h3>
+      <div><span class="tag">①</span><span class="desc">CLUSTERS — face light/shadow regions</span></div>
+      <div><span class="tag">②</span><span class="desc">DITHERING — corner shadow gradient</span></div>
+      <div><span class="tag">③</span><span class="desc">SELECTIVE AA — frame top curve</span></div>
+      <div><span class="tag">④</span><span class="desc">NOISE TEXTURE — wall + mirror glass</span></div>
+      <div><span class="tag">⑤</span><span class="desc">SINGLE WARM LIGHT — lamp upper-left</span></div>
+      <div style="margin-top:8px; color:#3a4050">L · toggle legend &nbsp; R · replay</div>
+    </div>
+  </div>
+  <div id="controls">Mirror Craft Demo · 480×270 · ctx.fillRect only · R replay · L legend</div>
+</div>
+
+<script>
+'use strict';
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+const W = 480, H = 270;
+
+// ================================================================
+// PALETTE — locked tokens from 03-art-and-aesthetic.md
+// These are the ONLY colors used in this demo. No invented colors.
+// ================================================================
+const C = {
+  bgDeep:       '#0e1a3a',
+  bgBase:       '#1c2858',
+  bgShadow:     '#5a4878',
+  floor:        '#1a2848',
+  floorEdge:    '#0a1428',
+  warmAmber:    '#ffc868',
+  warmDeep:     '#c87830',
+  warmGlow:     '#ffe088',
+  pipBody:      '#f0f8ff',
+  pipBodyDeep:  '#c8d8ff',
+  pipApron:     '#e8d8b0',    // used as warm flesh base
+  pipApronDark: '#a89868',    // warm flesh shadow
+  pipHair:      '#4a3020',
+  pipEye:       '#1a1428',
+  pipBlush:     '#ff9888',
+  pipGlow:      '#a8c0ff',
+};
+
+// Hex → [r, g, b] helper for blitting noise texture
+function hexToRgb(h) {
+  const n = parseInt(h.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+// ================================================================
+// HELPERS
+// ================================================================
+function px(x, y, c)         { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), 1, 1); }
+function rect(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), w, h); }
+
+// ================================================================
+// DOC-11 PRIMITIVE 1: BAYER ORDERED DITHERING
+// Technique 2 (dithering) — for graded shadow, no extra palette colors.
+// BAYER4[y % 4][x % 4] gives threshold 0-15; divide by 16 → 0..1.
+// If normalized shadow intensity > threshold → use darker color.
+// ================================================================
+const BAYER4 = [
+  [ 0,  8,  2, 10],
+  [12,  4, 14,  6],
+  [ 3, 11,  1,  9],
+  [15,  7, 13,  5],
+];
+
+/**
+ * ditherFill — ordered Bayer dither blending colorA→colorB.
+ * @param intensity  0 = all colorA, 1 = all colorB (float per pixel possible
+ *                   by passing a function (x,y)→0..1 for gradients).
+ */
+function ditherFill(x, y, w, h, colorA, colorB, intensityFn) {
+  for (let py = y; py < y + h; py++) {
+    for (let px2 = x; px2 < x + w; px2++) {
+      const threshold = BAYER4[py & 3][px2 & 3] / 16;
+      const t = typeof intensityFn === 'function' ? intensityFn(px2, py) : intensityFn;
+      ctx.fillStyle = t > threshold ? colorB : colorA;
+      ctx.fillRect(px2, py, 1, 1);
+    }
+  }
+}
+
+// ================================================================
+// DOC-11 PRIMITIVE 2: NOISE TEXTURE (generated once, cached, blitted)
+// Technique 4 — palette-quantized offscreen canvas; never re-generated.
+// Uses deterministic hash (no Math.random) so it's stable across frames.
+// ================================================================
+let _noiseCanvas  = null;
+let _noiseCtx     = null;
+const NOISE_W = 96, NOISE_H = 64;
+
+function _hash(x, y) {
+  // Deterministic pseudo-noise — stable per pixel, no randomness each frame
+  const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+/**
+ * makeNoiseTexture — builds and caches the noise offscreen canvas.
+ * Call once at startup. Quantizes to a small palette of bg tones.
+ */
+function makeNoiseTexture() {
+  _noiseCanvas = document.createElement('canvas');
+  _noiseCanvas.width  = NOISE_W;
+  _noiseCanvas.height = NOISE_H;
+  _noiseCtx = _noiseCanvas.getContext('2d');
+
+  // Noise palette: three tones quantized from bgDeep/bgBase/bgShadow
+  const noisePalette = [
+    hexToRgb(C.bgDeep),    // darkest
+    hexToRgb(C.bgBase),    // mid
+    hexToRgb(C.bgShadow),  // slight purple-grey
+  ];
+
+  const imgData = _noiseCtx.createImageData(NOISE_W, NOISE_H);
+  for (let py = 0; py < NOISE_H; py++) {
+    for (let px2 = 0; px2 < NOISE_W; px2++) {
+      // Two octaves of deterministic noise → palette-quantize
+      const v = _hash(px2, py) * 0.65 + _hash(px2 * 2.3, py * 1.7) * 0.35;
+      const idx = v < 0.42 ? 0 : v < 0.72 ? 1 : 2;
+      const [r, g, b] = noisePalette[idx];
+      const i = (py * NOISE_W + px2) * 4;
+      imgData.data[i]   = r;
+      imgData.data[i+1] = g;
+      imgData.data[i+2] = b;
+      imgData.data[i+3] = 255;
+    }
+  }
+  _noiseCtx.putImageData(imgData, 0, 0);
+}
+
+/**
+ * blitNoise — tile the cached noise onto a region of the main canvas.
+ * @param alpha  0..1 overlay opacity
+ */
+function blitNoise(x, y, w, h, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  // Tile the NOISE_W × NOISE_H pattern across the region
+  for (let ty = y; ty < y + h; ty += NOISE_H) {
+    for (let tx = x; tx < x + w; tx += NOISE_W) {
+      ctx.drawImage(_noiseCanvas, tx, ty);
+    }
+  }
+  ctx.restore();
+}
+
+// ================================================================
+// SCENE GEOMETRY — mirror frame and glass bounds
+// ================================================================
+// Mirror frame outer: centered horizontally, nearly full height
+const MFX = 162, MFY = 6, MFW = 156, MFH = 258;
+// Glass interior (inset from frame)
+const MGX = MFX + 12, MGY = MFY + 12, MGW = MFW - 24, MGH = MFH - 24;
+// Face center inside glass
+const FCX = MGX + MGW / 2;  // horizontal center of glass
+const FCY = MGY + MGH * 0.40; // ~40% down from glass top
+
+// ================================================================
+// COMPONENT: CABIN WALL SLICE (left + right panels)
+// Uses: Cluster shading (panel seams), Noise texture, Dithering (shadow)
+// ================================================================
+function drawCabinWall() {
+  // Base wall fill — cool moonlit blue
+  rect(0, 0, W, H, C.bgBase);
+
+  // Vertical riveted wall panels — like drawShipPanel in the game
+  const panelW = 80;
+  for (let px2 = 0; px2 < W; px2 += panelW) {
+    // Skip the mirror area
+    if (px2 + panelW > MFX && px2 < MFX + MFW) continue;
+    const pAlpha = 0.18;
+    ctx.save();
+    ctx.globalAlpha = pAlpha;
+    ctx.strokeStyle = C.bgShadow;
+    ctx.lineWidth   = 1;
+    ctx.strokeRect(px2 + 0.5, 4.5, panelW - 1, H - 10);
+    ctx.restore();
+    // Rivet dots at corners
+    for (const [rx, ry] of [[px2+6, 10],[px2+panelW-8, 10],[px2+6, H-14],[px2+panelW-8, H-14]]) {
+      if (rx > MFX - 4 && rx < MFX + MFW + 4) continue;
+      ctx.save(); ctx.globalAlpha = 0.28; px(rx, ry, C.bgShadow); ctx.restore();
+    }
+  }
+
+  // Noise texture overlay on wall sections (Technique 4 — doc-11)
+  blitNoise(0,         0, MFX,       H, 0.18);
+  blitNoise(MFX + MFW, 0, W - MFX - MFW, H, 0.18);
+
+  // ── DITHERING (Technique 2) ─────────────────────────────────
+  // Deep shadow in the right wall, furthest from the lamp.
+  // The shadow intensity increases with x and y (away from lamp at upper-left).
+  const shadowX = MFX + MFW, shadowW = W - shadowX;
+  if (shadowW > 0) {
+    ditherFill(shadowX, 0, shadowW, H, C.bgBase, C.bgDeep, (px2, py) => {
+      // Shadow strongest at far-right lower corner, weakest at near-left upper
+      const tx = (px2 - shadowX) / shadowW;
+      const ty = py / H;
+      return Math.min(1, (tx * 0.6 + ty * 0.4) * 0.95);
+    });
+  }
+
+  // Lighter dither on left wall near top (warm light reaches here)
+  ditherFill(0, H * 0.5, MFX, H * 0.5, C.bgBase, C.bgDeep, (px2, py) => {
+    return Math.min(1, (1 - px2 / MFX) * 0.4 + (py - H*0.5) / (H*0.5) * 0.3);
+  });
+
+  // Floor band
+  const floorY = H - 20;
+  const floorGrad = ctx.createLinearGradient(0, floorY, 0, H);
+  floorGrad.addColorStop(0, C.floor);
+  floorGrad.addColorStop(1, C.floorEdge);
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, floorY, W, 20);
+  // Floor-wall seam
+  rect(0, floorY, W, 1, C.floorEdge);
+}
+
+// ================================================================
+// COMPONENT: LAMP (single warm light, upper-left)
+// Uses: Single-warm-light modeling (Technique 5)
+// ================================================================
+function drawLamp() {
+  const lx = 42, ly = 22;  // lamp center
+
+  // Radial warm-amber glow — the dominant light source
+  const glow = ctx.createRadialGradient(lx, ly, 0, lx, ly, 180);
+  glow.addColorStop(0,   'rgba(255,224,136,0.28)');
+  glow.addColorStop(0.25,'rgba(255,200,104,0.16)');
+  glow.addColorStop(0.6, 'rgba(200,120,48,0.06)');
+  glow.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // Lamp wire from ceiling
+  rect(lx, 0, 1, ly - 4, C.pipHair);
+  // Lamp shade (small trapezoid, warm amber)
+  ctx.fillStyle = C.warmAmber;
+  ctx.beginPath();
+  ctx.moveTo(lx - 10, ly - 4); ctx.lineTo(lx + 10, ly - 4);
+  ctx.lineTo(lx + 7, ly + 10); ctx.lineTo(lx - 7, ly + 10);
+  ctx.closePath(); ctx.fill();
+  // Lamp interior bright spot
+  ctx.save(); ctx.globalAlpha = 0.6;
+  rect(lx - 4, ly, 8, 3, C.warmGlow);
+  ctx.restore();
+  // Lamp cord knot / fixture top
+  rect(lx - 2, ly - 6, 4, 3, C.warmDeep);
+}
+
+// ================================================================
+// COMPONENT: MIRROR FRAME
+// Uses: Clusters (frame shading), Selective AA (top curve, labeled)
+// ================================================================
+function drawMirrorFrame() {
+  // Frame body — dark wood cluster: base dark, highlight near lamp
+  rect(MFX, MFY, MFW, MFH, C.pipHair);
+
+  // Cluster 1: warm highlight on left/top edge (catches lamp light)
+  // This is a deliberate cluster, not scatter — a connected band
+  rect(MFX, MFY, MFW, 4, C.warmDeep);       // top highlight cluster
+  rect(MFX, MFY, 4, MFH, C.warmDeep);        // left highlight cluster
+  ctx.save(); ctx.globalAlpha = 0.35;
+  rect(MFX + 2, MFY + 2, MFW - 4, 2, C.warmAmber); // inner glint
+  ctx.restore();
+
+  // Cluster 2: shadow on right/bottom edge (away from lamp)
+  rect(MFX + MFW - 4, MFY, 4, MFH, C.bgDeep);   // right shadow cluster
+  rect(MFX, MFY + MFH - 4, MFW, 4, C.bgDeep);   // bottom shadow cluster
+
+  // Brass corner ornaments (warm amber — locked palette)
+  for (const [cx2, cy2] of [
+    [MFX + 2, MFY + 2], [MFX + MFW - 10, MFY + 2],
+    [MFX + 2, MFY + MFH - 10], [MFX + MFW - 10, MFY + MFH - 10]
+  ]) {
+    rect(cx2, cy2, 8, 8, C.warmAmber);
+    rect(cx2 + 1, cy2 + 1, 6, 6, C.warmGlow);
+    rect(cx2 + 2, cy2 + 2, 4, 4, C.warmAmber);
+  }
+
+  // ── SELECTIVE AA (Technique 3) ──────────────────────────────
+  // Hand-placed intermediate pixels at the top-left and top-right corners
+  // of the frame — the only curves that benefit from AA at this scale.
+  // Each pixel is individually commented as "selective AA".
+  const aaColor = C.warmDeep; // intermediate between frame and wall
+  // Top-left corner softening
+  px(MFX,     MFY - 1, aaColor);    // selective AA — top-left
+  px(MFX - 1, MFY,     aaColor);    // selective AA — left of top-left
+  px(MFX + 1, MFY - 1, aaColor);    // selective AA
+  // Top-right corner softening
+  px(MFX + MFW - 1, MFY - 1, aaColor);  // selective AA — top-right
+  px(MFX + MFW,     MFY,     aaColor);  // selective AA
+
+  // Glass surround (thin inner bevel)
+  ctx.strokeStyle = 'rgba(200,180,100,0.40)';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(MGX - 1.5, MGY - 1.5, MGW + 3, MGH + 3);
+}
+
+// ================================================================
+// COMPONENT: MIRROR GLASS INTERIOR
+// The glass before/during the melt shows the reflective surface + face.
+// ================================================================
+function drawMirrorGlass(t) {
+  // Glass dark base — slightly tinted cool-blue (reflective)
+  const glassGrad = ctx.createLinearGradient(MGX, MGY, MGX + MGW, MGY + MGH);
+  glassGrad.addColorStop(0,   C.floor);
+  glassGrad.addColorStop(0.4, C.bgBase);
+  glassGrad.addColorStop(1,   C.bgDeep);
+  ctx.fillStyle = glassGrad;
+  ctx.fillRect(MGX, MGY, MGW, MGH);
+
+  // Noise texture over glass (Technique 4 — doc-11)
+  // Gives the mirror glass a subtle non-flat surface texture.
+  blitNoise(MGX, MGY, MGW, MGH, 0.12);
+
+  // Faint lamp reflection in glass upper-left
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  const refGlow = ctx.createRadialGradient(MGX + 25, MGY + 20, 0, MGX + 25, MGY + 20, 55);
+  refGlow.addColorStop(0, C.warmGlow);
+  refGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = refGlow;
+  ctx.fillRect(MGX, MGY, MGW, MGH);
+  ctx.restore();
+
+  // Clip all face content to the glass interior
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(MGX, MGY, MGW, MGH);
+  ctx.clip();
+
+  // ── HUMAN FACE (melts downward as t increases) ───────────────
+  // meltT: face fade starts at t=0.25, complete at t=1.0
+  const faceAlpha = Math.max(0, 1 - Math.max(0, t - 0.20) / 0.80);
+  const drip      = t * 72;  // max 72px drop
+
+  if (faceAlpha > 0.01) {
+    ctx.save();
+    ctx.globalAlpha = faceAlpha;
+    drawHumanFace(FCX, FCY, drip);
+    ctx.restore();
+  }
+
+  // ── GHOST FACE (emerges as t increases) ──────────────────────
+  const ghostAlpha = Math.min(1, Math.max(0, t - 0.18) / 0.82);
+  if (ghostAlpha > 0.01) {
+    ctx.save();
+    ctx.globalAlpha = ghostAlpha;
+    drawGhostFace(FCX, FCY);
+    ctx.restore();
+  }
+
+  ctx.restore(); // unclip
+}
+
+// ================================================================
+// HUMAN PIP FACE (Register-B close-up, pre-melt)
+// Uses: Clusters (highlight / base / shadow regions), not scatter
+// drip controls how far each feature has sagged downward
+// ================================================================
+function drawHumanFace(cx, cy, drip) {
+  // ── Cluster 1: HAIR (dark, top of head) ──────────────────────
+  // Hair is a connected dark cluster — not scattered pixels
+  const hairDrip = drip * 0.15;  // hair is heavy, drips slowest
+  ctx.fillStyle = C.pipHair;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - 56 + hairDrip, 42, 28, 0, Math.PI, 0, false);
+  ctx.fill();
+  // Hair sideburns / temples
+  rect(cx - 42, cy - 56 + hairDrip, 8, 22, C.pipHair);
+  rect(cx + 34, cy - 56 + hairDrip, 8, 22, C.pipHair);
+
+  // ── Cluster 2: FACE BASE (warm flesh tone) ───────────────────
+  const faceDrip = drip * 0.45;
+  ctx.fillStyle = C.pipApron;  // warm cream = face base (locked palette)
+  ctx.beginPath();
+  ctx.ellipse(cx, cy - 10 + faceDrip, 44, 58, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ── Cluster 3: HIGHLIGHT (lamp-side — upper left of face) ────
+  // A single deliberate highlight cluster, not scattered dots
+  ctx.save();
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = C.warmAmber;  // warm lamplight on face
+  ctx.beginPath();
+  ctx.ellipse(cx - 14, cy - 26 + faceDrip * 0.8, 22, 28, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // ── Cluster 4: SHADOW (away from lamp — right side of face) ──
+  ctx.save();
+  ctx.globalAlpha = 0.42;
+  ctx.fillStyle = C.bgShadow;  // cool shadow (locked palette)
+  ctx.beginPath();
+  ctx.ellipse(cx + 18, cy - 6 + faceDrip, 20, 38, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // ── Eyes (drip faster than face center) ──────────────────────
+  const eyeDrip = drip * 0.88;
+  // Eye sockets — dark hollow
+  ctx.fillStyle = C.pipEye;
+  ctx.beginPath(); ctx.ellipse(cx - 14, cy - 34 + eyeDrip, 8, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx + 14, cy - 34 + eyeDrip, 8, 7, 0, 0, Math.PI * 2); ctx.fill();
+  // Eye glints (pinprick highlights per the cinematic spec)
+  ctx.save(); ctx.globalAlpha = 0.85;
+  ctx.fillStyle = C.warmGlow;
+  px(cx - 16, cy - 37 + eyeDrip, C.warmGlow); // selective AA-adjacent — tiny warm glint
+  px(cx + 12, cy - 37 + eyeDrip, C.warmGlow);
+  ctx.restore();
+
+  // ── Nose (drips faster) ──────────────────────────────────────
+  const noseDrip = drip * 1.10;
+  ctx.save(); ctx.globalAlpha = 0.70;
+  ctx.fillStyle = C.pipApronDark;
+  ctx.beginPath();
+  ctx.moveTo(cx - 4, cy - 16 + noseDrip);
+  ctx.lineTo(cx + 4, cy - 16 + noseDrip);
+  ctx.lineTo(cx,     cy - 10 + noseDrip);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  // ── Mouth (fastest drip) ─────────────────────────────────────
+  const mouthDrip = drip * 1.35;
+  ctx.save(); ctx.globalAlpha = 0.80;
+  ctx.fillStyle = C.warmDeep;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + 10 + mouthDrip, 10, 4, 0, 0, Math.PI);
+  ctx.fill();
+  ctx.restore();
+
+  // ── Apron bib (bottom of frame — identity marker) ────────────
+  const apronDrip = drip * 0.55;
+  const apronY = cy + 38 + apronDrip;
+  if (apronY < FCY + MGH / 2 + 20) {
+    rect(cx - 22, apronY, 44, 18, C.pipApron);
+    rect(cx - 20, apronY + 1, 40, 16, C.pipApronDark);
+    rect(cx - 18, apronY + 3, 36, 10, C.pipApron);
+  }
+
+  // ── Drip streaks during melt ──────────────────────────────────
+  // These emerge as drip increases — liquid strands, warm flesh tone
+  if (drip > 8) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, drip / 40) * 0.75;
+    ctx.strokeStyle = C.pipApron;
+    ctx.lineWidth = 2;
+    const dripSeeds = [cx - 18, cx - 7, cx, cx + 9, cx + 19];
+    dripSeeds.forEach((sx, i) => {
+      const dripLen = drip * (0.5 + (i % 3) * 0.22);
+      ctx.beginPath();
+      ctx.moveTo(sx, cy + 15 + faceDrip * 0.4);
+      ctx.lineTo(sx + (i % 2 === 0 ? 1 : -1.5), cy + 15 + faceDrip * 0.4 + dripLen);
+      ctx.stroke();
+    });
+    ctx.lineWidth = 1;
+    ctx.restore();
+  }
+}
+
+// ================================================================
+// GHOST PIP FACE (present-day Pip, revealed as melt completes)
+// Uses: Clusters (ghost form shaping), cool glow
+// No hair, no apron — per the register spec.
+// ================================================================
+function drawGhostFace(cx, cy) {
+  // Cool glow around the ghost form (spirit-pip signature glow)
+  ctx.save();
+  const ghostGlow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 65);
+  ghostGlow.addColorStop(0,   'rgba(168,192,255,0.22)');
+  ghostGlow.addColorStop(0.5, 'rgba(168,192,255,0.08)');
+  ghostGlow.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = ghostGlow;
+  ctx.fillRect(MGX, MGY, MGW, MGH);
+  ctx.restore();
+
+  // Ghost form: round bald head + body + three wavy bumps at base
+  ctx.shadowColor = 'rgba(168,192,255,0.55)';
+  ctx.shadowBlur  = 10;
+  ctx.fillStyle   = C.pipBody;  // cool ghost white
+  ctx.beginPath();
+  // Bald head arc (round top, bald — no hair)
+  ctx.arc(cx, cy - 20, 40, Math.PI, 0);
+  // Body sides down
+  ctx.lineTo(cx + 40, cy + 30);
+  // Three wavy bumps at bottom (classic ghost silhouette)
+  ctx.quadraticCurveTo(cx + 28, cy + 46, cx + 14, cy + 30);
+  ctx.quadraticCurveTo(cx +  2, cy + 46, cx - 14, cy + 30);
+  ctx.quadraticCurveTo(cx - 28, cy + 46, cx - 40, cy + 30);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Subtle depth — darker cluster on right (away from lamp)
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = C.pipBodyDeep;
+  ctx.beginPath();
+  ctx.ellipse(cx + 16, cy - 8, 22, 36, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Two dark eye-dots — the only facial features (per register spec)
+  ctx.fillStyle = C.pipEye;
+  ctx.beginPath(); ctx.arc(cx - 11, cy - 28, 4.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx + 11, cy - 28, 4.5, 0, Math.PI * 2); ctx.fill();
+
+  // Pinprick cool highlights in eye sockets (per cinematic spec: "sunken eye sockets with pinprick highlights")
+  ctx.fillStyle = C.pipGlow;
+  px(cx - 12, cy - 30, C.pipGlow);  // left eye glint
+  px(cx + 10, cy - 30, C.pipGlow);  // right eye glint
+}
+
+// ================================================================
+// FULL SCENE DRAW
+// ================================================================
+function drawScene(t) {
+  drawCabinWall();
+  drawLamp();
+  drawMirrorFrame();
+  drawMirrorGlass(t);
+}
+
+// ================================================================
+// ANIMATION
+// ================================================================
+const MELT_DUR = 2200;  // ms — per Sprint 11 "~2s"
+let startTime  = null;
+
+function replay() { startTime = null; }
+
+function loop(now) {
+  if (startTime === null) startTime = now;
+  const elapsed = now - startTime;
+  // t: 0→1 over MELT_DUR, then holds at 1
+  const t = Math.min(1, elapsed / MELT_DUR);
+  drawScene(t);
+  requestAnimationFrame(loop);
+}
+
+// ================================================================
+// CONTROLS
+// ================================================================
+const legendEl = document.getElementById('legend');
+let legendVisible = true;
+
+function toggleLegend() {
+  legendVisible = !legendVisible;
+  legendEl.classList.toggle('hidden', !legendVisible);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'r' || e.key === 'R') replay();
+  if (e.key === 'l' || e.key === 'L') toggleLegend();
+});
+
+// ================================================================
+// STARTUP
+// ================================================================
+makeNoiseTexture();   // generate noise cache once
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

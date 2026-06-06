@@ -7,10 +7,11 @@
 
 <!--
   THE LAST BITES — Environment Gallery
-  Sprint B: Gallery Scaffold
+  Sprint B: Gallery Scaffold  |  Sprint C: Ch1 Art Pass (2026-06-06)
 
   One cell per ROOM / BG / PROP entry from design-docs/art-asset-master-list.md.
-  All cells are designed:false placeholders — no draw functions.
+  Sprint C: All 30 Ch1 cells drawn (6 ROOM, 1 BG, 23 PROP). Render loop added.
+  Ch2–Ch8 remain designed:false placeholders.
   Grouped by chapter (Ch1–Ch8); within each chapter: ROOM → BG → PROP.
   Cross-chapter assets appear ONCE under their first-appearance chapter with
   also-appears notes on the cell.
@@ -240,9 +241,9 @@ html, body {
 <div id="header">
   <h1>The Last Bites — Environment Gallery</h1>
   <p>All ROOM, BG, and PROP assets from the art-asset master list.
-     One placeholder cell per entry. Grouped by chapter; within each chapter: ROOM → BG → PROP.
+     Grouped by chapter; within each chapter: ROOM → BG → PROP.
      Cross-chapter assets appear once (first chapter); also-appears chapters shown on cell.
-     Every cell is a placeholder — no art yet. Sprint B scaffold.</p>
+     Sprint C: all 30 Ch1 cells drawn (6 ROOM, 1 BG, 23 PROP). Ch2–Ch8 remain placeholders.</p>
 
   <div class="legend">
     <div class="legend-item"><div class="legend-swatch swatch-room"></div> Room</div>
@@ -430,6 +431,839 @@ const CELL_W = 200;
 const CELL_H = 113;
 
 /* =============================================================
+   PALETTE — locked tokens (mirrors character-gallery.html)
+   ============================================================= */
+const P = {
+  bgDeep:    '#0e1a3a', bgBase:    '#1c2858', bgShadow:  '#5a4878',
+  floor:     '#1a2848', floorEdge: '#0a1428',
+  warmDeep:  '#2a1408', warmBase:  '#5a2c18', warmFloor: '#3a1c0a',
+  pipBody:   '#f0f8ff', pipGlow:   '#a8c0ff',
+  brass:     '#7a5820', brassHi:   '#c8a864', brassEdge: '#604820',
+  wood:      '#3a2c14', woodDark:  '#2a1c0c', woodHi:    'rgba(200,140,60,0.15)',
+  carpet:    '#7a1830', carpetEdge:'#5a1020',
+  wall:      '#1a2848', wallHi:    'rgba(50,70,120,0.22)',
+  creamWarm: '#e8d8b0', creamDeep: '#c8b890',
+};
+
+/* --- micro helpers --- */
+function _r(ctx, x, y, w, h, color) {
+  ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), w, h);
+}
+const FY = 100; // floor y in 200×113 cell space
+
+function _cellBg(ctx, opts) {
+  const g = ctx.createLinearGradient(0, 0, 0, FY);
+  g.addColorStop(0,   opts.sky1 || P.bgDeep);
+  g.addColorStop(0.6, opts.sky2 || P.bgBase);
+  g.addColorStop(1,   opts.sky3 || P.bgBase);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 200, FY);
+  _r(ctx, 0, FY, 200, 13, opts.floor || P.floor);
+  _r(ctx, 0, FY, 200, 1,  P.floorEdge);
+}
+
+function _miniPanel(ctx, x, y, w, h) {
+  _r(ctx, x, y, w, h, 'rgba(26,40,72,0.55)');
+  ctx.strokeStyle = 'rgba(50,70,120,0.22)'; ctx.lineWidth = 0.5;
+  ctx.strokeRect(Math.round(x)+0.5, Math.round(y)+0.5, w-1, h-1);
+  ctx.fillStyle = 'rgba(60,80,130,0.38)';
+  [[2,2],[w-4,2],[2,h-4],[w-4,h-4]].forEach(([rx,ry])=>{
+    ctx.beginPath(); ctx.arc(x+rx, y+ry, 0.8, 0, Math.PI*2); ctx.fill();
+  });
+}
+function _warmPanel(ctx, x, y, w, h) {
+  _r(ctx, x, y, w, h, 'rgba(50,30,10,0.55)');
+  ctx.strokeStyle = 'rgba(80,58,22,0.22)'; ctx.lineWidth = 0.5;
+  ctx.strokeRect(Math.round(x)+0.5, Math.round(y)+0.5, w-1, h-1);
+}
+function _wallPanels(ctx, warm) {
+  const fn = warm ? _warmPanel : _miniPanel;
+  for (let x = 0; x < 200; x += 28) fn(ctx, x, 12, Math.min(26, 200-x-2), 70);
+}
+function _door(ctx, x, y, w, h) {
+  _r(ctx, x, y, w, h, '#0e1830');
+  ctx.strokeStyle = 'rgba(60,80,130,0.4)'; ctx.lineWidth = 0.5;
+  ctx.strokeRect(x+0.5, y+0.5, w-1, h-1);
+  _r(ctx, x+w-3, y+h/2, 2, 2, 'rgba(180,150,80,0.55)');
+}
+function _porthole(ctx, cx, cy, r2) {
+  ctx.strokeStyle = P.brass; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy, r2+1, 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle = '#040810';
+  ctx.beginPath(); ctx.arc(cx, cy, r2, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(190,215,255,0.5)';
+  ctx.fillRect(cx-3, cy-2, 1, 1); ctx.fillRect(cx+2, cy+1, 1, 1);
+}
+function _sconce(ctx, x, y) {
+  _r(ctx, x-2, y, 4, 6, P.brass);
+  _r(ctx, x-3, y+6, 6, 3, P.brassEdge);
+  const g = ctx.createRadialGradient(x, y+2, 0, x, y+2, 8);
+  g.addColorStop(0, 'rgba(255,200,80,0.30)'); g.addColorStop(1, 'rgba(255,160,40,0)');
+  ctx.fillStyle = g; ctx.fillRect(x-8, y-4, 16, 16);
+}
+function _carpet(ctx) {
+  _r(ctx, 0, FY-8, 200, 8, P.carpet);
+  _r(ctx, 0, FY-9, 200, 1, P.carpetEdge);
+  _r(ctx, 0, FY-8, 200, 1, '#9a2040');
+}
+function _lbl(ctx, text) {
+  ctx.fillStyle = 'rgba(200,168,120,0.55)'; ctx.font = '5px monospace';
+  ctx.textAlign = 'center'; ctx.fillText(text.toUpperCase(), 100, 109); ctx.textAlign = 'left';
+}
+function _auroraInRect(ctx, x, y, w, h) {
+  const ag = ctx.createLinearGradient(x, y, x, y+h);
+  ag.addColorStop(0,'rgba(0,0,0,0)'); ag.addColorStop(0.35,'rgba(58,112,72,0.28)');
+  ag.addColorStop(0.55,'rgba(122,72,152,0.20)'); ag.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle = ag; ctx.fillRect(x, y, w, h);
+}
+
+/* =============================================================
+   CHAPTER 1 — ROOM DRAW FUNCTIONS
+   ============================================================= */
+
+function drawHallwayCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a2848', sky2:'#1c2a50', sky3:'#1a2848', floor:'#1a2848'});
+  _wallPanels(ctx, false);
+  _r(ctx, 0, 88, 200, 12, '#141e3c');
+  _carpet(ctx);
+  [8,38,68,98,128,158].forEach(dx => _door(ctx, dx, 30, 18, 58));
+  _porthole(ctx, 28, 22, 5); _porthole(ctx, 88, 22, 5); _porthole(ctx, 148, 22, 5);
+  _sconce(ctx, 58, 22); _sconce(ctx, 118, 22);
+  // Luggage trolley silhouette (far end)
+  const tx=148,ty=FY-14;
+  _r(ctx,tx,ty,14,10,'#3a3028'); _r(ctx,tx+2,ty-4,10,5,'#5a4838'); _r(ctx,tx+2,ty-7,8,3,'#a09080');
+  ctx.fillStyle='#2a2020';
+  ctx.beginPath();ctx.arc(tx+3,ty+10,2,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(tx+11,ty+10,2,0,Math.PI*2);ctx.fill();
+  _lbl(ctx,'Main Hallway');
+}
+
+function drawGrandparentsCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#322414', sky2:'#3c2c18', sky3:'#2c2010', floor:'#281a0c'});
+  _wallPanels(ctx, true);
+  // Warm lamp glow
+  const lg=ctx.createRadialGradient(150,30,0,150,60,55);
+  lg.addColorStop(0,'rgba(255,200,80,0.28)');lg.addColorStop(1,'rgba(255,160,40,0)');
+  ctx.fillStyle=lg;ctx.fillRect(90,0,110,80);
+  // Four-pane window
+  _r(ctx,8,18,32,52,'#040810');
+  ctx.strokeStyle='#3a2c14';ctx.lineWidth=1.5;ctx.strokeRect(8,18,32,52);
+  ctx.strokeStyle='rgba(80,110,165,0.5)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(24,18);ctx.lineTo(24,70);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(8,44);ctx.lineTo(40,44);ctx.stroke();
+  _auroraInRect(ctx,8,18,32,52);
+  ctx.fillStyle='rgba(190,215,255,0.4)';
+  [[14,24],[28,28],[18,36]].forEach(([sx,sy])=>ctx.fillRect(sx,sy,1,1));
+  // Bed
+  _r(ctx,118,FY-22,72,22,'#302618');_r(ctx,118,FY-22,72,8,'#5a4428');
+  _r(ctx,178,FY-34,12,34,'#3a2e1a');
+  // Bedside lamp
+  _r(ctx,155,FY-32,3,16,'#5a4828');_r(ctx,150,FY-42,13,10,'#7a6838');_r(ctx,151,FY-41,11,8,'#c89040');
+  // Babcia seated
+  _r(ctx,122,FY-40,14,18,'#2a1f28');_r(ctx,125,FY-50,8,10,'#8a2a2a');_r(ctx,126,FY-44,6,4,'#d0b090');
+  // Dziadek at window
+  _r(ctx,42,FY-42,14,42,'#2a3a5a');_r(ctx,44,FY-52,10,10,'#1a1f2a');
+  // Suitcase
+  _r(ctx,68,FY-18,36,12,'#1a1008');_r(ctx,70,FY-20,12,3,'#a09080');
+  _lbl(ctx,"Grandparents' Cabin 644");
+}
+
+function drawCabin646Cell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1e2e54', sky2:'#2e3e72', sky3:'#1e2e54', floor:'#1a2848'});
+  _wallPanels(ctx, false);
+  _porthole(ctx,28,26,8);
+  // Child drawing on wall
+  _r(ctx,55,22,24,18,'#d8d0b8');
+  ctx.strokeStyle='#7a5820';ctx.lineWidth=0.5;ctx.strokeRect(55,22,24,18);
+  ctx.fillStyle='#4a6888';ctx.fillRect(59,32,16,3);ctx.fillRect(65,28,4,5);
+  // Mirror (center-right)
+  _r(ctx,110,14,24,38,'#1a0c04');_r(ctx,113,17,18,32,'#0e1830');
+  ctx.strokeStyle=P.brass;ctx.lineWidth=1;ctx.strokeRect(110,14,24,38);
+  // Bed
+  _r(ctx,148,FY-22,44,22,'#2c2850');_r(ctx,148,FY-22,44,8,'#c8c4e0');
+  _r(ctx,186,FY-28,6,28,'#2c2850');
+  // Nightstand + Smørbukk glint
+  _r(ctx,142,FY-18,10,18,'#3a2c14');_r(ctx,143,FY-20,8,4,'#c8a864');
+  _lbl(ctx,"Cabin 646 (Pip's)");
+}
+
+function drawDarkCorridorCell(ctx, t) {
+  const g=ctx.createLinearGradient(0,0,0,FY);
+  g.addColorStop(0,'#08080e');g.addColorStop(1,'#0a0c14');
+  ctx.fillStyle=g;ctx.fillRect(0,0,200,FY);
+  _r(ctx,0,FY,200,13,'#0c0c14');
+  ctx.globalAlpha=0.25;_wallPanels(ctx,false);ctx.globalAlpha=1;
+  // Working sconce — amber glow
+  const sc=ctx.createRadialGradient(40,28,0,40,28,22);
+  sc.addColorStop(0,'rgba(255,195,60,0.45)');sc.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sc;ctx.fillRect(20,10,42,40);
+  _sconce(ctx,40,22);
+  // Broken sconce right (dim)
+  ctx.globalAlpha=0.4;_sconce(ctx,148,22);ctx.globalAlpha=1;
+  ctx.fillStyle='rgba(255,230,80,0.55)';
+  [[146,36],[152,38],[149,34]].forEach(([x,y])=>ctx.fillRect(x,y,1,1));
+  // Janitor cart silhouette
+  _r(ctx,115,FY-26,28,22,'#2a2820');_r(ctx,117,FY-28,4,30,'#2a2820');
+  // Echo spider glow dots
+  ctx.fillStyle='rgba(255,195,60,0.45)';
+  ctx.beginPath();ctx.arc(80,20,3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(86,22,2,0,Math.PI*2);ctx.fill();
+  _porthole(ctx,62,30,4);_porthole(ctx,152,30,4);
+  _lbl(ctx,'Dark Corridor');
+}
+
+function drawKitchenCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a1008', sky2:'#201408', sky3:'#1c1208', floor:'#2a1c0c'});
+  _wallPanels(ctx, true);
+  // Pendant glow
+  const pl=ctx.createRadialGradient(90,18,0,90,55,65);
+  pl.addColorStop(0,'rgba(220,165,55,0.38)');pl.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=pl;ctx.fillRect(30,0,120,80);
+  _r(ctx,89,0,2,14,'#3a2808');_r(ctx,83,14,14,4,'#3a2808');
+  // Counter
+  _r(ctx,40,80,140,20,'#2e1c0c');_r(ctx,40,79,140,1,'rgba(200,140,60,0.3)');
+  // Gravlaks plate
+  _r(ctx,62,74,20,6,'#f4e8c0');_r(ctx,64,74,6,3,'#e87050');_r(ctx,70,75,10,2,'#f4f0e0');
+  // Henrik figure
+  _r(ctx,125,FY-44,18,44,'#1a1a24');_r(ctx,122,FY-46,22,20,'#e8d8b0');
+  _r(ctx,128,FY-52,12,10,'#d0b898');_r(ctx,126,FY-60,14,10,'#f0f0e8');
+  // Copper pots
+  ctx.fillStyle='#a07840';
+  for(let i=0;i<3;i++){
+    const px2=155+i*12,py2=22;
+    ctx.beginPath();ctx.ellipse(px2,py2+4,4,5,0,0,Math.PI*2);ctx.fill();
+    _r(ctx,px2-1,15,2,8,'#604820');
+  }
+  _lbl(ctx,'The Kitchen');
+}
+
+function drawObsDeckCell(ctx, t) {
+  const wg=ctx.createLinearGradient(0,0,0,FY);
+  wg.addColorStop(0,'#1a2230');wg.addColorStop(1,'#161e2c');
+  ctx.fillStyle=wg;ctx.fillRect(0,0,200,FY);
+  _r(ctx,0,FY,200,13,'#141c28');
+  const vpT=8,vpB=68,fw=5;
+  _r(ctx,fw,vpT+fw,200-fw*2,vpB-vpT-fw*2,'#020408');
+  _auroraInRect(ctx,fw,vpT+fw,200-fw*2,vpB-vpT-fw*2);
+  ctx.fillStyle='rgba(190,215,255,0.4)';
+  [[30,18],[60,14],[100,20],[140,16],[170,22],[50,30],[120,26]].forEach(([sx,sy])=>ctx.fillRect(sx,sy,1,1));
+  // Frame
+  _r(ctx,0,vpT,200,fw,'#2a1c0c');_r(ctx,0,vpB-fw,200,fw,'#2a1c0c');
+  _r(ctx,0,vpT,fw,vpB-vpT,'#2a1c0c');_r(ctx,200-fw,vpT,fw,vpB-vpT,'#2a1c0c');
+  _r(ctx,97,vpT+fw,6,vpB-vpT-fw*2,'#2a1c0c');
+  ctx.fillStyle=P.brassEdge;
+  [[2,vpT+1],[194,vpT+1],[2,vpB-6],[194,vpB-6]].forEach(([bx,by])=>ctx.fillRect(bx,by,5,5));
+  // Benches
+  _r(ctx,20,FY-12,36,8,'#2a1c0c');_r(ctx,20,FY-14,36,2,P.wood);
+  _r(ctx,110,FY-12,36,8,'#2a1c0c');_r(ctx,110,FY-14,36,2,P.wood);
+  // Telescope
+  _r(ctx,162,FY-28,8,22,'#604820');_r(ctx,158,FY-6,14,2,'#3a2808');_r(ctx,164,FY-28,6,4,P.brass);
+  _lbl(ctx,'Observation Deck');
+}
+
+/* =============================================================
+   CHAPTER 1 — BACKGROUND DRAW FUNCTION
+   ============================================================= */
+
+function drawBergenBgCell(ctx, t) {
+  const sky=ctx.createLinearGradient(0,0,0,70);
+  sky.addColorStop(0,'#020408');sky.addColorStop(0.55,'#050a14');sky.addColorStop(1,'#06091a');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,200,70);
+  _auroraInRect(ctx,0,15,200,30);
+  // Stars
+  ctx.fillStyle='rgba(190,215,255,0.50)';
+  [[22,8],[45,5],[70,10],[95,6],[120,9],[155,7],[178,4],[35,20],[105,14],[165,18]].forEach(([sx,sy])=>ctx.fillRect(sx,sy,1,1));
+  ctx.fillStyle='rgba(190,215,255,0.22)';
+  [[58,12],[88,4],[130,11],[145,15],[80,18],[172,12]].forEach(([sx,sy])=>ctx.fillRect(sx,sy,1,1));
+  // Fjord silhouette
+  ctx.fillStyle='rgba(8,15,30,0.92)';
+  ctx.beginPath();ctx.moveTo(0,70);
+  ctx.lineTo(0,52);ctx.lineTo(20,42);ctx.lineTo(40,48);ctx.lineTo(65,38);ctx.lineTo(90,45);
+  ctx.lineTo(120,36);ctx.lineTo(150,44);ctx.lineTo(175,40);ctx.lineTo(200,50);ctx.lineTo(200,70);
+  ctx.closePath();ctx.fill();
+  // Bergen shore lights
+  ctx.fillStyle='rgba(255,180,60,0.30)';ctx.fillRect(100,60,80,10);
+  // Lighthouse blink
+  const lb=Math.sin(t*2)>0.5?0.8:0.1;
+  ctx.fillStyle=`rgba(255,255,200,${lb})`;ctx.fillRect(138,56,2,2);
+  // Water
+  const wtr=ctx.createLinearGradient(0,62,0,113);
+  wtr.addColorStop(0,'#060c1a');wtr.addColorStop(1,'#030810');
+  ctx.fillStyle=wtr;ctx.fillRect(0,62,200,51);
+  const mp=ctx.createRadialGradient(100,80,0,100,80,60);
+  mp.addColorStop(0,'rgba(180,200,230,0.10)');mp.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=mp;ctx.fillRect(40,62,120,50);
+  ctx.strokeStyle='rgba(100,130,180,0.10)';ctx.lineWidth=0.5;
+  for(let i=0;i<4;i++){
+    const wy=70+i*10+Math.sin(t*0.8+i)*1;
+    ctx.beginPath();ctx.moveTo(0,wy);ctx.lineTo(200,wy);ctx.stroke();
+  }
+  _lbl(ctx,'Ocean-at-Night / Bergen');
+}
+
+/* =============================================================
+   CHAPTER 1 — PROP DRAW FUNCTIONS
+   ============================================================= */
+
+function drawBedBodyLumpCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1e2e54', sky2:'#2e3e72', sky3:'#1e2e54', floor:'#1a2848'});
+  const bx=40,by=FY-24,bw=120,bh=22;
+  _r(ctx,bx,by,bw,bh,'#2c2850');_r(ctx,bx+bw-8,by-10,8,bh+10,'#2c2850');
+  _r(ctx,bx+2,by+2,bw-10,8,'#c8c4e0');
+  _r(ctx,bx+10,by+4,bw-30,6,'#9898b8');_r(ctx,bx+20,by+2,40,8,'#8080a8');
+  _lbl(ctx,'Bed + Body-Lump');
+}
+
+function drawCrayonDrawingCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a2848', sky2:'#1c2a50', sky3:'#1a2848', floor:'#1a2848'});
+  const px2=55,py2=20,pw=90,ph=65;
+  _r(ctx,px2,py2,pw,ph,'#d8d0b8');
+  ctx.strokeStyle='#a89878';ctx.lineWidth=1;ctx.strokeRect(px2+1,py2+1,pw-2,ph-2);
+  ctx.fillStyle='#7ab8d8';ctx.fillRect(px2+2,py2+2,pw-4,30);
+  ctx.fillStyle='#3a7898';ctx.fillRect(px2+2,py2+32,pw-4,31);
+  // Boat
+  ctx.fillStyle='#8a4820';ctx.fillRect(px2+30,py2+26,30,12);ctx.fillRect(px2+24,py2+34,42,6);
+  // Sail
+  ctx.fillStyle='#f8f4e0';
+  ctx.beginPath();ctx.moveTo(px2+40,py2+14);ctx.lineTo(px2+55,py2+27);ctx.lineTo(px2+40,py2+27);ctx.closePath();ctx.fill();
+  // Sun
+  ctx.fillStyle='#f8d820';ctx.beginPath();ctx.arc(px2+72,py2+12,7,0,Math.PI*2);ctx.fill();
+  // Waves
+  ctx.strokeStyle='#f4f0d8';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(px2+2,py2+40);ctx.quadraticCurveTo(px2+20,py2+37,px2+40,py2+40);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px2+44,py2+42);ctx.quadraticCurveTo(px2+62,py2+39,px2+88,py2+42);ctx.stroke();
+  _lbl(ctx,"Child's Crayon Drawing");
+}
+
+function drawCabinMirrorCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1e2e54', sky2:'#2e3e72', sky3:'#1e2e54', floor:'#1a2848'});
+  const mx=62,my=12,mw=76,mh=88;
+  _r(ctx,mx,my,mw,mh,'#1a0c04');_r(ctx,mx+5,my+5,mw-10,mh-10,'#0e1830');
+  ctx.strokeStyle=P.brass;ctx.lineWidth=1;ctx.strokeRect(mx+0.5,my+0.5,mw-1,mh-1);
+  ctx.strokeStyle=P.brassEdge;ctx.lineWidth=0.5;ctx.strokeRect(mx+3,my+3,mw-6,mh-6);
+  ctx.fillStyle=P.brassHi;
+  [[mx+2,my+2],[mx+mw-4,my+2],[mx+2,my+mh-4],[mx+mw-4,my+mh-4],
+   [mx+mw/2-1,my+2],[mx+2,my+mh/2-1],[mx+mw-3,my+mh/2-1],[mx+mw/2-1,my+mh-4]].forEach(([bx,by2])=>{
+    ctx.beginPath();ctx.arc(bx,by2,1.5,0,Math.PI*2);ctx.fill();
+  });
+  // Ghost reflection
+  ctx.globalAlpha=0.50;
+  _r(ctx,mx+26,my+24,24,38,'#f0f8ff');_r(ctx,mx+28,my+18,20,8,'#f0f8ff');
+  _r(ctx,mx+24,my+58,8,4,'#f0f8ff');_r(ctx,mx+33,my+58,8,4,'#f0f8ff');_r(ctx,mx+42,my+58,8,4,'#f0f8ff');
+  ctx.globalAlpha=1;
+  // Cool glow
+  const gg=ctx.createRadialGradient(mx+38,my+44,0,mx+38,my+44,28);
+  gg.addColorStop(0,'rgba(168,192,255,0.18)');gg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=gg;ctx.fillRect(mx+5,my+5,mw-10,mh-10);
+  _lbl(ctx,'Cabin Mirror');
+}
+
+function drawPortholeCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a2848', sky2:'#1c2a50', sky3:'#1a2848', floor:'#1a2848'});
+  const cx=100,cy=50,outer=35,inner=28;
+  ctx.strokeStyle=P.brass;ctx.lineWidth=4;
+  ctx.beginPath();ctx.arc(cx,cy,outer,0,Math.PI*2);ctx.stroke();
+  // Iron clasp bars
+  ctx.strokeStyle='#3a3a48';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(cx-outer-2,cy);ctx.lineTo(cx-outer+8,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx+outer-8,cy);ctx.lineTo(cx+outer+2,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy-outer-2);ctx.lineTo(cx,cy-outer+8);ctx.stroke();
+  ctx.fillStyle='#040810';ctx.beginPath();ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.fill();
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.clip();
+  _auroraInRect(ctx,cx-inner,cy-inner,inner*2,inner*2);
+  ctx.fillStyle='rgba(190,215,255,0.5)';
+  [[cx-12,cy-10],[cx+8,cy-14],[cx-6,cy+6],[cx+14,cy+4]].forEach(([sx,sy])=>ctx.fillRect(sx,sy,1,1));
+  ctx.restore();
+  ctx.strokeStyle=P.brassEdge;ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle=P.brassHi;
+  for(let i=0;i<8;i++){
+    const a=i*Math.PI/4;
+    ctx.beginPath();ctx.arc(cx+Math.cos(a)*(outer-3),cy+Math.sin(a)*(outer-3),1.5,0,Math.PI*2);ctx.fill();
+  }
+  _lbl(ctx,'Porthole Assembly');
+}
+
+function drawGPWindowCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#322414', sky2:'#3c2c18', sky3:'#2c2010', floor:'#281a0c'});
+  const lg=ctx.createRadialGradient(140,50,0,140,50,70);
+  lg.addColorStop(0,'rgba(255,200,80,0.15)');lg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=lg;ctx.fillRect(70,0,130,80);
+  const wx=28,wy=10,ww=80,wh=72;
+  _r(ctx,wx,wy,ww,wh,'#040810');
+  ctx.save();ctx.beginPath();ctx.rect(wx,wy,ww,wh);ctx.clip();
+  _auroraInRect(ctx,wx,wy,ww,wh);
+  ctx.fillStyle='rgba(190,215,255,0.4)';
+  [[wx+15,wy+12],[wx+35,wy+8],[wx+58,wy+14],[wx+25,wy+28],[wx+65,wy+22]].forEach(([sx,sy])=>ctx.fillRect(sx,sy,1,1));
+  ctx.restore();
+  ctx.strokeStyle='#3a2c14';ctx.lineWidth=2.5;ctx.strokeRect(wx-2,wy-2,ww+4,wh+4);
+  ctx.strokeStyle='rgba(80,110,165,0.5)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(wx+ww/2,wy);ctx.lineTo(wx+ww/2,wy+wh);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(wx,wy+wh/2);ctx.lineTo(wx+ww,wy+wh/2);ctx.stroke();
+  _lbl(ctx,"Grandparents' Window");
+}
+
+function drawBedsideLampCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#322414', sky2:'#3c2c18', sky3:'#2c2010', floor:'#281a0c'});
+  const lg=ctx.createRadialGradient(100,48,0,100,70,60);
+  lg.addColorStop(0,'rgba(255,200,80,0.40)');lg.addColorStop(0.4,'rgba(220,150,40,0.22)');lg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=lg;ctx.fillRect(30,15,140,88);
+  _r(ctx,98,65,4,30,'#5a4828');_r(ctx,88,FY-12,24,8,'#7a6838');_r(ctx,90,FY-8,20,4,'#604820');
+  // Shade
+  ctx.fillStyle='#c89040';
+  ctx.beginPath();ctx.moveTo(80,65);ctx.lineTo(120,65);ctx.lineTo(112,35);ctx.lineTo(88,35);ctx.closePath();ctx.fill();
+  ctx.fillStyle='rgba(255,220,100,0.40)';
+  ctx.beginPath();ctx.moveTo(83,63);ctx.lineTo(117,63);ctx.lineTo(110,38);ctx.lineTo(90,38);ctx.closePath();ctx.fill();
+  const sg=ctx.createLinearGradient(80,35,80,65);
+  sg.addColorStop(0,'rgba(255,220,100,0.50)');sg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sg;
+  ctx.beginPath();ctx.moveTo(82,63);ctx.lineTo(118,63);ctx.lineTo(111,37);ctx.lineTo(89,37);ctx.closePath();ctx.fill();
+  _lbl(ctx,'Bedside Lamp');
+}
+
+function drawSuitcaseCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#322414', sky2:'#3c2c18', sky3:'#2c2010', floor:'#281a0c'});
+  const sx=30,sy=38,sw=140,sh=38;
+  _r(ctx,sx,sy,sw,sh,'#1a1008');_r(ctx,sx,sy,sw,sh/2,'#221808');_r(ctx,sx,sy+sh/2,sw,1,'#3a2818');
+  _r(ctx,sx+sw/2-20,sy+sh/2-2,40,4,'#5a3820');
+  ctx.fillStyle=P.brass;
+  [[sx,sy],[sx+sw-6,sy],[sx,sy+sh-4],[sx+sw-6,sy+sh-4]].forEach(([cx2,cy2])=>_r(ctx,cx2,cy2,6,4,P.brass));
+  _r(ctx,sx+sw/3,sy+sh/2-2,8,4,'#a08664');_r(ctx,sx+2*sw/3,sy+sh/2-2,8,4,'#a08664');
+  ctx.strokeStyle='#5a3820';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(sx+sw/2,sy-4,14,Math.PI,0);ctx.stroke();
+  ctx.fillStyle='#7a5830';
+  ctx.beginPath();ctx.arc(sx+sw/2-14,sy-4,2,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(sx+sw/2+14,sy-4,2,0,Math.PI*2);ctx.fill();
+  // Striped shirt visible
+  _r(ctx,sx+8,sy+sh/2+4,36,14,'#3a6898');_r(ctx,sx+10,sy+sh/2+6,32,3,'#4a80b8');_r(ctx,sx+10,sy+sh/2+10,32,3,'#4a80b8');
+  // Stuffed bear
+  ctx.fillStyle='#c8a870';
+  ctx.beginPath();ctx.arc(sx+58,sy+sh/2+10,9,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(sx+54,sy+sh/2+4,5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(sx+62,sy+sh/2+4,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#3a2818';
+  ctx.beginPath();ctx.arc(sx+55,sy+sh/2+9,1.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(sx+61,sy+sh/2+9,1.5,0,Math.PI*2);ctx.fill();
+  _lbl(ctx,'Open Suitcase');
+}
+
+function drawPhotoPipCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#322414', sky2:'#3c2c18', sky3:'#2c2010', floor:'#281a0c'});
+  const lg=ctx.createRadialGradient(60,50,0,60,50,80);
+  lg.addColorStop(0,'rgba(255,200,80,0.18)');lg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=lg;ctx.fillRect(0,0,150,100);
+  const fx=55,fy=15,fw2=90,fh2=72;
+  _r(ctx,fx,fy,fw2,fh2,'#5a4420');ctx.strokeStyle='#8a6830';ctx.lineWidth=1;ctx.strokeRect(fx,fy,fw2,fh2);
+  _r(ctx,fx+4,fy+4,fw2-8,fh2-8,'#c8a878');_r(ctx,fx+4,fy+4,fw2-8,28,'#8098b0');
+  // Body & shirt
+  _r(ctx,fx+32,fy+28,26,32,'#3a6090');_r(ctx,fx+24,fy+30,8,18,'#3a6090');_r(ctx,fx+58,fy+30,8,18,'#3a6090');
+  _r(ctx,fx+22,fy+42,10,8,'#d0b890');_r(ctx,fx+56,fy+42,10,8,'#d0b890');
+  // Pierogi
+  _r(ctx,fx+36,fy+40,18,10,'#e8d8a0');
+  // Head + dark hair
+  _r(ctx,fx+34,fy+14,22,16,'#d0b890');_r(ctx,fx+34,fy+12,22,6,'#2a1808');
+  _r(ctx,fx+32,fy+14,4,8,'#2a1808');_r(ctx,fx+54,fy+14,4,8,'#2a1808');
+  // Eyes
+  _r(ctx,fx+38,fy+18,3,2,'#e8e0d0');_r(ctx,fx+49,fy+18,3,2,'#e8e0d0');
+  ctx.fillStyle='#2a2030';ctx.fillRect(fx+39,fy+18,1,1);ctx.fillRect(fx+50,fy+18,1,1);
+  _r(ctx,fx+40,fy+22,10,1,'#3a1808');
+  _lbl(ctx,'Photo of Young Pip');
+}
+
+function drawTrolleyCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a2848', sky2:'#1c2a50', sky3:'#1a2848', floor:'#1a2848'});
+  _r(ctx,60,38,80,50,'#3a3028');_r(ctx,62,40,76,10,'#4a4038');
+  _r(ctx,62,30,4,58,'#2e2818');_r(ctx,134,30,4,58,'#2e2818');
+  _r(ctx,58,28,84,5,'#2e2818');
+  // Bags
+  _r(ctx,68,20,30,22,'#5a4838');_r(ctx,96,24,24,18,'#7a6a50');
+  _r(ctx,78,14,20,10,'#2a3a5a');_r(ctx,100,14,18,12,'#8a2a2a');
+  _r(ctx,68,26,30,1,'#8a7060');_r(ctx,96,28,24,1,'#a09070');
+  // Stuffed bear peeking
+  ctx.fillStyle='#c8a870';ctx.beginPath();ctx.arc(116,13,6,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(112,9,3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(120,9,3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#3a2818';ctx.beginPath();ctx.arc(114,12,1,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(118,12,1,0,Math.PI*2);ctx.fill();
+  // Wheels
+  ctx.fillStyle='#1a1210';
+  ctx.beginPath();ctx.arc(74,88,8,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(126,88,8,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#3a3028';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(74,88,8,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.arc(126,88,8,0,Math.PI*2);ctx.stroke();
+  _lbl(ctx,'Luggage Trolley');
+}
+
+function drawWallDecorCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a2848', sky2:'#1c2a50', sky3:'#1a2848', floor:'#1a2848'});
+  // 5 framed pieces
+  _r(ctx,12,22,28,36,'#3a2818');_r(ctx,14,24,24,32,'#0a1428');_r(ctx,14,48,24,8,'#1c2848');
+  _r(ctx,52,24,24,32,'#3a2818');_r(ctx,54,26,20,28,'#2a1808');
+  ctx.fillStyle='#a08664';ctx.beginPath();ctx.arc(64,40,8,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#c8a878';ctx.beginPath();ctx.arc(64,40,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1008';ctx.fillRect(64,33,1,8);
+  _r(ctx,92,22,28,36,'#5a4420');_r(ctx,94,24,24,32,'#d8d0b8');
+  ctx.fillStyle='#3a6820';ctx.beginPath();ctx.moveTo(106,36);ctx.lineTo(112,30);ctx.lineTo(114,40);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#4a7830';ctx.beginPath();ctx.moveTo(106,36);ctx.lineTo(100,28);ctx.lineTo(99,40);ctx.closePath();ctx.fill();
+  _r(ctx,132,22,28,36,'#3a2818');_r(ctx,134,24,24,32,'#c8b888');
+  ctx.strokeStyle='#8a6030';ctx.lineWidth=0.5;
+  for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(134,28+i*8);ctx.lineTo(158,28+i*8);ctx.stroke();}
+  ctx.fillStyle='#7a4820';ctx.beginPath();ctx.arc(146,40,3,0,Math.PI*2);ctx.fill();
+  _r(ctx,172,20,24,40,'#3a2818');_r(ctx,175,23,18,34,'#0e1830');
+  ctx.strokeStyle=P.brass;ctx.lineWidth=1;ctx.strokeRect(172,20,24,40);
+  ctx.fillStyle='rgba(168,192,255,0.18)';ctx.fillRect(175,23,18,34);
+  _lbl(ctx,'Hallway Wall Decor Set (5)');
+}
+
+function drawSconcesPairCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a2848', sky2:'#1c2a50', sky3:'#1a2848', floor:'#1a2848'});
+  // Left: steady
+  {
+    const sx=55,sy=42;
+    const g=ctx.createRadialGradient(sx,sy,0,sx,sy,30);
+    g.addColorStop(0,'rgba(255,200,80,0.38)');g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.fillRect(sx-30,sy-20,60,55);
+    _r(ctx,sx-10,sy-4,20,4,'#5a4820');_r(ctx,sx-8,sy-12,16,10,'#7a6838');
+    ctx.fillStyle='#c89040';
+    ctx.beginPath();ctx.moveTo(sx-8,sy-12);ctx.lineTo(sx+8,sy-12);ctx.lineTo(sx+12,sy-4);ctx.lineTo(sx-12,sy-4);ctx.closePath();ctx.fill();
+    ctx.fillStyle='rgba(255,200,60,0.85)';ctx.beginPath();ctx.arc(sx,sy-10,3,0,Math.PI*2);ctx.fill();
+    const fp=ctx.createRadialGradient(sx,FY,0,sx,FY,20);
+    fp.addColorStop(0,'rgba(255,200,80,0.22)');fp.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=fp;ctx.fillRect(sx-22,FY-8,44,22);
+    ctx.fillStyle='rgba(200,168,120,0.5)';ctx.font='5px monospace';ctx.textAlign='center';ctx.fillText('x=390 steady',sx,FY+10);
+  }
+  // Right: flicker
+  {
+    const sx=145,sy=42;
+    const flicker=0.6+Math.sin(t*8.5)*0.25+Math.sin(t*13.1)*0.12;
+    const g=ctx.createRadialGradient(sx,sy,0,sx,sy,30);
+    g.addColorStop(0,`rgba(255,200,80,${(0.35*flicker).toFixed(2)})`);g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.fillRect(sx-30,sy-20,60,55);
+    _r(ctx,sx-10,sy-4,20,4,'#5a4820');_r(ctx,sx-8,sy-12,16,10,'#7a6838');
+    ctx.fillStyle=`rgba(200,150,40,${flicker.toFixed(2)})`;
+    ctx.beginPath();ctx.moveTo(sx-8,sy-12);ctx.lineTo(sx+8,sy-12);ctx.lineTo(sx+12,sy-4);ctx.lineTo(sx-12,sy-4);ctx.closePath();ctx.fill();
+    ctx.fillStyle=`rgba(255,200,60,${(0.85*flicker).toFixed(2)})`;ctx.beginPath();ctx.arc(sx,sy-10,3,0,Math.PI*2);ctx.fill();
+    const fp=ctx.createRadialGradient(sx,FY,0,sx,FY,20);
+    fp.addColorStop(0,`rgba(255,200,80,${(0.18*flicker).toFixed(2)})`);fp.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=fp;ctx.fillRect(sx-22,FY-8,44,22);
+    ctx.fillStyle='rgba(200,168,120,0.5)';ctx.font='5px monospace';ctx.textAlign='center';ctx.fillText('x=810 flicker',sx,FY+10);
+  }
+  ctx.textAlign='left';
+  _lbl(ctx,'Hallway Sconces (Pair)');
+}
+
+function drawBulletinBoardCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a2848', sky2:'#1c2a50', sky3:'#1a2848', floor:'#1a2848'});
+  const bx=30,by=18,bw=140,bh=74;
+  _r(ctx,bx,by,bw,bh,'#8a6a38');
+  ctx.strokeStyle='#7a5c28';ctx.lineWidth=2;ctx.strokeRect(bx,by,bw,bh);
+  ctx.fillStyle='#a08040';
+  [[bx+3,by+3],[bx+bw-5,by+3],[bx+3,by+bh-5],[bx+bw-5,by+bh-5]].forEach(([cx2,cy2])=>{
+    ctx.beginPath();ctx.arc(cx2,cy2,2.5,0,Math.PI*2);ctx.fill();
+  });
+  _r(ctx,bx+8,by+8,70,54,'#ebe4ce');_r(ctx,bx+78,by+10,50,38,'#e5decc');_r(ctx,bx+10,by+54,62,14,'#e0d8bc');
+  ctx.fillStyle='rgba(60,40,15,0.55)';ctx.font='6px monospace';ctx.textAlign='left';
+  ctx.fillText('WELCOME ABOARD',bx+10,by+18);ctx.fillText('MNEMOSYNE',bx+10,by+26);
+  ctx.fillStyle='rgba(60,40,15,0.35)';ctx.font='4px monospace';
+  ctx.fillText('Bergen → Southampton',bx+10,by+35);
+  ctx.fillText('Istanbul → Saldanha',bx+10,by+42);
+  ctx.fillText('Kolonodale → Tapajós',bx+10,by+49);
+  ctx.fillStyle='#b82020';
+  [[bx+8,by+8],[bx+78,by+10],[bx+8,by+54],[bx+118,by+10]].forEach(([px3,py3])=>{
+    ctx.beginPath();ctx.arc(px3+3,py3+3,2.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(180,30,30,0.35)';ctx.beginPath();ctx.arc(px3+3,py3+3,4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#b82020';
+  });
+  _lbl(ctx,'Bulletin Board');
+}
+
+function drawBrokenSconceCell(ctx, t) {
+  const g=ctx.createLinearGradient(0,0,0,FY);
+  g.addColorStop(0,'#08080e');g.addColorStop(1,'#0a0c14');
+  ctx.fillStyle=g;ctx.fillRect(0,0,200,FY);
+  _r(ctx,0,FY,200,13,'#0c0c14');
+  ctx.fillStyle='rgba(200,168,120,0.40)';ctx.font='5px monospace';ctx.textAlign='center';
+  ctx.fillText('BROKEN',52,15);ctx.fillText('REPAIRED',148,15);
+  _r(ctx,100,12,1,88,'rgba(80,100,160,0.25)');
+  // Broken (left)
+  {
+    const sx=52,sy=45;
+    ctx.save();ctx.translate(sx,sy);ctx.rotate(0.2);
+    _r(ctx,-10,-4,20,4,'#5a4820');_r(ctx,-8,-12,16,10,'#7a6838');
+    ctx.restore();
+    ctx.strokeStyle='rgba(255,230,80,0.8)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(sx+4,sy-8);ctx.lineTo(sx+12,sy-4);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(sx-4,sy-10);ctx.lineTo(sx-12,sy-2);ctx.stroke();
+    const sparks=[[sx+8,sy-6],[sx+14,sy-2],[sx-10,sy-1],[sx-14,sy+2],[sx,sy-14]];
+    sparks.forEach(([px3,py3])=>{
+      ctx.fillStyle=`rgba(255,230,80,${(0.5+Math.sin(t*12+px3)*0.4).toFixed(2)})`;
+      ctx.fillRect(px3,py3,1,1);
+    });
+    ctx.fillStyle='rgba(200,200,220,0.35)';
+    ctx.fillRect(sx-12,FY-4,4,2);ctx.fillRect(sx-8,FY-6,3,3);ctx.fillRect(sx+8,FY-4,5,2);
+    ctx.fillStyle='rgba(255,200,80,0.25)';
+    ctx.beginPath();ctx.arc(sx,sy,14,0,Math.PI*2);ctx.fill();
+  }
+  // Repaired (right)
+  {
+    const sx=148,sy=45;
+    const g2=ctx.createRadialGradient(sx,sy,0,sx,sy,28);
+    g2.addColorStop(0,'rgba(255,200,80,0.35)');g2.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g2;ctx.fillRect(sx-28,sy-20,56,60);
+    _r(ctx,sx-10,sy-4,20,4,'#5a4820');_r(ctx,sx-8,sy-12,16,10,'#7a6838');
+    ctx.fillStyle='#c89040';
+    ctx.beginPath();ctx.moveTo(sx-8,sy-12);ctx.lineTo(sx+8,sy-12);ctx.lineTo(sx+12,sy-4);ctx.lineTo(sx-12,sy-4);ctx.closePath();ctx.fill();
+    ctx.fillStyle='rgba(255,200,60,0.9)';ctx.beginPath();ctx.arc(sx,sy-10,3,0,Math.PI*2);ctx.fill();
+    const fp=ctx.createRadialGradient(sx,FY,0,sx,FY,18);
+    fp.addColorStop(0,'rgba(255,200,80,0.20)');fp.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=fp;ctx.fillRect(sx-20,FY-6,40,20);
+  }
+  ctx.textAlign='left';
+  _lbl(ctx,'Broken Sconce + Wiring');
+}
+
+function drawJanitorCartCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#08080e', sky2:'#0a0c14', sky3:'#0a0c14', floor:'#0c0c14'});
+  _r(ctx,35,32,130,56,'#2a2820');_r(ctx,37,34,126,10,'#383828');_r(ctx,37,54,126,10,'#383828');_r(ctx,37,74,126,10,'#383828');
+  _r(ctx,35,30,4,58,'#2a2820');_r(ctx,161,30,4,58,'#2a2820');_r(ctx,60,30,4,58,'#2a2020');_r(ctx,136,30,4,58,'#2a2020');
+  // Mop bucket
+  _r(ctx,42,38,24,16,'#3a4a80');_r(ctx,44,39,20,2,'#4a5a90');
+  // Mop handle
+  _r(ctx,53,10,3,30,'#7a5820');_r(ctx,50,38,9,5,'#7a8898');
+  // Broom
+  _r(ctx,88,10,2,28,'#7a5820');_r(ctx,82,38,14,5,'#c8b888');_r(ctx,83,40,12,3,'#a09070');
+  // Clipboard
+  _r(ctx,112,35,22,18,'#c8a864');ctx.strokeStyle='#8a6820';ctx.lineWidth=0.5;ctx.strokeRect(112,35,22,18);
+  ctx.fillStyle='rgba(40,20,8,0.75)';ctx.font='4px monospace';ctx.textAlign='left';
+  ctx.fillText('J.HENRIKSEN',114,43);ctx.fillText('NIGHT CREW',114,49);
+  // Supplies
+  _r(ctx,140,56,18,8,'#8a7060');_r(ctx,145,58,8,4,'#3a8040');
+  // Skillingsboller
+  ctx.fillStyle='#c8783a';ctx.beginPath();ctx.arc(70,80,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#8a4820';ctx.beginPath();ctx.arc(70,80,7,0,Math.PI);ctx.fill();
+  ctx.fillStyle='rgba(240,210,160,0.50)';ctx.beginPath();ctx.arc(70,78,4,0,Math.PI*2);ctx.fill();
+  // Wheels
+  ctx.fillStyle='#1a1210';
+  ctx.beginPath();ctx.arc(52,88,6,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(148,88,6,0,Math.PI*2);ctx.fill();
+  _lbl(ctx,"Janitor's Cart");
+}
+
+function drawGravlaksPlateCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a1008', sky2:'#201408', sky3:'#1c1208', floor:'#2a1c0c'});
+  const pl=ctx.createRadialGradient(100,30,0,100,65,70);
+  pl.addColorStop(0,'rgba(220,165,55,0.28)');pl.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=pl;ctx.fillRect(20,0,160,90);
+  // Plate
+  ctx.fillStyle='#f4eee0';ctx.beginPath();ctx.ellipse(100,62,68,28,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#d8d0c0';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(100,62,68,28,0,0,Math.PI*2);ctx.stroke();
+  // Gravlaks
+  ctx.fillStyle='#e87050';ctx.beginPath();ctx.ellipse(80,60,26,14,-0.2,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(180,70,40,0.40)';ctx.lineWidth=1;
+  for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(64+i*6,52);ctx.lineTo(68+i*6,68);ctx.stroke();}
+  // Lefse
+  ctx.fillStyle='#f0e8c0';ctx.beginPath();ctx.ellipse(120,64,20,10,0.3,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#d8d0a0';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(120,64,20,10,0.3,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle='#c0b880';ctx.lineWidth=0.5;ctx.beginPath();ctx.moveTo(106,62);ctx.lineTo(134,66);ctx.stroke();
+  // Pickles
+  ctx.fillStyle='#3a5828';
+  [[88,70],[96,72],[104,72]].forEach(([px3,py3])=>{ctx.beginPath();ctx.arc(px3,py3,2.5,0,Math.PI*2);ctx.fill();});
+  _lbl(ctx,'Gravlaks-and-Lefse Plate');
+}
+
+function drawHenrikStoolCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a1008', sky2:'#201408', sky3:'#1c1208', floor:'#2a1c0c'});
+  const g=ctx.createRadialGradient(100,40,0,100,70,60);
+  g.addColorStop(0,'rgba(220,165,55,0.22)');g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g;ctx.fillRect(30,0,140,100);
+  // Seat
+  ctx.fillStyle='#3a2c14';ctx.beginPath();ctx.ellipse(100,50,38,12,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(200,140,60,0.15)';ctx.beginPath();ctx.ellipse(100,50,38,12,0,0,Math.PI);ctx.fill();
+  ctx.strokeStyle='#604820';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(100,50,38,12,0,0,Math.PI*2);ctx.stroke();
+  // Legs
+  _r(ctx,72,52,5,38,'#2a1c0c');_r(ctx,123,52,5,38,'#2a1c0c');_r(ctx,78,52,5,34,'#241808');_r(ctx,117,52,5,34,'#241808');
+  _r(ctx,72,72,60,3,'#2a1c0c');
+  ctx.strokeStyle='#3a2c14';ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(100,80,35,10,0,0,Math.PI*2);ctx.stroke();
+  _lbl(ctx,"Henrik's Stool");
+}
+
+function drawCandleCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a1008', sky2:'#201408', sky3:'#1c1208', floor:'#2a1c0c'});
+  const flicker=0.75+Math.sin(t*4.7)*0.15+Math.sin(t*7.3)*0.08;
+  const g=ctx.createRadialGradient(100,44,0,100,60,50);
+  g.addColorStop(0,`rgba(255,200,80,${(0.45*flicker).toFixed(2)})`);
+  g.addColorStop(0.4,`rgba(220,140,40,${(0.22*flicker).toFixed(2)})`);
+  g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g;ctx.fillRect(40,10,120,90);
+  // Wax
+  _r(ctx,87,50,26,40,'#f4f0e8');_r(ctx,84,58,4,8,'#f0eae0');_r(ctx,113,62,4,6,'#f0eae0');_r(ctx,87,48,26,4,'#e8e4d8');
+  // Wick
+  _r(ctx,99,36,2,14,'#3a2808');
+  // Flame
+  const fh=12+flicker*4;
+  ctx.fillStyle=`rgba(255,200,60,${(0.9*flicker).toFixed(2)})`;
+  ctx.beginPath();ctx.moveTo(100,36-fh);ctx.bezierCurveTo(108,36-fh*0.6,106,36,100,36);
+  ctx.bezierCurveTo(94,36,92,36-fh*0.6,100,36-fh);ctx.fill();
+  ctx.fillStyle=`rgba(255,240,180,${(0.95*flicker).toFixed(2)})`;
+  ctx.beginPath();ctx.moveTo(100,36-fh*0.7);ctx.bezierCurveTo(104,36-fh*0.4,103,36,100,36);
+  ctx.bezierCurveTo(97,36,96,36-fh*0.4,100,36-fh*0.7);ctx.fill();
+  // Base plate
+  ctx.fillStyle='#d8c8a0';ctx.beginPath();ctx.ellipse(100,90,20,7,0,0,Math.PI*2);ctx.fill();
+  _lbl(ctx,"Candle (Henrik's Gift)");
+}
+
+function drawAuroraViewportCell(ctx, t) {
+  const vpT=4,vpB=80,fw=7;
+  _r(ctx,fw,vpT+fw,200-fw*2,vpB-vpT-fw*2,'#020408');
+  _auroraInRect(ctx,fw,vpT+fw,200-fw*2,vpB-vpT-fw*2);
+  ctx.fillStyle='rgba(190,215,255,0.5)';
+  [[30,18],[60,14],[100,20],[140,16],[170,22],[50,32],[120,28],[80,14],[160,32]].forEach(([sx,sy])=>ctx.fillRect(sx,sy,1,1));
+  // Frame
+  _r(ctx,0,vpT,200,fw,'#2a1c0c');_r(ctx,0,vpB-fw,200,fw,'#2a1c0c');
+  _r(ctx,0,vpT,fw,vpB-vpT,'#2a1c0c');_r(ctx,200-fw,vpT,fw,vpB-vpT,'#2a1c0c');
+  _r(ctx,97,vpT+fw,6,vpB-vpT-fw*2,'#2a1c0c');
+  _r(ctx,fw,vpT+fw+Math.round((vpB-vpT-fw*2)*0.52)-2,200-fw*2,3,'#2a1c0c');
+  ctx.fillStyle='#604820';
+  [[2,vpT+1],[192,vpT+1],[2,vpB-6],[192,vpB-6]].forEach(([bx2,by2])=>ctx.fillRect(bx2,by2,6,6));
+  ctx.fillStyle=P.brassHi;
+  [[3,vpT+2],[193,vpT+2],[3,vpB-5],[193,vpB-5]].forEach(([bx2,by2])=>ctx.fillRect(bx2,by2,2,2));
+  _r(ctx,0,vpB,200,13,'#1a2230');_r(ctx,0,100,200,13,'#141c28');
+  _lbl(ctx,'Aurora Viewport Frame');
+}
+
+function drawTelescopeCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a2230', sky2:'#1e2638', sky3:'#161e2c', floor:'#141c28'});
+  const tx=40,ty=48,tlen=120,td=14;
+  _r(ctx,94,62,4,36,'#3a2808');_r(ctx,60,88,70,2,'#3a2808');
+  ctx.strokeStyle='#3a2808';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(96,96);ctx.lineTo(60,98);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(96,96);ctx.lineTo(130,98);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(96,96);ctx.lineTo(96,62);ctx.stroke();
+  const tubeG=ctx.createLinearGradient(tx,ty-td/2,tx,ty+td/2);
+  tubeG.addColorStop(0,'#8a6428');tubeG.addColorStop(0.5,'#c8a060');tubeG.addColorStop(1,'#604820');
+  ctx.fillStyle=tubeG;ctx.beginPath();ctx.roundRect(tx,ty-td/2,tlen,td,3);ctx.fill();
+  // Eyepiece
+  ctx.fillStyle='#7a5820';ctx.beginPath();ctx.ellipse(tx+8,ty,8,10,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#0e0e1a';ctx.beginPath();ctx.ellipse(tx+8,ty,5,6,0,0,Math.PI*2);ctx.fill();
+  // Objective
+  ctx.fillStyle='#7a5820';ctx.beginPath();ctx.ellipse(tx+tlen-6,ty,10,13,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#0a1828';ctx.beginPath();ctx.ellipse(tx+tlen-6,ty,7,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(168,192,255,0.30)';ctx.beginPath();ctx.ellipse(tx+tlen-8,ty-3,3,4,0,0,Math.PI*2);ctx.fill();
+  _r(ctx,tx+40,ty-td/2-2,8,td+4,'#8a6830');_r(ctx,tx+80,ty-td/2-2,8,td+4,'#8a6830');
+  _lbl(ctx,'Brass Telescope');
+}
+
+function drawSmorbukkCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1e2e54', sky2:'#2e3e72', sky3:'#1e2e54', floor:'#1a2848'});
+  _r(ctx,52,28,96,52,'#7a4818');_r(ctx,52,38,96,8,'#c8a020');_r(ctx,52,36,96,2,'#e8c040');_r(ctx,52,46,96,2,'#a08018');
+  _r(ctx,52,28,96,4,'#9a5820');_r(ctx,52,76,96,4,'#9a5820');
+  _r(ctx,52,28,12,52,'#8a5018');_r(ctx,136,28,12,52,'#8a5018');
+  ctx.fillStyle='#f4e888';ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.fillText('SMØRBUKK',100,44);
+  ctx.fillStyle='rgba(60,25,5,0.30)';ctx.fillRect(66,48,68,6);
+  const g=ctx.createRadialGradient(100,54,0,100,54,50);
+  g.addColorStop(0,'rgba(255,200,60,0.12)');g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g;ctx.fillRect(40,14,120,80);
+  ctx.textAlign='left';
+  _lbl(ctx,'Smørbukk Treat');
+}
+
+function drawSkillingsbollerCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#08080e', sky2:'#0a0c14', sky3:'#0a0c14', floor:'#0c0c14'});
+  const bg=ctx.createRadialGradient(100,55,0,100,55,52);
+  bg.addColorStop(0,'rgba(200,110,30,0.28)');bg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=bg;ctx.fillRect(40,15,120,80);
+  ctx.fillStyle='#c8783a';ctx.beginPath();ctx.arc(100,56,38,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#8a4820';ctx.lineWidth=2.5;
+  ctx.beginPath();
+  for(let a=0;a<6.5;a+=0.12){const rad=4+a*4.8;ctx.lineTo(100+Math.cos(a)*rad,56+Math.sin(a)*rad);}
+  ctx.stroke();
+  ctx.fillStyle='rgba(248,232,200,0.70)';ctx.beginPath();ctx.ellipse(100,40,22,8,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(248,232,200,0.50)';
+  ctx.beginPath();ctx.ellipse(88,50,12,5,0.3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(114,48,10,4,-0.3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#7a3818';ctx.beginPath();ctx.arc(100,56,38,0.2,Math.PI-0.2);ctx.fill();
+  ctx.fillStyle='#c8783a';ctx.beginPath();ctx.arc(100,54,34,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#8a4820';ctx.lineWidth=2;
+  ctx.beginPath();
+  for(let a=0;a<6.5;a+=0.12){const rad=4+a*4.5;ctx.lineTo(100+Math.cos(a)*rad,56+Math.sin(a)*rad);}
+  ctx.stroke();
+  _lbl(ctx,'Skillingsboller Treat');
+}
+
+function drawBamsemums(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a1008', sky2:'#201408', sky3:'#1c1208', floor:'#2a1c0c'});
+  _r(ctx,42,24,116,64,'#1c1008');_r(ctx,42,24,116,10,'#c87820');_r(ctx,42,24,116,2,'#e89830');
+  _r(ctx,52,34,96,40,'#f0ece0');
+  ctx.fillStyle='#e8e4d8';
+  ctx.beginPath();ctx.ellipse(100,62,22,16,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(100,44,14,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(90,36,5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(110,36,5,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a1408';
+  ctx.beginPath();ctx.arc(95,44,2,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(105,44,2,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#3a2018';ctx.beginPath();ctx.ellipse(100,49,4,3,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#c87820';ctx.font='bold 8px monospace';ctx.textAlign='center';ctx.fillText('BAMSEMUMS',100,31);
+  ctx.textAlign='left';
+  _lbl(ctx,'Bamsemums Treat');
+}
+
+function drawKvikkLunsjCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a2230', sky2:'#1e2638', sky3:'#161e2c', floor:'#141c28'});
+  _r(ctx,40,22,120,66,'#c01810');_r(ctx,40,44,120,14,'#c8a020');_r(ctx,40,42,120,2,'#e8c040');_r(ctx,40,58,120,2,'#a08018');
+  ctx.fillStyle='rgba(180,10,0,0.45)';
+  for(let i=0;i<6;i++){_r(ctx,42+i*18,24,1,18,'rgba(180,10,0,0.45)');_r(ctx,42+i*18,62,1,22,'rgba(180,10,0,0.45)');}
+  ctx.fillStyle='#f8f4e8';ctx.font='bold 10px monospace';ctx.textAlign='center';
+  ctx.fillText('KVIKK',100,38);ctx.fillText('LUNSJ',100,52);
+  _r(ctx,40,22,14,66,'#a01008');_r(ctx,146,22,14,66,'#a01008');
+  _r(ctx,42,82,116,4,'#3a1c08');
+  ctx.fillStyle='rgba(60,25,8,0.25)';
+  for(let i=0;i<4;i++)_r(ctx,42+i*28,62,2,20,'rgba(60,25,8,0.25)');
+  const g=ctx.createRadialGradient(100,55,0,100,55,55);
+  g.addColorStop(0,'rgba(255,180,60,0.12)');g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g;ctx.fillRect(30,8,140,90);
+  ctx.textAlign='left';
+  _lbl(ctx,'Kvikk Lunsj Treat');
+}
+
+/* =============================================================
+   DRAW FUNCTION REGISTRY — maps asset.id to drawFn(ctx, t)
+   Only Ch1 cells are drawn; all others remain placeholders.
+   ============================================================= */
+const DRAW_FNS = {
+  'CH1-ROOM-01': drawHallwayCell,
+  'CH1-ROOM-02': drawGrandparentsCell,
+  'CH1-ROOM-03': drawCabin646Cell,
+  'CH1-ROOM-04': drawDarkCorridorCell,
+  'CH1-ROOM-05': drawKitchenCell,
+  'CH1-ROOM-06': drawObsDeckCell,
+  'CH1-BG-01':   drawBergenBgCell,
+  'CH1-PROP-01': drawBedBodyLumpCell,
+  'CH1-PROP-02': drawCrayonDrawingCell,
+  'CH1-PROP-03': drawCabinMirrorCell,
+  'CH1-PROP-04': drawPortholeCell,
+  'CH1-PROP-05': drawGPWindowCell,
+  'CH1-PROP-06': drawBedsideLampCell,
+  'CH1-PROP-07': drawSuitcaseCell,
+  'CH1-PROP-08': drawPhotoPipCell,
+  'CH1-PROP-09': drawTrolleyCell,
+  'CH1-PROP-10': drawWallDecorCell,
+  'CH1-PROP-11': drawSconcesPairCell,
+  'CH1-PROP-12': drawBulletinBoardCell,
+  'CH1-PROP-13': drawBrokenSconceCell,
+  'CH1-PROP-14': drawJanitorCartCell,
+  'CH1-PROP-15': drawGravlaksPlateCell,
+  'CH1-PROP-16': drawHenrikStoolCell,
+  'CH1-PROP-17': drawCandleCell,
+  'CH1-PROP-18': drawAuroraViewportCell,
+  'CH1-PROP-19': drawTelescopeCell,
+  'CH1-PROP-20': drawSmorbukkCell,
+  'CH1-PROP-21': drawSkillingsbollerCell,
+  'CH1-PROP-22': drawBamsemums,
+  'CH1-PROP-23': drawKvikkLunsjCell,
+};
+
+/* =============================================================
    ASSET DATA
    Each entry = one ROOM / BG / PROP from the master list.
    Fields:
@@ -438,7 +1272,7 @@ const CELL_H = 113;
      type        'ROOM' | 'BG' | 'PROP'
      chapter     1–8 (first-appearance chapter for cross-chapter assets)
      section     DOM row id suffix  e.g. 'ch1-room', 'ch3-bg', 'ch6-prop'
-     designed    always false for Sprint B — all placeholders
+     designed    true if draw function exists; false = placeholder
      desc        One-line description from the master list
      alsoAppears null or string e.g. 'Ch4, Ch8'
      source      Source doc citation
@@ -448,42 +1282,42 @@ const ASSETS = [
   // ── CHAPTER 1: ROOMS ─────────────────────────────────────
   {
     id: 'CH1-ROOM-01', name: 'Main Hallway', type: 'ROOM',
-    chapter: 1, section: 'ch1-room', designed: false,
+    chapter: 1, section: 'ch1-room', designed: true,
     desc: 'Passenger corridor; 1440px wide, scrolling; crimson runner carpet, 6 cabin doors (636–646), 3 portholes, 2 sconces, wall-decor set, luggage trolley; hub for all Ch1 beats.',
     alsoAppears: null,
     source: 'hallway.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-ROOM-02', name: "Grandparents' Cabin (644)", type: 'ROOM',
-    chapter: 1, section: 'ch1-room', designed: false,
+    chapter: 1, section: 'ch1-room', designed: true,
     desc: 'Single-screen grief room; one bed, bedside lamp, four-pane window, open suitcase, photograph on nightstand; Babcia seated on bed, Dziadek at window; Beat 6.',
     alsoAppears: null,
     source: 'grandparents-cabin.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-ROOM-03', name: 'Cabin 646 (Pip\'s cabin + collection room)', type: 'ROOM',
-    chapter: 1, section: 'ch1-room', designed: false,
+    chapter: 1, section: 'ch1-room', designed: true,
     desc: 'Single-screen 480px; mirror, porthole, child\'s crayon drawing, nightstand with Smørbukk, bed; collection items from all chapters accumulate here.',
     alsoAppears: null,
     source: 'cabin-646.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-ROOM-04', name: 'Dark Corridor / Service Stairwell', type: 'ROOM',
-    chapter: 1, section: 'ch1-room', designed: false,
+    chapter: 1, section: 'ch1-room', designed: true,
     desc: '~960px; service deck; broken sconce (puzzle target), janitor\'s cart, stairwell to kitchen; echo-spiders; two lighting states (pre-puzzle dark, post-puzzle dim-but-lit).',
     alsoAppears: null,
     source: 'dark-corridor.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-ROOM-05', name: 'The Kitchen', type: 'ROOM',
-    chapter: 1, section: 'ch1-room', designed: false,
+    chapter: 1, section: 'ch1-room', designed: true,
     desc: 'Henrik\'s working kitchen; ~960px; warm pendant light, counter with meal, Henrik\'s stool, hanging copper pots, freezer doorway, storage racks; Beats 9–13.',
     alsoAppears: 'Ch4 (end-beat), Ch5 (end-beat), Ch6 (end-beat), Ch7 (end-beat + reunion), Ch8 (finale)',
     source: 'kitchen.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-ROOM-06', name: 'Observation Deck', type: 'ROOM',
-    chapter: 1, section: 'ch1-room', designed: false,
+    chapter: 1, section: 'ch1-room', designed: true,
     desc: 'Aurora viewing room; ~700px; wide curved viewport, wooden benches, coiled rope, brass telescope; Beat 12.',
     alsoAppears: null,
     source: 'observation-deck.md; ch01-cabin-646-outline.md',
@@ -492,7 +1326,7 @@ const ASSETS = [
   // ── CHAPTER 1: BACKGROUNDS ────────────────────────────────
   {
     id: 'CH1-BG-01', name: 'Ocean-at-night / Bergen approach', type: 'BG',
-    chapter: 1, section: 'ch1-bg', designed: false,
+    chapter: 1, section: 'ch1-bg', designed: true,
     desc: 'Ship-window scenery; multi-layer (near-black sky, aurora-faint, seeded stars, fjord silhouettes, Bergen shore-light, lighthouse blink, swell); seen through all portholes and Grandparents\' window simultaneously.',
     alsoAppears: 'Ch2–Ch7 (port scene updates each chapter — listed under respective chapters)',
     source: 'hallway.md; grandparents-cabin.md; cabin-646.md',
@@ -501,161 +1335,161 @@ const ASSETS = [
   // ── CHAPTER 1: PROPS ──────────────────────────────────────
   {
     id: 'CH1-PROP-01', name: 'Bed + body-lump', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Cabin 646; two draw-states: pre-reveal (dark lump under covers) / post-reveal (sheet-lift animation, Pip\'s body visible); scripted timing.',
     alsoAppears: null,
     source: 'cabin-646.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-PROP-02', name: "Child's crayon drawing", type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Cabin 646 wall (x=160); boat-at-sea; inspectable; Beat 3 ambient detail.',
     alsoAppears: null,
     source: 'cabin-646.md',
   },
   {
     id: 'CH1-PROP-03', name: 'Cabin mirror', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Cabin 646 (x=280); dark wood + bronze frame, brass rivets; Cinematic 2 trigger; two states (normal / melt-in-progress).',
     alsoAppears: null,
     source: 'cabin-646.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-PROP-04', name: 'Porthole assembly', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Brass ring with iron clasp, small circular glass; recurring ship prop — hallway (x=180, 600, 1050), cabin 646 (x=190); delivers ocean scenery via parallax engine.',
     alsoAppears: 'Ch2, Ch3, Ch4, Ch5, Ch6, Ch7 (ship traversal and kitchen rooms)',
     source: 'hallway.md; cabin-646.md',
   },
   {
     id: 'CH1-PROP-05', name: "Grandparents' cabin window", type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Four-pane wood-framed rectangular window (NOT a porthole); faces the sea; lit with warm-amber glow; delivers same parallax scenery as portholes.',
     alsoAppears: null,
     source: 'grandparents-cabin.md',
   },
   {
     id: 'CH1-PROP-06', name: 'Bedside lamp', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: "Grandparents' Cabin; trapezoid shade on stem; sole warm-amber light source in the room.",
     alsoAppears: null,
     source: 'grandparents-cabin.md',
   },
   {
     id: 'CH1-PROP-07', name: 'Open suitcase', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: "Grandparents' Cabin; horizontal, dark-brown body, brass latches, Pip's boat-shirt on top, stuffed bear visible; Beat 6 inspectable.",
     alsoAppears: null,
     source: 'grandparents-cabin.md',
   },
   {
     id: 'CH1-PROP-08', name: 'Framed photograph of young Pip', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: "Grandparents' Cabin nightstand; Pip at age 6 holding a pierogi; inspectable.",
     alsoAppears: null,
     source: 'grandparents-cabin.md',
   },
   {
     id: 'CH1-PROP-09', name: 'Luggage trolley', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Hallway (x=530); stacked bags, grandparents\' luggage, stuffed bear visible; Beat 5 ambient detail; inspectable.',
     alsoAppears: null,
     source: 'hallway.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-PROP-10', name: 'Hallway wall decor set (5 pieces)', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Ship photograph, barometer, botanical print, navigation map, ornate mirror; x≈230/435/650/865/1115; ambient inspectables.',
     alsoAppears: null,
     source: 'hallway.md',
   },
   {
     id: 'CH1-PROP-11', name: 'Hallway sconces (pair)', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Brass wall sconces; x=390 (steady amber) and x=810 (flickers — Beat 8 foreshadow); warm floor light-pools.',
     alsoAppears: null,
     source: 'hallway.md',
   },
   {
     id: 'CH1-PROP-12', name: 'Bulletin board', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Hallway (x=130); cork board, brass frame, paper notices, red pins; "Welcome Aboard" itinerary; Beat 2 gated inspectable.',
     alsoAppears: null,
     source: 'hallway.md',
   },
   {
     id: 'CH1-PROP-13', name: 'Broken sconce + exposed wiring', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Dark corridor (x≈420); electricity-ability puzzle target; hold-button mechanic; two states (broken / repaired).',
     alsoAppears: null,
     source: 'dark-corridor.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-PROP-14', name: "Janitor's cart", type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Dark corridor (x≈840); mop bucket, broom, supplies, clipboard with "J. Henriksen" name-tag; Skillingsboller treat hidden on cart shelf; Beat 8.',
     alsoAppears: null,
     source: 'dark-corridor.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-PROP-15', name: 'Gravlaks-and-lefse plate', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Kitchen counter (x≈250); central Beat 9 prop; triggers Cinematic 6a/6b doubled taste-memory.',
     alsoAppears: null,
     source: 'kitchen.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-PROP-16', name: "Henrik's stool", type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Kitchen (x≈400); conversational anchor for Beats 10–11c.',
     alsoAppears: null,
     source: 'kitchen.md',
   },
   {
     id: 'CH1-PROP-17', name: "Candle (Henrik's gift)", type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Small wax candle; handed to Pip in Beat 13; carried as inventory item through Ch2 and Ch3; used in Ch4 puzzle.',
     alsoAppears: 'Ch4 (Karakoncolos puzzle — lit with CH3-PROP-04 Matches)',
     source: 'ch01-cabin-646-outline.md; ch04-turkiye-outline.md',
   },
   {
     id: 'CH1-PROP-18', name: 'Aurora viewport frame', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Observation Deck; wide curved window with dark-wood mullions and brass fittings; aurora visible beyond; Beat 12.',
     alsoAppears: null,
     source: 'observation-deck.md',
   },
   {
     id: 'CH1-PROP-19', name: 'Brass telescope', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Observation Deck (x=540); on tripod; inspectable ambient prop.',
     alsoAppears: null,
     source: 'observation-deck.md',
   },
   {
     id: 'CH1-PROP-20', name: 'Smørbukk treat', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Cabin 646 nightstand (x=332); Norwegian caramel-chocolate bar; Ch1 replay-reward collectible.',
     alsoAppears: null,
     source: 'cabin-646.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-PROP-21', name: 'Skillingsboller treat', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: "Janitor's cart in dark corridor (x≈840); Norwegian cinnamon bun; Beat 8 collectible.",
     alsoAppears: null,
     source: 'dark-corridor.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-PROP-22', name: 'Bamsemums treat', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Kitchen (x≈520); Norwegian marshmallow-chocolate snack; teaches the collect verb; Beat 9.',
     alsoAppears: null,
     source: 'kitchen.md; ch01-cabin-646-outline.md',
   },
   {
     id: 'CH1-PROP-23', name: 'Kvikk Lunsj treat', type: 'PROP',
-    chapter: 1, section: 'ch1-prop', designed: false,
+    chapter: 1, section: 'ch1-prop', designed: true,
     desc: 'Observation Deck (x=565); Norwegian wafer bar, red wrapper with gold foil stripe; Ch1\'s final treat.',
     alsoAppears: null,
     source: 'observation-deck.md; ch01-cabin-646-outline.md',
@@ -1189,19 +2023,38 @@ function buildCell(asset) {
   return { canvas, ctx, asset };
 }
 
-/* Build all cells and draw placeholders */
+/* =============================================================
+   BUILD ALL CELLS
+   Designed cells use DRAW_FNS; undesigned cells get placeholders.
+   An rAF loop drives the animated designed cells.
+   ============================================================= */
+
+const animatedCells = [];
+
 ASSETS.forEach(asset => {
   const { canvas, ctx, asset: a } = buildCell(asset);
-  drawAssetPlaceholder(ctx, a);
+  const fn = DRAW_FNS[a.id];
+  if (a.designed && fn) {
+    // Draw once immediately (avoids blank flash before first rAF tick)
+    fn(ctx, 0);
+    animatedCells.push({ canvas, ctx, fn });
+  } else {
+    drawAssetPlaceholder(ctx, a);
+  }
 });
 
-/* =============================================================
-   NOTE: No render loop needed — all cells are static placeholders.
-   drawAssetPlaceholder is called once per cell at build time.
-   When a cell gains a draw function (designed: true), a render
-   loop like character-gallery.html's requestAnimationFrame loop
-   should be added here.
-   ============================================================= */
+/* Render loop — only runs if there are animated cells */
+if (animatedCells.length > 0) {
+  const startTime = performance.now();
+  function render() {
+    const t = (performance.now() - startTime) / 1000; // seconds
+    for (const cell of animatedCells) {
+      cell.fn(cell.ctx, t);
+    }
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+}
 </script>
 
 </body>

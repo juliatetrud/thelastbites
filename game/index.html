@@ -7533,47 +7533,105 @@ function drawDoctorExitCinematic(now) {
 /* Procedural doctor sprite — Adult NPC scale (~60px).
    Dark suit, white collar, grey skin, small black bag. Facing right (toward far door). */
 function drawDoctor(screenX, groundY, now) {
+  /* Sprint D port: ported from gallery drawDoctor (Sprint 40 approved design).
+     Dark coat, cream shirt V, medical bag with brass clasp, brown hair,
+     tired forward lean. ~66px tall (0.60 door-fraction). */
   const bob  = Math.abs(Math.sin(now / 380)) * 2;
   const foot = Math.round(groundY + bob);
+  const cx   = Math.round(screenX);
 
   ctx.save();
-  ctx.translate(screenX, foot);
+  ctx.translate(cx, foot);
 
-  // Hair (dark)
-  ctx.fillStyle = '#1a1218';
-  ctx.fillRect(-5, -60, 11,  4);
-
-  // Head (tired-pale skin)
-  ctx.fillStyle = '#988076';
-  ctx.fillRect(-4, -56,  9, 10);
-
-  // White shirt / collar
-  ctx.fillStyle = '#b8bcc8';
-  ctx.fillRect(-2, -46,  5,  3);
-
-  // Suit jacket shoulders + body (dark charcoal)
-  ctx.fillStyle = '#1e2030';
-  ctx.fillRect(-8, -43, 16,  3);   // shoulders
-  ctx.fillRect(-6, -40, 12, 14);   // jacket body
-  ctx.fillRect(-9, -40,  3, 14);   // left arm
-  ctx.fillRect( 6, -40,  3, 14);   // right arm
-  ctx.fillRect(-5, -26, 10,  4);   // jacket lower hem
-
-  // Trousers (dark grey)
-  ctx.fillStyle = '#28262e';
-  ctx.fillRect(-5, -22,  4, 16);   // left leg
-  ctx.fillRect( 1, -22,  4, 16);   // right leg
-
-  // Shoes (very dark)
+  // Shoes (dark)
   ctx.fillStyle = '#0e0e14';
-  ctx.fillRect(-6,  -6,  5,  2);
-  ctx.fillRect( 1,  -6,  5,  2);
+  ctx.fillRect(-7, -2, 6, 2);
+  ctx.fillRect( 1, -2, 6, 2);
 
-  // Doctor's bag — small rectangular, held at right side
+  // Trousers (dark charcoal)
+  ctx.fillStyle = '#28262e';
+  ctx.fillRect(-6, -18, 4, 16);
+  ctx.fillRect( 2, -18, 4, 16);
+
+  // Coat lower hem
+  ctx.fillStyle = '#1e2030';
+  ctx.fillRect(-9, -32, 18, 14);
+
+  // Coat upper body / torso
+  ctx.fillRect(-9, -52, 18, 20);
+  // Coat edge shadows for depth
+  ctx.fillStyle = '#141824';
+  ctx.fillRect(-9, -52, 1, 20);
+  ctx.fillRect( 8, -52, 1, 20);
+
+  // CREAM SHIRT — visible at chest as V below collar
+  ctx.fillStyle = '#d8d0b8';
+  ctx.fillRect(-2, -49, 4, 15);   // shirt front
+  // Coat lapels framing the shirt
+  ctx.fillStyle = '#1e2030';
+  ctx.fillRect(-6, -48, 4, 13);
+  ctx.fillRect( 2, -48, 4, 13);
+
+  // Left arm (free hand)
+  ctx.fillRect(-13, -50, 4, 20);
+  ctx.fillStyle = '#c8a878';
+  ctx.fillRect(-13, -30, 4, 5);   // left hand
+
+  // Right arm (holds the medical bag)
+  ctx.fillStyle = '#1e2030';
+  ctx.fillRect( 9, -50, 4, 20);
+
+  // MEDICAL BAG — held in right hand; small, leather, worn
   ctx.fillStyle = '#1a1008';
-  ctx.fillRect( 8, -32,  7,  6);   // bag body
-  ctx.fillStyle = '#2a1a0e';
-  ctx.fillRect( 9, -34,  5,  2);   // bag handle
+  ctx.fillRect( 9, -30, 9, 7);    // bag body
+  ctx.fillStyle = '#2a1a08';
+  ctx.fillRect(11, -33, 5, 3);    // handle arch
+  ctx.fillRect(12, -34, 3, 2);    // handle loop top
+  ctx.fillStyle = '#c8a864';
+  ctx.fillRect(17, -30, 1, 1);    // brass clasp
+  ctx.fillStyle = '#2e1c0c';
+  ctx.fillRect(10, -29, 1, 1);    // bag shadow
+
+  // Neck
+  ctx.fillStyle = '#c8a878';
+  ctx.fillRect(-2, -55, 4, 3);
+
+  // Head — forward-inclined (1px offset)
+  const hx = 1;   // forward lean offset
+  const ht = -65;
+
+  ctx.fillStyle = '#c8a878';
+  ctx.fillRect(hx - 4, ht,     9, 3);   // face top
+  ctx.fillRect(hx - 4, ht + 3, 9, 5);   // face mid
+  ctx.fillRect(hx - 3, ht + 8, 7, 2);   // chin
+
+  // Brown hair — middle-aged, shows on sides and crown
+  ctx.fillStyle = '#4a3020';
+  ctx.fillRect(hx - 4, ht,     9, 2);   // crown hair
+  ctx.fillRect(hx - 5, ht + 2, 2, 4);   // left temple hair
+  ctx.fillRect(hx + 3, ht + 2, 2, 4);   // right temple hair
+
+  // Eyes (canonical human: cream whites + dark pupils)
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(hx - 3, ht + 3, 2, 2);   // left eye white
+  ctx.fillRect(hx + 1, ht + 3, 2, 2);   // right eye white
+  ctx.fillStyle = '#2a2030';
+  ctx.fillRect(hx - 2, ht + 4, 1, 1);   // left pupil
+  ctx.fillRect(hx + 2, ht + 4, 1, 1);   // right pupil
+  // Brows — level (tired acceptance)
+  ctx.fillStyle = '#483828';
+  ctx.fillRect(hx - 3, ht + 2, 2, 1);
+  ctx.fillRect(hx + 1, ht + 2, 2, 1);
+  // Under-eye shadow (years of late calls)
+  ctx.fillStyle = 'rgba(80,60,40,0.32)';
+  ctx.fillRect(hx - 3, ht + 5, 2, 1);
+  ctx.fillRect(hx + 1, ht + 5, 2, 1);
+
+  // Mouth — kind but closed
+  ctx.fillStyle = '#3a2818';
+  ctx.fillRect(hx - 1, ht + 9, 3, 1);
+
+  // No hat (distinguishes from Passenger)
 
   ctx.restore();
 }
@@ -9409,11 +9467,56 @@ function drawEchoMouse(screenX, groundY, now) {
 }
 
 /* ================================================================
-   HENRIK SPRITES  (Sprint 26 Stage 2)
+   HENRIK SPRITES  (Sprint D port: ported from gallery drawHenrik Sprint 09-polish-r2)
+   Tall toque, sleek black button-up + slacks, cream apron, pipe, gray hair/mustache.
    drawHenrikStanding — neutral standing pose, used during walk.
    drawHenrikSitting  — seated pose, body above stool, legs hanging.
    groundY = FLOOR_Y (180) for both; stool seat at FLOOR_Y-28.
    ================================================================ */
+
+/* Shared draw helpers for Henrik's head+toque (called by both standing + sitting) */
+function _drawHenrikHead(cx, baseY) {
+  const ht = baseY - 72;  // top of head
+  const hx = cx;
+
+  // Gray hair peek
+  ctx.fillStyle = '#8a8898';
+  ctx.fillRect(hx - 4, ht,     9, 1);
+  ctx.fillRect(hx - 5, ht + 1, 2, 3);
+  ctx.fillRect(hx + 3, ht + 1, 2, 3);
+  // Head
+  ctx.fillStyle = '#d0b898';
+  ctx.fillRect(hx - 4, ht,     9, 2);
+  ctx.fillRect(hx - 5, ht + 2, 11, 4);
+  ctx.fillRect(hx - 5, ht + 6, 11, 3);
+  // 5 o'clock shadow
+  ctx.fillStyle = 'rgba(138,136,152,0.28)';
+  ctx.fillRect(hx - 4, ht + 5, 2, 4);
+  ctx.fillRect(hx + 2, ht + 5, 2, 4);
+  ctx.fillRect(hx - 3, ht + 7, 7, 2);
+  // Mustache
+  ctx.fillStyle = '#8a8898';
+  ctx.fillRect(hx - 3, ht + 7, 7, 2);
+  // Eyes (canonical human: cream whites + dark pupils)
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(hx - 3, ht + 3, 3, 2);
+  ctx.fillRect(hx + 1, ht + 3, 3, 2);
+  ctx.fillStyle = '#3a3040';
+  ctx.fillRect(hx - 2, ht + 4, 1, 1);
+  ctx.fillRect(hx + 2, ht + 4, 1, 1);
+  // Eyebrows
+  ctx.fillStyle = '#4a4a50';
+  ctx.fillRect(hx - 3, ht + 2, 3, 1);
+  ctx.fillRect(hx + 1, ht + 2, 3, 1);
+  // Toque: band (warm cream) then tall white pillar
+  ctx.fillStyle = '#d8d4c0';
+  ctx.fillRect(hx - 6, ht - 2, 13, 2);   // band
+  ctx.fillStyle = '#8a8898';
+  ctx.fillRect(hx - 4, ht - 1, 9,  1);   // hair peek under band
+  ctx.fillStyle = '#f0f0e8';
+  ctx.fillRect(hx - 6, ht - 12, 13, 10); // crown body
+  ctx.fillRect(hx - 5, ht - 14, 11, 2);  // dome tip
+}
 
 function drawHenrikStanding(screenX, groundY, facing, now) {
   const bob = Math.abs(Math.sin(now / 450)) * 1.5;
@@ -9423,40 +9526,68 @@ function drawHenrikStanding(screenX, groundY, facing, now) {
   ctx.translate(cx, cy);
   if (facing === 'left') ctx.scale(-1, 1);
 
-  ctx.fillStyle = '#e8e0d0';
-  ctx.fillRect(-7, -86, 14, 4);
-  ctx.fillRect(-5, -98, 10, 14);
+  // Shoes (near-black)
+  ctx.fillStyle = '#1a1a24';
+  ctx.fillRect(-8, -2,  7, 2);
+  ctx.fillRect( 2, -2,  7, 2);
 
-  ctx.fillStyle = '#b8805c';
-  ctx.fillRect(-8, -82, 16, 18);
+  // Slacks (near-black)
+  ctx.fillRect(-7, -24, 5, 22);
+  ctx.fillRect( 2, -24, 5, 22);
 
-  ctx.fillStyle = '#1a1010';
-  ctx.fillRect(-7, -76, 4, 3);
-  ctx.fillRect(3, -76, 4, 3);
+  // Shirt body (near-black)
+  ctx.fillRect(-10, -62, 21, 38);
 
-  ctx.fillStyle = '#1c0c0c';
-  ctx.fillRect(-3, -67, 6, 2);
+  // Apron bib
+  ctx.fillStyle = '#e8d8b0';
+  ctx.fillRect(-4, -56, 10, 14);
+  // Apron skirt
+  ctx.fillRect(-6, -42, 14, 18);
+  // Apron waist tie strings
+  ctx.fillRect(-9, -42, 3, 1);
+  ctx.fillRect( 7, -42, 3, 1);
 
-  ctx.fillStyle = '#b8805c';
-  ctx.fillRect(-4, -64, 8, 6);
+  // Collar V
+  ctx.fillStyle = '#1a1a24';
+  ctx.fillRect( 0, -57, 1, 1);
+  ctx.fillRect(-1, -58, 1, 1);
+  ctx.fillRect( 1, -58, 1, 1);
 
-  ctx.fillStyle = '#dcd8c8';
-  ctx.fillRect(-14, -58, 28, 26);
-  ctx.fillStyle = '#c4c0b0';
-  ctx.fillRect(-2, -55, 4, 22);
+  // Left sleeve + skin forearm
+  ctx.fillStyle = '#1a1a24';
+  ctx.fillRect(-13, -56, 4, 18);
+  ctx.fillStyle = '#d0b898';
+  ctx.fillRect(-13, -38, 4, 12);
 
-  ctx.fillStyle = '#dcd8c8';
-  ctx.fillRect(-22, -55, 8, 24);
-  ctx.fillRect(14, -55, 8, 24);
+  // Right sleeve + skin forearm (pipe side)
+  ctx.fillStyle = '#1a1a24';
+  ctx.fillRect( 9, -52, 5, 16);
+  ctx.fillStyle = '#d0b898';
+  ctx.fillRect(10, -36, 4, 10);
 
-  ctx.fillStyle = '#38342e';
-  ctx.fillRect(-13, -32, 26, 18);
-  ctx.fillRect(-11, -14, 9, 14);
-  ctx.fillRect(2, -14, 9, 14);
+  // Pipe (right hand)
+  ctx.fillStyle = '#3a2018';
+  ctx.fillRect(14, -28, 9, 2);   // stem
+  ctx.fillRect(21, -31, 3, 4);   // bowl
+  ctx.fillStyle = '#a07040';
+  ctx.fillRect(22, -30, 1, 1);   // ember
+  ctx.fillStyle = '#c88848';
+  ctx.fillRect(22, -29, 1, 1);   // glow
 
-  ctx.fillStyle = '#28201c';
-  ctx.fillRect(-13, -1, 12, 3);
-  ctx.fillRect(2, -1, 12, 3);
+  // Pipe smoke (animated via now)
+  const sp = ((now / 1250) % 1);
+  const sA = 0.4 - sp * 0.35;
+  ctx.fillStyle = `rgba(205,190,155,${sA.toFixed(2)})`;
+  ctx.fillRect(22, -32 - Math.floor(sp * 5), 1, 1);
+  if (sp > 0.3)  { ctx.fillStyle = 'rgba(205,190,155,0.22)'; ctx.fillRect(23, -36, 1, 1); }
+  if (sp > 0.65) { ctx.fillStyle = 'rgba(205,190,155,0.12)'; ctx.fillRect(22, -39, 1, 1); }
+
+  // Neck
+  ctx.fillStyle = '#d0b898';
+  ctx.fillRect(-2, -68, 5, 9);
+
+  // Head + toque
+  _drawHenrikHead(0, 0);
 
   ctx.restore();
 }
@@ -9469,45 +9600,66 @@ function drawHenrikSitting(screenX, groundY, facing, now) {
   ctx.translate(cx, cy);
   if (facing === 'left') ctx.scale(-1, 1);
 
-  ctx.fillStyle = '#e8e0d0';
-  ctx.fillRect(-7, -86, 14, 4);
-  ctx.fillRect(-5, -98, 10, 14);
+  // Shoes (near-black)
+  ctx.fillStyle = '#1a1a24';
+  ctx.fillRect(-8, -2,  7, 2);
+  ctx.fillRect( 2, -2,  7, 2);
 
-  ctx.fillStyle = '#b8805c';
-  ctx.fillRect(-8, -82, 16, 18);
+  // Slacks hanging from stool seat
+  ctx.fillRect(-7, -28, 5, 26);
+  ctx.fillRect( 2, -28, 5, 26);
 
-  ctx.fillStyle = '#1a1010';
-  ctx.fillRect(-7, -76, 4, 3);
-  ctx.fillRect(3, -76, 4, 3);
+  // Thighs (horizontal on stool seat at -28)
+  ctx.fillRect(-10, -36, 20, 8);
 
-  ctx.fillStyle = '#1c0c0c';
-  ctx.fillRect(-3, -67, 6, 2);
+  // Shirt body
+  ctx.fillRect(-10, -62, 21, 26);
 
-  ctx.fillStyle = '#b8805c';
-  ctx.fillRect(-4, -64, 8, 6);
+  // Apron bib
+  ctx.fillStyle = '#e8d8b0';
+  ctx.fillRect(-4, -56, 10, 14);
+  // Apron skirt (over thighs)
+  ctx.fillRect(-7, -42, 14, 14);
+  // Apron tie strings
+  ctx.fillRect(-10, -42, 3, 1);
+  ctx.fillRect(  7, -42, 3, 1);
 
-  ctx.fillStyle = '#dcd8c8';
-  ctx.fillRect(-14, -58, 28, 26);
-  ctx.fillStyle = '#c4c0b0';
-  ctx.fillRect(-2, -55, 4, 22);
+  // Collar V
+  ctx.fillStyle = '#1a1a24';
+  ctx.fillRect( 0, -57, 1, 1);
+  ctx.fillRect(-1, -58, 1, 1);
+  ctx.fillRect( 1, -58, 1, 1);
 
-  // Arms resting on knees
-  ctx.fillStyle = '#dcd8c8';
-  ctx.fillRect(-22, -36, 8, 12);
-  ctx.fillRect(14, -36, 8, 12);
+  // Arms resting on knees (skin forearms)
+  ctx.fillStyle = '#1a1a24';
+  ctx.fillRect(-13, -50, 4, 14);
+  ctx.fillRect(  9, -50, 5, 12);
+  ctx.fillStyle = '#d0b898';
+  ctx.fillRect(-13, -36, 4, 10);
+  ctx.fillRect( 10, -38, 4, 12);
 
-  // Thighs horizontal (on stool seat at -28)
-  ctx.fillStyle = '#38342e';
-  ctx.fillRect(-14, -32, 28, 10);
+  // Pipe (right hand, resting)
+  ctx.fillStyle = '#3a2018';
+  ctx.fillRect(14, -30, 8, 2);
+  ctx.fillRect(21, -33, 3, 4);
+  ctx.fillStyle = '#a07040';
+  ctx.fillRect(22, -32, 1, 1);
+  ctx.fillStyle = '#c88848';
+  ctx.fillRect(22, -31, 1, 1);
 
-  // Lower legs hanging down from seat
-  ctx.fillRect(-12, -22, 9, 22);
-  ctx.fillRect(3, -22, 9, 22);
+  // Pipe smoke (animated)
+  const sp = ((now / 1250) % 1);
+  const sA = 0.35 - sp * 0.30;
+  ctx.fillStyle = `rgba(205,190,155,${sA.toFixed(2)})`;
+  ctx.fillRect(22, -34 - Math.floor(sp * 5), 1, 1);
+  if (sp > 0.3)  { ctx.fillStyle = 'rgba(205,190,155,0.20)'; ctx.fillRect(23, -38, 1, 1); }
 
-  // Shoes near floor
-  ctx.fillStyle = '#28201c';
-  ctx.fillRect(-13, -2, 12, 4);
-  ctx.fillRect(2, -2, 12, 4);
+  // Neck
+  ctx.fillStyle = '#d0b898';
+  ctx.fillRect(-2, -68, 5, 9);
+
+  // Head + toque
+  _drawHenrikHead(0, 0);
 
   ctx.restore();
 }

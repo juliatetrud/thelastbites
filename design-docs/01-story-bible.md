@@ -224,7 +224,7 @@ The Mnemosyne carries the residue of every encounter across its history — smal
 
 Each chapter features **one species** as its ambient ghost-vermin, deliberately. The species changes by chapter — never repeated, always specific. This gives each port-of-call a distinct ambient register without overwhelming any single environment.
 
-**Chapter 1: echo-mice.** Small, ground-level, drained-amber translucent. They scuttle along baseboards in the dark corridor. They are unattended but not menacing — the chapter's only "small wrongness" beyond the cinematics.
+**Chapter 1: echo-spiders.** Warm-amber translucent; two staging types: floor-level skitterers along baseboards, and ceiling danglers bobbing on silk threads. Sparse and unattended — the chapter's only "small wrongness" beyond the cinematics. (Locked Sprint 41; see `08-character-reference-sheets.md` §Echo-creatures for full per-chapter roster.)
 
 *(Each chapter's species is assigned in its outline doc as the chapter is designed.)*
 

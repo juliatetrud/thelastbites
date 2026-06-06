@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Last Bites — Environment Gallery</title>
+
+<!--
+  THE LAST BITES — Environment Gallery
+  Sprint B: Gallery Scaffold
+
+  One cell per ROOM / BG / PROP entry from design-docs/art-asset-master-list.md.
+  All cells are designed:false placeholders — no draw functions.
+  Grouped by chapter (Ch1–Ch8); within each chapter: ROOM → BG → PROP.
+  Cross-chapter assets appear ONCE under their first-appearance chapter with
+  also-appears notes on the cell.
+
+  Standalone reference page — does not affect game/index.html.
+  No build step. Vanilla JS. image-rendering: pixelated.
+  Single file; no external dependencies beyond Google Fonts.
+-->
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0a0e1a;
+  --bg-mid:   #0e1428;
+  --text:     #c8a878;
+  --text-dim: #7a6848;
+  --accent:   #ffc868;
+  --border:   #2a3060;
+  --type-room: #88b8c8;
+  --type-bg:   #a8c898;
+  --type-prop: #c8b888;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Special Elite', monospace;
+  min-height: 100%;
+}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+#header {
+  padding: 24px 32px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-mid);
+}
+
+#header h1 {
+  font-size: 18px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+#header p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.legend-item {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend-swatch {
+  width: 10px; height: 10px;
+  border-radius: 2px;
+}
+.swatch-room { background: var(--type-room); }
+.swatch-bg   { background: var(--type-bg); }
+.swatch-prop { background: var(--type-prop); }
+
+/* Sticky nav */
+#gallery-nav {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#gallery-nav::-webkit-scrollbar { display: none; }
+
+#gallery-nav a {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 10px 16px;
+  border-top: 1px solid transparent;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+#gallery-nav a:hover { color: var(--text); border-top-color: var(--text-dim); }
+
+#sticky-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-mid);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── GALLERY ─────────────────────────────────────────────── */
+#gallery-main {
+  padding: 24px 32px 64px;
+}
+
+.gallery-chapter {
+  margin-bottom: 56px;
+}
+
+.chapter-header {
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 28px;
+}
+
+.type-section {
+  margin-bottom: 32px;
+}
+
+.type-header {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  padding-left: 4px;
+  border-left: 2px solid;
+}
+.type-header.rooms { color: var(--type-room); border-color: var(--type-room); }
+.type-header.bgs   { color: var(--type-bg);   border-color: var(--type-bg); }
+.type-header.props { color: var(--type-prop);  border-color: var(--type-prop); }
+
+.gallery-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* ── CELL ─────────────────────────────────────────────────── */
+/* Landscape/scene canvas: 320×180 internal (16:9 480×270 at 2/3 scale)
+   Displayed at 2× CSS = 640×360 visual... that's very wide.
+   Use 240×135 internal → 480×270 CSS = one full game canvas height/width.
+   Or 160×90 internal → 320×180 CSS for a compact but landscape cell.
+   Chosen: 200×113 internal → 400×226 CSS — fits ~3-wide on 1400px viewport
+   while clearly reading as landscape/wide-scene shaped.            */
+/* CELL_W = 200, CELL_H = 113  (these match the canvas internal dims below) */
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.cell canvas {
+  display: block;
+  /* 200×113 internal → 2× CSS */
+  width: 400px;
+  height: 226px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 1px solid var(--border);
+}
+
+.cell-info {
+  width: 400px;
+}
+
+.cell-id {
+  font-family: 'Special Elite', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  margin-bottom: 3px;
+}
+
+.cell-name {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.cell-type-tag {
+  display: inline-block;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  padding: 1px 6px;
+  margin-right: 6px;
+  border-radius: 2px;
+}
+.tag-room { color: var(--bg); background: var(--type-room); }
+.tag-bg   { color: var(--bg); background: var(--type-bg); }
+.tag-prop { color: var(--bg); background: var(--type-prop); }
+
+.cell-desc {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin-bottom: 2px;
+}
+
+.cell-also {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: #4a5878;
+  margin-top: 2px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="header">
+  <h1>The Last Bites — Environment Gallery</h1>
+  <p>All ROOM, BG, and PROP assets from the art-asset master list.
+     One placeholder cell per entry. Grouped by chapter; within each chapter: ROOM → BG → PROP.
+     Cross-chapter assets appear once (first chapter); also-appears chapters shown on cell.
+     Every cell is a placeholder — no art yet. Sprint B scaffold.</p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch swatch-room"></div> Room</div>
+    <div class="legend-item"><div class="legend-swatch swatch-bg"></div> Background</div>
+    <div class="legend-item"><div class="legend-swatch swatch-prop"></div> Prop</div>
+  </div>
+</div>
+
+<div id="sticky-nav">
+  <nav id="gallery-nav">
+    <a href="#ch1">Ch 1 — Cabin 646</a>
+    <a href="#ch2">Ch 2 — Käsmu</a>
+    <a href="#ch3">Ch 3 — Southampton</a>
+    <a href="#ch4">Ch 4 — Istanbul</a>
+    <a href="#ch5">Ch 5 — Saldanha Bay</a>
+    <a href="#ch6">Ch 6 — Kolonodale</a>
+    <a href="#ch7">Ch 7 — Alter do Chão</a>
+    <a href="#ch8">Ch 8 — Greenpoint</a>
+  </nav>
+</div>
+
+<div id="gallery-main">
+
+  <div id="ch1" class="gallery-chapter">
+    <div class="chapter-header">Chapter 1 — Cabin 646 (Bergen → open Atlantic)</div>
+
+    <div class="type-section">
+      <div class="type-header rooms">Rooms</div>
+      <div class="gallery-row" id="row-ch1-room"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header bgs">Backgrounds</div>
+      <div class="gallery-row" id="row-ch1-bg"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header props">Props</div>
+      <div class="gallery-row" id="row-ch1-prop"></div>
+    </div>
+  </div>
+
+  <div id="ch2" class="gallery-chapter">
+    <div class="chapter-header">Chapter 2 — A Cat, a Pan, a Promise (Käsmu, Estonia)</div>
+
+    <div class="type-section">
+      <div class="type-header rooms">Rooms</div>
+      <div class="gallery-row" id="row-ch2-room"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header bgs">Backgrounds</div>
+      <div class="gallery-row" id="row-ch2-bg"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header props">Props</div>
+      <div class="gallery-row" id="row-ch2-prop"></div>
+    </div>
+  </div>
+
+  <div id="ch3" class="gallery-chapter">
+    <div class="chapter-header">Chapter 3 — A Scotsman's Red Curry (Southampton)</div>
+
+    <div class="type-section">
+      <div class="type-header rooms">Rooms</div>
+      <div class="gallery-row" id="row-ch3-room"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header bgs">Backgrounds</div>
+      <div class="gallery-row" id="row-ch3-bg"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header props">Props</div>
+      <div class="gallery-row" id="row-ch3-prop"></div>
+    </div>
+  </div>
+
+  <div id="ch4" class="gallery-chapter">
+    <div class="chapter-header">Chapter 4 — Muhittin's Muhammara (Istanbul)</div>
+
+    <div class="type-section">
+      <div class="type-header rooms">Rooms</div>
+      <div class="gallery-row" id="row-ch4-room"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header bgs">Backgrounds</div>
+      <div class="gallery-row" id="row-ch4-bg"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header props">Props</div>
+      <div class="gallery-row" id="row-ch4-prop"></div>
+    </div>
+  </div>
+
+  <div id="ch5" class="gallery-chapter">
+    <div class="chapter-header">Chapter 5 — A Stew for the Crew (Saldanha Bay, South Africa)</div>
+
+    <div class="type-section">
+      <div class="type-header rooms">Rooms</div>
+      <div class="gallery-row" id="row-ch5-room"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header bgs">Backgrounds</div>
+      <div class="gallery-row" id="row-ch5-bg"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header props">Props</div>
+      <div class="gallery-row" id="row-ch5-prop"></div>
+    </div>
+  </div>
+
+  <div id="ch6" class="gallery-chapter">
+    <div class="chapter-header">Chapter 6 — A Knot of Banana Leaves (Kolonodale, Central Sulawesi)</div>
+
+    <div class="type-section">
+      <div class="type-header rooms">Rooms</div>
+      <div class="gallery-row" id="row-ch6-room"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header bgs">Backgrounds</div>
+      <div class="gallery-row" id="row-ch6-bg"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header props">Props</div>
+      <div class="gallery-row" id="row-ch6-prop"></div>
+    </div>
+  </div>
+
+  <div id="ch7" class="gallery-chapter">
+    <div class="chapter-header">Chapter 7 — A Stew for the Smoke-Child (Alter do Chão, Tapajós, Brazil)</div>
+
+    <div class="type-section">
+      <div class="type-header rooms">Rooms</div>
+      <div class="gallery-row" id="row-ch7-room"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header bgs">Backgrounds</div>
+      <div class="gallery-row" id="row-ch7-bg"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header props">Props</div>
+      <div class="gallery-row" id="row-ch7-prop"></div>
+    </div>
+  </div>
+
+  <div id="ch8" class="gallery-chapter">
+    <div class="chapter-header">Chapter 8 — A Perfect Last Bite (Greenpoint, Brooklyn)</div>
+
+    <div class="type-section">
+      <div class="type-header rooms">Rooms</div>
+      <div class="gallery-row" id="row-ch8-room"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header bgs">Backgrounds</div>
+      <div class="gallery-row" id="row-ch8-bg"></div>
+    </div>
+
+    <div class="type-section">
+      <div class="type-header props">Props</div>
+      <div class="gallery-row" id="row-ch8-prop"></div>
+    </div>
+  </div>
+
+</div><!-- #gallery-main -->
+
+<script>
+/* =============================================================
+   CANVAS CONSTANTS
+   Internal: 200×113 px  (landscape 16:9-ish scene ratio)
+   Displayed at 2× CSS → 400×226 visual px
+   ============================================================= */
+const CELL_W = 200;
+const CELL_H = 113;
+
+/* =============================================================
+   ASSET DATA
+   Each entry = one ROOM / BG / PROP from the master list.
+   Fields:
+     id          CH#-TYPE-## identifier (locked by Sprint A)
+     name        Display name
+     type        'ROOM' | 'BG' | 'PROP'
+     chapter     1–8 (first-appearance chapter for cross-chapter assets)
+     section     DOM row id suffix  e.g. 'ch1-room', 'ch3-bg', 'ch6-prop'
+     designed    always false for Sprint B — all placeholders
+     desc        One-line description from the master list
+     alsoAppears null or string e.g. 'Ch4, Ch8'
+     source      Source doc citation
+   ============================================================= */
+const ASSETS = [
+
+  // ── CHAPTER 1: ROOMS ─────────────────────────────────────
+  {
+    id: 'CH1-ROOM-01', name: 'Main Hallway', type: 'ROOM',
+    chapter: 1, section: 'ch1-room', designed: false,
+    desc: 'Passenger corridor; 1440px wide, scrolling; crimson runner carpet, 6 cabin doors (636–646), 3 portholes, 2 sconces, wall-decor set, luggage trolley; hub for all Ch1 beats.',
+    alsoAppears: null,
+    source: 'hallway.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-ROOM-02', name: "Grandparents' Cabin (644)", type: 'ROOM',
+    chapter: 1, section: 'ch1-room', designed: false,
+    desc: 'Single-screen grief room; one bed, bedside lamp, four-pane window, open suitcase, photograph on nightstand; Babcia seated on bed, Dziadek at window; Beat 6.',
+    alsoAppears: null,
+    source: 'grandparents-cabin.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-ROOM-03', name: 'Cabin 646 (Pip\'s cabin + collection room)', type: 'ROOM',
+    chapter: 1, section: 'ch1-room', designed: false,
+    desc: 'Single-screen 480px; mirror, porthole, child\'s crayon drawing, nightstand with Smørbukk, bed; collection items from all chapters accumulate here.',
+    alsoAppears: null,
+    source: 'cabin-646.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-ROOM-04', name: 'Dark Corridor / Service Stairwell', type: 'ROOM',
+    chapter: 1, section: 'ch1-room', designed: false,
+    desc: '~960px; service deck; broken sconce (puzzle target), janitor\'s cart, stairwell to kitchen; echo-spiders; two lighting states (pre-puzzle dark, post-puzzle dim-but-lit).',
+    alsoAppears: null,
+    source: 'dark-corridor.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-ROOM-05', name: 'The Kitchen', type: 'ROOM',
+    chapter: 1, section: 'ch1-room', designed: false,
+    desc: 'Henrik\'s working kitchen; ~960px; warm pendant light, counter with meal, Henrik\'s stool, hanging copper pots, freezer doorway, storage racks; Beats 9–13.',
+    alsoAppears: 'Ch4 (end-beat), Ch5 (end-beat), Ch6 (end-beat), Ch7 (end-beat + reunion), Ch8 (finale)',
+    source: 'kitchen.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-ROOM-06', name: 'Observation Deck', type: 'ROOM',
+    chapter: 1, section: 'ch1-room', designed: false,
+    desc: 'Aurora viewing room; ~700px; wide curved viewport, wooden benches, coiled rope, brass telescope; Beat 12.',
+    alsoAppears: null,
+    source: 'observation-deck.md; ch01-cabin-646-outline.md',
+  },
+
+  // ── CHAPTER 1: BACKGROUNDS ────────────────────────────────
+  {
+    id: 'CH1-BG-01', name: 'Ocean-at-night / Bergen approach', type: 'BG',
+    chapter: 1, section: 'ch1-bg', designed: false,
+    desc: 'Ship-window scenery; multi-layer (near-black sky, aurora-faint, seeded stars, fjord silhouettes, Bergen shore-light, lighthouse blink, swell); seen through all portholes and Grandparents\' window simultaneously.',
+    alsoAppears: 'Ch2–Ch7 (port scene updates each chapter — listed under respective chapters)',
+    source: 'hallway.md; grandparents-cabin.md; cabin-646.md',
+  },
+
+  // ── CHAPTER 1: PROPS ──────────────────────────────────────
+  {
+    id: 'CH1-PROP-01', name: 'Bed + body-lump', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Cabin 646; two draw-states: pre-reveal (dark lump under covers) / post-reveal (sheet-lift animation, Pip\'s body visible); scripted timing.',
+    alsoAppears: null,
+    source: 'cabin-646.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-PROP-02', name: "Child's crayon drawing", type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Cabin 646 wall (x=160); boat-at-sea; inspectable; Beat 3 ambient detail.',
+    alsoAppears: null,
+    source: 'cabin-646.md',
+  },
+  {
+    id: 'CH1-PROP-03', name: 'Cabin mirror', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Cabin 646 (x=280); dark wood + bronze frame, brass rivets; Cinematic 2 trigger; two states (normal / melt-in-progress).',
+    alsoAppears: null,
+    source: 'cabin-646.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-PROP-04', name: 'Porthole assembly', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Brass ring with iron clasp, small circular glass; recurring ship prop — hallway (x=180, 600, 1050), cabin 646 (x=190); delivers ocean scenery via parallax engine.',
+    alsoAppears: 'Ch2, Ch3, Ch4, Ch5, Ch6, Ch7 (ship traversal and kitchen rooms)',
+    source: 'hallway.md; cabin-646.md',
+  },
+  {
+    id: 'CH1-PROP-05', name: "Grandparents' cabin window", type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Four-pane wood-framed rectangular window (NOT a porthole); faces the sea; lit with warm-amber glow; delivers same parallax scenery as portholes.',
+    alsoAppears: null,
+    source: 'grandparents-cabin.md',
+  },
+  {
+    id: 'CH1-PROP-06', name: 'Bedside lamp', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: "Grandparents' Cabin; trapezoid shade on stem; sole warm-amber light source in the room.",
+    alsoAppears: null,
+    source: 'grandparents-cabin.md',
+  },
+  {
+    id: 'CH1-PROP-07', name: 'Open suitcase', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: "Grandparents' Cabin; horizontal, dark-brown body, brass latches, Pip's boat-shirt on top, stuffed bear visible; Beat 6 inspectable.",
+    alsoAppears: null,
+    source: 'grandparents-cabin.md',
+  },
+  {
+    id: 'CH1-PROP-08', name: 'Framed photograph of young Pip', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: "Grandparents' Cabin nightstand; Pip at age 6 holding a pierogi; inspectable.",
+    alsoAppears: null,
+    source: 'grandparents-cabin.md',
+  },
+  {
+    id: 'CH1-PROP-09', name: 'Luggage trolley', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Hallway (x=530); stacked bags, grandparents\' luggage, stuffed bear visible; Beat 5 ambient detail; inspectable.',
+    alsoAppears: null,
+    source: 'hallway.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-PROP-10', name: 'Hallway wall decor set (5 pieces)', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Ship photograph, barometer, botanical print, navigation map, ornate mirror; x≈230/435/650/865/1115; ambient inspectables.',
+    alsoAppears: null,
+    source: 'hallway.md',
+  },
+  {
+    id: 'CH1-PROP-11', name: 'Hallway sconces (pair)', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Brass wall sconces; x=390 (steady amber) and x=810 (flickers — Beat 8 foreshadow); warm floor light-pools.',
+    alsoAppears: null,
+    source: 'hallway.md',
+  },
+  {
+    id: 'CH1-PROP-12', name: 'Bulletin board', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Hallway (x=130); cork board, brass frame, paper notices, red pins; "Welcome Aboard" itinerary; Beat 2 gated inspectable.',
+    alsoAppears: null,
+    source: 'hallway.md',
+  },
+  {
+    id: 'CH1-PROP-13', name: 'Broken sconce + exposed wiring', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Dark corridor (x≈420); electricity-ability puzzle target; hold-button mechanic; two states (broken / repaired).',
+    alsoAppears: null,
+    source: 'dark-corridor.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-PROP-14', name: "Janitor's cart", type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Dark corridor (x≈840); mop bucket, broom, supplies, clipboard with "J. Henriksen" name-tag; Skillingsboller treat hidden on cart shelf; Beat 8.',
+    alsoAppears: null,
+    source: 'dark-corridor.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-PROP-15', name: 'Gravlaks-and-lefse plate', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Kitchen counter (x≈250); central Beat 9 prop; triggers Cinematic 6a/6b doubled taste-memory.',
+    alsoAppears: null,
+    source: 'kitchen.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-PROP-16', name: "Henrik's stool", type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Kitchen (x≈400); conversational anchor for Beats 10–11c.',
+    alsoAppears: null,
+    source: 'kitchen.md',
+  },
+  {
+    id: 'CH1-PROP-17', name: "Candle (Henrik's gift)", type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Small wax candle; handed to Pip in Beat 13; carried as inventory item through Ch2 and Ch3; used in Ch4 puzzle.',
+    alsoAppears: 'Ch4 (Karakoncolos puzzle — lit with CH3-PROP-04 Matches)',
+    source: 'ch01-cabin-646-outline.md; ch04-turkiye-outline.md',
+  },
+  {
+    id: 'CH1-PROP-18', name: 'Aurora viewport frame', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Observation Deck; wide curved window with dark-wood mullions and brass fittings; aurora visible beyond; Beat 12.',
+    alsoAppears: null,
+    source: 'observation-deck.md',
+  },
+  {
+    id: 'CH1-PROP-19', name: 'Brass telescope', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Observation Deck (x=540); on tripod; inspectable ambient prop.',
+    alsoAppears: null,
+    source: 'observation-deck.md',
+  },
+  {
+    id: 'CH1-PROP-20', name: 'Smørbukk treat', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Cabin 646 nightstand (x=332); Norwegian caramel-chocolate bar; Ch1 replay-reward collectible.',
+    alsoAppears: null,
+    source: 'cabin-646.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-PROP-21', name: 'Skillingsboller treat', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: "Janitor's cart in dark corridor (x≈840); Norwegian cinnamon bun; Beat 8 collectible.",
+    alsoAppears: null,
+    source: 'dark-corridor.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-PROP-22', name: 'Bamsemums treat', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Kitchen (x≈520); Norwegian marshmallow-chocolate snack; teaches the collect verb; Beat 9.',
+    alsoAppears: null,
+    source: 'kitchen.md; ch01-cabin-646-outline.md',
+  },
+  {
+    id: 'CH1-PROP-23', name: 'Kvikk Lunsj treat', type: 'PROP',
+    chapter: 1, section: 'ch1-prop', designed: false,
+    desc: 'Observation Deck (x=565); Norwegian wafer bar, red wrapper with gold foil stripe; Ch1\'s final treat.',
+    alsoAppears: null,
+    source: 'observation-deck.md; ch01-cabin-646-outline.md',
+  },
+
+  // ── CHAPTER 2: ROOMS ─────────────────────────────────────
+  {
+    id: 'CH2-ROOM-01', name: 'The Mnemosyne lower decks (Ch2 traversal)', type: 'ROOM',
+    chapter: 2, section: 'ch2-room', designed: false,
+    desc: 'Narrow brass corridor; echo-mice; wordless, darker and more cramped than the passenger hallway; leads from ship to Ch2 port.',
+    alsoAppears: null,
+    source: 'ch02-tallinn-outline.md',
+  },
+  {
+    id: 'CH2-ROOM-02', name: "Leida's cottage kitchen", type: 'ROOM',
+    chapter: 2, section: 'ch2-room', designed: false,
+    desc: 'Käsmu, Estonia; wood-burning stove, pine table and chairs, herbs hanging overhead, cast-iron pan (lost and found); warm and sparse.',
+    alsoAppears: null,
+    source: 'ch02-tallinn-outline.md',
+  },
+
+  // ── CHAPTER 2: BACKGROUNDS ────────────────────────────────
+  {
+    id: 'CH2-BG-01', name: 'Käsmu harbor approach', type: 'BG',
+    chapter: 2, section: 'ch2-bg', designed: false,
+    desc: 'Small Estonian coastal village; slate dock, wooden buildings, birch trees; evening light on calm water.',
+    alsoAppears: null,
+    source: 'ch02-tallinn-outline.md',
+  },
+
+  // ── CHAPTER 2: PROPS ──────────────────────────────────────
+  {
+    id: 'CH2-PROP-01', name: "Leida's cast-iron pan", type: 'PROP',
+    chapter: 2, section: 'ch2-prop', designed: false,
+    desc: 'Heavy, dark, worn handle; the lost-and-found central prop; puzzle object; Ch2 pan-search arc.',
+    alsoAppears: null,
+    source: 'ch02-tallinn-outline.md',
+  },
+  {
+    id: 'CH2-PROP-02', name: "Haldjas's three sincerity doors", type: 'PROP',
+    chapter: 2, section: 'ch2-prop', designed: false,
+    desc: 'Non-architectural puzzle space; three low wooden doors in an impossible arrangement; Haldjas encounter.',
+    alsoAppears: null,
+    source: 'ch02-tallinn-outline.md',
+  },
+  {
+    id: 'CH2-PROP-03', name: "Leida's offering altar", type: 'PROP',
+    chapter: 2, section: 'ch2-prop', designed: false,
+    desc: 'Flat stone, worn wooden bowl, faded ribbon; placed outside the cottage door; ambient world-building prop.',
+    alsoAppears: null,
+    source: 'ch02-tallinn-outline.md',
+  },
+
+  // ── CHAPTER 3: ROOMS ─────────────────────────────────────
+  {
+    id: 'CH3-ROOM-01', name: 'The Mnemosyne lower decks (Ch3 traversal)', type: 'ROOM',
+    chapter: 3, section: 'ch3-room', designed: false,
+    desc: 'Cramped corridor; crimson carpet, echo-fish drifting along walls and floor; feels submerged.',
+    alsoAppears: null,
+    source: 'ch03-southampton-outline.md',
+  },
+  {
+    id: 'CH3-ROOM-02', name: 'The Dundee kitchen', type: 'ROOM',
+    chapter: 3, section: 'ch3-room', designed: false,
+    desc: 'Warm, large; pine table seating 9; Sandy\'s chair at the head; wood-burning Aga range; family gathered.',
+    alsoAppears: null,
+    source: 'ch03-southampton-outline.md',
+  },
+
+  // ── CHAPTER 3: BACKGROUNDS ────────────────────────────────
+  {
+    id: 'CH3-BG-01', name: 'Southampton dockyard at night', type: 'BG',
+    chapter: 3, section: 'ch3-bg', designed: false,
+    desc: 'Slate-blue; industrial cranes, single streetlamp pool, harbor water; port approach.',
+    alsoAppears: null,
+    source: 'ch03-southampton-outline.md',
+  },
+  {
+    id: 'CH3-BG-02', name: 'Bevois Street approach', type: 'BG',
+    chapter: 3, section: 'ch3-bg', designed: false,
+    desc: 'Residential Southampton street; amber glow from the Dundee kitchen window at far end; echo-deer on pavement.',
+    alsoAppears: null,
+    source: 'ch03-southampton-outline.md',
+  },
+  {
+    id: 'CH3-BG-03', name: "Edie's pier wine shop", type: 'BG',
+    chapter: 3, section: 'ch3-bg', designed: false,
+    desc: "Small shopfront on the harbor pier; Edie's ghost-translucent silhouette behind the counter.",
+    alsoAppears: null,
+    source: 'ch03-southampton-outline.md',
+  },
+
+  // ── CHAPTER 3: PROPS ──────────────────────────────────────
+  {
+    id: 'CH3-PROP-01', name: "Sandy's YoYo Games hoodie", type: 'PROP',
+    chapter: 3, section: 'ch3-prop', designed: false,
+    desc: "Draped on his kitchen chair; primary identity cue for Sandy's presence even when he isn't drawn; Ch3 throughout.",
+    alsoAppears: null,
+    source: 'ch03-southampton-outline.md',
+  },
+  {
+    id: 'CH3-PROP-02', name: "Sandy's handwritten recipe card", type: 'PROP',
+    chapter: 3, section: 'ch3-prop', designed: false,
+    desc: 'On the Dundee kitchen counter; central prop for the chef encounter arc.',
+    alsoAppears: null,
+    source: 'ch03-southampton-outline.md',
+  },
+  {
+    id: 'CH3-PROP-03', name: "Wine bottle (Edie's gift)", type: 'PROP',
+    chapter: 3, section: 'ch3-prop', designed: false,
+    desc: 'Given to Pip by Edie; distraction/offering prop for the Black Shuck puzzle.',
+    alsoAppears: null,
+    source: 'ch03-southampton-outline.md',
+  },
+  {
+    id: 'CH3-PROP-04', name: 'Matches (collected via Pätu)', type: 'PROP',
+    chapter: 3, section: 'ch3-prop', designed: false,
+    desc: 'Pätu meows near a harbor newsstand; Pip collects a box of matches; load-bearing for Ch4 candle-lighting and Ch7 dock puzzle.',
+    alsoAppears: 'Ch4 (Karakoncolos puzzle — used with CH1-PROP-17 Candle), Ch7 (Boitatá puzzle)',
+    source: 'ch03-southampton-outline.md',
+  },
+
+  // ── CHAPTER 4: ROOMS ─────────────────────────────────────
+  {
+    id: 'CH4-ROOM-01', name: 'Stray-cat alley (Ch4 traversal)', type: 'ROOM',
+    chapter: 4, section: 'ch4-room', designed: false,
+    desc: 'Narrow Istanbul cobble passage; echo-cats on walls, ledges, doorways; dim lamplight at far end; humid cold night.',
+    alsoAppears: null,
+    source: 'ch04-turkiye-outline.md',
+  },
+  {
+    id: 'CH4-ROOM-02', name: "Muhittin's kitchen", type: 'ROOM',
+    chapter: 4, section: 'ch4-room', designed: false,
+    desc: 'Low-ceilinged Istanbul house interior; wood-fired oven, long table, copper pots, heavy mortar; warm amber light.',
+    alsoAppears: null,
+    source: 'ch04-turkiye-outline.md',
+  },
+
+  // ── CHAPTER 4: BACKGROUNDS ────────────────────────────────
+  {
+    id: 'CH4-BG-01', name: 'Istanbul harbor approach at night', type: 'BG',
+    chapter: 4, section: 'ch4-bg', designed: false,
+    desc: 'Narrow stone streets, cold winter night; city lights reflected on water; slate-blue with ember-red shadows.',
+    alsoAppears: null,
+    source: 'ch04-turkiye-outline.md',
+  },
+  {
+    id: 'CH4-BG-02', name: 'Frozen square (monster arena)', type: 'BG',
+    chapter: 4, section: 'ch4-bg', designed: false,
+    desc: 'Cobblestones, dying brazier, frozen fountain; the Karakoncolos encounter space; cold and still.',
+    alsoAppears: null,
+    source: 'ch04-turkiye-outline.md',
+  },
+  {
+    id: 'CH4-BG-03', name: 'Walnut orchard (taste-memory)', type: 'BG',
+    chapter: 4, section: 'ch4-bg', designed: false,
+    desc: 'Autumn Turkish rural scene; two boys among walnut trees; warm amber memory light.',
+    alsoAppears: null,
+    source: 'ch04-turkiye-outline.md',
+  },
+
+  // ── CHAPTER 4: PROPS ──────────────────────────────────────
+  // Note: CH1-PROP-17 Candle and CH3-PROP-04 Matches appear here but are
+  // entered under their first chapters above.
+  {
+    id: 'CH4-PROP-01', name: 'Leather pouch of walnuts', type: 'PROP',
+    chapter: 4, section: 'ch4-prop', designed: false,
+    desc: 'Dropped by Karakoncolos on resolution; becomes the muhammara ingredient; puzzle-resolution object.',
+    alsoAppears: null,
+    source: 'ch04-turkiye-outline.md',
+  },
+  {
+    id: 'CH4-PROP-02', name: 'Photograph of young Erik', type: 'PROP',
+    chapter: 4, section: 'ch4-prop', designed: false,
+    desc: "Henrik's pocket photograph; glimpsed by Pip at Ch4 end; blond boy, age 11; Henrik quickly pockets it; revelation deferred to Ch6.",
+    alsoAppears: 'Ch6 (Pip sees it longer — sliding off counter), Ch7 (reunion beat — warm under Pip\'s hand after memory-gifting)',
+    source: 'ch04-turkiye-outline.md',
+  },
+  {
+    id: 'CH4-PROP-03', name: "Muhittin's grandfather's mortar", type: 'PROP',
+    chapter: 4, section: 'ch4-prop', designed: false,
+    desc: 'Old worn stone mortar and pestle; central to the muhammara taste-memory; heirloom object.',
+    alsoAppears: null,
+    source: 'ch04-turkiye-outline.md',
+  },
+
+  // ── CHAPTER 5: ROOMS ─────────────────────────────────────
+  {
+    id: 'CH5-ROOM-01', name: 'Lower-deck storage room (Ch5 — "the Drowned Room")', type: 'ROOM',
+    chapter: 5, section: 'ch5-room', designed: false,
+    desc: "Old floorboards, wood crates, single porthole; Iris's squeeze-and-pop entrance; Mamlambo's eye at porthole; ship at-sea, no port yet.",
+    alsoAppears: null,
+    source: 'ch05-south-africa-outline.md',
+  },
+  {
+    id: 'CH5-ROOM-02', name: "Johannes's courtyard + kitchen", type: 'ROOM',
+    chapter: 5, section: 'ch5-room', designed: false,
+    desc: 'Saldanha Bay; open-air potjie fire, cast-iron pot on three legs, courtyard table set for friends; warm dusk light.',
+    alsoAppears: null,
+    source: 'ch05-south-africa-outline.md',
+  },
+
+  // ── CHAPTER 5: BACKGROUNDS ────────────────────────────────
+  {
+    id: 'CH5-BG-01', name: 'Saldanha Bay harbor at dusk', type: 'BG',
+    chapter: 5, section: 'ch5-bg', designed: false,
+    desc: "Atlantic sky; deep red-ochre light; Johannes's courtyard fire visible in middle distance; dramatic color contrast.",
+    alsoAppears: null,
+    source: 'ch05-south-africa-outline.md',
+  },
+  {
+    id: 'CH5-BG-02', name: "Iris's Lethe dining room (taste-memory)", type: 'BG',
+    chapter: 5, section: 'ch5-bg', designed: false,
+    desc: 'Edwardian formal dining; long white-tablecloth table, candelabra, family in formal dress; warm-amber light slightly warped by time/water.',
+    alsoAppears: null,
+    source: 'ch05-south-africa-outline.md',
+  },
+
+  // ── CHAPTER 5: PROPS ──────────────────────────────────────
+  {
+    id: 'CH5-PROP-01', name: "Father's switchblade", type: 'PROP',
+    chapter: 5, section: 'ch5-prop', designed: false,
+    desc: 'Mother-of-pearl handle, Edwardian; given to Pip by Iris; for cutting rope or cord; load-bearing for Ch6 puzzle.',
+    alsoAppears: 'Ch6 (used in Pocong puzzle), Ch7 (carried — not used), Ch8 (carried through finale)',
+    source: 'ch05-south-africa-outline.md',
+  },
+  {
+    id: 'CH5-PROP-02', name: "Plate of brussels sprouts (Iris's unfinished meal)", type: 'PROP',
+    chapter: 5, section: 'ch5-prop', designed: false,
+    desc: 'Half-eaten, held-in-time, slightly waterlogged; Pip eats them for Iris so she can move on.',
+    alsoAppears: null,
+    source: 'ch05-south-africa-outline.md',
+  },
+  {
+    id: 'CH5-PROP-03', name: 'Cast-iron potjie (three-legged pot)', type: 'PROP',
+    chapter: 5, section: 'ch5-prop', designed: false,
+    desc: "Johannes's outdoor kitchen; large blackened pot on three splayed legs over open fire; central cooking prop.",
+    alsoAppears: null,
+    source: 'ch05-south-africa-outline.md',
+  },
+
+  // ── CHAPTER 6: ROOMS ─────────────────────────────────────
+  {
+    id: 'CH6-ROOM-01', name: 'The Mnemosyne lower decks (Ch6 traversal)', type: 'ROOM',
+    chapter: 6, section: 'ch6-room', designed: false,
+    desc: 'Humid, warm; echo-tarsiers on overhead structures; clove-and-salt smell implied.',
+    alsoAppears: null,
+    source: 'ch06-indonesia-outline.md',
+  },
+  {
+    id: 'CH6-ROOM-02', name: "Tirta's warung", type: 'ROOM',
+    chapter: 6, section: 'ch6-room', designed: false,
+    desc: 'Open-front Indonesian food stall; charcoal grill, iron pan, thatched roof overhang; warm evening light.',
+    alsoAppears: null,
+    source: 'ch06-indonesia-outline.md',
+  },
+
+  // ── CHAPTER 6: BACKGROUNDS ────────────────────────────────
+  {
+    id: 'CH6-BG-01', name: 'Kolonodale port approach', type: 'BG',
+    chapter: 6, section: 'ch6-bg', designed: false,
+    desc: 'Wooden stilt-houses over water, coconut palms, blue-green bay; clove-smoke haze; late afternoon orange light.',
+    alsoAppears: null,
+    source: 'ch06-indonesia-outline.md',
+  },
+  {
+    id: 'CH6-BG-02', name: 'Banana grove clearing with graves', type: 'BG',
+    chapter: 6, section: 'ch6-bg', designed: false,
+    desc: 'Forest path from dock to town; large-leaved banana trees, grave markers, blue-dusk light; Pocong encounter space.',
+    alsoAppears: null,
+    source: 'ch06-indonesia-outline.md',
+  },
+
+  // ── CHAPTER 6: PROPS ──────────────────────────────────────
+  // Note: CH5-PROP-01 Switchblade and CH4-PROP-02 Erik photograph are
+  // entered under their first chapters above.
+  {
+    id: 'CH6-PROP-01', name: "Banana leaves (Pocong's gift)", type: 'PROP',
+    chapter: 6, section: 'ch6-prop', designed: false,
+    desc: 'Stack of large fresh banana leaves; given to Pip after Pocong\'s cooperative resolution; used in lemper cooking; partially carried forward to Ch7 kitchen.',
+    alsoAppears: 'Ch7 (kitchen beat — Henrik receives leaves from Pip)',
+    source: 'ch06-indonesia-outline.md',
+  },
+
+  // ── CHAPTER 7: ROOMS ─────────────────────────────────────
+  {
+    id: 'CH7-ROOM-01', name: 'The Mnemosyne lower decks (Ch7 traversal)', type: 'ROOM',
+    chapter: 7, section: 'ch7-room', designed: false,
+    desc: 'Warm, humid; echo-mosquitoes; Amazon heat begins here.',
+    alsoAppears: null,
+    source: 'ch07-brazil-outline.md',
+  },
+  {
+    id: 'CH7-ROOM-02', name: "Joana and Beatriz's stilt house", type: 'ROOM',
+    chapter: 7, section: 'ch7-room', designed: false,
+    desc: 'Raised on wooden piles; clay tile roof; single open-plan kitchen + living space; dock-side extension over the Tapajós river.',
+    alsoAppears: null,
+    source: 'ch07-brazil-outline.md',
+  },
+
+  // ── CHAPTER 7: BACKGROUNDS ────────────────────────────────
+  {
+    id: 'CH7-BG-01', name: 'Alter do Chão dock at night', type: 'BG',
+    chapter: 7, section: 'ch7-bg', designed: false,
+    desc: 'Small wooden dock; Tapajós river black and wide; forest wall beginning at the edge of the light; phosphorescent underglow.',
+    alsoAppears: null,
+    source: 'ch07-brazil-outline.md',
+  },
+  {
+    id: 'CH7-BG-02', name: 'Ch7 forest path', type: 'BG',
+    chapter: 7, section: 'ch7-bg', designed: false,
+    desc: 'Dense Amazon canopy; phosphorescent fungi on roots and bark; deep humid dark; Capuchin scampers ahead; Boitatá encounter space.',
+    alsoAppears: null,
+    source: 'ch07-brazil-outline.md',
+  },
+
+  // ── CHAPTER 7: PROPS ──────────────────────────────────────
+  // Note: CH3-PROP-04 Matches and CH5-PROP-01 Switchblade are entered
+  // under their first chapters above.
+  {
+    id: 'CH7-PROP-01', name: 'Clay moqueca pot', type: 'PROP',
+    chapter: 7, section: 'ch7-prop', designed: false,
+    desc: 'Joana/Beatriz kitchen; wide, terracotta, with lid; central cooking prop for the moqueca recipe.',
+    alsoAppears: null,
+    source: 'ch07-brazil-outline.md',
+  },
+  // Note: CH4-PROP-02 Erik photograph third encounter is in Ch7 but entered
+  // under Ch4 as first-appearance chapter.
+
+  // ── CHAPTER 8: ROOMS ─────────────────────────────────────
+  {
+    id: 'CH8-ROOM-01', name: 'Greenpoint streets (Ch8 traversal)', type: 'ROOM',
+    chapter: 8, section: 'ch8-room', designed: false,
+    desc: 'Brooklyn at night; narrow residential streets, brownstones, corner bodegas; urban vermin; Ch8 opening.',
+    alsoAppears: null,
+    source: 'ch08-greenpoint-outline.md',
+  },
+  {
+    id: 'CH8-ROOM-02', name: 'Pip\'s apartment kitchen ("the bottom of the well")', type: 'ROOM',
+    chapter: 8, section: 'ch8-room', designed: false,
+    desc: 'Childhood kitchen; long table with all six chairs; site of Phase 3 (Completing the Infection) and the final pierogi-table memory; emotional climax space.',
+    alsoAppears: null,
+    source: 'ch08-greenpoint-outline.md',
+  },
+  {
+    id: 'CH8-ROOM-03', name: "Babcia and Dziadek's Greenpoint apartment", type: 'ROOM',
+    chapter: 8, section: 'ch8-room', designed: false,
+    desc: 'The grandparents\' home; familiar domestic space; final gift of memory-gifting to both grandparents; pierogi kitchen.',
+    alsoAppears: null,
+    source: 'ch08-greenpoint-outline.md',
+  },
+
+  // ── CHAPTER 8: BACKGROUNDS ────────────────────────────────
+  {
+    id: 'CH8-BG-01', name: 'Brooklyn / Greenpoint night', type: 'BG',
+    chapter: 8, section: 'ch8-bg', designed: false,
+    desc: "Brownstone neighborhood; warm window-light against cold street; autumn or late night; Pip's real home, now seen as a ghost.",
+    alsoAppears: null,
+    source: 'ch08-greenpoint-outline.md',
+  },
+
+  // ── CHAPTER 8: PROPS ──────────────────────────────────────
+  {
+    id: 'CH8-PROP-01', name: 'Pong paddles + ball (Phase 1)', type: 'PROP',
+    chapter: 8, section: 'ch8-prop', designed: false,
+    desc: "Shadow's first phase mechanic; minimal flat paddles, bouncing pixel; the game-within-the-game visual register.",
+    alsoAppears: null,
+    source: 'ch08-greenpoint-outline.md',
+  },
+  {
+    id: 'CH8-PROP-02', name: 'Kitchen table with all six chairs', type: 'PROP',
+    chapter: 8, section: 'ch8-prop', designed: false,
+    desc: 'The bottom-of-the-well memory; long table, pierogi plate at center; six chairs for Pip, parents, grandparents, and one empty for Erik; narrative climax prop.',
+    alsoAppears: null,
+    source: 'ch08-greenpoint-outline.md',
+  },
+  // Note: CH1-ROOM-05 (Kitchen), CH1-CHAR-04 (Babcia), CH1-CHAR-05 (Dziadek),
+  // CH1-CHAR-08 (Erik), CH5-PROP-01 (Switchblade) all also appear in Ch8 but
+  // are entered under their first-appearance chapters.
+
+];
+
+/* =============================================================
+   PLACEHOLDER RENDERER
+   Draws the asset ID prominently, then name, type, and desc.
+   No silhouette — just a clean framed empty-scene placeholder.
+   ============================================================= */
+function drawAssetPlaceholder(ctx, asset) {
+  // Background gradient — dark blue-gray, landscape scene feel
+  const grad = ctx.createLinearGradient(0, 0, 0, CELL_H);
+  grad.addColorStop(0, '#0a0f1e');
+  grad.addColorStop(0.55, '#111830');
+  grad.addColorStop(1, '#0d1220');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, CELL_W, CELL_H);
+
+  // Dashed outer border
+  ctx.strokeStyle = 'rgba(80, 100, 160, 0.30)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  ctx.strokeRect(3.5, 3.5, CELL_W - 7, CELL_H - 7);
+  ctx.setLineDash([]);
+
+  // Faint inner frame suggesting a scene viewport
+  ctx.strokeStyle = 'rgba(60, 80, 130, 0.18)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 4]);
+  ctx.strokeRect(8.5, 8.5, CELL_W - 17, CELL_H - 17);
+  ctx.setLineDash([]);
+
+  // Determine type color token
+  const typeColors = {
+    'ROOM': '#88b8c8',
+    'BG':   '#a8c898',
+    'PROP': '#c8b888',
+  };
+  const tc = typeColors[asset.type] || '#7a9898';
+
+  // Type badge in upper-right
+  ctx.fillStyle = tc + '2a';  // very faint fill
+  ctx.fillRect(CELL_W - 38, 5, 33, 11);
+  ctx.fillStyle = tc;
+  ctx.font = '6px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(asset.type, CELL_W - 21, 13);
+
+  // ID — the most prominent element, centered upper area
+  ctx.fillStyle = '#ffc868';
+  ctx.font = 'bold 14px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(asset.id, CELL_W / 2, 36);
+
+  // Name line
+  ctx.fillStyle = 'rgba(200, 168, 120, 0.80)';
+  ctx.font = '8px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  // Truncate if too long
+  const maxW = CELL_W - 20;
+  let nameText = asset.name.toUpperCase();
+  ctx.fillText(nameText, CELL_W / 2, 50, maxW);
+
+  // Description — word-wrapped into ~2 lines at small size
+  ctx.fillStyle = 'rgba(120, 100, 70, 0.65)';
+  ctx.font = '6px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  const words = asset.desc.split(' ');
+  const lineMaxW = CELL_W - 24;
+  const lines = [];
+  let line = '';
+  words.forEach(w => {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > lineMaxW) {
+      if (line) lines.push(line);
+      line = w;
+    } else {
+      line = test;
+    }
+  });
+  if (line) lines.push(line);
+  // Show up to 3 lines
+  const showLines = lines.slice(0, 3);
+  showLines.forEach((l, i) => {
+    ctx.fillText(l, CELL_W / 2, 63 + i * 9, lineMaxW);
+  });
+
+  // "NO DESIGN YET" label at bottom center
+  ctx.fillStyle = 'rgba(80, 100, 160, 0.40)';
+  ctx.font = '7px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('NO DESIGN YET', CELL_W / 2, CELL_H - 7);
+
+  ctx.textAlign = 'left';
+}
+
+/* =============================================================
+   CELL BUILDER
+   ============================================================= */
+function buildCell(asset) {
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+  cell.id = 'cell-' + asset.id;
+
+  // Canvas
+  const canvas = document.createElement('canvas');
+  canvas.width  = CELL_W;
+  canvas.height = CELL_H;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  cell.appendChild(canvas);
+
+  // Info block
+  const info = document.createElement('div');
+  info.className = 'cell-info';
+
+  // ID line (most prominent reference handle)
+  const idEl = document.createElement('div');
+  idEl.className = 'cell-id';
+  idEl.textContent = asset.id;
+  info.appendChild(idEl);
+
+  // Name + type tag
+  const nameEl = document.createElement('div');
+  nameEl.className = 'cell-name';
+  const typeTagEl = document.createElement('span');
+  typeTagEl.className = 'cell-type-tag tag-' + asset.type.toLowerCase();
+  typeTagEl.textContent = asset.type;
+  nameEl.appendChild(typeTagEl);
+  nameEl.appendChild(document.createTextNode(asset.name));
+  info.appendChild(nameEl);
+
+  // Description
+  const descEl = document.createElement('div');
+  descEl.className = 'cell-desc';
+  descEl.textContent = asset.desc;
+  info.appendChild(descEl);
+
+  // Also-appears note
+  if (asset.alsoAppears) {
+    const alsoEl = document.createElement('div');
+    alsoEl.className = 'cell-also';
+    alsoEl.textContent = 'also appears: ' + asset.alsoAppears;
+    info.appendChild(alsoEl);
+  }
+
+  cell.appendChild(info);
+
+  // Mount to section row
+  const row = document.getElementById('row-' + asset.section);
+  if (row) row.appendChild(cell);
+
+  return { canvas, ctx, asset };
+}
+
+/* Build all cells and draw placeholders */
+ASSETS.forEach(asset => {
+  const { canvas, ctx, asset: a } = buildCell(asset);
+  drawAssetPlaceholder(ctx, a);
+});
+
+/* =============================================================
+   NOTE: No render loop needed — all cells are static placeholders.
+   drawAssetPlaceholder is called once per cell at build time.
+   When a cell gains a draw function (designed: true), a render
+   loop like character-gallery.html's requestAnimationFrame loop
+   should be added here.
+   ============================================================= */
+</script>
+
+</body>
+</html>

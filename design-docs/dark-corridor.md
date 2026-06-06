@@ -2,14 +2,14 @@
 
 # The Dark Corridor / Stairwell
 
-The chapter's first real puzzle room. Pitch black, broken, in disrepair. Where Pip earns electricity and float as full abilities, where the "no one can see me" rule lands its final confirmation, and where the chapter pivots from grief into discovery.
+The chapter's first real puzzle room. Ominouos and dark hallway, broken items in disrepair, and echo spiders mischeviously bounce from webs, crawl on the floors. Where Pip earns electricity and float as full abilities, where the "no one can see me" rule lands its final confirmation, and where the chapter pivots from grief into discovery.
 
 ## Purpose
 
 A single room playing three roles in sequence:
 
 1. **The dark room (Beat 8 opening).** Pip enters from the hallway's far-right dark zone. The corridor is pitch black. Standard movement and inspection don't work. The player has to *do something* before they can proceed.
-2. **The puzzle room (Beat 8 middle).** Pip finds the broken sconce with exposed wiring. He uses his nascent electricity ability to spark the lights. **Float is also unlocked here** — broken glass on the floor triggers an involuntary panic-rise that becomes a controlled ability. The corridor reveals itself.
+2. **The puzzle room (Beat 8 middle).** Pip finds the broken sconce with exposed wiring. He uses his nascent electricity ability to spark the lights. **Float is also increased here so he can float from floor to cieling** — broken glass on the floor triggers an involuntary panic-rise that becomes a controlled ability. The corridor reveals itself.
 3. **The "no one can see me" room (Beat 8 end).** Pip discovers the janitor's cart blocking the stairwell. The cart has a name tag — "J. Henriksen, Maintenance." Pip backtracks to the grandparents' cabin, uses Dziadek's radio to page the janitor over the ship's intercom, returns to the corridor. The janitor walks in, mutters in Norwegian, looks right past Pip, moves the cart, and walks away. The rule locks in.
 
 This is the chapter's **first integrated multi-step puzzle** — clue (name tag) → ability (radio in grandparents' cabin) → outcome (path opens) → bonus story beat (the rule reinforced).

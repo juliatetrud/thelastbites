@@ -1186,7 +1186,7 @@ const HALL_W = 1440;           // hallway width — 3× canvas width
 
 /* Sprint 20: Beat 8 constants */
 const JANITOR_SPEED             = 105;    // px/s — matches passenger speed
-const DARK_CORRIDOR_AURA_R      = 55;     // px radius of Pip's aura — Sprint 46: lifted for navigability
+const DARK_CORRIDOR_AURA_R      = 72;     // px radius of Pip's aura — Sprint 50: lifted further for clear legibility
 const FLOAT_DISCOVERY_RISE_RATE = 50;     // px/s upward during involuntary float discovery
 const FLOAT_DISCOVERY_FALL_RATE = 50;     // px/s downward after peak
 
@@ -1277,6 +1277,13 @@ const pip = {
     electricity:          false,
     talkThroughSpeakers:  false,
   },
+
+  /* Sprint 50: spider boop — horizontal knockback toward entry point on contact.
+     vx: px/s (negative = leftward); decays at decayRate per second. */
+  boop: {
+    vx:        0,
+    decayRate: 0,
+  },
 };
 
 /* ================================================================
@@ -1366,8 +1373,11 @@ const echoMouse = {
 function playSound(name) { /* stub — name logged only in dev */ }
 
 /* Sprint 46: echo-spider state — Ch1 dark corridor (floor skitterers + ceiling danglers).
-   Warm-amber translucent, bouncy/mischievous. Pip floats past ceiling ones. */
+   Warm-amber translucent, bouncy/mischievous. Pip floats past ceiling ones.
+   Sprint 50: boopBossIdx — which spider (0-3) gives the large knockback this entry.
+   Indices: 0=floor[0], 1=floor[1], 2=ceiling[0], 3=ceiling[1]. Re-rolled each entry. */
 const echoSpiders = {
+  boopBossIdx: 0,   // re-rolled on every corridor entry via rollBoopBoss()
   floor: [
     { x: 200, dir: 1, timer: 0,   anchor: 200, range: 55, speed: 45, touched: false, touchTimer: 0 },
     { x: 680, dir: -1, timer: 1.8, anchor: 680, range: 50, speed: 40, touched: false, touchTimer: 0 },
@@ -3136,6 +3146,14 @@ function update(dt) {
     // Clamp Pip to current room bounds (uses per-room pipMinX from Sprint 10.7)
     const roomMin = rooms[currentRoom].pipMinX !== undefined ? rooms[currentRoom].pipMinX : PIP_HALF_W;
     pip.x = Math.max(roomMin, Math.min(rooms[currentRoom].pipMaxX, pip.x));
+
+    // Sprint 50: spider boop knockback — applied on top of normal movement, decays over time
+    if (pip.boop.vx !== 0) {
+      pip.x += pip.boop.vx * dt;
+      pip.boop.vx *= Math.max(0, 1 - pip.boop.decayRate * dt);
+      if (Math.abs(pip.boop.vx) < 4) pip.boop.vx = 0;
+      pip.x = Math.max(roomMin, Math.min(rooms[currentRoom].pipMaxX, pip.x));
+    }
 
     // Room edge triggers — walk into the edge to change rooms
     // Sprint 10.7: cabin exits via left wall (door at x=120) back to hallway at cabin door position (1180)
@@ -6059,6 +6077,10 @@ function startTransition(toRoom, entryEdge, entryX) {
     // Land Pip on floor on room change (don't carry float state across)
     pip.float.altitude = 0;
     pip.float.vy       = 0;
+    pip.boop.vx        = 0;  // clear any boop on room change
+
+    // Sprint 50: re-roll boop-boss spider on every dark-corridor entry
+    if (toRoom === 'darkCorridor') rollBoopBoss();
 
     // First hallway entry: arm the passenger timer
     if (toRoom === 'hallway' && !passenger.hallwayEntered) {
@@ -8599,16 +8621,36 @@ function updateEchoMouse(dt) {
 }
 
 /* ================================================================
-   SPRINT 46: ECHO-SPIDER UPDATE + DRAW
+   SPRINT 46 / 50: ECHO-SPIDER UPDATE + DRAW
    Warm-amber translucent. Floor skitterers + ceiling danglers.
-   Pip floats past ceiling ones; bumping floor ones drains strength.
+   Sprint 46: Pip floats past ceiling ones.
+   Sprint 50: Contact boops Pip leftward (boop mechanic) instead of draining strength.
+              One random spider per entry (boopBossIdx) gives a large knockback.
    ================================================================ */
+
+/* Knock Pip leftward (toward corridor entry at pipMinX). Sprint 50. */
+function boopPip(speed, decayRate) {
+  pip.boop.vx        = -speed;    // leftward
+  pip.boop.decayRate = decayRate;
+}
+
+/* Re-roll which spider is the large-knockback "boss" for this entry.
+   Re-rolled each corridor entry; not persisted to save (can't be memorized). */
+function rollBoopBoss() {
+  const total = echoSpiders.floor.length + echoSpiders.ceiling.length;
+  echoSpiders.boopBossIdx = Math.floor(Math.random() * total);
+  // Reset touch cooldowns — every spider is a fresh threat on re-entry
+  [...echoSpiders.floor, ...echoSpiders.ceiling].forEach(s => {
+    s.touched = false; s.touchTimer = 0;
+  });
+}
 
 function updateEchoSpiders(dt) {
   if (currentRoom !== 'darkCorridor') return;
 
   // Floor spiders — slow skitter back and forth
-  for (const s of echoSpiders.floor) {
+  for (let i = 0; i < echoSpiders.floor.length; i++) {
+    const s = echoSpiders.floor[i];
     if (s.touched) {
       s.touchTimer -= dt;
       if (s.touchTimer <= 0) s.touched = false;
@@ -8620,16 +8662,18 @@ function updateEchoSpiders(dt) {
     }
     s.x += s.dir * s.speed * dt;
     s.x  = Math.max(s.anchor - s.range, Math.min(s.anchor + s.range, s.x));
-    // Collision: floor contact (Pip not floating)
+    // Collision: floor contact (Pip not floating) — boop toward entry
     if (!s.touched && Math.abs(pip.x - s.x) < 18 && pip.float.altitude < 10) {
       s.touched    = true;
       s.touchTimer = 1.5;
-      loseStrength(1);
+      const isBoss = (i === echoSpiders.boopBossIdx);
+      boopPip(isBoss ? 280 : 150, isBoss ? 2.0 : 3.5);
     }
   }
 
-  // Ceiling danglers — bob on threads; hurt Pip only when floating into them
-  for (const s of echoSpiders.ceiling) {
+  // Ceiling danglers — bob on threads; boop Pip when floating into them
+  for (let i = 0; i < echoSpiders.ceiling.length; i++) {
+    const s = echoSpiders.ceiling[i];
     if (s.touched) {
       s.touchTimer -= dt;
       if (s.touchTimer <= 0) s.touched = false;
@@ -8637,13 +8681,14 @@ function updateEchoSpiders(dt) {
     // Bob position: thread anchor at y=38, bob amplitude below
     const spiderY = 38 + s.bobAmp * 0.5 + s.bobAmp * 0.5 * Math.sin(Date.now() * 0.001 * s.bobSpeed + s.bobPhase);
     s._drawY = spiderY;
-    // Collision: Pip floating at approximately the spider's hanging height
+    // Collision: Pip floating at approximately the spider's hanging height — boop toward entry
     const spiderWorldY = FLOOR_Y - spiderY;   // in world-y terms
     const pipY         = pip.y - pip.float.altitude;
     if (!s.touched && Math.abs(pip.x - s.x) < 18 && Math.abs(pipY - spiderWorldY) < 20) {
       s.touched    = true;
       s.touchTimer = 1.5;
-      loseStrength(1);
+      const isBoss = (echoSpiders.floor.length + i === echoSpiders.boopBossIdx);
+      boopPip(isBoss ? 280 : 150, isBoss ? 2.0 : 3.5);
     }
   }
 }
@@ -8841,17 +8886,34 @@ function drawDarkCorridor(camX, now) {
   ctx.fillRect(0, 0, W, H);
 
   if (!darkCorridor.lit && !lightsOnSequence.active) {
-    // ---- DARK STATE — Sprint 46: lifted from 96% to 80% black for navigability. ----
+    // ---- DARK STATE — Sprint 50: layout matches hallway proportions; visibility lifted further. ----
     // Decision D / Aesthetic Rule 11: always navigable, never frustrating-dark.
+    const panelSpacing = 120;
+    const panelOffset  = (camX * 0.5) % panelSpacing;
+    const panelTop     = 20;
+    const baseboardH   = 12;
+    const panelH       = FLOOR_Y - baseboardH - panelTop;   // 148 — same as hallway
+
     ctx.fillStyle = '#0a0c14';
     ctx.fillRect(0, 0, W, FLOOR_Y);
+
+    // Wall panels — same geometry as lit state; faintly visible under overlay
+    ctx.save();
+    ctx.globalAlpha = 0.28;
+    for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
+      drawShipPanel(Math.round(px), panelTop, panelSpacing, panelH, {
+        strokeColor: 'rgba(60,70,100,0.22)',
+        rivetColor:  'rgba(70,80,110,0.38)',
+      });
+    }
+    ctx.restore();
 
     // The single working sconce at world-x 240 — weak flicker
     const sc1SX = Math.round(240 - camX);
     if (sc1SX > -(20 + DARK_CORRIDOR_AURA_R) && sc1SX < W + 20 + DARK_CORRIDOR_AURA_R) {
       ctx.save();
-      ctx.globalAlpha = 0.55;
-      drawSconce(sc1SX, 70, { flicker: true, intensity: 0.45, now });
+      ctx.globalAlpha = 0.60;
+      drawSconce(sc1SX, 70, { flicker: true, intensity: 0.55, now });
       ctx.globalAlpha = 1;
       ctx.restore();
     }
@@ -8865,7 +8927,7 @@ function drawDarkCorridor(camX, now) {
     // Spark particles (during sconce puzzle)
     drawSconceSparks(camX);
 
-    // ---- Atmospheric lights drawn ON TOP of overlay — always visible ----
+    // ---- Atmospheric lights + hazards drawn ON TOP of overlay — always visible ----
     // Sprint 46: small service portholes + candles so the player can always orient.
 
     // Service portholes (small, reveal Bergen scenery — always visible as ambient glow)
@@ -8878,18 +8940,18 @@ function drawDarkCorridor(camX, now) {
     }
 
     // Candles in wall niches — tiny warm glows that orient the player
-    const candles = [{ gx: 148, now: now }, { gx: 510, now: now }, { gx: 802, now: now }];
+    const candles = [{ gx: 148 }, { gx: 510 }, { gx: 802 }];
     for (const { gx } of candles) {
       const cx = Math.round(gx - camX);
       if (cx < -12 || cx > W + 12) continue;
       const flicker = 0.60 + Math.sin(now * 0.0042 + gx) * 0.20 + Math.sin(now * 0.0071 + gx) * 0.12;
-      // Candle glow
-      const cg = ctx.createRadialGradient(cx, 108, 0, cx, 108, 18);
-      cg.addColorStop(0,   `rgba(255,195,60,${(0.38 * flicker).toFixed(3)})`);
-      cg.addColorStop(0.5, `rgba(200,130,30,${(0.15 * flicker).toFixed(3)})`);
+      // Candle glow — Sprint 50: brighter (0.38→0.50)
+      const cg = ctx.createRadialGradient(cx, 108, 0, cx, 108, 20);
+      cg.addColorStop(0,   `rgba(255,195,60,${(0.50 * flicker).toFixed(3)})`);
+      cg.addColorStop(0.5, `rgba(200,130,30,${(0.20 * flicker).toFixed(3)})`);
       cg.addColorStop(1,   'rgba(0,0,0,0)');
       ctx.fillStyle = cg;
-      ctx.fillRect(cx - 18, 90, 36, 36);
+      ctx.fillRect(cx - 20, 88, 40, 38);
       // Candle body
       ctx.fillStyle = `rgba(248,228,168,${(0.90 * flicker).toFixed(3)})`;
       ctx.fillRect(cx - 1, 110, 2, 8);
@@ -8897,23 +8959,37 @@ function drawDarkCorridor(camX, now) {
       ctx.fillRect(cx - 1, 108, 2, 3);
     }
 
-    // Stairwell hint — faint warm glow at world-x 880 even in dark state.
-    // Gives the player a distant beacon to walk toward.
+    // Stairwell hint — warm glow beacon at world-x 880. Sprint 50: stronger.
     {
       const stHintX = Math.round(880 - camX);
       if (stHintX > -60 && stHintX < W + 60) {
-        const shg = ctx.createRadialGradient(stHintX, FLOOR_Y - 30, 0, stHintX, FLOOR_Y - 30, 40);
-        shg.addColorStop(0,   'rgba(180,120,40,0.22)');
+        const shg = ctx.createRadialGradient(stHintX, FLOOR_Y - 30, 0, stHintX, FLOOR_Y - 30, 55);
+        shg.addColorStop(0,   'rgba(200,140,50,0.35)');
+        shg.addColorStop(0.5, 'rgba(160,100,30,0.14)');
         shg.addColorStop(1,   'rgba(0,0,0,0)');
         ctx.fillStyle = shg;
-        ctx.fillRect(stHintX - 40, FLOOR_Y - 70, 80, 70);
+        ctx.fillRect(stHintX - 55, FLOOR_Y - 85, 110, 85);
       }
     }
 
-    // Draw floor line (always visible)
-    ctx.strokeStyle = 'rgba(40,48,68,0.55)';
+    // Echo-spiders — warm-amber glow pierces the overlay; always visible as hazard cues
+    drawEchoSpiders(camX, now);
+
+    // Floor surface, floor line, and baseboard — same geometry as lit state; always visible
+    const darkFloorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + 20);
+    darkFloorGrad.addColorStop(0, '#121420');
+    darkFloorGrad.addColorStop(1, '#08080e');
+    ctx.fillStyle = darkFloorGrad;
+    ctx.fillRect(0, FLOOR_Y, W, 20);
+
+    ctx.strokeStyle = 'rgba(50,58,80,0.45)';
     ctx.lineWidth   = 1;
     ctx.beginPath(); ctx.moveTo(0, FLOOR_Y); ctx.lineTo(W, FLOOR_Y); ctx.stroke();
+
+    drawBaseboard(0, FLOOR_Y - baseboardH, W, {
+      fillColor:   'rgba(12,14,24,0.72)',
+      strokeColor: 'rgba(40,48,68,0.38)',
+    });
 
   } else {
     // ---- LIT STATE (or lights-on transition) ----
@@ -9029,9 +9105,10 @@ function drawDarkCorridorProps(camX, now, darkMode) {
   }
 
   // ---- Stairwell descent at world-x 880 ----
-  if (!darkMode || darkCorridor.lit) {
-    const stSX = Math.round(880 - camX);
-    if (stSX > -20 && stSX < W + 20) {
+  // In dark mode: show when Pip is within aura range (becomes visible as he approaches)
+  const stSX = Math.round(880 - camX);
+  if (stSX > -20 && stSX < W + 20) {
+    if (!darkMode || darkCorridor.lit || Math.abs(pip.x - 880) < DARK_CORRIDOR_AURA_R + 20) {
       drawStairwellDown(stSX);
     }
   }
@@ -9042,8 +9119,8 @@ function drawDarkOverlay(camX, now) {
   const pipSX = Math.round(pip.x - camX);
   const pipGY = Math.round(pip.y - pip.float.altitude - PIP_H / 2);
 
-  // Full-screen black overlay — Sprint 46: lowered from 0.96 to 0.80 for navigability.
-  ctx.fillStyle = 'rgba(4,6,12,0.80)';
+  // Full-screen black overlay — Sprint 50: lowered from 0.80 to 0.65 for clear legibility.
+  ctx.fillStyle = 'rgba(4,6,12,0.65)';
   ctx.fillRect(0, 0, W, FLOOR_Y);
 
   // Punch a soft hole at Pip's position using destination-out composite op

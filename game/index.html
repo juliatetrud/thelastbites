@@ -3397,9 +3397,9 @@ function updatePanicSequence(dt) {
           x:      pip.x + 4,  // trailing side (facing left, so right side trails)
           y:      pip.y - pip.float.altitude - PIP_H * 0.65,
           vx:     tearVX + (Math.random() - 0.5) * 10,
-          vy:     -15 - Math.random() * 10,
+          vy:     -40 - Math.random() * 20,  // stronger launch for a visible arc
           age:    0,
-          maxAge: 0.4,
+          maxAge: 0.55,
         });
       }
 
@@ -3419,9 +3419,9 @@ function updatePanicSequence(dt) {
           x:      pip.x + 4,
           y:      pip.y - pip.float.altitude - PIP_H * 0.65,
           vx:     PANIC_SPEED * 0.3 + (Math.random() - 0.5) * 10,
-          vy:     -15 - Math.random() * 10,
+          vy:     -40 - Math.random() * 20,
           age:    0,
-          maxAge: 0.4,
+          maxAge: 0.55,
         });
       }
       mb.panicTimer += dt;
@@ -3440,7 +3440,7 @@ function updatePanicSequence(dt) {
     t.age += dt;
     t.x   += t.vx * dt;
     t.y   += t.vy * dt;
-    t.vy  += 100 * dt;  // gravity
+    t.vy  += 220 * dt;  // stronger gravity so the upward arc descends visibly
     if (t.age >= t.maxAge) mb.tears.splice(i, 1);
   }
 }
@@ -4148,8 +4148,6 @@ render._lastNow = null;
    ---------------------------------------------------------------- */
 
 function drawTears(camX) {
-  // Sprint 45: cartoon teardrops — big, clear, expressive. Each tear is a visible
-  // oval/teardrop shape with a highlight, so they read unmistakably as cartoon tears.
   ctx.save();
   for (const t of mirrorBeat.tears) {
     const alpha = Math.max(0, 1 - t.age / t.maxAge) * 0.90;
@@ -4157,19 +4155,15 @@ function drawTears(camX) {
     ctx.globalAlpha = alpha;
     const sx = Math.round(t.x - camX);
     const sy = Math.round(t.y);
-    // Teardrop body: wide oval dropping to a point
+    // 5×10 pixel-art teardrop — readable at 480×270 with image-rendering:pixelated
     ctx.fillStyle = '#8ec8ff';
-    ctx.beginPath();
-    ctx.moveTo(sx, sy + 8);                          // bottom point
-    ctx.quadraticCurveTo(sx - 5, sy + 2, sx - 4, sy - 3);  // left curve
-    ctx.arc(sx, sy - 3, 4, Math.PI, 0, false);       // round top
-    ctx.quadraticCurveTo(sx + 5, sy + 2, sx, sy + 8);   // right curve
-    ctx.fill();
-    // Highlight (inner lighter area)
-    ctx.fillStyle = 'rgba(200,230,255,0.70)';
-    ctx.beginPath();
-    ctx.ellipse(sx - 1, sy - 2, 2, 3, -0.3, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillRect(sx - 1, sy,     3, 2);  // narrow top
+    ctx.fillRect(sx - 2, sy + 2, 5, 5);  // wide body
+    ctx.fillRect(sx - 1, sy + 7, 3, 2);  // narrow base
+    ctx.fillRect(sx,     sy + 9, 1, 1);  // tip
+    // Highlight
+    ctx.fillStyle = 'rgba(210,238,255,0.80)';
+    ctx.fillRect(sx - 1, sy + 1, 1, 4);
   }
   ctx.globalAlpha = 1;
   ctx.restore();

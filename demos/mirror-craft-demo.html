@@ -212,32 +212,7 @@ const HUMAN_GRID = [
   ['_', '_', 'A', 'A', 'a', 'a', 'A', 'A', 'A', '_', '_'],  // row15: apron wider
 ];
 
-// Token legend (ghost):
-//  _ transparent  G ghost-white(pipBody)  D ghost-shadow(pipBodyDeep)
-//  O ghost-halo/contour(pipGlow)
-//  Constants W P L . M = SAME as human (same palette values)
-
-const GHOST_GRID = [
-// Cols:  0    1    2    3    4    5    6    7    8    9   10
-  ['_', '_', '_', 'G', 'G', 'G', 'G', 'G', '_', '_', '_'],  // row 0: bald top
-  ['_', '_', 'G', 'G', 'G', 'G', 'G', 'G', 'G', '_', '_'],  // row 1: ghost head
-  ['O', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'O'],  // row 2: full width
-  ['O', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'D', 'O'],  // row 3: cool shadow right
-  ['O', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'D', 'D', 'O'],  // row 4
-  ['O', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'D', 'D', 'O'],  // row 5
-  ['O', 'G', 'W', 'P', 'G', 'G', 'W', 'P', 'D', 'D', 'O'],  // row 6: ★ EYES (same)
-  ['O', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'D', 'D', 'O'],  // row 7
-  ['O', 'G', 'L', 'G', 'G', '.', 'G', 'G', 'L', 'D', 'O'],  // row 8: ★ BLUSH+nose (same)
-  ['O', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'D', 'D', 'O'],  // row 9
-  ['O', 'G', 'G', 'G', 'M', 'M', 'M', 'G', 'D', 'D', 'O'],  // row10: ★ MOUTH (same)
-  ['O', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'D', 'D', 'O'],  // row11
-  ['_', 'O', 'G', 'G', 'G', 'G', 'G', 'G', 'O', '_', '_'],  // row12: narrowing
-  ['_', '_', 'O', 'O', 'G', 'G', 'O', 'O', '_', '_', '_'],  // row13: base
-  ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],  // row14: no apron
-  ['_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_'],  // row15: no apron
-];
-
-// Palette maps — constant cells (W P L . M) share the same value in both.
+// Palette maps — constant cells (P L M) share the same value across both forms.
 const humanPal = {
   '_': null,
   'K': C.pipHair,          // hair base (#4a3020)
@@ -249,28 +224,10 @@ const humanPal = {
   'W': F.pipEyeGreen,      // ★ iris (muted sea-green warm particular — removed by melt)
   'P': C.pipEye,           // ★ pupil (constant)
   'L': C.pipBlush,         // ★ blush (constant)
-  '.': F.skinShadow,       // ★ nose shadow (constant — minor)
-  'M': F.mouthLine,        // ★ mouth (constant)
+  '.': F.skinShadow,       // nose shadow (warm skin — melts with human face, not constant)
+  'M': F.mouthLine,        // ★ mouth (constant; ghost form overrides to dark at t=1)
   'A': C.pipApron,         // apron collar
   'a': C.pipApronDark,     // apron detail
-};
-const ghostPal = {
-  '_': null,
-  'K': C.pipBody,          // hair → bald ghost white
-  'k': C.pipBody,
-  'j': C.pipBody,
-  'F': C.pipBody,          // skin → ghost white
-  'f': C.pipBodyDeep,      // shadow → cool ghost shadow
-  'G': C.pipBody,          // lit skin → ghost white
-  'O': C.pipGlow,          // ghost halo / contour (#a8c0ff)
-  'D': C.pipBodyDeep,      // ghost cool shadow (#c8d8ff)
-  'W': null,               // iris gone — green was a warm particular; ghost has no iris
-  'P': C.pipEye,           // ★ pupil — SAME
-  'L': C.pipBlush,         // ★ blush — SAME (faint in cool context)
-  '.': C.pipBodyDeep,      // ★ nose vestige — cool shadow
-  'M': F.mouthLine,        // ★ mouth — SAME
-  'A': null,               // no apron
-  'a': null,
 };
 
 // Constant cell coordinates — these persist through the melt unchanged.
@@ -278,8 +235,7 @@ const ghostPal = {
 const CONST_CELLS = new Set([
   '6,3','6,7',               // eye-dots only (P left; P right) — iris W is a warm particular, melts
   '8,2','8,8',               // blush
-  '8,5',                     // nose shadow
-  '10,4','10,5','10,6',      // mouth
+  '10,4','10,5','10,6',      // mouth (color transitions to canonical dark at t=1 — see Step 3)
 ]);
 
 // ================================================================
@@ -448,64 +404,72 @@ function drawMirrorFrame() {
 }
 
 // ================================================================
-// DRAW: GHOST SILHOUETTE (doc-12: round bald head + body + three waves)
-// Called as step 1 of drawMirrorGlass — the form the melt resolves to.
-// Eye-dots, blush, mouth at same screen coords as human face (doc-12 canon).
+// DRAW: GHOST SILHOUETTE — canonical pixel-art Pip ghost, mirrored.
+// Ported from character-gallery.html drawPip (the authoritative form).
+// Scale S = FACE_SCALE (9px/unit) — same grid unit as the human face.
+// ox centres the 16-unit sprite in the glass; oy aligns the gallery row-7
+// (eye row) with face const-cell row-6 so eye-dots land at the same
+// screen y as the persistent human pupils (doc-12 CONSTANT doctrine).
+// Mirror formula: mx = 16 - lx - lw.  Pip's body is symmetric, so only
+// the deep-shadow side band moves from left (cols 1–2) to right (cols 13–14).
 // ================================================================
 function drawGhostSilhouette() {
-  const cx      = MGX + MGW / 2;           // 240 — glass center x
-  const hcy     = MGY + 66;                // 85  — head center y
-  const hR      = 56;                      // head radius (px)
-  const bHW     = 50;                      // body half-width (slightly less than hR)
-  const waveTop = MGY + MGH - 70;          // 181 — body→wave transition y
-  const waveBot = MGY + MGH - 8;           // 243 — wave tip y
+  const S  = FACE_SCALE;   // 9px per sprite unit
+  const ox = MGX + Math.round((MGW - 16 * S) / 2);  // 168 — sprite centred in glass
+  const oy = FOY + 6 * S - 7 * S;                   //  54 — row 7 aligns with face row 6
+  const b  = C.pipBody;       // #f0f8ff  cool-white ghost body
+  const bd = C.pipBodyDeep;   // #c8d8ff  cool shadow band
 
-  const wW = (2 * bHW) / 3;               // ~33.3 — width of each wave segment
+  // mR: draw one rect mirrored around sprite centre col 8.
+  function mR(lx, ly, lw, lh, c) {
+    ctx.fillStyle = c;
+    ctx.fillRect(ox + (16 - lx - lw) * S, oy + ly * S, lw * S, lh * S);
+  }
 
-  // ── Halo (Technique ⑦ — soft cool surround, not a radial blur) ────
   ctx.save();
-  ctx.globalAlpha = 0.22;
-  ctx.fillStyle = C.pipGlow;
-  const hR2 = hR + 8, bHW2 = bHW + 8, wW2 = (2 * bHW2) / 3;
-  ctx.beginPath();
-  ctx.arc(cx, hcy, hR2, Math.PI, 2 * Math.PI);   // wider dome
-  ctx.lineTo(cx + bHW2, waveTop);
-  ctx.quadraticCurveTo(cx + bHW2 - wW2 * 0.5, waveBot + 6, cx + bHW2 - wW2,       waveTop);
-  ctx.quadraticCurveTo(cx + bHW2 - wW2 * 1.5, waveBot + 6, cx + bHW2 - wW2 * 2,   waveTop);
-  ctx.quadraticCurveTo(cx - bHW2 + wW2 * 0.5, waveBot + 6, cx - bHW2,             waveTop);
-  ctx.lineTo(cx - bHW2, hcy);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
 
-  // ── Ghost body — cool-white, bald dome + body + three downward waves ──
-  ctx.fillStyle = C.pipBody;
-  ctx.beginPath();
-  ctx.arc(cx, hcy, hR, Math.PI, 2 * Math.PI);    // bald dome (left→top→right)
-  ctx.lineTo(cx + bHW, waveTop);                   // right body edge
-  ctx.quadraticCurveTo(cx + bHW - wW * 0.5, waveBot, cx + bHW - wW,       waveTop); // wave 1
-  ctx.quadraticCurveTo(cx + bHW - wW * 1.5, waveBot, cx + bHW - wW * 2,   waveTop); // wave 2
-  ctx.quadraticCurveTo(cx - bHW + wW * 0.5, waveBot, cx - bHW,            waveTop); // wave 3
-  ctx.lineTo(cx - bHW, hcy);                       // left body edge
-  ctx.closePath();
-  ctx.fill();
+  // Soft cool halo — one gentle glow per doc-11 (not a body fill)
+  const cx = ox + 8 * S;
+  const halo = ctx.createRadialGradient(cx, oy + 4 * S, 0, cx, oy + 4 * S, 8 * S);
+  halo.addColorStop(0, 'rgba(240,248,255,0.25)');
+  halo.addColorStop(1, 'rgba(240,248,255,0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(ox, oy, 16 * S, 12 * S);
 
-  // ── Rim light — top dome + left arc (Technique ⑦, lamp is upper-left) ──
-  ctx.save();
-  ctx.globalAlpha = 0.62;
-  ctx.strokeStyle = C.pipGlow;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(cx, hcy, hR + 0.5, Math.PI, 2 * Math.PI);  // upper dome arc
-  ctx.stroke();
-  ctx.restore();
+  // Head rows 0–8: narrow crown widens to full body width (gallery drawPip rows)
+  mR(4, 0,  8, 1, b);
+  mR(3, 1, 10, 1, b);
+  mR(2, 2, 12, 1, b);
+  mR(1, 3, 14, 1, b);
+  mR(1, 4, 14, 1, b);
+  mR(1, 5, 14, 1, b);
+  mR(1, 6, 14, 1, b);
+  mR(1, 7, 14, 1, b);
+  mR(1, 8, 14, 1, b);
 
-  // ── Eye-dots — same screen coords as human P cells (doc-12 constant) ──
-  // Left P: FOX + 3*FACE_SCALE = 218, FOY + 6*FACE_SCALE = 117
-  // Right P: FOX + 7*FACE_SCALE = 254, FOY + 6*FACE_SCALE = 117
+  // Body rows 9–20
+  for (let r = 9; r <= 20; r++) mR(1, r, 14, 1, b);
+
+  // Scalloped wave base — three downward bumps (rows 21–22; symmetric, mirror = same)
+  mR( 1, 21, 4, 1, b);  mR( 6, 21, 4, 1, b);  mR(11, 21, 4, 1, b);
+  mR( 1, 22, 3, 1, b);  mR( 7, 22, 2, 1, b);  mR(12, 22, 3, 1, b);
+
+  // Deep shadow side band — mirrored to right side (cols 13–14)
+  mR(1, 9, 2, 11, bd);
+
+  // Rim light on upper dome edges (doc-11 §9 — lit-side accent, not a full outline)
+  ctx.globalAlpha = 0.45;
+  mR(4, 0, 8, 1, C.pipGlow);   // crown top (symmetric)
+  mR(3, 1, 1, 1, C.pipGlow);   // narrowing left nub row 1 → mirrored to right col 12
+  mR(2, 2, 1, 1, C.pipGlow);   // narrowing left nub row 2 → mirrored to right col 13
+  ctx.globalAlpha = 1.0;
+
+  // Eye-dots at const-cell screen positions (doc-12 CONSTANT — same coords as human pupils)
   ctx.fillStyle = C.pipEye;
-  ctx.fillRect(FOX + 3 * FACE_SCALE, FOY + 6 * FACE_SCALE, FACE_SCALE, FACE_SCALE);
-  ctx.fillRect(FOX + 7 * FACE_SCALE, FOY + 6 * FACE_SCALE, FACE_SCALE, FACE_SCALE);
+  ctx.fillRect(FOX + 3 * S, FOY + 6 * S, S, S);   // left pupil  (const-cell row 6, col 3)
+  ctx.fillRect(FOX + 7 * S, FOY + 6 * S, S, S);   // right pupil (const-cell row 6, col 7)
+
+  ctx.restore();
 }
 
 // ================================================================
@@ -568,10 +532,11 @@ function drawMirrorGlass(t) {
 
   // ── Step 3: Always draw constant cells at full opacity on top ──
   // They persist through the melt — this is the thematic spine (doc-12).
+  // Mouth color transitions to canonical ghost dark at full melt (t≥1).
   for (const key of CONST_CELLS) {
     const [row, col] = key.split(',').map(Number);
     const token = HUMAN_GRID[row][col];
-    const color = humanPal[token];
+    const color = (token === 'M' && t >= 1) ? C.pipEye : humanPal[token];
     if (!color) continue;
     ctx.fillStyle = color;
     ctx.fillRect(FOX + col * FACE_SCALE, FOY + row * FACE_SCALE, FACE_SCALE, FACE_SCALE);

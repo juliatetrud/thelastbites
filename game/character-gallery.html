@@ -680,6 +680,85 @@ function drawPip(ctx, cx, floor, t, speaking) {
 }
 
 /* =============================================================
+   ① HUMAN PIP (memory form) — warm particulars the ghost lacks.
+   ~44px from floor to hair top, same movement register as ghost.
+   Sea-green iris LOCKED #4a8068. Constant features (eyes/blush/mouth)
+   share position convention with the ghost for melt consistency (doc-12).
+   NEEDS-VISUAL-CONFIRMATION: open design, Julia will react to this.
+   ============================================================= */
+function drawHumanPip(ctx, cx, floor, t, speaking) {
+  const bob = Math.round(Math.sin(t * 1.8) * (speaking ? 1.5 : 1.0));
+  const by  = floor + bob;
+
+  // Warm amber floor pool (living character)
+  floorGlow(ctx, cx, floor, 14, '#c87830', 0.30);
+
+  // Shoes (near-black)
+  rect(ctx, cx-5, by-3, 4, 3, '#1a1428');
+  rect(ctx, cx+1, by-3, 4, 3, '#1a1428');
+
+  // Legs (dark trousers)
+  rect(ctx, cx-5, by-16, 4, 13, '#2a2030');
+  rect(ctx, cx+1, by-16, 4, 13, '#2a2030');
+
+  // Shirt body (dark, under apron)
+  rect(ctx, cx-6, by-34, 13, 18, '#2a2838');
+  // Arms
+  rect(ctx, cx-10, by-33, 4, 15, '#2a2838');
+  rect(ctx, cx+6,  by-33, 4, 15, '#2a2838');
+
+  // Apron overlay (cream — memory particular, absent from ghost form)
+  rect(ctx, cx-4, by-32, 9, 16, '#e8d8b0');   // apron body
+  rect(ctx, cx-4, by-32, 1, 16, '#c4b890');   // left edge shadow
+  rect(ctx, cx-3, by-34, 7,  2, '#e8d8b0');   // bib strap above apron join
+
+  // ── Head ──────────────────────────────────────────────────────
+  const ht = by - 44;  // hair crown y
+
+  // Skin base (drawn first; hair overlays upper portion)
+  rect(ctx, cx-4, ht,    8, 2, '#c8a070');    // head top
+  rect(ctx, cx-5, ht+2, 10, 3, '#c8a070');    // forehead
+  rect(ctx, cx-5, ht+5, 10, 3, '#c8a070');    // mid face
+  rect(ctx, cx-4, ht+8,  8, 2, '#c8a070');    // chin
+
+  // Skin contour — value-step shadow, NOT black outlines (doc-12 doctrine)
+  rect(ctx, cx-5, ht+3, 1, 7, '#9a6840');     // left face edge
+  rect(ctx, cx+4, ht+3, 1, 7, '#9a6840');     // right face edge
+  rect(ctx, cx-4, ht+5, 1, 2, '#e0bc88');     // lit cheek cluster (lamp side)
+
+  // Hair — brown, three value clusters (base, shadow, lit highlight)
+  rect(ctx, cx-4, ht,    8, 3, '#4a3020');    // crown (overlays head skin)
+  rect(ctx, cx-5, ht+2,  2, 2, '#4a3020');    // left side hair
+  rect(ctx, cx+3, ht+2,  2, 2, '#4a3020');    // right side hair
+  rect(ctx, cx-4, ht,    2, 2, '#2a1808');    // shadow side (away from lamp)
+  rect(ctx, cx+2, ht,    2, 1, '#6a4832');    // lit highlight top-right
+
+  // Eyebrows — dark brown, flat, low (calm child — doc-12)
+  rect(ctx, cx-4, ht+3, 3, 1, '#2a1808');     // left brow
+  rect(ctx, cx+1, ht+3, 3, 1, '#2a1808');     // right brow
+
+  // Eyes — sea-green iris LOCKED #4a8068 (warm particular; removed by mirror melt)
+  drawHumanEye(ctx, cx-4, ht+4, 3, 2, '#f0e8d8', '#4a8068');  // left
+  drawHumanEye(ctx, cx+1, ht+4, 3, 2, '#f0e8d8', '#4a8068');  // right
+  px(ctx, cx-4, ht+4, '#ffffff');   // left eye highlight (alive spark)
+  px(ctx, cx+1, ht+4, '#ffffff');   // right eye highlight
+
+  // Nose — 1 shadow pixel (value-step; no nose outline — doc-12)
+  px(ctx, cx, ht+6, '#9a6840');
+
+  // Blush — CONSTANT feature (#ff9888, shared with ghost form)
+  px(ctx, cx-3, ht+7, C.pipBlush);
+  px(ctx, cx+2, ht+7, C.pipBlush);
+
+  // Mouth — CONSTANT feature (dark muted red-brown; never pure black — doc-12)
+  if (!speaking) {
+    rect(ctx, cx-1, ht+8, 3, 1, '#7a3828');
+  } else {
+    drawMouth(ctx, cx, ht+8, t, speaking, true);
+  }
+}
+
+/* =============================================================
    ② PÄTU — sitting, ported from patu-animation-test.html
    22px tall, ~30px wide. Origin: bottom-left of bounding box.
    Tail flick, ear twitch. No speak animation (Pätu doesn't speak).
@@ -1598,6 +1677,18 @@ const CHARACTERS = [
       drawCellBackground(ctx);
       drawDoorOutline(ctx);
       drawPip(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
+  },
+  {
+    id: 'pip-human', name: 'Pip (memory)', chapterTag: 'Ch 1', section: 'pip', designed: true,
+    assetId: 'CH1-CHAR-01b',
+    colorSig: 'warm skin #c8a070 / brown hair #4a3020 / sea-green iris #4a8068 / cream apron',
+    fracLabel: '0.35–0.40',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawHumanPip(ctx, CHAR_CX, FLOOR_Y, t, speaking);
     },
     canSpeak: true,
   },

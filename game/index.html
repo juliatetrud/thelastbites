@@ -5946,9 +5946,9 @@ function drawPip(screenX, groundY, now) {
 }
 
 /* ---- Layer 1: Body ----
-   Ghost silhouette, apron, and underglow. Local coords: (0,0) = center/foot.
-   The wavy bottom has three downward bumps (classic ghost shape).
-   See 03-art-and-aesthetic.md §Pip Sprite Specification. */
+   Ghost silhouette and underglow. Local coords: (0,0) = center/foot.
+   The wavy bottom has three downward bumps (classic ghost shape). No apron on
+   the gameplay ghost sprite. See 03-art-and-aesthetic.md §Pip Sprite Specification. */
 
 function drawPipBody() {
   const topY    = -PIP_H;       /* −40: top of sprite                   */
@@ -8274,10 +8274,10 @@ function drawGrandparents(camX, now) {
   }
 }
 
-/* ---- Babcia: seated on bed, hunched, head in hands, sobbing. Sprint 47 pose fix.
-   groundY = top of bed surface. Sob-bob ~1500ms period, ~1px amp.
-   Narration: Babcia is on the bed with her head in her hands. She is sobbing.
-   Sprint 45 design (kerchief, coat); Sprint 47 corrects the standing-on-bed pose. */
+/* ---- Babcia: seated on bed, hunched, head in hands, sobbing.
+   Canonical seated grief pose (Sprint 47). Gallery detail ported (Sprint G1):
+   proper eyes, animated hands, crying overlay, wider kerchief.
+   groundY = top of bed surface. Sob-bob ~1500ms period, ~1px amp. */
 function drawBabcia(screenX, groundY, now) {
   const t      = now / 1000;
   const bob    = Math.sin(now / 1500) * 1;
@@ -8288,15 +8288,15 @@ function drawBabcia(screenX, groundY, now) {
   ctx.save();
   ctx.translate(cx, cy);
 
-  // Coat body — seated, so no feet visible; coat falls from lap to shoulders.
+  // Coat body — seated; coat falls from lap to shoulders
   ctx.fillStyle = '#2a1f28';
   ctx.fillRect(-9 + swayX, -44, 18, 44);
   ctx.fillStyle = '#332838';
-  ctx.fillRect(-1 + swayX, -40, 1, 26);
-  ctx.fillRect(-5 + swayX, -40, 1, 26);
-  ctx.fillRect( 5 + swayX, -40, 1, 26);
-  ctx.fillRect(-9 + swayX, -43, 4, 1);
-  ctx.fillRect( 6 + swayX, -43, 4, 1);
+  ctx.fillRect(-1 + swayX, -40, 1, 26);  // center front seam
+  ctx.fillRect(-5 + swayX, -40, 1, 26);  // left panel
+  ctx.fillRect( 5 + swayX, -40, 1, 26);  // right panel
+  ctx.fillRect(-9 + swayX, -43, 4, 1);   // left sleeve join
+  ctx.fillRect( 6 + swayX, -43, 4, 1);   // right sleeve join
 
   // Wide seated lap at base
   ctx.fillStyle = '#2a1f28';
@@ -8306,34 +8306,74 @@ function drawBabcia(screenX, groundY, now) {
   ctx.fillStyle = '#d0b090';
   ctx.fillRect(-2 + swayX, -46, 4, 2);
 
-  // Head bowed sharply into hands
+  // Head bowed into hands
   const hx = swayX;
   ctx.fillStyle = '#d0b090';
-  ctx.fillRect(hx - 3, -54, 7, 4);
-  ctx.fillRect(hx - 2, -50, 5, 2);
+  ctx.fillRect(hx - 3, -54, 7, 4);   // face
+  ctx.fillRect(hx - 2, -50, 5, 2);   // chin
 
-  // Hands raised, covering face (head in hands — the grief pose)
-  ctx.fillRect(hx - 6, -52, 4, 6);
-  ctx.fillRect(hx + 2, -52, 4, 6);
   // Arms rising from lap to face
   ctx.fillStyle = '#2a1f28';
   ctx.fillRect(hx - 8, -44, 4, 8);
   ctx.fillRect(hx + 4, -44, 4, 8);
 
-  // Eyes barely visible between hands (cast down)
-  ctx.fillStyle = '#e8e0d0';
-  ctx.fillRect(hx - 2, -53, 2, 1);
-  ctx.fillRect(hx + 1, -53, 2, 1);
+  // Hands covering face — animate between clasped and apart
+  const handsClosed = ((t % 2.5) / 2.5) < 0.5;
+  ctx.fillStyle = '#d0b090';
+  if (handsClosed) {
+    ctx.fillRect(hx - 3, -52, 6, 5);
+  } else {
+    ctx.fillRect(hx - 6, -52, 4, 5);
+    ctx.fillRect(hx + 2, -52, 4, 5);
+  }
 
-  // KERCHIEF — the silhouette tell; over bowed head
+  // Eyes — sclera + pupil (2×2 each, visible between hands)
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(hx - 2, -53, 2, 2);
+  ctx.fillRect(hx + 1, -53, 2, 2);
+  ctx.fillStyle = '#2a1f28';
+  ctx.fillRect(hx - 1, -53, 1, 1);   // left pupil
+  ctx.fillRect(hx + 2, -53, 1, 1);   // right pupil
+
+  // Mouth (grief, small closed line)
+  ctx.fillStyle = '#7a4830';
+  ctx.fillRect(hx - 1, -51, 3, 1);
+
+  // Crying overlay — always active (she is always sobbing in this scene)
+  const tearEye = (ex, ey, offset) => {
+    const cycle = ((t + offset) % 3.2) / 3.2;
+    if (cycle < 0.22) return;
+    const yBase = ey + 2;
+    if (cycle < 0.50) {
+      ctx.fillStyle = `rgba(168,200,232,${0.50 * ((cycle - 0.22) / 0.28)})`;
+      ctx.fillRect(ex, yBase, 1, Math.ceil(((cycle - 0.22) / 0.28) * 2));
+    } else if (cycle < 0.80) {
+      const drip = (cycle - 0.50) / 0.30;
+      ctx.fillStyle = 'rgba(168,200,232,0.52)';
+      ctx.fillRect(ex, yBase, 1, 2);
+      for (let d = 0; d < Math.ceil(drip * 4); d++) {
+        ctx.fillStyle = `rgba(168,200,232,${Math.max(0, 0.42 - d * 0.12)})`;
+        ctx.fillRect(ex, yBase + 2 + d, 1, 1);
+      }
+    } else {
+      const fade = 1 - (cycle - 0.80) / 0.20;
+      ctx.fillStyle = `rgba(168,200,232,${0.52 * fade})`;
+      ctx.fillRect(ex, yBase, 1, 2);
+    }
+  };
+  tearEye(hx - 2, -53, 0);
+  tearEye(hx + 1, -53, 1.1);
+
+  // KERCHIEF — wider brim + tip, falls at sides
   ctx.fillStyle = '#8a2a2a';
-  ctx.fillRect(hx - 4, -60, 9,  2);
-  ctx.fillRect(hx - 3, -62, 7,  2);
-  ctx.fillRect(hx - 2, -64, 5,  2);
-  ctx.fillRect(hx - 1, -66, 3,  2);
-  ctx.fillRect(hx,     -68, 1,  2);
-  ctx.fillRect(hx - 5, -60, 2,  8);
-  ctx.fillRect(hx + 3, -60, 2,  8);
+  ctx.fillRect(hx - 5, -60, 11, 2);   // brim row
+  ctx.fillRect(hx - 4, -62,  9, 2);
+  ctx.fillRect(hx - 3, -64,  7, 2);
+  ctx.fillRect(hx - 2, -66,  5, 2);
+  ctx.fillRect(hx - 1, -68,  3, 2);
+  ctx.fillRect(hx,     -70,  1, 2);   // tip
+  ctx.fillRect(hx - 6, -60,  2, 8);   // left fall
+  ctx.fillRect(hx + 4, -60,  2, 8);   // right fall
 
   ctx.globalAlpha = 1;
   ctx.restore();
@@ -9154,6 +9194,43 @@ function drawDarkCorridor(camX, now) {
 function drawDarkCorridorProps(camX, now, darkMode) {
   // In dark mode, props are only visible within Pip's aura
   const pipSX = pip.x - camX;
+
+  // ---- Dim ocean-night portholes — Sprint G1 (3 porthole, 2 candle niches) ----
+  for (const { wx, py } of [{ wx:310,py:55 },{ wx:580,py:60 },{ wx:760,py:52 }]) {
+    const ptSX = Math.round(wx - camX);
+    if (ptSX < -20 || ptSX > W + 20) continue;
+    if (darkMode && Math.abs(pip.x - wx) >= DARK_CORRIDOR_AURA_R + 20) continue;
+    ctx.save();
+    ctx.globalAlpha = darkMode ? 0.45 : 0.70;
+    drawSceneryInPorthole(ptSX, py, 14, now);
+    ctx.restore();
+  }
+
+  // ---- Candle niches — atmospheric prop, visible in aura ----
+  for (const { wx, py } of [{ wx:490,py:72 },{ wx:680,py:70 }]) {
+    const cSX = Math.round(wx - camX);
+    if (cSX < -16 || cSX > W + 16) continue;
+    if (darkMode && Math.abs(pip.x - wx) >= DARK_CORRIDOR_AURA_R + 20) continue;
+    ctx.save();
+    if (darkMode) ctx.globalAlpha = 0.70;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(cSX - 6, py - 12, 12, 16);   // niche recess
+    ctx.fillStyle = '#ddd8c0';
+    ctx.fillRect(cSX - 2, py, 4, 10);           // candle pillar
+    ctx.fillStyle = '#c8c4a8';
+    ctx.fillRect(cSX - 2, py - 1, 1, 2);        // wax drip
+    const flkH = Math.round(3 + (Math.sin(now / 120 + wx * 0.01) * 0.5 + 0.5) * 2);
+    ctx.fillStyle = '#ffc030';
+    ctx.fillRect(cSX - 1, py - flkH - 2, 2, flkH);   // flame
+    ctx.fillStyle = '#ffffa0';
+    ctx.fillRect(cSX,     py - flkH - 2, 1, Math.max(1, flkH - 1));  // flame tip
+    const cGlow = ctx.createRadialGradient(cSX, py - 2, 0, cSX, py - 2, 12);
+    cGlow.addColorStop(0, 'rgba(255,180,50,0.15)');
+    cGlow.addColorStop(1, 'rgba(255,180,50,0)');
+    ctx.fillStyle = cGlow;
+    ctx.fillRect(cSX - 12, py - 14, 24, 24);   // warm glow
+    ctx.restore();
+  }
 
   // ---- Working sconce at world-x 240 (lit state — already drawn above, skip in dark) ----
 

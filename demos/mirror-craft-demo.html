@@ -457,17 +457,14 @@ function drawGhostSilhouette() {
   // Deep shadow side band — mirrored to right side (cols 13–14)
   mR(1, 9, 2, 11, bd);
 
-  // Rim light on upper dome edges (doc-11 §9 — lit-side accent, not a full outline)
-  ctx.globalAlpha = 0.45;
-  mR(4, 0, 8, 1, C.pipGlow);   // crown top (symmetric)
-  mR(3, 1, 1, 1, C.pipGlow);   // narrowing left nub row 1 → mirrored to right col 12
-  mR(2, 2, 1, 1, C.pipGlow);   // narrowing left nub row 2 → mirrored to right col 13
-  ctx.globalAlpha = 1.0;
-
-  // Eye-dots at const-cell screen positions (doc-12 CONSTANT — same coords as human pupils)
-  ctx.fillStyle = C.pipEye;
-  ctx.fillRect(FOX + 3 * S, FOY + 6 * S, S, S);   // left pupil  (const-cell row 6, col 3)
-  ctx.fillRect(FOX + 7 * S, FOY + 6 * S, S, S);   // right pupil (const-cell row 6, col 7)
+  // Eyes — gallery drawPip verbatim: sprite row 7, 2×2 sprite-units, mirrored
+  mR(4,  7, 2, 2, C.pipEye);
+  mR(10, 7, 2, 2, C.pipEye);
+  // Blush — gallery drawPip verbatim: sprite row 10, 2×1, mirrored
+  mR(3,  10, 2, 1, C.pipBlush);
+  mR(11, 10, 2, 1, C.pipBlush);
+  // Mouth — gallery drawPip verbatim: sprite row 10, 2×1, mirrored
+  mR(7,  10, 2, 1, C.pipEye);
 
   ctx.restore();
 }

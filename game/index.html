@@ -7240,91 +7240,111 @@ function drawMirrorCinematic(now) {
   ctx.fillStyle = shimmerGrad;
   ctx.fillRect(msX, msY, msW, msH);
 
-  // --- Human face, visible clearly during the hold phase ---
-  const faceCX = msX + msW / 2;
-  const faceCY = msY + msH * 0.38;
-  const humanShift = meltT * msH * 0.55;   // pixels face drips downward
+  // --- Canonical pixel-art face melt (Sprint G1) ---
+  // Token-grid human face (doc-12) melts to gallery-drawPip ghost form.
+  // Const cells (eyes, blush, mouth) persist at same screen position throughout.
 
-  if (meltT < 1) {
-    const fAlpha = 1 - meltT * 0.88;
-    ctx.globalAlpha = fAlpha;
+  const FS = 6;   // px per cell — face 66×96px, ghost 96×138px, both fit 124×174 glass
+  const FACE_COLS_C = 11, FACE_ROWS_C = 16;
 
-    // Face ellipse — clearly warm/human before the melt
-    ctx.fillStyle = '#d4a870';
-    ctx.beginPath();
-    ctx.ellipse(faceCX, faceCY + humanShift * 0.6, 26, 32, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Subtle inner face lighter area (gives the face dimensionality)
-    ctx.fillStyle = '#e0bb90';
-    ctx.beginPath();
-    ctx.ellipse(faceCX - 3, faceCY - 4 + humanShift * 0.5, 16, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
+  const HG_C = [
+    ['_','_','K','K','K','K','K','K','K','_','_'],  // row  0 hair top
+    ['_','K','k','K','K','K','K','K','j','K','_'],  // row  1
+    ['_','K','k','K','K','K','K','K','j','K','_'],  // row  2
+    ['f','f','F','G','F','F','F','F','f','f','_'],  // row  3 hairline
+    ['_','f','G','G','F','F','F','F','f','f','_'],  // row  4 forehead
+    ['_','f','G','F','F','F','F','F','f','f','_'],  // row  5 brow
+    ['_','f','W','P','F','F','W','P','f','f','_'],  // row  6 EYES (P=pupil const)
+    ['_','f','F','F','F','F','F','F','f','f','_'],  // row  7
+    ['_','f','L','F','F','.','F','F','L','f','_'],  // row  8 BLUSH+nose (L=const)
+    ['_','f','F','F','F','F','F','F','f','f','_'],  // row  9
+    ['_','f','F','F','M','M','M','F','f','f','_'],  // row 10 MOUTH (M=const)
+    ['_','f','F','F','F','F','F','F','f','f','_'],  // row 11
+    ['_','_','f','F','F','F','F','F','f','_','_'],  // row 12 chin
+    ['_','_','_','f','F','F','F','f','_','_','_'],  // row 13 neck
+    ['_','_','_','A','A','A','A','A','_','_','_'],  // row 14 apron bib
+    ['_','_','A','A','a','a','A','A','A','_','_'],  // row 15 apron wider
+  ];
+  const HP_C = {
+    '_':null,'K':'#4a3020','k':'#2a1808','j':'#6a4832',
+    'F':'#c8a070','f':'#9a6840','G':'#e0bc88',
+    'W':'#4a8068','P':'#1a1428','L':'#ff9888','.':'#9a6840',
+    'M':'#7a3828','A':'#e8d8b0','a':'#c4b890'
+  };
+  // Eyes (pupils), blush, mouth persist at same screen positions through the melt
+  const CC_C = new Set(['6,3','6,7','8,2','8,8','10,4','10,5','10,6']);
 
-    // Eyes — drip slightly faster than face center
-    const eyeShift = humanShift * 1.1;
-    ctx.fillStyle = '#2a1810';
-    ctx.beginPath(); ctx.ellipse(faceCX - 8, faceCY - 8 + eyeShift, 4, 3.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(faceCX + 8, faceCY - 8 + eyeShift, 4, 3.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#f8f0e8';
-    ctx.beginPath(); ctx.arc(faceCX - 7, faceCY - 9 + eyeShift, 1.5, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(faceCX + 9, faceCY - 9 + eyeShift, 1.5, 0, Math.PI * 2); ctx.fill();
+  // Face origin: centred in glass, upper-mid vertically
+  const FOX_C = msX + Math.round((msW - FACE_COLS_C * FS) / 2);
+  const FOY_C = msY + Math.round((msH - FACE_ROWS_C * FS) * 0.30);
 
-    // Drip streaks — thicker and more visible
-    if (meltT > 0.08) {
-      ctx.globalAlpha = fAlpha * meltT * 0.90;
-      ctx.strokeStyle = '#d4a870';
-      ctx.lineWidth = 2.5;
-      const dripSeeds = [faceCX - 16, faceCX - 6, faceCX, faceCX + 8, faceCX + 16];
-      for (let d = 0; d < dripSeeds.length; d++) {
-        const dripLen = meltT * msH * 0.50 * (0.5 + (d % 3) * 0.25);
-        ctx.beginPath();
-        ctx.moveTo(dripSeeds[d], faceCY + 16 + humanShift * 0.3);
-        ctx.lineTo(dripSeeds[d] + (d % 2 === 0 ? 1.5 : -1.5), faceCY + 16 + dripLen + humanShift * 0.3);
-        ctx.stroke();
-      }
-      ctx.lineWidth = 1;
-    }
+  // Ghost origin: centred; ghost row-7 aligns with face row-6 (eye alignment)
+  const GS = FS;
+  const GOX = msX + Math.round((msW - 16 * GS) / 2);
+  const GOY = FOY_C + 6 * FS - 7 * GS;
+  const gb = '#f0f8ff', gbd = '#c8d8ff', gg = '#a8c0ff';
+
+  function mRCin(lx, ly, lw, lh, c) {
+    ctx.fillStyle = c;
+    ctx.fillRect(GOX + (16 - lx - lw) * GS, GOY + ly * GS, lw * GS, lh * GS);
+  }
+
+  // ── Step 1: Ghost silhouette (pixel-art rows, matches gallery drawPip mirrored) ──
+  const ghostAlpha = meltT > 0.15 ? Math.min(1, (meltT - 0.15) / 0.45) : 0;
+  if (ghostAlpha > 0) {
+    ctx.globalAlpha = ghostAlpha;
+    const hcx = GOX + 8 * GS;
+    const halo = ctx.createRadialGradient(hcx, GOY + 4 * GS, 0, hcx, GOY + 4 * GS, 8 * GS);
+    halo.addColorStop(0, 'rgba(240,248,255,0.25)');
+    halo.addColorStop(1, 'rgba(240,248,255,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(GOX, GOY, 16 * GS, 12 * GS);
+    // Head rows 0–8
+    mRCin(4,0,8,1,gb); mRCin(3,1,10,1,gb); mRCin(2,2,12,1,gb);
+    mRCin(1,3,14,1,gb); mRCin(1,4,14,1,gb); mRCin(1,5,14,1,gb);
+    mRCin(1,6,14,1,gb); mRCin(1,7,14,1,gb); mRCin(1,8,14,1,gb);
+    // Body rows 9–20
+    for (let r = 9; r <= 20; r++) mRCin(1, r, 14, 1, gb);
+    // Scalloped waves rows 21–22
+    mRCin(1,21,4,1,gb); mRCin(6,21,4,1,gb); mRCin(11,21,4,1,gb);
+    mRCin(1,22,3,1,gb); mRCin(7,22,2,1,gb); mRCin(12,22,3,1,gb);
+    // Deep shadow band (mirrored to right side)
+    mRCin(1, 9, 2, 11, gbd);
+    // Rim light on upper dome
+    ctx.globalAlpha = ghostAlpha * 0.45;
+    mRCin(4,0,8,1,gg); mRCin(3,1,1,1,gg); mRCin(2,2,1,1,gg);
     ctx.globalAlpha = 1;
   }
 
-  // --- Ghost face resolves as the melt completes ---
-  if (meltT > 0.25) {
-    const ghostAlpha = Math.min(1, (meltT - 0.25) / 0.75);
-    ctx.globalAlpha = ghostAlpha;
+  // ── Step 2: Human face rows dissolving (non-const cells sag + fade) ──
+  const DRIP_C = FS * 2.0;
+  for (let row = 0; row < FACE_ROWS_C; row++) {
+    const rowStart = (row / FACE_ROWS_C) * 0.60;
+    const rowEnd   = rowStart + 0.40;
+    const rowMelt  = Math.min(1, Math.max(0, (meltT - rowStart) / (rowEnd - rowStart)));
+    if (rowMelt >= 1) continue;
+    const sag   = rowMelt * DRIP_C;
+    const alpha = 1 - rowMelt;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    for (let col = 0; col < FACE_COLS_C; col++) {
+      if (CC_C.has(`${row},${col}`)) continue;
+      const token = HG_C[row][col];
+      const color = HP_C[token];
+      if (!color) continue;
+      ctx.fillStyle = color;
+      ctx.fillRect(Math.round(FOX_C + col * FS), Math.round(FOY_C + row * FS + sag), FS, FS);
+    }
+    ctx.restore();
+  }
 
-    // Cool ghost glow behind the form
-    const ghostGlow = ctx.createRadialGradient(faceCX, faceCY, 0, faceCX, faceCY, 38);
-    ghostGlow.addColorStop(0, 'rgba(160,210,255,0.22)');
-    ghostGlow.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = ghostGlow;
-    ctx.fillRect(msX, msY, msW, msH);
-
-    // Ghost body — Pip's classic silhouette: round head, three bumps at base
-    ctx.fillStyle = '#dce8f8';
-    ctx.shadowColor = 'rgba(180,220,255,0.70)';
-    ctx.shadowBlur  = 14;
-    ctx.beginPath();
-    ctx.arc(faceCX, faceCY - 4, 28, Math.PI, 0);   // head arc (round top)
-    const ghostBase = faceCY + 24;
-    ctx.lineTo(faceCX + 28, ghostBase);
-    // Three wavy bumps at the bottom — Pip's ghost tail
-    ctx.quadraticCurveTo(faceCX + 19, ghostBase + 12, faceCX + 10, ghostBase);
-    ctx.quadraticCurveTo(faceCX +  2, ghostBase + 12, faceCX -  8, ghostBase);
-    ctx.quadraticCurveTo(faceCX - 18, ghostBase + 12, faceCX - 28, ghostBase);
-    ctx.closePath();
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // Ghost eyes — dark, hollow, the truth of what Pip has become
-    ctx.fillStyle = '#080e1c';
-    ctx.beginPath(); ctx.ellipse(faceCX - 8, faceCY - 8, 5, 5.5, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(faceCX + 8, faceCY - 8, 5, 5.5, 0, 0, Math.PI * 2); ctx.fill();
-    // Cool eye glints
-    ctx.fillStyle = 'rgba(180,225,255,0.60)';
-    ctx.beginPath(); ctx.arc(faceCX - 7, faceCY - 9, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(faceCX + 9, faceCY - 9, 2, 0, Math.PI * 2); ctx.fill();
-
-    ctx.globalAlpha = 1;
+  // ── Step 3: Const cells always on top (eyes, blush, mouth persist) ──
+  for (const key of CC_C) {
+    const [row, col] = key.split(',').map(Number);
+    const token = HG_C[row][col];
+    if (!HP_C[token]) continue;
+    ctx.fillStyle = HP_C[token];
+    ctx.fillRect(Math.round(FOX_C + col * FS), Math.round(FOY_C + row * FS), FS, FS);
   }
 
   ctx.restore();   // unclip

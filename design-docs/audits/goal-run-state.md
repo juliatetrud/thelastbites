@@ -1,8 +1,8 @@
 # GOAL-1 Run State
 
-Last updated: 2026-06-16 (after Ch5 build)
+Last updated: 2026-06-16 (after Ch6 build)
 
-## Status: IN PROGRESS — Ch6 next
+## Status: IN PROGRESS — Ch7 next
 
 ## What's built
 - Ch1: complete (existing code) — audit PASS (commit `47eab8a`)
@@ -10,6 +10,7 @@ Last updated: 2026-06-16 (after Ch5 build)
 - Ch3: Southampton — PASS (commit `26b0984`, checkpoint `goal-checkpoint-ch3`)
 - Ch4: Istanbul/Türkiye — PASS (commit `641bd2c`, checkpoint `goal-checkpoint-ch4`)
 - Ch5: South Africa/Saldanha Bay — PASS (commit `6ebc9b9`, checkpoint `goal-checkpoint-ch5`)
+- Ch6: Indonesia/Kolonodale — PASS (commit `4796822`, checkpoint `goal-checkpoint-ch6`)
 
 ## GitHub Issues opened
 - #78: Visual confirmation backlog
@@ -19,27 +20,25 @@ Last updated: 2026-06-16 (after Ch5 build)
 - #82: Ch2 checkpoint pushed
 - #83: Ch3 tracking issue
 - #84: Ch4 tracking issue
-- #85: Ch5 tracking issue (TBD — to open after push)
+- #85: Ch5 tracking issue
+- #86: Ch6 tracking issue (TBD — to open after push)
 
 ## Architecture globals
-- `pip.abilities.memoryGifting` — new, set true in Ch5 Beat 5
-- `ch2State`, `ch3State`, `ch4State`, `ch5State` — all wired to save
+- `pip.abilities.memoryGifting` — set in Ch5
+- `ch2State` through `ch6State` — all wired to save
 - `ch4WalnutsHeld` standalone bool
-- Inventory items: switchblade-iris (Ch5), muhammara jar (Ch4, given away)
+- Inventory items: switchblade-iris (Ch5, load-bearing Ch6+)
+- Erik photograph first seen in Ch6 (dialogue only; boy of 11, blond, wooden spoon)
 
-## Ch6–Ch8: NOT STARTED
+## Ch7–Ch8: NOT STARTED
 Build order:
-1. ~~Ch2 (Estonia/Käsmu)~~ DONE
-2. ~~Ch3 (Southampton)~~ DONE
-3. ~~Ch4 (Istanbul)~~ DONE
-4. ~~Ch5 (South Africa)~~ DONE
-5. Ch6 (Indonesia): Pocong, Tirta, lemper, infection arc, Erik photograph
-6. Ch7 (Brazil): Boitatá, Joana/Beatriz, moqueca, Erik kitchen scene
-7. Ch8 (Greenpoint): shadow, override phases, reunions, final line
+1. ~~Ch2 through Ch6~~ DONE (5 chapters this session)
+2. Ch7 (Brazil): Boitatá, Joana/Beatriz, moqueca, Erik kitchen scene / birthday
+3. Ch8 (Greenpoint): shadow, override phases, reunions, final line
 
 ## Next step
-Push Ch5 checkpoint, open #85, read ch06 spec, build Ch6.
+Push Ch6 checkpoint, open #86, read ch07 spec, build Ch7.
 
 ## Context budget
-- Moderate-high: 4 chapters built this session (Ch2–Ch5)
-- Priority: continue builds Ch6–Ch8, then cross-chapter audit
+- HIGH: 5 chapters built this session (Ch2–Ch6) + context growing long
+- Priority: Ch7 + Ch8 to finish GOAL-1; maintain JS size discipline

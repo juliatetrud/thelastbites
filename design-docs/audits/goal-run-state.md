@@ -1,8 +1,8 @@
 # GOAL-1 Run State
 
-Last updated: 2026-06-16 (after Ch7 build)
+Last updated: 2026-06-16 (GOAL-1 COMPLETE — all 8 chapters built)
 
-## Status: IN PROGRESS — Ch8 next
+## Status: COMPLETE ✓
 
 ## What's built
 - Ch1: complete (existing code) — audit PASS (commit `47eab8a`)
@@ -12,6 +12,7 @@ Last updated: 2026-06-16 (after Ch7 build)
 - Ch5: South Africa/Saldanha Bay — PASS (commit `6ebc9b9`, checkpoint `goal-checkpoint-ch5`)
 - Ch6: Indonesia/Kolonodale — PASS (commit `4796822`, checkpoint `goal-checkpoint-ch6`)
 - Ch7: Brazil/Alter do Chão — PASS (commit `712a96f`, checkpoint `goal-checkpoint-ch7`)
+- Ch8: Greenpoint/Brooklyn — PASS (commit `c4ab7b7`, checkpoint `goal-checkpoint-ch8`)
 
 ## GitHub Issues opened
 - #78: Visual confirmation backlog

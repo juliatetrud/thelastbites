@@ -1276,6 +1276,7 @@ const pip = {
   abilities: {
     electricity:          false,
     talkThroughSpeakers:  false,
+    objectMemory:         false,  // Ch2: touch meaningful objects to see their history
   },
 
   /* Sprint 50: spider boop — horizontal knockback toward entry point on contact.
@@ -1426,6 +1427,39 @@ const chapterState = {
   chapter1Complete:    false, // true once Chapter 1 ends cleanly
 };
 
+/* ================================================================
+   CHAPTER 2 STATE — Estonia / Käsmu
+   ================================================================ */
+const ch2State = {
+  chapter2Active:       false,
+  haldjasIntroSeen:     false,  // Haldjas wariness challenge dialogue done
+  panFound:             false,  // pan discovered behind the pipe
+  objectMemoryEarned:   false,  // ability unlocked at the pan
+  panPickedUp:          false,  // pan physically taken (after vision)
+  arrivedKasmu:         false,  // reached Käsmu village exterior
+  arrivedCottage:       false,  // reached Leida's cottage
+  leidaMet:             false,  // Leida introduction complete
+  cookingStep:          0,      // 0=not started, 1–3 = cooking steps, 4=done
+  cookingDone:          false,
+  mealEaten:            false,  // first kotletid bitten
+  tasteMemorySeen:      false,  // lunchbox cinematic complete
+  promiseMade:          false,  // Pip's promise to Pätu spoken
+  sincerityDoor1Tried:  false,
+  sincerityDoor3Tried:  false,
+  sincerityDone:        false,
+  altarSeen:            false,
+  patuJoined:           false,  // Pätu walks to ship with Pip
+  returnedToShip:       false,
+  chapter2Complete:     false,
+};
+
+/* Pätu companion state — persists across chapters once aboard */
+const patuState = {
+  aboard:  false,   // true after Ch2 chapter2Complete
+  x:       0,       // world-x (set when she appears in a room)
+  facing:  'right',
+};
+
 /* Sprint 29: Nøkken glimpse state — scripted ~3s input-locked sequence
    after the dock farewell cinematic. Separate from cinematic.active
    so the room renders underneath while the glimpse draws on top. */
@@ -1464,9 +1498,12 @@ function buildSaveObject() {
       floatUnlocked:        pip.float.unlocked,
       abilityElectricity:   pip.abilities.electricity,
       abilityTalkSpeakers:  pip.abilities.talkThroughSpeakers,
+      abilityObjectMemory:  pip.abilities.objectMemory,
     },
     cabinState:      { ...cabinState },
     chapterState:    { ...chapterState },
+    ch2State:        { ...ch2State },
+    patuAboard:      patuState.aboard,
     darkCorridor:    { lit: darkCorridor.lit, cartRemoved: darkCorridor.cartRemoved, cartX: darkCorridor.cartX },
     cinematicPlayed: Array.from(cinematic.played),
     passenger:       { thoughtBeatFired: passenger.thoughtBeatFired, passBeatComplete: passenger.passBeatComplete },
@@ -1516,10 +1553,13 @@ function applySave(data) {
   pip.float.unlocked                 = data.pip.floatUnlocked;
   pip.abilities.electricity          = data.pip.abilityElectricity   || false;
   pip.abilities.talkThroughSpeakers  = data.pip.abilityTalkSpeakers  || false;
+  pip.abilities.objectMemory         = data.pip.abilityObjectMemory  || false;
 
   // Restore story flags
   Object.assign(cabinState,   data.cabinState);
   Object.assign(chapterState, data.chapterState);
+  if (data.ch2State)   Object.assign(ch2State,   data.ch2State);
+  if (data.patuAboard) patuState.aboard = data.patuAboard;
 
   // Restore dark corridor state (additive — missing fields default to initial values)
   if (data.darkCorridor) {
@@ -3190,6 +3230,42 @@ function update(dt) {
         chapterState.grandparentsLeft = true;
         startNokkenGlimpse();
       });
+
+    // Ch2 room transitions
+    } else if (currentRoom === 'ch2LowerDeck' && pip.x <= rooms.ch2LowerDeck.pipMinX + 1
+               && ch2State.chapter2Active) {
+      // Left edge of Ch2 lower deck — return to Ch1 observation deck (chapter-complete state)
+      startTransition('observationDeck', 'fromRight');
+    } else if (currentRoom === 'ch2LowerDeck' && pip.x >= rooms.ch2LowerDeck.pipMaxX - 1
+               && ch2State.panPickedUp && !dialogue.active && !cinematic.active) {
+      // Pip has the pan — cross the gangway to Käsmu
+      if (!ch2State.arrivedKasmu) {
+        ch2State.arrivedKasmu = true;
+        showDialogue({
+          id: 'ch2-gangway-cross',
+          lines: [
+            { speaker: null, text: 'The gangway creaks. Salt air. Fog. Somewhere ahead, birch smoke.', italic: true },
+          ],
+          choices: null,
+          onEnd: () => startTransition('ch2Kasmu', 'fromLeft'),
+        });
+      } else {
+        startTransition('ch2Kasmu', 'fromLeft');
+      }
+    } else if (currentRoom === 'ch2Kasmu' && pip.x <= rooms.ch2Kasmu.pipMinX + 1) {
+      // Return from Käsmu to ship
+      startTransition('ch2LowerDeck', 'fromRight', rooms.ch2LowerDeck.pipMaxX - 40);
+    } else if (currentRoom === 'ch2Kasmu' && pip.x >= rooms.ch2Kasmu.pipMaxX - 1
+               && !dialogue.active && !cinematic.active) {
+      // Far right — approach Leida's cottage door
+      if (!ch2State.arrivedCottage) {
+        ch2State.arrivedCottage = true;
+        startTransition('ch2Cottage', 'fromLeft');
+      }
+    } else if (currentRoom === 'ch2Cottage' && pip.x <= rooms.ch2Cottage.pipMinX + 1
+               && ch2State.sincerityDone && ch2State.altarSeen) {
+      // Leave cottage after sincerity puzzle + altar scene
+      startTransition('ch2Kasmu', 'fromRight', rooms.ch2Kasmu.pipMaxX - 40);
     }
   }
 
@@ -3231,6 +3307,56 @@ function update(dt) {
       janitorWalk.pendingStart = false;
       if (currentRoom === 'darkCorridor') startJanitorWalk();
     }, 500);
+  }
+
+  // Ch2: Haldjas intro trigger — first approach to Pätu's corner
+  if (currentRoom === 'ch2LowerDeck' && ch2State.chapter2Active
+      && !ch2State.haldjasIntroSeen && !dialogue.active && !cinematic.active) {
+    if (pip.x > 580 && pip.x < 680) {
+      triggerHaldjasIntro();
+    }
+  }
+
+  // Ch2: pan interaction trigger — approach pan after Haldjas intro
+  if (currentRoom === 'ch2LowerDeck' && ch2State.haldjasIntroSeen
+      && !ch2State.panPickedUp && !dialogue.active && !cinematic.active) {
+    if (pip.x > 680 && pip.x < 780) {
+      if (!ch2State.panFound) {
+        ch2State.panFound = true;
+      }
+    }
+  }
+
+  // Ch2: return-to-ship beat — Pätu walks to corner, closing narration
+  if (currentRoom === 'ch2LowerDeck' && ch2State.chapter2Complete
+      && !ch2State.returnedToShip && !dialogue.active && !cinematic.active) {
+    if (pip.x > 580 && pip.x < 680) {
+      ch2State.returnedToShip = true;
+      showDialogue({
+        id: 'ch2-return-narration',
+        lines: [
+          { speaker: null, text: 'The corner is just a corner now. Pätu stretches and sits down beside Pip.', italic: true },
+          { speaker: null, text: 'Outside, the sea. Somewhere ahead, the next port.', italic: true },
+        ],
+        choices: null,
+        onEnd: () => showChapter2End(),
+      });
+    }
+  }
+
+  // Ch2: Leida meeting trigger in cottage
+  if (currentRoom === 'ch2Cottage' && ch2State.arrivedCottage
+      && !ch2State.leidaMet && !dialogue.active && !cinematic.active) {
+    if (pip.x > 200 && pip.x < 320) {
+      triggerLeidaMeeting();
+    }
+  }
+
+  // Ch2: Pätu position update — she trails Pip loosely when aboard
+  if (patuState.aboard && currentRoom === 'ch2LowerDeck') {
+    const targetX = pip.x - 40;
+    patuState.x += (targetX - patuState.x) * 0.04;
+    patuState.facing = pip.body.facing;
   }
 
   updatePassenger(dt);
@@ -6126,7 +6252,7 @@ function triggerDeckStub() {
    ================================================================ */
 
 function showChapter1End() {
-  triggerDeckStub();  // reuses the terminal fade + overlay; text now says "End of Chapter 1."
+  startChapter2();   // Ch1→Ch2 transition (Ch2 built in GOAL-1 sprint)
 }
 
 /* ================================================================
@@ -6652,8 +6778,25 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null,     text: 'Pip cannot remember the last time he ate. Maybe he never has, now. Maybe this is the first time.', italic: false },
     { speaker: null,     text: 'He takes a bite.',                                          italic: false },
     { speaker: null,     text: 'The food hovers in the air.',                               italic: false },
-    { speaker: null,     text: 'Behind him, a sound. A pan dropped. A man’s voice.',     italic: false },
-    { speaker: 'HENRIK', text: '“AAAAAAAAA—”',                                italic: false },
+    { speaker: null,     text: "Behind him, a sound. A pan dropped. A man’s voice.",  italic: false },
+    { speaker: 'HENRIK', text: '”AAAAAAAAA—“',                            italic: false },
+  ],
+
+  /* Ch2: object-memory-pan — Pip touches Leida’s lost pan, sees its history. */
+  'object-memory-pan': [
+    { speaker: null, text: "The pan is cold. Then: heat. A kitchen somewhere. A woman’s hands. A small cat watching from the window.", italic: true  },
+    { speaker: null, text: 'Someone has cooked love into this pan for a long time.',                                                          italic: true  },
+    { speaker: null, text: 'Pip knows, suddenly, where this pan belongs. And to whom.',                                                       italic: true  },
+  ],
+
+  /* Ch2: lunchbox-taste — Leida’s taste-memory. Young Leida shares her lunch. */
+  'lunchbox-taste': [
+    { speaker: null,        text: 'The cottage falls away.',                                                                                   italic: true  },
+    { speaker: null,        text: 'Winter. A wooden schoolhouse. A thin boy in a too-light jacket, sitting alone on a step.',                 italic: false },
+    { speaker: null,        text: 'The girl with the tin pail walks to him and sits down without asking.',                                     italic: false },
+    { speaker: 'LEIDA',     text: '“My mother always packs two. Take it.”',                                                          italic: false },
+    { speaker: null,        text: 'He takes it carefully, the way someone eats who has learned not to rush food.',                            italic: false },
+    { speaker: null,        text: 'They sit on the step. The wind moves in the birches. No words. Just the warmth of a meatball passed between cold hands.', italic: true },
   ],
 };
 
@@ -6693,6 +6836,12 @@ function showCinematic(name, onEnd) {
     firstTasteCin.phase         = '6a';
     firstTasteCin.crossfadeStart = 0;
     firstTasteCin.prevLineIndex = -1;
+  } else if (name === 'lunchbox-taste') {
+    lunchboxCin.elapsed = 0;
+    lunchboxCin.phase   = 'A';
+    cinematic.isMemory  = true;
+  } else if (name === 'object-memory-pan') {
+    cinematic.isMemory  = true;
   }
 
   showDialogue({
@@ -6809,7 +6958,9 @@ function drawCinematicScene(name, now) {
   else if (name === 'henrik-sits-down')  drawHenrikSitsDownCinematic(now);
   else if (name === 'first-taste')       drawFirstTasteCinematic(now);
   else if (name === 'dock-farewell')     drawDockFarewellCinematic(now);
-  else if (name === 'henriks-offer')     drawHenriksOfferCinematic(now);
+  else if (name === 'henriks-offer')       drawHenriksOfferCinematic(now);
+  else if (name === 'object-memory-pan')   drawObjectMemoryPanCinematic(now);
+  else if (name === 'lunchbox-taste')      drawLunchboxTasteCinematic(now);
   // Sprint 11: memory mist opt-in — drawn on top of scene, below dialogue overlay
   if (cinematic.isMemory) drawMemoryMist(now);
 }
@@ -12954,6 +13105,1110 @@ function initTouchControls() {
     });
   });
 }
+
+/* ================================================================
+   CHAPTER 2 — Estonia / Käsmu
+   A Cat, a Pan, a Promise
+   GOAL-1 Sprint build: 2026-06-15
+   ================================================================ */
+
+/* ---- Ch2 room object lists (forward-declared; populated below) ---- */
+const ch2LowerDeckObjects = [];
+const ch2KasmuObjects     = [];
+const ch2CottageObjects   = [];
+
+/* ---- Ch2 pan inspectable (pushed to ch2LowerDeckObjects at end of section) ---- */
+const ch2PanObject = {
+  id: 'leidas-pan',
+  x:  720,
+  get node() {
+    if (!ch2State.haldjasIntroSeen) return null;
+    if (ch2State.panPickedUp) {
+      return {
+        id: 'pan-held',
+        lines: [{ speaker: null, text: 'Pip is already carrying it. The pan is warm in his hands.', italic: true }],
+        choices: null, onEnd: null,
+      };
+    }
+    if (!ch2State.objectMemoryEarned) {
+      return {
+        id: 'pan-first-touch',
+        lines: [],
+        choices: null,
+        onEnd() {
+          pip.abilities.objectMemory = true;
+          ch2State.objectMemoryEarned = true;
+          showCinematic('object-memory-pan', () => {
+            showDialogue({
+              id: 'pan-after-vision',
+              lines: [
+                { speaker: 'HALDJAS', text: '"Yes. You are made of bonds. Go on, then — bring her her pan."', italic: false },
+              ],
+              choices: null,
+              onEnd() { ch2State.panPickedUp = true; autoSave(); },
+            });
+          });
+        },
+      };
+    }
+    return {
+      id: 'pan-pick-up',
+      lines: [{ speaker: null, text: 'Pip lifts the pan from behind the pipe. It is heavier than it looks. It is clearly loved.', italic: true }],
+      choices: null,
+      onEnd() { ch2State.panPickedUp = true; autoSave(); },
+    };
+  },
+};
+ch2LowerDeckObjects.push(ch2PanObject);
+
+/* ----------------------------------------------------------------
+   Chapter 2 — Beat functions
+   ---------------------------------------------------------------- */
+
+function startChapter2() {
+  ch2State.chapter2Active = true;
+  currentChapter = 2;
+  hideHUD();
+  setControlsStrip('');
+  const fade = document.getElementById('room-transition');
+  fade.style.opacity = '1';
+  setTimeout(() => {
+    currentRoom = 'ch2LowerDeck';
+    pip.x = 60;
+    pip.body.facing = 'right';
+    pip.float.altitude = 0;
+    fade.style.transition = 'opacity 0.8s ease';
+    fade.style.opacity = '0';
+    setTimeout(() => {
+      showHUD();
+      setRoomStrip();
+      autoSave();
+      showDialogue({
+        id: 'ch2-opening',
+        lines: [
+          { speaker: null, text: 'Below decks. The brass fittings are going green in the damp. Echo-mice scurry along the baseboards.', italic: true },
+          { speaker: null, text: 'Something warm and amber flickers at the far end of the corridor.', italic: true },
+        ],
+        choices: null, onEnd: null,
+      });
+    }, 900);
+  }, 600);
+}
+
+function triggerHaldjasIntro() {
+  ch2State.haldjasIntroSeen = true;
+  showDialogue({
+    id: 'haldjas-intro',
+    lines: [
+      { speaker: null,     text: "Amber sparkles drift around Pätu's feet, warm as a coal between colors.", italic: true },
+      { speaker: 'HALDJAS', text: '"Not all of you are good. How do I know which one you are?"', italic: false },
+      { speaker: null,     text: 'Pätu blinks. She is watching to see what Pip does.', italic: true },
+      { speaker: 'HALDJAS', text: '"Leida has lost her old pan. It is somewhere on this ship. Help us find it. We will see what kind of ghost you are."', italic: false },
+    ],
+    choices: null,
+    onEnd() { autoSave(); },
+  });
+}
+
+function triggerLeidaMeeting() {
+  ch2State.leidaMet = true;
+  showDialogue({
+    id: 'leida-meeting',
+    lines: [
+      { speaker: null,  text: "Leida's face does something quiet when she sees the pan. She takes it without asking how.", italic: true },
+      { speaker: 'LEIDA', text: '"Oh. Oh, you brought her back. And you brought him."', italic: false },
+      { speaker: 'LEIDA', text: '"Come in. I am making kotletid."', italic: false },
+    ],
+    choices: null,
+    onEnd() { autoSave(); setTimeout(() => startCookingPuzzle(), 600); },
+  });
+}
+
+function startCookingPuzzle() {
+  ch2State.cookingStep = 1;
+  showCookingStep1();
+}
+
+function showCookingStep1() {
+  showDialogue({
+    id: 'cooking-step1',
+    lines: [{ speaker: 'LEIDA', text: '"What goes in first, Pip — the egg and breadcrumbs, or the butter?"', italic: false }],
+    choices: [
+      {
+        text: 'Mix the egg and breadcrumbs into the meat.',
+        onSelect() {
+          ch2State.cookingStep = 2;
+          showDialogue({
+            id: 'cooking-step1-right',
+            lines: [{ speaker: 'LEIDA', text: '"Yes. Wet hands — so it doesn\'t stick."', italic: false }],
+            choices: null,
+            onEnd: () => showCookingStep2(),
+          });
+        },
+      },
+      {
+        text: 'Add the butter to the pan first.',
+        onSelect() {
+          showDialogue({
+            id: 'cooking-step1-wrong',
+            lines: [{ speaker: 'LEIDA', text: '"Not yet, Pip. The butter waits. Watch."', italic: false }],
+            choices: null,
+            onEnd: () => showCookingStep1(),
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function showCookingStep2() {
+  showDialogue({
+    id: 'cooking-step2',
+    lines: [{ speaker: 'LEIDA', text: '"Now — when is the pan ready? You will smell it."', italic: false }],
+    choices: [
+      {
+        text: 'When it smells of butter, just before it catches.',
+        onSelect() {
+          ch2State.cookingDone = true;
+          ch2State.cookingStep = 3;
+          showDialogue({
+            id: 'cooking-done',
+            lines: [
+              { speaker: 'LEIDA', text: '"There. Now lay them in. Gently."', italic: false },
+              { speaker: null,    text: 'The meatballs go in four at a time. The sound is everything.', italic: true },
+            ],
+            choices: null,
+            onEnd: () => triggerMealAndTasteMemory(),
+          });
+        },
+      },
+      {
+        text: 'When it starts smoking.',
+        onSelect() {
+          showDialogue({
+            id: 'cooking-step2-wrong',
+            lines: [{ speaker: 'LEIDA', text: '"Too late then. Butter burns. Try again."', italic: false }],
+            choices: null,
+            onEnd: () => showCookingStep2(),
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function triggerMealAndTasteMemory() {
+  ch2State.mealEaten = true;
+  showDialogue({
+    id: 'meal-served',
+    lines: [
+      { speaker: 'LEIDA', text: '"Sit, Pip. Eat."', italic: false },
+      { speaker: null,    text: 'Wooden plate. Sour cream. Potatoes. The table is long. The window full of geraniums.', italic: true },
+      { speaker: null,    text: 'Pip takes a bite.', italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      addKotletidRecipe();
+      showCinematic('lunchbox-taste', () => {
+        ch2State.tasteMemorySeen = true;
+        autoSave();
+        showDialogue({
+          id: 'after-lunchbox',
+          lines: [
+            { speaker: 'LEIDA', text: '"He liked them too."', italic: false },
+            { speaker: null,    text: "She does not explain further. The husband's chair is empty. It has been empty a long time.", italic: true },
+          ],
+          choices: null,
+          onEnd: () => triggerPromiseSequence(),
+        });
+      });
+    },
+  });
+}
+
+function triggerPromiseSequence() {
+  showDialogue({
+    id: 'patu-ceremony',
+    lines: [
+      { speaker: null,  text: 'Pätu walks to the door. She turns. She meows.', italic: true },
+      { speaker: null,  text: 'Pip kneels beside her.', italic: true },
+      { speaker: 'PIP', text: '"I\'ll protect you, Pätu. As long as you choose to come aboard."', italic: false },
+    ],
+    choices: null,
+    onEnd() {
+      ch2State.promiseMade = true;
+      showDialogue({
+        id: 'spell-start',
+        lines: [
+          { speaker: null, text: 'The light dims. The Haldjas\'s sparkles thicken.', italic: true },
+          { speaker: null, text: 'Three doors. Each one has someone behind it. Each one wants what you have.', italic: true },
+        ],
+        choices: null,
+        onEnd: () => presentSincerityPuzzle(),
+      });
+    },
+  });
+}
+
+function presentSincerityPuzzle() {
+  showDialogue({
+    id: 'sincerity-doors',
+    lines: [
+      { speaker: null, text: 'Three folk-tale doors stand in the cottage.', italic: true },
+    ],
+    choices: [
+      {
+        text: 'Door 1 — A sweet girl in a white pinafore: "Give me your meatball, ghost-boy. And I\'ll give you your life back."',
+        onSelect() {
+          ch2State.sincerityDoor1Tried = true;
+          showDialogue({
+            id: 'door1-reveal',
+            lines: [
+              { speaker: null, text: 'The girl\'s smile holds a beat too long. Her eyes darken. She was never a girl.', italic: true },
+              { speaker: null, text: 'Wrongness arrives late, the way wrongness always does.', italic: true },
+            ],
+            choices: null,
+            onEnd: () => presentSincerityPuzzle(),
+          });
+        },
+      },
+      {
+        text: 'Door 2 — A bent old woman in a dark shawl, looking at the floor: "I am hungry. Have you anything to spare?"',
+        onSelect: () => resolveSincerityPuzzle(),
+      },
+      {
+        text: 'Door 3 — A healthy man with a polite smile: "I\'ll take the spirit\'s meatball. In return: I\'ll take you home. Just for tonight. They\'re sitting at the table right now."',
+        onSelect() {
+          ch2State.sincerityDoor3Tried = true;
+          showDialogue({
+            id: 'door3-reveal',
+            lines: [
+              { speaker: null, text: 'The man\'s polite smile widens. His teeth are too even. His color drains.', italic: true },
+              { speaker: null, text: 'He told the truth about the table. He lied about the price.', italic: true },
+            ],
+            choices: null,
+            onEnd: () => presentSincerityPuzzle(),
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function resolveSincerityPuzzle() {
+  ch2State.sincerityDone = true;
+  showDialogue({
+    id: 'sincerity-resolve',
+    lines: [
+      { speaker: null, text: 'Pip steps forward. He places his own half-finished meatball in the old woman\'s hands.', italic: true },
+      { speaker: null, text: 'She raises her face. The shawl becomes fur. The tired eyes become Pätu\'s yellow ones.', italic: true },
+      { speaker: null, text: 'She has been here all along. You fed her anyway.', italic: true },
+      { speaker: null, text: 'The doors dissolve. The cottage returns — warmer. Pätu is on the floor.', italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      showDialogue({
+        id: 'haldjas-resolve',
+        lines: [{ speaker: 'HALDJAS', text: '"You saw her. The spell is done. Go."', italic: false }],
+        choices: null,
+        onEnd: () => triggerAltarScene(),
+      });
+    },
+  });
+}
+
+function triggerAltarScene() {
+  ch2State.altarSeen  = true;
+  ch2State.patuJoined = true;
+  patuState.aboard    = true;
+  patuState.x         = Math.max(pip.x - 40, rooms.ch2Cottage.pipMinX + 20);
+  showDialogue({
+    id: 'altar-scene',
+    lines: [
+      { speaker: null,   text: 'Leida steps outside with a small wrapped meatball.', italic: true },
+      { speaker: null,   text: 'She places it in the bowl on the flat stone near the path.', italic: true },
+      { speaker: 'LEIDA', text: '"Thank you, old friend. For watching over her. For watching over them."', italic: false },
+      { speaker: null,   text: 'The Haldjas\'s sparkles thicken at the altar. She accepts the offering. She stays with Leida.', italic: true },
+      { speaker: null,   text: 'Pätu walks to the door. She does not look back.', italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      autoSave();
+      showDialogue({
+        id: 'ch2-leave-cottage',
+        lines: [{ speaker: null, text: 'Walk left to leave the cottage.', italic: true }],
+        choices: null, onEnd: null,
+      });
+    },
+  });
+}
+
+function showChapter2End() {
+  ch2State.chapter2Complete = true;
+  autoSave();
+  // Replace triggerDeckStub's overlay text with "End of Chapter 2."
+  const overlay = document.getElementById('end-sprint-overlay');
+  if (overlay) {
+    const msg = overlay.querySelector('p');
+    if (msg) msg.textContent = 'End of Chapter 2.';
+  }
+  triggerDeckStub();
+}
+
+function addKotletidRecipe() {
+  if (notebook.items.some(i => i.id === 'recipe-kotletid')) return;
+  notebook.items.push({
+    id:         'recipe-kotletid',
+    name:       'Kodused kotletid',
+    annotation: 'Estonian home-style meatballs, pan-fried in butter — Leida\'s cottage, Käsmu.',
+    kind:       'recipe',
+    sprite:     'kotletid',
+  });
+  renderNotebookItems();
+  autoSave();
+}
+
+/* ----------------------------------------------------------------
+   Ch2 character draw functions
+   ---------------------------------------------------------------- */
+
+/* Pätu — gray tabby, 22px tall. Ported verbatim from gallery drawPatu. */
+function drawPatu(screenX, groundY, now) {
+  const t = now / 1000;
+  const tailFlick = (t % 3.5) < 0.25;
+  const earTwitch = (t % 4.0) < 0.15 ? -1 : 0;
+  const cx = Math.round(screenX) - 15;
+  const cy = Math.round(groundY);
+  const bY = -22;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Shadow
+  const sg = ctx.createRadialGradient(14, -1, 0, 14, -1, 12);
+  sg.addColorStop(0, 'rgba(0,0,0,0.30)');
+  sg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sg;
+  ctx.fillRect(2, -3, 24, 6);
+
+  // Tail
+  ctx.fillStyle = tailFlick ? '#7a8298' : '#5a6278';
+  ctx.fillRect(2, bY+16, 1, 1);
+  ctx.fillRect(2, bY+17, 2, 1);
+  ctx.fillRect(3, bY+18, 3, 1);
+  ctx.fillRect(5, bY+19, 4, 1);
+  ctx.fillRect(8, bY+20, 5, 1);
+  ctx.fillStyle = '#2a2f3a';
+  ctx.fillRect(2, bY+16, 1, 1);  // dark tip
+
+  // Body
+  ctx.fillStyle = '#5a6278';
+  ctx.fillRect(12, bY+8,  8, 1);
+  ctx.fillRect(11, bY+9,  10, 1);
+  ctx.fillRect(10, bY+10, 12, 1);
+  ctx.fillRect(9,  bY+11, 13, 1);
+  ctx.fillRect(8,  bY+12, 14, 1);
+  ctx.fillRect(8,  bY+13, 14, 1);
+  ctx.fillRect(7,  bY+14, 15, 1);
+  ctx.fillRect(7,  bY+15, 15, 1);
+  ctx.fillRect(7,  bY+16, 15, 1);
+  ctx.fillRect(7,  bY+17, 15, 1);
+  ctx.fillRect(7,  bY+18, 15, 1);
+  ctx.fillRect(7,  bY+19, 15, 1);
+  // Paws
+  ctx.fillRect(9,  bY+20, 3, 1);
+  ctx.fillRect(14, bY+20, 3, 1);
+  ctx.fillStyle = '#2a2f3a';
+  ctx.fillRect(9,  bY+21, 3, 1);
+  ctx.fillRect(14, bY+21, 3, 1);
+  // Belly
+  ctx.fillStyle = '#8a92a8';
+  ctx.fillRect(11, bY+17, 6, 1);
+  ctx.fillRect(11, bY+18, 6, 1);
+  // Tabby stripes
+  ctx.fillStyle = '#2a2f3a';
+  ctx.fillRect(11, bY+11, 4, 1);
+  ctx.fillRect(17, bY+11, 3, 1);
+  ctx.fillRect(10, bY+14, 3, 1);
+  ctx.fillRect(16, bY+14, 4, 1);
+
+  // Head
+  const et = earTwitch;
+  ctx.fillStyle = '#5a6278';
+  ctx.fillRect(8,  bY+0+et, 1, 1);
+  ctx.fillRect(14, bY+0+et, 1, 1);
+  ctx.fillRect(7,  bY+1+et, 2, 1);
+  ctx.fillRect(14, bY+1+et, 2, 1);
+  ctx.fillRect(7,  bY+2, 3, 1);
+  ctx.fillRect(13, bY+2, 3, 1);
+  // Ear inner
+  ctx.fillStyle = '#8a4a4a';
+  ctx.fillRect(8,  bY+2, 1, 1);
+  ctx.fillRect(14, bY+2, 1, 1);
+  // Head continue
+  ctx.fillStyle = '#5a6278';
+  ctx.fillRect(7,  bY+3, 9, 1);
+  ctx.fillRect(6,  bY+4, 11, 1);
+  ctx.fillRect(6,  bY+5, 11, 1);
+  ctx.fillRect(6,  bY+6, 11, 1);
+  ctx.fillRect(7,  bY+7, 9, 1);
+  ctx.fillRect(8,  bY+8, 5, 1);
+  // M stripe
+  ctx.fillStyle = '#2a2f3a';
+  ctx.fillRect(8,  bY+3, 1, 1);
+  ctx.fillRect(11, bY+3, 1, 1);
+  ctx.fillRect(14, bY+3, 1, 1);
+  // Eyes
+  ctx.fillStyle = '#ffd84a';
+  ctx.fillRect(8,  bY+5, 2, 2);
+  ctx.fillRect(13, bY+5, 2, 2);
+  ctx.fillStyle = '#1a0808';
+  ctx.fillRect(8,  bY+5, 1, 1);
+  ctx.fillRect(14, bY+5, 1, 1);
+  ctx.fillStyle = '#ffe88a';
+  ctx.fillRect(9,  bY+5, 1, 1);
+  ctx.fillRect(13, bY+5, 1, 1);
+  // Nose + mouth
+  ctx.fillStyle = '#6a3a3a';
+  ctx.fillRect(11, bY+7, 1, 1);
+  ctx.fillStyle = '#1a0808';
+  ctx.fillRect(11, bY+8, 1, 1);
+
+  ctx.restore();
+}
+
+/* Haldjas — warm amber sparkle cluster, no humanoid body. */
+function drawHaldjas(screenX, groundY, now) {
+  const t  = now / 1000;
+  const cx = Math.round(screenX);
+  const cy = Math.round(groundY);
+  const sparks = [
+    { ox: -8, oy: -40, s: 2, p: 0.0 }, { ox:  5, oy: -52, s: 1, p: 1.1 },
+    { ox: -2, oy: -60, s: 2, p: 2.3 }, { ox: 12, oy: -45, s: 1, p: 0.7 },
+    { ox:-12, oy: -32, s: 1, p: 1.8 }, { ox:  8, oy: -36, s: 2, p: 3.1 },
+    { ox: -6, oy: -55, s: 1, p: 2.0 }, { ox:  3, oy: -26, s: 1, p: 0.4 },
+    { ox:-15, oy: -50, s: 1, p: 1.5 }, { ox: 15, oy: -38, s: 2, p: 2.8 },
+    { ox:  0, oy: -65, s: 1, p: 0.9 }, { ox:-10, oy: -20, s: 2, p: 1.6 },
+    { ox:  7, oy: -58, s: 1, p: 2.4 }, { ox: -4, oy: -48, s: 1, p: 3.0 },
+    { ox: 10, oy: -22, s: 1, p: 0.2 }, { ox: -1, oy: -33, s: 2, p: 1.3 },
+  ];
+  for (const sp of sparks) {
+    const alpha = 0.4 + Math.sin(t * 1.8 + sp.p) * 0.35;
+    if (alpha <= 0.05) continue;
+    const drift = Math.sin(t * 0.9 + sp.p) * 2;
+    const sx = Math.round(cx + sp.ox + Math.cos(t * 0.7 + sp.p) * 1.5);
+    const sy = Math.round(cy + sp.oy + drift);
+    ctx.globalAlpha = Math.max(0, alpha * 0.45);
+    ctx.fillStyle = '#ffa030';
+    ctx.fillRect(sx - 1, sy - 1, sp.s + 2, sp.s + 2);
+    ctx.globalAlpha = Math.max(0, alpha);
+    ctx.fillStyle = sp.s > 1 ? '#ffe870' : '#ffc030';
+    ctx.fillRect(sx, sy, sp.s, sp.s);
+  }
+  ctx.globalAlpha = 1.0;
+}
+
+/* Leida — Estonian grandmother, cream apron, blue headscarf, ~66px tall. */
+function drawLeida(screenX, groundY, now, speaking, facing) {
+  const t     = now / 1000;
+  const sway  = Math.round(Math.sin(t * 1.2) * 0.4);
+  const bob   = speaking ? Math.round(Math.sin(t * 2.8) * 0.7) : 0;
+  const lean  = 2;
+  const cx    = Math.round(screenX);
+  const cy    = Math.round(groundY);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (facing === 'left') ctx.scale(-1, 1);
+
+  // Floor glow (warm blue)
+  const fg = ctx.createRadialGradient(0, 0, 0, 0, 0, 18);
+  fg.addColorStop(0, 'rgba(60,90,160,0.12)');
+  fg.addColorStop(1, 'rgba(60,90,160,0)');
+  ctx.fillStyle = fg;
+  ctx.fillRect(-18, -4, 36, 6);
+
+  // Shoes
+  ctx.fillStyle = '#3a2818';
+  ctx.fillRect(-7 + sway, -3, 6, 3);
+  ctx.fillRect( 1 + sway, -3, 6, 3);
+
+  // Coat body
+  ctx.fillStyle = '#2a2430';
+  ctx.fillRect(-10 + sway, -56, 21, 53);
+  ctx.fillStyle = '#332838';
+  ctx.fillRect(-1 + sway, -50, 1, 30);
+  ctx.fillRect(-6 + sway, -50, 1, 30);
+  ctx.fillRect( 6 + sway, -50, 1, 30);
+  ctx.fillRect(-10 + sway, -54, 3, 1);
+  ctx.fillRect(  7 + sway, -54, 3, 1);
+
+  // Cream apron (front panel)
+  ctx.fillStyle = '#e8d8b0';
+  ctx.fillRect(-5 + sway, -52, 11, 44);
+  ctx.fillStyle = '#d0c090';
+  ctx.fillRect(-4 + sway, -38, 9, 2);
+
+  // Hands clasped at waist
+  ctx.fillStyle = '#d0a880';
+  ctx.fillRect(-3 + sway, -28, 6, 4);
+
+  // Neck
+  ctx.fillStyle = '#d0a880';
+  ctx.fillRect(-2 + sway + lean, -58, 4, 2);
+
+  // Head (slight forward lean)
+  const hx = sway + lean;
+  const ht = -63 + bob;
+  ctx.fillStyle = '#d0a880';
+  ctx.fillRect(hx - 4, ht + 2, 9, 4);
+  ctx.fillRect(hx - 3, ht + 6, 7, 2);
+
+  // Eyes
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(hx - 3, ht + 3, 2, 2);
+  ctx.fillRect(hx + 1, ht + 3, 2, 2);
+  ctx.fillStyle = '#2a1f28';
+  ctx.fillRect(hx - 2, ht + 4, 1, 1);
+  ctx.fillRect(hx + 2, ht + 4, 1, 1);
+
+  // Mouth
+  ctx.fillStyle = speaking ? '#7a3820' : '#8a5040';
+  ctx.fillRect(hx - 1, ht + 7, 3, 1);
+
+  // Gray hair below scarf
+  ctx.fillStyle = '#7a7060';
+  ctx.fillRect(hx - 4, ht + 1, 2, 3);
+  ctx.fillRect(hx + 2, ht + 1, 2, 3);
+
+  // Estonian-blue headscarf
+  ctx.fillStyle = '#3a5080';
+  ctx.fillRect(hx - 5, ht - 3, 11, 2);
+  ctx.fillRect(hx - 4, ht - 5, 9,  2);
+  ctx.fillRect(hx - 3, ht - 7, 7,  2);
+  ctx.fillRect(hx - 2, ht - 9, 5,  2);
+  ctx.fillRect(hx - 1, ht - 11, 3, 2);
+  ctx.fillRect(hx - 6, ht - 3, 2, 8);
+  ctx.fillRect(hx + 4, ht - 3, 2, 8);
+  ctx.fillStyle = '#4a6898';
+  ctx.fillRect(hx - 4, ht - 3, 1, 2);
+  ctx.fillRect(hx + 3, ht - 3, 1, 2);
+  ctx.fillStyle = '#2a3860';
+  ctx.fillRect(hx - 5, ht - 3, 1, 2);
+  ctx.fillRect(hx + 5, ht - 3, 1, 2);
+
+  ctx.restore();
+}
+
+/* ----------------------------------------------------------------
+   Ch2 cinematic draw functions
+   ---------------------------------------------------------------- */
+
+function drawObjectMemoryPanCinematic(now) {
+  const t = now / 1000;
+  ctx.fillStyle = '#0a0804';
+  ctx.fillRect(0, 0, W, H);
+
+  // Amber memory warmth
+  const mist = ctx.createRadialGradient(W / 2, H / 2, 10, W / 2, H / 2, 150);
+  mist.addColorStop(0,   'rgba(255,160,40,0.22)');
+  mist.addColorStop(0.5, 'rgba(160,80,20,0.10)');
+  mist.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = mist;
+  ctx.fillRect(0, 0, W, H);
+
+  // Table
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(50, 130, 380, 40);
+  ctx.fillStyle = '#3a2010';
+  ctx.fillRect(50, 128, 380, 4);
+
+  // Old woman cooking
+  ctx.fillStyle = '#3a2818';
+  ctx.fillRect(70, 78, 28, 70);
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(74, 60, 20, 20);
+  ctx.fillStyle = '#2a3860';
+  ctx.fillRect(70, 50, 26, 14);
+
+  // Pan on stove
+  ctx.fillStyle = '#2a2020';
+  ctx.fillRect(120, 116, 65, 18);
+  ctx.fillStyle = '#3a2a1a';
+  ctx.fillRect(122, 118, 60, 12);
+  const fire = 0.30 + Math.sin(t * 3.5) * 0.15;
+  ctx.fillStyle = `rgba(255,110,30,${fire.toFixed(2)})`;
+  ctx.fillRect(115, 116, 75, 8);
+
+  // Pätu watching
+  ctx.fillStyle = '#3a3830';
+  ctx.fillRect(265, 118, 30, 18);
+  ctx.fillRect(269, 106, 22, 14);
+  ctx.fillStyle = '#ffd84a';
+  ctx.fillRect(271, 110, 4, 3);
+  ctx.fillRect(281, 110, 4, 3);
+
+  ctx.fillStyle = 'rgba(200,165,110,0.85)';
+  ctx.font = 'italic 11px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('Someone has cooked love into this pan for a long time.', W / 2, H - 28);
+  ctx.textAlign = 'left';
+}
+
+/* Lunchbox state (tracks elapsed for phase B flash) */
+const lunchboxCin = { phase: 'A', elapsed: 0 };
+
+function drawLunchboxTasteCinematic(now) {
+  const t = now / 1000;
+  lunchboxCin.elapsed = t;
+
+  ctx.fillStyle = '#0c0e10';
+  ctx.fillRect(0, 0, W, H);
+
+  // Cool blue-white memory mist
+  ctx.fillStyle = `rgba(150,170,190,${(0.10 + Math.sin(t * 0.7) * 0.04).toFixed(2)})`;
+  ctx.fillRect(0, 0, W, H);
+
+  // Ground
+  ctx.fillStyle = '#1a1c14';
+  ctx.fillRect(0, 142, W, H - 142);
+  ctx.fillStyle = '#22201a';
+  ctx.fillRect(0, 140, W, 4);
+
+  // School building (left)
+  ctx.fillStyle = '#1a1408';
+  ctx.fillRect(0, 48, 175, 94);
+  ctx.fillStyle = '#141008';
+  ctx.fillRect(0, 48, 175, 14);
+
+  // Birch trees
+  ctx.fillStyle = '#c0b8a8';
+  ctx.fillRect(355, 72, 3, 68);
+  ctx.fillRect(395, 62, 3, 78);
+  ctx.fillStyle = 'rgba(170,180,160,0.10)';
+  for (let l = 0; l < 4; l++) {
+    ctx.fillRect(345 + l * 13, 72 + l * 9, 28 - l * 4, 7);
+    ctx.fillRect(390 + l * 11, 64 + l * 9, 26 - l * 4, 6);
+  }
+
+  // Step
+  ctx.fillStyle = '#2a2820';
+  ctx.fillRect(115, 130, 110, 12);
+  ctx.fillStyle = '#302e24';
+  ctx.fillRect(115, 128, 110, 4);
+
+  // Young Leida (left, blue-scarved)
+  ctx.fillStyle = '#2a2430';
+  ctx.fillRect(155, 98, 24, 46);
+  ctx.fillStyle = '#c0a068';
+  ctx.fillRect(160, 80, 14, 20);
+  ctx.fillStyle = '#3a5080';
+  ctx.fillRect(156, 74, 18, 11);
+  ctx.fillRect(153, 80, 5, 16);
+  ctx.fillRect(174, 80, 5, 16);
+  // Tin pail
+  ctx.fillStyle = '#3a3828';
+  ctx.fillRect(162, 112, 12, 8);
+  ctx.fillStyle = '#4a4a38';
+  ctx.fillRect(163, 112, 10, 3);
+
+  // Thin boy
+  ctx.fillStyle = '#2a2820';
+  ctx.fillRect(200, 102, 16, 42);
+  ctx.fillStyle = '#c0a060';
+  ctx.fillRect(202, 84, 12, 20);
+  ctx.fillStyle = '#3a3020';
+  ctx.fillRect(200, 76, 14, 10);
+
+  // Meatball being passed
+  ctx.fillStyle = '#8a5030';
+  ctx.beginPath();
+  ctx.arc(190, 115, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(155,175,195,0.90)';
+  ctx.font = 'italic 11px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  const line = t < 4.5 ? '"My mother always packs two. Take it."'
+                        : 'They sit on the cold step. The birches move.';
+  ctx.fillText(line, W / 2, H - 28);
+  ctx.textAlign = 'left';
+}
+
+/* ----------------------------------------------------------------
+   Ch2 room draw functions
+   ---------------------------------------------------------------- */
+
+function drawCh2LowerDeck(camX, now) {
+  // Background — cool steel-blue lower deck
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#0e1428');
+  wallG.addColorStop(0.6, '#141c30');
+  wallG.addColorStop(1,   '#0a1020');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Floor
+  ctx.fillStyle = '#080e18';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#0c1220';
+  ctx.fillRect(0, FLOOR_Y, W, 2);
+
+  // Baseboard
+  ctx.fillStyle = '#1a2038';
+  ctx.fillRect(0, FLOOR_Y - 8, W, 8);
+  ctx.fillStyle = '#232840';
+  ctx.fillRect(0, FLOOR_Y - 8, W, 2);
+
+  // Horizontal pipe
+  ctx.fillStyle = '#1e2848';
+  ctx.fillRect(0, 78, W, 7);
+  ctx.fillStyle = '#2a3460';
+  ctx.fillRect(0, 78, W, 2);
+
+  // Portholes
+  const portXs = [60, 220, 400, 600, 800].map(x => Math.round(x - camX));
+  for (const px of portXs) {
+    if (px < -20 || px > W + 20) continue;
+    ctx.fillStyle = '#4a3820';
+    ctx.beginPath(); ctx.arc(px, 40, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1a1408';
+    ctx.beginPath(); ctx.arc(px, 40, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#0a0c10';
+    ctx.beginPath(); ctx.arc(px, 40, 9, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Service candles
+  for (const cx2 of [130, 330, 530, 730, 870].map(x => Math.round(x - camX))) {
+    if (cx2 < -12 || cx2 > W + 12) continue;
+    const flicker = 0.7 + Math.sin(now / 300 + cx2 * 0.1) * 0.22;
+    ctx.fillStyle = `rgba(255,170,50,${(0.10 * flicker).toFixed(2)})`;
+    ctx.fillRect(cx2 - 8, FLOOR_Y - 20, 16, 16);
+    ctx.fillStyle = '#c86820';
+    ctx.fillRect(cx2 - 1, FLOOR_Y - 14, 2, 6);
+    ctx.fillStyle = `rgba(255,215,90,${(0.7 * flicker).toFixed(2)})`;
+    ctx.fillRect(cx2, FLOOR_Y - 15, 1, 2);
+  }
+
+  // Pan (with breadcrumb aura when inspectable)
+  if (ch2State.haldjasIntroSeen && !ch2State.panPickedUp) {
+    const panSX = Math.round(720 - camX);
+    if (panSX > -30 && panSX < W + 30) {
+      const aura = 0.20 + Math.sin(now / 700) * 0.10;
+      ctx.fillStyle = `rgba(255,180,60,${aura.toFixed(2)})`;
+      ctx.fillRect(panSX - 14, FLOOR_Y - 24, 28, 16);
+      // Pan silhouette (cast iron, dark)
+      ctx.fillStyle = '#3a3028';
+      ctx.fillRect(panSX - 9, FLOOR_Y - 18, 18, 11);
+      ctx.fillStyle = '#5a4838';
+      ctx.fillRect(panSX - 7, FLOOR_Y - 16, 14, 7);
+      ctx.fillStyle = '#4a3820';
+      ctx.fillRect(panSX + 5, FLOOR_Y - 15, 10, 4);  // handle
+    }
+  }
+
+  // Pätu before Haldjas intro (glimpse at far right)
+  if (!ch2State.haldjasIntroSeen) {
+    const patuSX = Math.round(640 - camX);
+    if (patuSX > -30 && patuSX < W + 30) {
+      const alpha = 0.6 + Math.sin(now / 800) * 0.2;
+      ctx.globalAlpha = alpha;
+      drawPatu(640 - camX, FLOOR_Y, now);
+      ctx.globalAlpha = 1.0;
+      drawHaldjas(660 - camX, FLOOR_Y, now);
+    }
+  } else if (!ch2State.panPickedUp) {
+    // After intro: Pätu + Haldjas near the pan
+    const patuSX = Math.round(650 - camX);
+    if (patuSX > -30 && patuSX < W + 30) {
+      drawPatu(patuSX, FLOOR_Y, now);
+      drawHaldjas(Math.round(670 - camX), FLOOR_Y, now);
+    }
+  }
+
+  // Pan picked up — Pätu walks with Pip
+  if (ch2State.panPickedUp && !ch2State.arrivedKasmu) {
+    drawPatu(Math.round(pip.x - 40 - camX), FLOOR_Y, now);
+  }
+
+  // Return beat — Pätu beside Pip in now-empty corner
+  if (ch2State.chapter2Complete && patuState.aboard) {
+    drawPatu(Math.round(patuState.x - camX), FLOOR_Y, now);
+  }
+}
+
+function drawCh2Kasmu(camX, now) {
+  // Foggy coastal sky
+  const skyG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  skyG.addColorStop(0,   '#181f28');
+  skyG.addColorStop(0.5, '#1e2c38');
+  skyG.addColorStop(1,   '#1a2830');
+  ctx.fillStyle = skyG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Ground
+  ctx.fillStyle = '#1c2018';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#24281c';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Fog near horizon
+  const fogG = ctx.createLinearGradient(0, FLOOR_Y - 40, 0, FLOOR_Y);
+  fogG.addColorStop(0, 'rgba(40,60,80,0)');
+  fogG.addColorStop(1, 'rgba(40,60,80,0.30)');
+  ctx.fillStyle = fogG;
+  ctx.fillRect(0, FLOOR_Y - 40, W, 40);
+
+  // Wooden buildings (parallax 0.3×)
+  const bOff = Math.round(camX * 0.3) % 800;
+  for (const [bx, bw, bh] of [[80,120,88],[260,100,72],[450,140,94],[660,108,78],[860,130,100]]) {
+    const sx = Math.round(bx - bOff);
+    if (sx < -150 || sx > W + 20) continue;
+    ctx.fillStyle = '#1a1808';
+    ctx.fillRect(sx, FLOOR_Y - bh, bw, bh);
+    ctx.fillStyle = '#141408';
+    ctx.beginPath();
+    ctx.moveTo(sx - 5, FLOOR_Y - bh);
+    ctx.lineTo(sx + bw / 2, FLOOR_Y - bh - 18);
+    ctx.lineTo(sx + bw + 5, FLOOR_Y - bh);
+    ctx.fill();
+    const wAlpha = 0.25 + Math.sin(now / 2100 + sx) * 0.07;
+    ctx.fillStyle = `rgba(255,175,55,${wAlpha.toFixed(2)})`;
+    ctx.fillRect(sx + 20, FLOOR_Y - bh + 20, 16, 12);
+  }
+
+  // Altar stone (world-x ~920)
+  const altSX = Math.round(920 - camX);
+  if (altSX > -40 && altSX < W + 20) {
+    ctx.fillStyle = '#2a2818';
+    ctx.fillRect(altSX - 16, FLOOR_Y - 8, 32, 6);
+    ctx.fillStyle = '#3a2010';
+    ctx.fillRect(altSX - 6, FLOOR_Y - 14, 12, 6);
+    ctx.fillStyle = '#2a1808';
+    ctx.fillRect(altSX - 5, FLOOR_Y - 12, 10, 4);
+    ctx.fillStyle = '#3a1a10';
+    ctx.fillRect(altSX - 2, FLOOR_Y - 16, 4, 2);
+    if (ch2State.altarSeen) {
+      drawHaldjas(altSX, FLOOR_Y - 8, now);
+    }
+  }
+
+  // Birch trees (parallax 0.15×)
+  const bTOff = Math.round(camX * 0.15);
+  for (let i = 0; i < 3; i++) {
+    const btx = ((50 + i * 210 - bTOff) % (W + 100) + W + 100) % (W + 100) - 50;
+    ctx.fillStyle = '#d8d0c0';
+    ctx.fillRect(Math.round(btx) - 2, FLOOR_Y - 68, 4, 68);
+    ctx.fillStyle = 'rgba(190,200,185,0.12)';
+    for (let j = 0; j < 5; j++) {
+      ctx.fillRect(Math.round(btx) - 8 + j * 3, FLOOR_Y - 68 + j * 10, 16 - j * 2, 7);
+    }
+  }
+
+  // Leida's cottage door (world-x ~1000)
+  const doorSX = Math.round(1000 - camX);
+  if (doorSX > -50 && doorSX < W + 30) {
+    ctx.fillStyle = '#2a1a08';
+    ctx.fillRect(doorSX - 22, FLOOR_Y - 62, 44, 62);
+    ctx.fillStyle = '#3a2810';
+    ctx.fillRect(doorSX - 17, FLOOR_Y - 56, 34, 52);
+    const glow = ctx.createRadialGradient(doorSX, FLOOR_Y - 32, 0, doorSX, FLOOR_Y - 32, 55);
+    glow.addColorStop(0, 'rgba(255,175,55,0.18)');
+    glow.addColorStop(1, 'rgba(255,175,55,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(doorSX - 55, FLOOR_Y - 82, 110, 82);
+    // Geraniums
+    ctx.fillStyle = '#3a1818';
+    ctx.fillRect(doorSX - 12, FLOOR_Y - 82, 24, 14);
+    ctx.fillStyle = '#4a1a10';
+    for (let g = 0; g < 4; g++) {
+      ctx.fillRect(doorSX - 10 + g * 6, FLOOR_Y - 78, 5, 10);
+    }
+  }
+
+  // Pätu walking ahead (before reaching cottage)
+  if (ch2State.panPickedUp && !ch2State.arrivedCottage) {
+    const leadX = Math.min(pip.x + 65, rooms.ch2Kasmu.pipMaxX - 20);
+    drawPatu(Math.round(leadX - camX), FLOOR_Y, now);
+    drawHaldjas(Math.round(leadX + 20 - camX), FLOOR_Y, now);
+  }
+
+  // Pätu with Pip on return walk
+  if (ch2State.patuJoined) {
+    drawPatu(Math.round(pip.x - 38 - camX), FLOOR_Y, now);
+  }
+}
+
+function drawCh2Cottage(camX, now) {
+  // Warm pine-wood cottage interior
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#1e1408');
+  wallG.addColorStop(0.6, '#2a1c0c');
+  wallG.addColorStop(1,   '#1a1208');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Floor planks
+  ctx.fillStyle = '#1a1008';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#221608';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+  ctx.fillStyle = '#140c04';
+  for (let px2 = 0; px2 < W; px2 += 32) ctx.fillRect(px2, FLOOR_Y, 1, H - FLOOR_Y);
+
+  // Wall paneling lines
+  ctx.fillStyle = '#2a1c08';
+  for (let wy = 20; wy < FLOOR_Y; wy += 24) ctx.fillRect(0, wy, W, 1);
+
+  // Lamp glow
+  const lampG = ctx.createRadialGradient(240, 70, 0, 240, 70, 160);
+  lampG.addColorStop(0,   'rgba(255,215,100,0.22)');
+  lampG.addColorStop(0.5, 'rgba(255,180,55,0.08)');
+  lampG.addColorStop(1,   'rgba(255,180,55,0)');
+  ctx.fillStyle = lampG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Wood stove (world-x ~80)
+  const stoveSX = Math.round(80 - camX);
+  if (stoveSX > -65 && stoveSX < W + 25) {
+    ctx.fillStyle = '#2a2220';
+    ctx.fillRect(stoveSX - 22, FLOOR_Y - 56, 44, 56);
+    ctx.fillStyle = '#1a1818';
+    ctx.fillRect(stoveSX - 17, FLOOR_Y - 50, 34, 42);
+    ctx.fillStyle = '#181820';
+    ctx.fillRect(stoveSX - 4, FLOOR_Y - 90, 8, 38);
+    const fireA = 0.14 + Math.sin(now / 420) * 0.07;
+    ctx.fillStyle = `rgba(255,115,35,${fireA.toFixed(2)})`;
+    ctx.fillRect(stoveSX - 10, FLOOR_Y - 46, 20, 30);
+  }
+
+  // Pine table (world-x 200–385)
+  const tL = Math.round(200 - camX), tR = Math.round(385 - camX);
+  if (tR > 0 && tL < W) {
+    ctx.fillStyle = '#3a2810';
+    ctx.fillRect(tL, FLOOR_Y - 30, tR - tL, 7);
+    ctx.fillStyle = '#2a1c08';
+    ctx.fillRect(tL + 4, FLOOR_Y - 23, 4, 23);
+    ctx.fillRect(tR - 8, FLOOR_Y - 23, 4, 23);
+  }
+
+  // Window + geraniums (world-x ~385)
+  const winSX = Math.round(385 - camX);
+  if (winSX > -55 && winSX < W + 25) {
+    ctx.fillStyle = '#0e1828';
+    ctx.fillRect(winSX - 22, 28, 44, 52);
+    ctx.fillStyle = '#182030';
+    ctx.fillRect(winSX - 20, 30, 40, 48);
+    ctx.fillStyle = '#2a1010';
+    ctx.fillRect(winSX - 18, 76, 36, 8);
+    ctx.fillStyle = '#3a1818';
+    for (let g = 0; g < 4; g++) ctx.fillRect(winSX - 16 + g * 9, 68, 7, 10);
+  }
+
+  // Dried herbs
+  ctx.fillStyle = 'rgba(88,78,28,0.55)';
+  for (let h2 = 0; h2 < 5; h2++) {
+    const hx2 = Math.round((h2 * 96 + 48) - camX);
+    if (hx2 < -12 || hx2 > W + 12) continue;
+    ctx.fillRect(hx2 - 1, 0, 2, 22 + h2 * 3);
+    ctx.fillRect(hx2 - 4, 20 + h2 * 3, 8, 7);
+  }
+
+  // Leida (world-x 280, after she's been met)
+  if (ch2State.leidaMet) {
+    const lSX = Math.round(280 - camX);
+    if (lSX > -55 && lSX < W + 55) {
+      const speaking = dialogue.active && dialogue.node &&
+        dialogue.node.lines &&
+        dialogue.node.lines[dialogue.lineIndex] &&
+        dialogue.node.lines[dialogue.lineIndex].speaker === 'LEIDA';
+      drawLeida(lSX, FLOOR_Y, now, speaking, 'right');
+    }
+  }
+
+  // Pätu at Leida's feet after cooking starts
+  if (ch2State.cookingDone || ch2State.mealEaten) {
+    drawPatu(Math.round(225 - camX), FLOOR_Y, now);
+  }
+
+  // Sincerity puzzle three-door overlay
+  if (ch2State.promiseMade && !ch2State.sincerityDone) {
+    ctx.fillStyle = 'rgba(0,0,8,0.52)';
+    ctx.fillRect(0, 0, W, H);
+
+    const dW = 54, dH = 92;
+    const dY = FLOOR_Y - dH - 8;
+    const doorDefs = [
+      { dx: 55,  tried: ch2State.sincerityDoor1Tried },
+      { dx: 210, tried: false },
+      { dx: 365, tried: ch2State.sincerityDoor3Tried },
+    ];
+    const figColors = ['#3a1838', '#2a1018', '#1a2030'];
+    for (let di = 0; di < 3; di++) {
+      const d = doorDefs[di];
+      ctx.fillStyle = d.tried ? '#1a1210' : '#2a2010';
+      ctx.fillRect(d.dx, dY, dW, dH);
+      ctx.fillStyle = d.tried ? '#141008' : '#1a1408';
+      ctx.fillRect(d.dx + 3, dY + 3, dW - 6, dH - 3);
+      if (!d.tried) {
+        ctx.fillStyle = figColors[di];
+        const fW = 18, fH = 36;
+        ctx.fillRect(d.dx + (dW - fW) / 2, dY + dH - fH - 4, fW, fH);
+      }
+      ctx.fillStyle = '#c8a870';
+      ctx.font = '7px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${di + 1}`, d.dx + dW / 2, dY + dH + 11);
+    }
+    ctx.textAlign = 'left';
+
+    // Haldjas sparkles at door edges
+    drawHaldjas(dW + 15, FLOOR_Y - 28, now);
+    drawHaldjas(W - 20, FLOOR_Y - 28, now);
+  }
+}
+
+/* ----------------------------------------------------------------
+   Ch2 room data
+   ---------------------------------------------------------------- */
+
+let currentChapter = 1;
+
+rooms.ch2LowerDeck = {
+  width:         900,
+  pipMaxX:       860,
+  pipMinX:       30,
+  pipEntryX:     60,
+  portholeScene: null,
+  objects:       ch2LowerDeckObjects,
+  collectibles:  [],
+  draw:          drawCh2LowerDeck,
+};
+
+rooms.ch2Kasmu = {
+  width:         1100,
+  pipMaxX:       1070,
+  pipMinX:       30,
+  pipEntryX:     60,
+  portholeScene: null,
+  objects:       ch2KasmuObjects,
+  collectibles:  [],
+  draw:          drawCh2Kasmu,
+};
+
+rooms.ch2Cottage = {
+  width:         500,
+  pipMaxX:       460,
+  pipMinX:       20,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch2CottageObjects,
+  collectibles:  [],
+  draw:          drawCh2Cottage,
+};
 
 /* ================================================================
    KICK OFF

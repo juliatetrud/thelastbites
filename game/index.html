@@ -1800,9 +1800,9 @@ const cabinObjects = [
               // Sprint 45: float unlocks HERE (bed reveal = Pip gains the power).
               cabinState.bedRevealed        = true;
               cabinState.beatStage          = 'post-bed';
-              pip.float.unlocked            = true;
-              chapterState.floatUnlocked    = true;
-              setRoomStrip();   // update controls strip to show SPACE float
+              // Sprint G1: float is discovered in the dark corridor (broken glass),
+              // not at the bed reveal. updatePanicSequence sets pip.float.altitude
+              // directly and does not check pip.float.unlocked — panic float is safe.
               startPanicSequence();
             });
           },
@@ -2286,6 +2286,7 @@ const darkCorridorObjects = [
     id: 'dc-cart',
     get x() { return darkCorridor.cartX; },
     sparkleY: 148,
+    get breadcrumb() { return darkCorridor.lit && !chapterState.cartFound; },   // Sprint G1: pulse when lit, clear once found
     get node() {
       if (chapterState.cartFound) {
         return {
@@ -2316,6 +2317,7 @@ const darkCorridorObjects = [
     id: 'dc-stairwell',
     x: 880,
     sparkleY: 150,
+    get breadcrumb() { return chapterState.janitorWalked; },   // Sprint G1: pulse after janitor clears cart
     get node() {
       if (!chapterState.janitorWalked) {
         return null;   // not interactive until janitor walk completes
@@ -3335,7 +3337,7 @@ function update(dt) {
   // Sprint 20: float-discovery trigger (broken glass at world-x ~420)
   if (currentRoom === 'darkCorridor' && !floatDiscovery.active && !chapterState.floatUnlocked
       && chapterState.sconceFixed && !dialogue.active && !heldButtonPuzzle.active) {
-    if (pip.x > 415 && pip.x < 425) {
+    if (pip.x > 380 && pip.x < 460) {   // Sprint G1: widened from 10px to 80px — nav polish
       triggerFloatDiscovery();
     }
   }

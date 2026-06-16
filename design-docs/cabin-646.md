@@ -44,7 +44,7 @@ Room width changed to 480px (single-screen, no scroll) in Sprint 32. All x coord
 - Mirror: x 268-292 (world-x 280)
 - Nightstand: x 322-342 (world-x 332, left of bed)
 - Bed: x 360-460 (world-x 360, width 100)
-- Doctor-exit door: x 414-446 (world-x 430; recessed near right wall, not interactable, no glow)
+- ~~Doctor-exit door: x 414-446 (world-x 430; recessed near right wall, not interactable, no glow)~~ **REMOVED Sprint G1b — Cabin 646 has no second door**
 - Right wall cap: x 432-480
 
 ### Inspectable flavor lines (locked, implemented in Stage 2)
@@ -92,7 +92,7 @@ Single-screen room. **Camera does not scroll — room width = 480px = canvas wid
 - **Return-visit entry — hallway door at world-x `120`, silent open (Sprint 23 canon):** After Pip has entered and exited Cabin 646, the hallway door at world-x 120 is the return entry point. Width 32, height 110, top at y=58. Brass handle, kickplate. **No dialogue from the hallway side, ever** — no choice menu, no "Listen at the door." Pip walks up to the door from the hallway and it opens silently. The doctor-exit cinematic does not replay (`cabinState.doctorSeen === true`).
 - **First-visit exit (panic exit, Sprint 23 canon):** Pip exits Cabin 646 by **phasing through the wall back to the hallway**, not through the cabin door. Per Julia's canonical beat-order paragraph: *"Spooked, he runs through the wall into the hallway."* The current Sprint 11 implementation glides Pip through the door; rework to wall-phase egress lands in Sprint 24.
 - **Return-visit exit:** through the hallway door at world-x 120. No prompt; the door opens on approach.
-- **A second door at world-x `450`** — the doctor's exit door, added Sprint 14 for the doctor-exit cinematic. **Not interactable.** Pip cannot use it. After the doctor-exit cinematic plays once on first entry, the door appears closed; it has no further function. A code comment makes this explicit.
+- **The former doctor's exit door (world-x `430`/`450`) has been REMOVED (Sprint G1b).** Cabin 646 has no second door. The doctor-exit cinematic still plays (the doctor fades into the right wall), but there is no door drawn. Any door appearing at world-x 430 or thereabouts is a bug. The `doctorExit.doorOpen` flag is retained in state but does not affect rendering.
 - **The cabin has end walls** (Sprint 11): a 36-px left wall cap at world-x `0` and a 48-px right wall cap at world-x `ROOM_W`. The cabin reads as enclosed, not as a hallway segment. Both walls have rivet strips.
 - **A small brass plaque on the right wall** reads "CABIN 646."
 

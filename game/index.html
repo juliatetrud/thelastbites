@@ -1346,6 +1346,9 @@ const floatDiscovery = {
   timer:  0,
 };
 
+// G1b: lightning flash state — fired by wire-shock to signal float cap raise
+const lightningFlash = { active: false, timer: 0, DURATION: 0.35 };
+
 /* Janitor's scripted walk state machine. */
 const janitorWalk = {
   active:  false,
@@ -1413,7 +1416,8 @@ const chapterState = {
   radioDiscovered:     false, // true after first radio inspection (talk-through-speakers earned)
   darkCorridorEntered: false, // true on first entry to dark corridor
   sconceFixed:         false, // true after broken-sconce held-button puzzle completes
-  floatUnlocked:       false, // true after broken-glass float-discovery sequence
+  floatUnlocked:       false, // true after bed-reveal (G1b restored)
+  floatBoosted:        false, // true after wire-shock; raises altitude cap (G1b)
   cartFound:           false, // true after janitor's cart inspection
   janitorPaged:        false, // true after Pip pages J. Henriksen via radio
   janitorWalked:       false, // true after janitor's scripted walk completes
@@ -1800,9 +1804,9 @@ const cabinObjects = [
               // Sprint 45: float unlocks HERE (bed reveal = Pip gains the power).
               cabinState.bedRevealed        = true;
               cabinState.beatStage          = 'post-bed';
-              // Sprint G1: float is discovered in the dark corridor (broken glass),
-              // not at the bed reveal. updatePanicSequence sets pip.float.altitude
-              // directly and does not check pip.float.unlocked — panic float is safe.
+              pip.float.unlocked            = true;   // G1b: restored (bed reveal = float learned)
+              chapterState.floatUnlocked    = true;
+              setRoomStrip();
               startPanicSequence();
             });
           },
@@ -2018,11 +2022,10 @@ const hallwayObjects = [
                     pip.body.facing = 'right';
                     pip.float.altitude = 0;
                     pip.float.vy       = 0;
-                    showCinematic('grandparents', () => {
-                      // Sprint 11: advance breadcrumb stage so mirror and bed glow when Pip returns
-                      cabinState.beatStage = 'pre-mirror';
-                      setRoomStrip();
-                    });
+                    // G1b: no grandparents cinematic — Pip walks in to gallery art
+                    cabinState.beatStage = 'pre-mirror';
+                    cinematic.played.add('grandparents');  // unlock mirror gate
+                    setRoomStrip();
                     transition.active = false;
                     setTimeout(() => { overlay.style.opacity = '0'; }, 200);
                   }, 200);
@@ -2273,7 +2276,9 @@ const darkCorridorObjects = [
             // Puzzle complete
             chapterState.sconceFixed = true;
             pip.abilities.electricity = true;
+            chapterState.floatBoosted = true;   // G1b: wire-shock raises float altitude cap
             playSound('sconce-buzz');
+            triggerLightningFlash();
             startLightsOnSequence();
           });
         },
@@ -3334,12 +3339,10 @@ function update(dt) {
   updateEchoSpiders(dt);   // Sprint 46: dark corridor spiders
   updateSconceSparks(dt);
 
-  // Sprint 20: float-discovery trigger (broken glass at world-x ~420)
-  if (currentRoom === 'darkCorridor' && !floatDiscovery.active && !chapterState.floatUnlocked
-      && chapterState.sconceFixed && !dialogue.active && !heldButtonPuzzle.active) {
-    if (pip.x > 380 && pip.x < 460) {   // Sprint G1: widened from 10px to 80px — nav polish
-      triggerFloatDiscovery();
-    }
+  // G1b: tick lightning flash timer
+  if (lightningFlash.active) {
+    lightningFlash.timer -= dt;
+    if (lightningFlash.timer <= 0) lightningFlash.active = false;
   }
 
   // Sprint 20: on first dark-corridor entry, set darkCorridorEntered flag
@@ -3830,8 +3833,9 @@ function updateFloat(dt) {
 
   f.altitude += f.vy * dt;
 
-  if (f.altitude >= FLOAT_MAX_ALT) {
-    f.altitude = FLOAT_MAX_ALT;
+  const floatCap = chapterState.floatBoosted ? FLOAT_MAX_ALT : 30;  // G1b: wire-shock raises cap
+  if (f.altitude >= floatCap) {
+    f.altitude = floatCap;
     f.vy       = 0;
   } else if (f.altitude <= 0) {
     f.altitude = 0;
@@ -4645,6 +4649,14 @@ function render(now) {
     ctx.scale(3.5, 3.5);
     drawTreatSprite(ctx, treatFlash.sprite, 0, 0);
     ctx.restore();
+  }
+
+  // G1b: lightning flash overlay (wire-shock signals float cap raise)
+  if (lightningFlash.active) {
+    const lp = 1 - lightningFlash.timer / lightningFlash.DURATION;
+    const la = lp < 0.2 ? lp / 0.2 : Math.max(0, 1 - (lp - 0.2) / 0.8);
+    ctx.fillStyle = `rgba(210, 235, 255, ${(la * 0.88).toFixed(3)})`;
+    ctx.fillRect(0, 0, W, H);
   }
 
   // Sprint 13: update and draw pickup tweens on the tween layer
@@ -6158,29 +6170,39 @@ function drawCabin(camX, now) {
     ctx.fillStyle = '#e0ddf4';
     ctx.fillRect(bedSX + bedGW - 22, bedGY + 2, 14, 10);
 
-    // Lump-in-bed overlay (Sprint 10.7) — visible until Sprint 11 bed-reveal
-    // A soft body-shaped bump under the covers. Implied, not detailed.
+    // G1b: bed lump — legibly occupied; body shape clearly under covers
     if (!cabinState.bedRevealed) {
-      const lumpX    = bedSX + 6;
-      const lumpY    = bedGY + 1;
-      const lumpW    = bedGW - 22;
-      const lumpH    = 10;
+      const lumpX = bedSX + 4;
+      const lumpY = bedGY - 2;
+      const lumpW = bedGW - 10;
+      const lumpH = 14;
 
-      ctx.fillStyle   = 'rgba(20, 18, 48, 0.45)';
+      // Shadow base (darker, broader)
+      ctx.fillStyle = 'rgba(10, 8, 32, 0.65)';
       ctx.beginPath();
       ctx.moveTo(lumpX, lumpY + lumpH);
-      ctx.quadraticCurveTo(lumpX + lumpW * 0.3, lumpY - 2, lumpX + lumpW * 0.85, lumpY + 2);
+      ctx.quadraticCurveTo(lumpX + lumpW * 0.35, lumpY - 1, lumpX + lumpW * 0.88, lumpY + 4);
       ctx.lineTo(lumpX + lumpW, lumpY + lumpH);
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle   = 'rgba(50, 46, 88, 0.55)';
+      // Body silhouette — feet left, head-bump right; shoulder peak visible
+      ctx.fillStyle = 'rgba(38, 34, 72, 0.85)';
       ctx.beginPath();
       ctx.moveTo(lumpX, lumpY + lumpH);
-      ctx.quadraticCurveTo(lumpX + lumpW * 0.15, lumpY - 4, lumpX + lumpW * 0.35, lumpY - 2);
-      ctx.quadraticCurveTo(lumpX + lumpW * 0.55, lumpY - 3, lumpX + lumpW * 0.75, lumpY + 1);
-      ctx.quadraticCurveTo(lumpX + lumpW * 0.90, lumpY + 3, lumpX + lumpW, lumpY + lumpH);
+      ctx.quadraticCurveTo(lumpX + lumpW * 0.08, lumpY + 8, lumpX + lumpW * 0.18, lumpY);
+      ctx.quadraticCurveTo(lumpX + lumpW * 0.30, lumpY - 5, lumpX + lumpW * 0.38, lumpY - 6);
+      ctx.quadraticCurveTo(lumpX + lumpW * 0.48, lumpY - 8, lumpX + lumpW * 0.56, lumpY - 7);
+      ctx.quadraticCurveTo(lumpX + lumpW * 0.66, lumpY - 9, lumpX + lumpW * 0.72, lumpY - 8);
+      ctx.quadraticCurveTo(lumpX + lumpW * 0.82, lumpY - 4, lumpX + lumpW * 0.90, lumpY + 2);
+      ctx.lineTo(lumpX + lumpW, lumpY + lumpH);
       ctx.closePath();
+      ctx.fill();
+
+      // Head bump — rounded shape at right end (child-sized)
+      ctx.fillStyle = 'rgba(52, 46, 90, 0.75)';
+      ctx.beginPath();
+      ctx.ellipse(lumpX + lumpW * 0.91, lumpY - 3, 5, 4, 0, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -6195,19 +6217,7 @@ function drawCabin(camX, now) {
   // the black hole Julia saw, AND the ReferenceError above was the Pip-invisible bug).
   // The functional exit (pip.x <= pipMinX) still works without any door visual.
 
-  // Far door: doctor's exit. Not interactable. Recessed in right end-wall.
-  const farDoorGX = 430;
-  const farDoorSX = Math.round(farDoorGX - camX);
-  if (farDoorSX > -(dw + 6) && farDoorSX < W + (dw + 6)) {
-    if (doctorExit.doorOpen) {
-      // Door ajar: dark gap on entry side, panel shifted open
-      ctx.fillStyle = '#050810';
-      ctx.fillRect(farDoorSX - Math.floor(dw / 2), doorTop, 10, dh);
-      drawDoor(farDoorSX + 8, doorTop, { w: dw - 6, h: dh, warm: false });
-    } else {
-      drawDoor(farDoorSX, doorTop, { w: dw, h: dh, warm: false });
-    }
-  }
+  // G1b: far door (doctor's exit at x=430) removed. Cabin 646 has no second door.
 
   // Floor surface
   const floorGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, FLOOR_Y + 20);
@@ -7943,6 +7953,30 @@ function drawMirrorCinematic(now) {
     ctx.globalAlpha = ghostAlpha * 0.45;
     mRCin(4,0,8,1,gg); mRCin(3,1,1,1,gg); mRCin(2,2,1,1,gg);
     ctx.globalAlpha = 1;
+
+    // G1b: ghost eyes + blink once after melt completes
+    if (meltT >= 1) {
+      const postMelt  = elapsed - (HOLD_T + MELT_T);
+      const blinking  = postMelt > 0.5 && postMelt < 0.75;
+      const eyeY      = Math.round(GOY + 5 * GS + Math.floor(GS * 0.3));
+      const eyeLX     = Math.round(GOX + (16 - 11) * GS);
+      const eyeRX     = Math.round(GOX + (16 - 6) * GS);
+      if (!blinking) {
+        ctx.save();
+        ctx.globalAlpha = ghostAlpha * 0.85;
+        ctx.fillStyle = '#c8e0ff';
+        ctx.fillRect(eyeLX, eyeY, GS, Math.ceil(GS * 0.65));
+        ctx.fillRect(eyeRX, eyeY, GS, Math.ceil(GS * 0.65));
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.globalAlpha = ghostAlpha * 0.6;
+        ctx.fillStyle = '#203060';
+        ctx.fillRect(eyeLX, eyeY + Math.floor(GS * 0.3), GS, 2);
+        ctx.fillRect(eyeRX, eyeY + Math.floor(GS * 0.3), GS, 2);
+        ctx.restore();
+      }
+    }
   }
 
   // ── Step 2: Human face rows dissolving (non-const cells sag + fade) ──
@@ -7967,13 +8001,19 @@ function drawMirrorCinematic(now) {
     ctx.restore();
   }
 
-  // ── Step 3: Const cells always on top (eyes, blush, mouth persist) ──
-  for (const key of CC_C) {
-    const [row, col] = key.split(',').map(Number);
-    const token = HG_C[row][col];
-    if (!HP_C[token]) continue;
-    ctx.fillStyle = HP_C[token];
-    ctx.fillRect(Math.round(FOX_C + col * FS), Math.round(FOY_C + row * FS), FS, FS);
+  // ── Step 3: Const cells (eyes, blush, mouth) — fade out as melt completes ──
+  if (meltT < 1) {
+    const constAlpha = Math.max(0, 1 - Math.max(0, meltT - 0.75) / 0.25);
+    ctx.save();
+    ctx.globalAlpha = constAlpha;
+    for (const key of CC_C) {
+      const [row, col] = key.split(',').map(Number);
+      const token = HG_C[row][col];
+      if (!HP_C[token]) continue;
+      ctx.fillStyle = HP_C[token];
+      ctx.fillRect(Math.round(FOX_C + col * FS), Math.round(FOY_C + row * FS), FS, FS);
+    }
+    ctx.restore();
   }
 
   ctx.restore();   // unclip
@@ -9221,6 +9261,12 @@ function triggerFloatDiscovery() {
   floatDiscovery.timer  = 0.6;
   pip.float.altitude    = 0;
   playSound('float-discovery');
+}
+
+// G1b: wire-shock lightning flash (fires when sconce puzzle completes)
+function triggerLightningFlash() {
+  lightningFlash.active = true;
+  lightningFlash.timer  = lightningFlash.DURATION;
 }
 
 function updateFloatDiscovery(dt) {

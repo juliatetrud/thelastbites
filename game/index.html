@@ -1509,6 +1509,7 @@ function buildSaveObject() {
     ch5State:        { ...ch5State },
     ch6State:        { ...ch6State },
     ch7State:        { ...ch7State },
+    ch8State:        { ...ch8State },
     patuAboard:      patuState.aboard,
     darkCorridor:    { lit: darkCorridor.lit, cartRemoved: darkCorridor.cartRemoved, cartX: darkCorridor.cartX },
     cinematicPlayed: Array.from(cinematic.played),
@@ -1572,6 +1573,7 @@ function applySave(data) {
   if (data.ch5State && data.ch5State.switchbladeHeld && !pip.abilities.memoryGifting) pip.abilities.memoryGifting = true;
   if (data.ch6State)   Object.assign(ch6State,   data.ch6State);
   if (data.ch7State)   Object.assign(ch7State,   data.ch7State);
+  if (data.ch8State)   Object.assign(ch8State,   data.ch8State);
   if (data.patuAboard) patuState.aboard = data.patuAboard;
 
   // Restore dark corridor state (additive — missing fields default to initial values)
@@ -3664,6 +3666,81 @@ function update(dt) {
       && !dialogue.active && !cinematic.active) {
     if (pip.x > 80) {
       triggerErikBeat();
+    }
+  }
+
+  // ---- Ch8 room transitions ----
+
+  if (ch8State.chapter8Active && !dialogue.active && !cinematic.active) {
+    if (currentRoom === 'ch8Street' && pip.x >= rooms.ch8Street.pipMaxX - 1) {
+      ch8State.arrivedApartment = true;
+      startTransition('ch8ApartmentHall', 'fromLeft');
+    } else if (currentRoom === 'ch8ApartmentHall' && pip.x >= rooms.ch8ApartmentHall.pipMaxX - 1) {
+      startTransition('ch8PipKitchen', 'fromLeft');
+    } else if (currentRoom === 'ch8ApartmentHall' && pip.x <= rooms.ch8ApartmentHall.pipMinX + 1) {
+      startTransition('ch8Street', 'fromRight', rooms.ch8Street.pipMaxX - 40);
+    } else if (currentRoom === 'ch8PipKitchen' && pip.x <= rooms.ch8PipKitchen.pipMinX + 1
+               && ch8State.parentsSeen && !ch8State.visitedBabcia) {
+      startTransition('ch8ApartmentHall', 'fromRight', rooms.ch8ApartmentHall.pipMaxX - 20);
+    } else if (currentRoom === 'ch8ApartmentHall' && pip.x <= rooms.ch8ApartmentHall.pipMinX + 1
+               && ch8State.parentsSeen && !ch8State.visitedBabcia) {
+      startTransition('ch8Street', 'fromRight', rooms.ch8Street.pipMaxX - 40);
+    } else if (currentRoom === 'ch8Street' && pip.x <= rooms.ch8Street.pipMinX + 1
+               && ch8State.parentsSeen && !ch8State.visitedBabcia) {
+      startTransition('ch8BabciaApartment', 'fromLeft');
+    } else if (currentRoom === 'ch8BabciaApartment' && pip.x <= rooms.ch8BabciaApartment.pipMinX + 1
+               && ch8State.babciaFeltHim) {
+      startTransition('ch8Street', 'fromRight', rooms.ch8Street.pipMaxX - 40);
+    } else if (currentRoom === 'ch8Street' && pip.x >= rooms.ch8Street.pipMaxX - 1
+               && ch8State.babciaFeltHim) {
+      startTransition('ch8ApartmentHall', 'fromLeft');
+    } else if (currentRoom === 'ch8ApartmentHall' && pip.x >= rooms.ch8ApartmentHall.pipMaxX - 1
+               && ch8State.babciaFeltHim) {
+      startTransition('ch8PipKitchen', 'fromLeft');
+    }
+  }
+
+  // ---- Ch8 beat triggers ----
+
+  // Ch8: arriving at apartment building (end of street)
+  if (currentRoom === 'ch8Street' && ch8State.chapter8Active
+      && !ch8State.arrivedApartment && !dialogue.active && !cinematic.active) {
+    if (pip.x >= rooms.ch8Street.pipMaxX - 1) {
+      triggerApartmentArrival();
+    }
+  }
+
+  // Ch8: hallway memories on arrival
+  if (currentRoom === 'ch8ApartmentHall' && ch8State.chapter8Active
+      && !ch8State.inHallway && !dialogue.active && !cinematic.active) {
+    if (pip.x > 60) {
+      triggerHallwayMemories();
+    }
+  }
+
+  // Ch8: kitchen arrival — shadow rises
+  if (currentRoom === 'ch8PipKitchen' && ch8State.chapter8Active
+      && !ch8State.arrivedPipKitchen && !dialogue.active && !cinematic.active) {
+    if (pip.x > 80) {
+      triggerKitchenArrival();
+    }
+  }
+
+  // Ch8: Babcia visit on return to Babcia apartment
+  if (currentRoom === 'ch8BabciaApartment' && ch8State.chapter8Active
+      && ch8State.parentsSeen && !ch8State.visitedBabcia
+      && !dialogue.active && !cinematic.active) {
+    if (pip.x > 60) {
+      triggerBabciaVisit();
+    }
+  }
+
+  // Ch8: return to Pip's kitchen — final scene
+  if (currentRoom === 'ch8PipKitchen' && ch8State.chapter8Active
+      && ch8State.babciaFeltHim && !ch8State.chapter8Complete
+      && !dialogue.active && !cinematic.active) {
+    if (pip.x > 80) {
+      triggerFinalScene();
     }
   }
 
@@ -7151,6 +7228,22 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null, text: "Henrik, receiving this memory, feels the weight of his son's love for him — not grief. Love. Erik, in that kitchen, bouncing on his heels and so happy.", italic: true },
     { speaker: null, text: '"Papa,"', italic: false, speaker: 'ERIK (MEMORY)' },
   ],
+  'pierogi-table': [
+    { speaker: null, text: 'A kitchen table. All six chairs filled.', italic: true },
+    { speaker: null, text: "Babcia at the head. Dziadek beside her. Pip's mother and father across. Small Pip — three years old, maybe four — in a high chair pulled up to the corner.", italic: true },
+    { speaker: null, text: "A pot of pierogi in the center. The smell of butter and onion and farmer's cheese.", italic: true },
+    { speaker: null, text: "Babcia is holding a small ball of dough. She turns to small-Pip. Her hands take his small hands and place them on the dough. She is showing him the fold.", italic: true },
+    { speaker: null, text: 'Small Pip laughs.', italic: true },
+    { speaker: null, text: "His mother smiles at his father. His father lifts his glass. Dziadek says something that makes the room laugh. Babcia kisses the top of small Pip's head.", italic: true },
+    { speaker: null, text: 'The kitchen is full. The chairs are full. No one is missing. No one is dead. No one is lost.', italic: true },
+    { speaker: null, text: 'This is the memory before all losses.', italic: true },
+  ],
+  'parents-through-veil': [
+    { speaker: null, text: 'The pantry curtain pulls aside on its own.', italic: true },
+    { speaker: null, text: 'Through it is not the pantry.', italic: true },
+    { speaker: null, text: "Pip's father. Pip's mother. They are not as Pip last saw them — they are themselves, whole, alive in the way the dead are alive when they are at peace.", italic: true },
+    { speaker: null, text: 'They have been waiting.', italic: true },
+  ],
   'muhammara-orchard': [
     { speaker: null, text: 'An autumn orchard. Walnut trees, leaves coming down.', italic: true },
     { speaker: null, text: 'A grandmother kneels between two boys. She cracks a walnut. Hands it over.', italic: true },
@@ -7217,6 +7310,10 @@ function showCinematic(name, onEnd) {
     cinematic.isMemory  = true;
   } else if (name === 'erik-birthday-memory') {
     cinematic.isMemory  = true;
+  } else if (name === 'pierogi-table') {
+    cinematic.isMemory  = true;
+  } else if (name === 'parents-through-veil') {
+    cinematic.isMemory  = false;
   }
 
   showDialogue({
@@ -7344,6 +7441,8 @@ function drawCinematicScene(name, now) {
   else if (name === 'lemper-family-courtyard') drawLemperFamilyCourtyardCinematic(now);
   else if (name === 'moqueca-chain') drawMoquecaChainCinematic(now);
   else if (name === 'erik-birthday-memory') drawErikBirthdayMemoryCinematic(now);
+  else if (name === 'pierogi-table') drawPierogiTableCinematic(now);
+  else if (name === 'parents-through-veil') drawParentsThroughVeilCinematic(now);
   // Sprint 11: memory mist opt-in — drawn on top of scene, below dialogue overlay
   if (cinematic.isMemory) drawMemoryMist(now);
 }
@@ -20368,7 +20467,7 @@ function triggerChapter7Close() {
 }
 
 function showChapter7End() {
-  triggerDeckStub();   // Ch7→Ch8 transition (wired when Ch8 is built)
+  startChapter8();   // wired Ch7→Ch8
 }
 
 function addMoquecaRecipe() {
@@ -21156,6 +21255,1733 @@ rooms.ch7JoanaHouse = {
   objects:       ch7HouseObjects,
   collectibles:  [],
   draw:          drawCh7JoanaHouse,
+};
+
+/* ================================================================
+   CHAPTER 8 — Greenpoint, Brooklyn
+   A Perfect Last Bite (Pierogi)
+   GOAL-1 Sprint build: 2026-06-16 — THE FINAL CHAPTER
+   ================================================================ */
+
+const ch8State = {
+  chapter8Active:       false,
+  enteredStreet:        false,
+  arrivedApartment:     false,
+  inHallway:            false,
+  arrivedPipKitchen:    false,
+  shadowRisen:          false,
+  phase1Round:          0,       // 0–3 (3 = done)
+  phase1Done:           false,
+  phase2Round:          0,       // 0–7 (7 = done)
+  phase2Done:           false,
+  phase3Round:          0,       // 0–3 (3 = done)
+  phase3Done:           false,
+  bottomOfWellSeen:     false,
+  saidItsNotFair:       false,
+  shadowReintegrated:   false,
+  henrikArrived:        false,
+  foldTaught:           false,
+  veilOpened:           false,
+  parentsSeen:          false,
+  erikSeen:             false,
+  visitedBabcia:        false,
+  babciaGifted:         false,
+  babciaFeltHim:        false,
+  chapter8Complete:     false,
+};
+
+const ch8StreetObjects      = [];
+const ch8HallObjects        = [];
+const ch8PipKitchenObjects  = [];
+const ch8BabciaObjects      = [];
+
+/* ----------------------------------------------------------------
+   Ch8 Beat functions
+   ---------------------------------------------------------------- */
+
+function startChapter8() {
+  ch8State.chapter8Active = true;
+  currentChapter = 8;
+  hideHUD();
+  const fade = document.getElementById('room-transition');
+  fade.style.opacity = '1';
+  setTimeout(() => {
+    currentRoom = 'ch8Street';
+    pip.x = 40;
+    pip.body.facing = 'right';
+    pip.float.altitude = 0;
+    fade.style.transition = 'opacity 0.8s ease';
+    fade.style.opacity = '0';
+    setTimeout(() => {
+      showHUD();
+      setRoomStrip();
+      autoSave();
+      showDialogue({
+        id: 'ch8-greenpoint-opening',
+        lines: [
+          { speaker: null, text: 'Greenpoint, Brooklyn. The Mnemosyne has docked at a pier Pip does not recognize, because it has never been here before. It has come for him specifically.', italic: true },
+          { speaker: null, text: 'Henrik stays on the ship. He watches Pip go. He does not follow. He has been watching the gangway since they docked, and something in him knows that Pip needs to go first.', italic: true },
+          { speaker: null, text: 'Brick three-story walk-ups with iron fire escapes. Polish signs in shop windows. An overcast sky going to dusk. The smell of bakery exhaust and bus diesel.', italic: true },
+          { speaker: null, text: 'The infection flickers — faster now. A Pocong-fragment half-blocks Pip\'s view of the street, then recedes. He keeps walking. He is too close to home to pause.', italic: true },
+          { speaker: null, text: 'He knows every crack in this sidewalk. He knows which deli has the good pierogi. He knows the laundromat on the corner, and the building with the gargoyles two blocks over.', italic: true },
+          { speaker: null, text: 'He knows all of this. And home does not know he is here.', italic: true },
+        ],
+        choices: null,
+        onEnd() {
+          ch8State.enteredStreet = true;
+          autoSave();
+          showDialogue({
+            id: 'ch8-street-hint',
+            lines: [{ speaker: null, text: 'Walk right toward home.', italic: true }],
+            choices: null, onEnd: null,
+          });
+        },
+      });
+    }, 900);
+  }, 600);
+}
+
+function triggerApartmentArrival() {
+  ch8State.arrivedApartment = true;
+  showDialogue({
+    id: 'ch8-stoop',
+    lines: [
+      { speaker: null, text: "Pip's apartment building. The door is heavy, painted red. He stops at the bottom of the stoop. He looks up at the second-floor window. The light is off.", italic: true },
+      { speaker: null, text: "He has been home for less than a minute and he is already grieving.", italic: true },
+      { speaker: null, text: "Pätu sits on the bottom step and looks at him.", italic: true },
+      { speaker: null, text: "Pip floats through the door.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      autoSave();
+      startTransition('ch8ApartmentHall', 'fromLeft');
+    },
+  });
+}
+
+function triggerHallwayMemories() {
+  ch8State.inHallway = true;
+  showDialogue({
+    id: 'ch8-hallway',
+    lines: [
+      { speaker: null, text: "The hallway is narrow. The stairs are old wood. The wallpaper has watermarks near the ceiling. The stairs are the same stairs. He floats up.", italic: true },
+      { speaker: null, text: "His own apartment door is on the second floor. The number is 2B in tarnished brass.", italic: true },
+      { speaker: null, text: "He stops outside the door.", italic: true },
+      { speaker: null, text: "The grief he has been outrunning catches him here.", italic: true },
+      { speaker: null, text: "He hovers in the hallway. His outline blurs at the edges, then more, then more. Memories rise — not as flashbacks but as a wash, a flood: his mother's voice calling him for dinner; his father's heavy footsteps on this same stair; Babcia at the door with a bag of groceries; the sound of his own small feet running down this hall.", italic: true },
+      { speaker: null, text: "Pätu sits at his feet. She does not look at him. She is waiting.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      autoSave();
+      startTransition('ch8PipKitchen', 'fromLeft');
+    },
+  });
+}
+
+function triggerKitchenArrival() {
+  ch8State.arrivedPipKitchen = true;
+  showDialogue({
+    id: 'ch8-kitchen-enter',
+    lines: [
+      { speaker: null, text: "The apartment is empty. Of course it is. His grandparents moved out months ago — they couldn't bear to stay. But the kitchen is exactly as it was. They couldn't bear to change it either.", italic: true },
+      { speaker: null, text: "Pip floats slowly across the linoleum. Yellow-and-white worn pattern. The table. The chair he used to sit in. The pantry curtain. The refrigerator's hum. The window over the sink.", italic: true },
+      { speaker: null, text: "And then — as the grief rises fully in him — he changes.", italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerShadowRises(),
+  });
+}
+
+function triggerShadowRises() {
+  ch8State.shadowRisen = true;
+  showDialogue({
+    id: 'ch8-shadow-rises',
+    lines: [
+      { speaker: null,    text: "Pip's own outline darkens. The soft glow that has been with him dims. Black wires curl out of his shoulders, his hair, his fingertips — static-textured, alive in a low buzzing way, refusing to stay knotted.", italic: true },
+      { speaker: null,    text: "His silhouette fills with static. He is becoming the shadow. The shadow is Pip. His face — twelve years old, frightened — is still visible inside the dark form.", italic: true },
+      { speaker: null,    text: "Somewhere in the middle of his chest a channel plays: his own melting face from the Ch1 mirror, looped.", italic: true },
+      { speaker: null,    text: "Pätu, in the doorway, sits. She does not approach. She does not run. She is going to wait.", italic: true },
+      { speaker: 'SHADOW', text: '"You came home."', italic: false },
+      { speaker: 'SHADOW', text: '"I have been waiting for you."', italic: false },
+      { speaker: 'SHADOW', text: '"Let\'s begin."', italic: false },
+    ],
+    choices: null,
+    onEnd: () => runPhase1(1),
+  });
+}
+
+/* Phase 1 — Pong (shadow throws, Pip returns with warmth) */
+function runPhase1(round) {
+  const shadowThrows = [
+    {
+      shadow: '"The fire-serpent was right. Something dark rides with you. I am that dark. You have always known."',
+      hint:   'Answer it with what Joana and Beatriz taught you:',
+      choices: [
+        {
+          text: '"Give. Don\'t escape. Don\'t fight. Give." — Beatriz\'s voice. The warmth of the moqueca kitchen. The orange of the dendê.',
+          onSelect: () => resolvePhase1Round(round, true),
+        },
+        {
+          text: 'Say nothing. Let the wire try to wrap around him.',
+          onSelect: () => resolvePhase1Round(round, false),
+        },
+      ],
+    },
+    {
+      shadow: '"You infected someone else with my grief. You spread the dark into the Pocong. You carry sickness."',
+      hint:   'Answer it with what you know about the Pocong:',
+      choices: [
+        {
+          text: '"We answered those memories with warmth. Knot by knot. And the Pocong walked free. Dark answered with warmth is not dark anymore."',
+          onSelect: () => resolvePhase1Round(round, true),
+        },
+        {
+          text: 'Say nothing. Flinch.',
+          onSelect: () => resolvePhase1Round(round, false),
+        },
+      ],
+    },
+    {
+      shadow: '"The Mamlambo saw what I am. She tried to take it from you. You had to give something away to stop her."',
+      hint:   'Answer it with Iris:',
+      choices: [
+        {
+          text: '"What she took, I gave back to someone who needed it. I didn\'t lose it. I sent it where it could do something."',
+          onSelect: () => resolvePhase1Round(round, true),
+        },
+        {
+          text: 'Pull back. Let the wire tighten.',
+          onSelect: () => resolvePhase1Round(round, false),
+        },
+      ],
+    },
+  ];
+
+  const item = shadowThrows[round - 1];
+  showDialogue({
+    id: `ch8-phase1-${round}`,
+    lines: [
+      { speaker: 'SHADOW', text: item.shadow, italic: false },
+      { speaker: null,     text: item.hint, italic: true },
+    ],
+    choices: item.choices,
+    onEnd: null,
+  });
+}
+
+function resolvePhase1Round(round, correct) {
+  if (!correct) {
+    showDialogue({
+      id: `ch8-phase1-wrong-${round}`,
+      lines: [
+        { speaker: null,    text: "The wire wraps further. The static rises. The channel-skipping in Pip's chest gets louder.", italic: true },
+        { speaker: null,    text: "Pip finds the warmth again.", italic: true },
+      ],
+      choices: null,
+      onEnd: () => runPhase1(round),
+    });
+    return;
+  }
+  const numWires = round;
+  showDialogue({
+    id: `ch8-phase1-hit-${round}`,
+    lines: [
+      { speaker: null,    text: `The memory travels outward from Pip — warm, specific, true. It hits the dark blob and it dissolves. ${numWires} ${numWires === 1 ? 'wire' : 'wires'} fall away from the shadow.`, italic: true },
+      { speaker: 'SHADOW', text: round < 3 ? '"Again."' : '"You\'re better at this than I expected."', italic: false },
+    ],
+    choices: null,
+    onEnd() {
+      ch8State.phase1Round = round;
+      autoSave();
+      if (round < 3) {
+        runPhase1(round + 1);
+      } else {
+        ch8State.phase1Done = true;
+        showDialogue({
+          id: 'ch8-phase1-end',
+          lines: [
+            { speaker: null, text: "Three wires are on the floor. The shadow is smaller — more concentrated. The channels playing in the static are harder to dismiss now.", italic: true },
+            { speaker: 'SHADOW', text: '"Let me ask you something."', italic: false },
+          ],
+          choices: null,
+          onEnd: () => runPhase2(1),
+        });
+      }
+    },
+  });
+}
+
+/* Phase 2 — Riddle of the Chefs */
+const PHASE2_LIES = [
+  {
+    shadow: '"You are a ghost. You cannot feed anyone."',
+    choices: [
+      {
+        text: "Henrik's kitchen, the first night. Gravlaks in Cabin 646. Henrik fed a ghost. A ghost can come to the table.",
+        correct: true,
+      },
+      {
+        text: "Ignore it. You don't need to answer that.",
+        correct: false,
+      },
+    ],
+  },
+  {
+    shadow: '"You belong to no one. You have no place to go home to."',
+    choices: [
+      {
+        text: "Leida in Käsmu, Estonia. She opened her kitchen door. She welcomed Pätu — and through Pätu, me. A ghost can be welcomed.",
+        correct: true,
+      },
+      {
+        text: "Stay silent. Let the shadow find its own answer.",
+        correct: false,
+      },
+    ],
+  },
+  {
+    shadow: '"You will be forgotten. You already are."',
+    choices: [
+      {
+        text: "Sandy and her family in Southampton. An empty seat at the table. They felt its shape. A ghost can be missed.",
+        correct: true,
+      },
+      {
+        text: "Say: 'Maybe that's true.'",
+        correct: false,
+      },
+    ],
+  },
+  {
+    shadow: '"You did not get to grow up. You will never become anything."',
+    choices: [
+      {
+        text: "Muhittin in Istanbul. He is young. He cooks his grandmother's recipe. He is becoming her by cooking it. Growing up is not the only way to be carried forward.",
+        correct: true,
+      },
+      {
+        text: "Say: 'That is the truest thing you have said.'",
+        correct: false,
+      },
+    ],
+  },
+  {
+    shadow: '"You have nothing to teach."',
+    choices: [
+      {
+        text: "Johannes at the potjie. He forgot. He found it again. He talked to himself and to the cat. Even the best cooks forget. I have been remembering for them.",
+        correct: true,
+      },
+      {
+        text: "Stay quiet. Let it be true for a moment.",
+        correct: false,
+      },
+    ],
+  },
+  {
+    shadow: '"You will leave nothing behind."',
+    choices: [
+      {
+        text: "Tirta in Kolonodale. He wraps lemper for children he will never meet. Care for strangers is also legacy. I taught Henrik the fold tonight.",
+        correct: true,
+      },
+      {
+        text: "Look at the floor. Say nothing.",
+        correct: false,
+      },
+    ],
+  },
+  {
+    shadow: '"You are alone."',
+    choices: [
+      {
+        text: "Joana and Beatriz in their doorway. Hands joined. 'The chain is unbroken.' — I am part of it. I am not alone. I have never been less alone than right now.",
+        correct: true,
+      },
+      {
+        text: "Say nothing. Pip is crying now.",
+        correct: false,
+      },
+    ],
+  },
+];
+
+function runPhase2(round) {
+  const item = PHASE2_LIES[round - 1];
+  showDialogue({
+    id: `ch8-phase2-${round}`,
+    lines: [
+      { speaker: 'SHADOW', text: item.shadow, italic: false },
+    ],
+    choices: item.choices.map(c => ({
+      text: c.text,
+      onSelect: () => resolvePhase2Round(round, c.correct),
+    })),
+    onEnd: null,
+  });
+}
+
+function resolvePhase2Round(round, correct) {
+  if (!correct) {
+    showDialogue({
+      id: `ch8-phase2-wrong-${round}`,
+      lines: [
+        { speaker: 'SHADOW', text: '"You agree with me. Good. Now—"', italic: false },
+        { speaker: null,     text: "Pip shakes his head. Finds the right memory. Tries again.", italic: true },
+      ],
+      choices: null,
+      onEnd: () => runPhase2(round),
+    });
+    return;
+  }
+  const wiresFell = round;
+  showDialogue({
+    id: `ch8-phase2-hit-${round}`,
+    lines: [
+      { speaker: null, text: wiresFell <= 3
+        ? 'A wire falls. The shadow is quieter.'
+        : wiresFell <= 5
+        ? 'Another wire. The shadow\'s voice cracks at the edges.'
+        : 'The shadow is furious now — wires thrashing, voice cracking into multiple registers.', italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      ch8State.phase2Round = round;
+      autoSave();
+      if (round < 7) {
+        runPhase2(round + 1);
+      } else {
+        ch8State.phase2Done = true;
+        showDialogue({
+          id: 'ch8-phase2-end',
+          lines: [
+            { speaker: null,    text: "Six more wires have fallen. The shadow is now just a few wires and a face. The face is Pip's. The melting-face channel still plays — that one will not stop.", italic: true },
+          ],
+          choices: null,
+          onEnd: () => runPhase3(1),
+        });
+      }
+    },
+  });
+}
+
+/* Phase 3 — Completing the Infection */
+const PHASE3_FRAGMENTS = [
+  {
+    intro: "A cloth-wrapped figure, seen from inside. Looking out through a small gap at a family on the other side. Calling and not being heard.",
+    action: "Trace the face emerging from the cloth — the family on the other side sees him, finally.",
+    choices: [
+      {
+        text: "Trace it. The face emerges. The cloth parts. The family on the other side turns and sees.",
+        correct: true,
+      },
+      {
+        text: "Wait. The image holds, frozen.",
+        correct: false,
+      },
+    ],
+  },
+  {
+    intro: "A hand reaching toward a child, stopping mid-gesture. The hand was a mother's. The moment was interrupted.",
+    action: "Trace the path of the hand reaching the rest of the way.",
+    choices: [
+      {
+        text: "Trace the hand forward. It finds the child's cheek. The child looks up. The gesture completes.",
+        correct: true,
+      },
+      {
+        text: "Let the hand stay frozen mid-reach.",
+        correct: false,
+      },
+    ],
+  },
+  {
+    intro: "A half-set table. One chair pulled out from the others, waiting. The person who was supposed to sit there did not come.",
+    action: "Trace the figure approaching the table — small, familiar — and taking the seat.",
+    choices: [
+      {
+        text: "Trace the figure. They sit down. The chair is filled. The table is complete.",
+        correct: true,
+      },
+      {
+        text: "Leave the chair empty. It is the truth.",
+        correct: false,
+      },
+    ],
+  },
+];
+
+function runPhase3(round) {
+  const item = PHASE3_FRAGMENTS[round - 1];
+  showDialogue({
+    id: `ch8-phase3-${round}`,
+    lines: [
+      { speaker: null, text: "An infected memory rises from the shadow — a Pocong-fragment, truncated, playing on the static inside Pip's chest.", italic: true },
+      { speaker: null, text: item.intro, italic: true },
+      { speaker: null, text: "It stops on a still image. The ending is missing.", italic: true },
+      { speaker: null, text: item.action, italic: true },
+    ],
+    choices: item.choices.map(c => ({
+      text: c.text,
+      onSelect: () => resolvePhase3Round(round, c.correct),
+    })),
+    onEnd: null,
+  });
+}
+
+function resolvePhase3Round(round, correct) {
+  if (!correct) {
+    showDialogue({
+      id: `ch8-phase3-wrong-${round}`,
+      lines: [
+        { speaker: null, text: "The fragment stays frozen. The shadow waits. Pip looks at the image again.", italic: true },
+      ],
+      choices: null,
+      onEnd: () => runPhase3(round),
+    });
+    return;
+  }
+  showDialogue({
+    id: `ch8-phase3-hit-${round}`,
+    lines: [
+      { speaker: null, text: round === 1
+        ? "The fragment completes. The shadow grows quieter. The static lowers one register."
+        : round === 2
+        ? "The fragment completes. The shadow is almost silent now. The wires hang loose."
+        : "The fragment completes. The shadow is still. The wires hang loose. Only the melting-face channel still plays, soft now, looped.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      ch8State.phase3Round = round;
+      autoSave();
+      if (round < 3) {
+        runPhase3(round + 1);
+      } else {
+        ch8State.phase3Done = true;
+        triggerBottomOfWell();
+      }
+    },
+  });
+}
+
+function triggerBottomOfWell() {
+  showDialogue({
+    id: 'ch8-bottom-approach',
+    lines: [
+      { speaker: 'SHADOW', text: '"There\'s still one."', italic: false },
+      { speaker: null,     text: "Pip nods. He knows.", italic: true },
+      { speaker: 'SHADOW', text: '"I can\'t answer this one. There is no chef-memory for being murdered."', italic: false },
+      { speaker: null,     text: "Pip looks at the floor.", italic: true },
+      { speaker: 'SHADOW', text: '"But I\'m going to."', italic: false },
+    ],
+    choices: null,
+    onEnd() {
+      showCinematic('pierogi-table', () => {
+        ch8State.bottomOfWellSeen = true;
+        autoSave();
+        triggerItsNotFair();
+      });
+    },
+  });
+}
+
+function triggerItsNotFair() {
+  showDialogue({
+    id: 'ch8-its-not-fair',
+    lines: [
+      { speaker: null,    text: "The vision fades back to the present kitchen. The shadow's last two wires are loose. The shadow's voice is now indistinguishable from Pip's own.", italic: true },
+      { speaker: 'SHADOW', text: '"Say it."', italic: false },
+    ],
+    choices: [
+      {
+        text: '"It\'s not fair."',
+        onSelect() {
+          ch8State.saidItsNotFair = true;
+          showDialogue({
+            id: 'ch8-not-fair-2',
+            lines: [
+              { speaker: 'PIP',  text: '"It\'s not fair."', italic: false },
+              { speaker: null,   text: "A long breath. The kitchen is very quiet.", italic: true },
+              { speaker: 'PIP',  text: '"I was just a boy."', italic: false },
+              { speaker: null,   text: "He says it to the empty kitchen. To Babcia and Dziadek's chairs. To his mother and his father. To himself. He lets it be true.", italic: true },
+              { speaker: null,   text: "The kitchen is silent. Pätu pads over to him. She does not meow. She presses her side against his outline. They stay there for a long moment.", italic: true },
+              { speaker: null,   text: "Then the last two wires fall away. The shadow does not dissolve outward — it re-integrates into Pip. The dark wires curl back into his silhouette, soften, and become part of him. The static-darkness disappears.", italic: true },
+              { speaker: null,   text: "Pip is Pip again. His outline is steady. He glows, faintly, warmer than before.", italic: true },
+              { speaker: null,   text: "He is whole.", italic: true },
+            ],
+            choices: null,
+            onEnd() {
+              ch8State.shadowReintegrated = true;
+              autoSave();
+              triggerHenrikArrives();
+            },
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function triggerHenrikArrives() {
+  ch8State.henrikArrived = true;
+  showDialogue({
+    id: 'ch8-henrik-arrives',
+    lines: [
+      { speaker: null,    text: "A few moments later. The apartment door opens. Henrik is in the doorway with the photograph in his pocket. He has come up the stairs because he couldn't not.", italic: true },
+      { speaker: null,    text: "He doesn't ask how he got here, or how the door opened for him.", italic: true },
+      { speaker: null,    text: "He looks at Pip. He sees the kitchen behind him. He sees the empty chairs.", italic: true },
+      { speaker: 'HENRIK', text: '"Pip."', italic: false },
+      { speaker: null,    text: "Pip turns to him.", italic: true },
+      { speaker: 'PIP',   text: '"I think I\'m ready, Henrik. But — can we cook first?"', italic: false },
+      { speaker: null,    text: "Henrik nods, slowly. He sets his coat on the back of a chair. He pushes up his sleeves.", italic: true },
+      { speaker: 'HENRIK', text: '"Tell me what to do."', italic: false },
+    ],
+    choices: null,
+    onEnd: () => startPierogiCooking(),
+  });
+}
+
+function startPierogiCooking() {
+  showDialogue({
+    id: 'ch8-pierogi-intro',
+    lines: [
+      { speaker: null, text: "Pip floats up to the counter. Henrik finds the bag of flour in the pantry — somehow, exactly where it should be. The farmer's cheese in the refrigerator. Onion, butter, an egg, salt.", italic: true },
+      { speaker: null, text: "They make the dough together. Henrik does the kneading; Pip walks him through it. The kitchen smells faintly of butter and onion.", italic: true },
+      { speaker: 'PIP', text: '"Now press it flat. Not too thin — the filling needs the edge to grip."', italic: false },
+    ],
+    choices: null,
+    onEnd: () => showCh8FoldStep1(),
+  });
+}
+
+function showCh8FoldStep1() {
+  showDialogue({
+    id: 'ch8-fold-step1',
+    lines: [{ speaker: 'PIP', text: '"Spoon of filling in the center. Not too much. What do you do next?"', italic: false }],
+    choices: [
+      {
+        text: 'Fold the dough over and pinch the edge — index finger meeting thumb — to make a small wave-pattern crimp along the seam.',
+        onSelect() {
+          showDialogue({
+            id: 'ch8-fold-step1-right',
+            lines: [
+              { speaker: 'PIP',   text: '"Yes. The wave-pattern. Babcia was very particular about that. Hold the edge — you\'ll get the hang of it."', italic: false },
+              { speaker: 'HENRIK', text: '"Like this?"', italic: false },
+              { speaker: null,    text: "His first pierogi is misshapen. He laughs at it, briefly. Pip laughs too — a small sound, the first laugh he has made in this chapter.", italic: true },
+            ],
+            choices: null,
+            onEnd: () => showCh8FoldStep2(),
+          });
+        },
+      },
+      {
+        text: 'Roll the edge flat and press with a fork.',
+        onSelect() {
+          showDialogue({
+            id: 'ch8-fold-step1-wrong',
+            lines: [{ speaker: 'PIP', text: '"Fork marks are different. Babcia did the wave-pattern — fingers only. Try the fold."', italic: false }],
+            choices: null, onEnd: () => showCh8FoldStep1(),
+          });
+        },
+      },
+    ], onEnd: null,
+  });
+}
+
+function showCh8FoldStep2() {
+  showDialogue({
+    id: 'ch8-fold-step2',
+    lines: [
+      { speaker: 'PIP', text: '"It\'s okay. You\'ll get better. You have to. There\'s going to be another one. After me."', italic: false },
+      { speaker: null,  text: "Henrik looks at him. He understands. The next ghost-child the Mnemosyne will hold.", italic: true },
+      { speaker: 'HENRIK', text: '"I will."', italic: false },
+      { speaker: 'PIP', text: '"Good. Now make another. Fold the next one the same way."', italic: false },
+    ],
+    choices: [
+      {
+        text: 'Do it again: press flat, fill the center, fold over, wave-crimp the edge. Again.',
+        onSelect() {
+          showDialogue({
+            id: 'ch8-fold-done',
+            lines: [
+              { speaker: null,    text: "Henrik's second pierogi is better. His third is nearly right. The wave-crimp is there.", italic: true },
+              { speaker: 'PIP',   text: '"That one. Babcia would say that one is good."', italic: false },
+              { speaker: 'HENRIK', text: '"Babcia would be proud."', italic: false },
+            ],
+            choices: null,
+            onEnd() {
+              ch8State.foldTaught = true;
+              addPierogiRecipe();
+              autoSave();
+              triggerVeilOpens();
+            },
+          });
+        },
+      },
+    ], onEnd: null,
+  });
+}
+
+function triggerVeilOpens() {
+  ch8State.veilOpened = true;
+  showDialogue({
+    id: 'ch8-veil-opens',
+    lines: [
+      { speaker: null, text: "The pot of water on the stove begins to boil. The pierogi are ready to drop in.", italic: true },
+      { speaker: null, text: "And then — the kitchen changes.", italic: true },
+      { speaker: null, text: "It does not transform. It does not break. A door opens that was not there before. The pantry curtain pulls aside on its own, and through it is not the pantry — it is more kitchen, lit warmer, lit older, lit from somewhere just beyond the world.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      showCinematic('parents-through-veil', () => {
+        ch8State.parentsSeen = true;
+        autoSave();
+        triggerReunionScene();
+      });
+    },
+  });
+}
+
+function triggerReunionScene() {
+  ch8State.erikSeen = true;
+  showDialogue({
+    id: 'ch8-reunion',
+    lines: [
+      { speaker: null,    text: "Pip's father and mother step through the veil, whole, alive in the way the dead are alive when they are at peace. They are themselves. They have been waiting.", italic: true },
+      { speaker: null,    text: "Pip sees them. His face crumples. He has not let himself cry in seven chapters.", italic: true },
+      { speaker: null,    text: "The dam breaks.", italic: true },
+      { speaker: null,    text: "He floats toward them, sobbing — twelve years old and home. His mother kneels and gathers him in. His father wraps his arms around them both. They are not solid, but they are close. They have been waiting.", italic: true },
+      { speaker: null,    text: "Behind them, Erik steps through the veil too. He smiles at Henrik.", italic: true },
+      { speaker: 'ERIK',  text: '"Hi, dad."', italic: false },
+      { speaker: null,    text: "Henrik moves toward him. Erik moves toward Henrik. They meet halfway, both crying, both holding on. Neither one quite solid. It does not matter.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      showDialogue({
+        id: 'ch8-pip-one-more-thing',
+        lines: [
+          { speaker: null,          text: "Time passes. Eventually Pip lifts his face from his mother's shoulder. He looks at Henrik. He looks at his parents.", italic: true },
+          { speaker: 'PIP',         text: '"I have to do one more thing. Before I come."', italic: false },
+          { speaker: "PIP'S MOTHER", text: '"Go. We\'ll wait."', italic: false },
+          { speaker: null,          text: "She knows. She has been a grandparent's daughter. She understands.", italic: true },
+        ],
+        choices: null,
+        onEnd() {
+          autoSave();
+          showDialogue({
+            id: 'ch8-street-again-hint',
+            lines: [{ speaker: null, text: "Leave the apartment. Find Babcia and Dziadek two blocks away.", italic: true }],
+            choices: null, onEnd: null,
+          });
+        },
+      });
+    },
+  });
+}
+
+function triggerBabciaVisit() {
+  ch8State.visitedBabcia = true;
+  showDialogue({
+    id: 'ch8-babcia-arrival',
+    lines: [
+      { speaker: null, text: "Pip floats through the streets. He is not the kid who walked in earlier. His outline is steady. His glow is warmer. He is not afraid.", italic: true },
+      { speaker: null, text: "Two blocks. Three. Babcia and Dziadek's building. He floats up, through the door. He knows this apartment as well as his own. Better, even.", italic: true },
+      { speaker: null, text: "He floats through the door.", italic: true },
+      { speaker: null, text: "Babcia and Dziadek are at the kitchen table. They are not eating. A pot of water on the stove that they have not gotten around to boiling. They have been sitting like this for a while. The television in the corner is on but neither is watching it.", italic: true },
+      { speaker: null, text: "Babcia's hand is on the table near Dziadek's. Not holding — but very close.", italic: true },
+      { speaker: null, text: "Pip floats around the table. He looks at his grandmother's face — older than he remembers, more tired. He looks at his grandfather's hands — the hands that taught him to whittle a stick into a whistle. He looks at the photograph of himself on the wall. Taken when he was eight. Missing his front teeth.", italic: true },
+      { speaker: null, text: "He cannot stay. The veil is calling. But he has one more thing to do.", italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerBabciaGift(),
+  });
+}
+
+function triggerBabciaGift() {
+  showDialogue({
+    id: 'ch8-babcia-gift',
+    lines: [
+      { speaker: null, text: "He gathers the deepest memory he has — the one from the bottom of the well. The kitchen table with all six chairs filled. Babcia at the head. Small-Pip in the high chair. His mother's smile. His father's lifted glass. His grandfather's joke. Babcia kissing the top of his head.", italic: true },
+      { speaker: null, text: "He holds the memory in his open hands.", italic: true },
+      { speaker: null, text: "He moves close to Babcia. He does not touch her. He hovers near her shoulder. He gives.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      ch8State.babciaGifted = true;
+      autoSave();
+      triggerBabciaFeels();
+    },
+  });
+}
+
+function triggerBabciaFeels() {
+  ch8State.babciaFeltHim = true;
+  showDialogue({
+    id: 'ch8-babcia-feels',
+    lines: [
+      { speaker: null,     text: "Babcia's eyes widen. She does not see him. But — for a moment — she feels him.", italic: true },
+      { speaker: null,     text: "Her face changes. Not surprised, exactly. Recognized. As if a feeling she has been chasing in dreams just sat down beside her.", italic: true },
+      { speaker: null,     text: "She closes her eyes.", italic: true },
+      { speaker: null,     text: "She is at the kitchen table. All six chairs filled. Her son alive, across from her, lifting his glass. Her grandson in the high chair, three years old, hands on dough she is teaching him to fold. Her husband beside her saying the thing that always made everyone laugh. She is teaching her grandson the pierogi her own grandmother taught her.", italic: true },
+      { speaker: null,     text: "She tastes the pierogi on the air. Not memory — taste. As if she had just eaten one. Salty, buttery, the cheese filling warm.", italic: true },
+      { speaker: null,     text: "Her eyes open. She turns to Dziadek.", italic: true },
+      { speaker: 'BABCIA',  text: '"Jan."', italic: false },
+      { speaker: null,     text: "Dziadek looks at her. He has felt something too.", italic: true },
+      { speaker: 'BABCIA',  text: '"Filipek?"', italic: false },
+      { speaker: null,     text: "She mouths it more than speaks it. The name they used to call him. The diminutive of Filip — his real name, given before he became Pip.", italic: true },
+      { speaker: null,     text: "Dziadek looks around the kitchen. He sees nothing. But —", italic: true },
+      { speaker: 'DZIADEK', text: '"He\'s here, Marta."', italic: false },
+      { speaker: null,     text: "He says it not as a hope but as a knowing.", italic: true },
+      { speaker: 'BABCIA',  text: '"He\'s all right."', italic: false },
+      { speaker: null,     text: "She does not phrase it as a question.", italic: true },
+      { speaker: null,     text: "Pip — hovering near her shoulder, his hands now empty — nods. They do not see the nod. But Babcia's hand finds Dziadek's on the table, and Dziadek's hand turns over to hold hers.", italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerCrossing(),
+  });
+}
+
+function triggerCrossing() {
+  showDialogue({
+    id: 'ch8-crossing-leave',
+    lines: [
+      { speaker: null, text: "Pip floats toward the apartment door. Pätu walks beside him. At the threshold he pauses.", italic: true },
+      { speaker: null, text: "He turns back one last time. Babcia and Dziadek are at the table, hands joined, faces wet, eyes closed. The grief has not gone — but something is now held that was not held before. They will live, and they will live well.", italic: true },
+      { speaker: null, text: "Pip nods to himself. He floats out of the kitchen.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      autoSave();
+      showDialogue({
+        id: 'ch8-return-hint',
+        lines: [{ speaker: null, text: "Walk back to your apartment. They're waiting.", italic: true }],
+        choices: null, onEnd: null,
+      });
+    },
+  });
+}
+
+function triggerFinalScene() {
+  showDialogue({
+    id: 'ch8-final-kitchen',
+    lines: [
+      { speaker: null,          text: "Pip and Pätu walk the two blocks back. Pip's outline is bright now — warmer than at any moment in the game. Pätu trots ahead, chest puffed out, escorting him.", italic: true },
+      { speaker: null,          text: "His parents are waiting. Henrik and Erik are at the kitchen table — Henrik holding the photograph in one hand and Erik's hand in the other. The pierogi are draining in a colander. The kitchen smells right.", italic: true },
+      { speaker: "PIP'S MOTHER", text: '"Are you ready, sweetheart?"', italic: false },
+      { speaker: null,          text: "Pip nods.", italic: true },
+      { speaker: 'PIP',         text: '"Try one."', italic: false },
+      { speaker: null,          text: "Henrik picks up a pierogi with a fork. He blows on it. He bites.", italic: true },
+      { speaker: null,          text: "His face changes. He closes his eyes. The taste is right.", italic: true },
+      { speaker: 'HENRIK',       text: '"Babcia would be proud."', italic: false },
+      { speaker: null,          text: "Pip smiles.", italic: true },
+      { speaker: null,          text: "His mother holds out her hand. His father stands beside her. Erik gives him a small nod from across the kitchen — I'll see you soon. Pätu rubs against Pip's ankle one last time and then sits, calmly, watching.", italic: true },
+      { speaker: null,          text: "Pip takes his mother's hand.", italic: true },
+      { speaker: null,          text: "He pauses at the threshold. Eyes half-closed. He says, to the kitchen, to Henrik, to no one in particular:", italic: true },
+      { speaker: 'PIP',         text: '"Mmmm. That was a perfect last bite."', italic: false },
+      { speaker: null,          text: "And he steps through.", italic: true },
+      { speaker: null,          text: "The veil closes behind him.", italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerEpilogue(),
+  });
+}
+
+function triggerEpilogue() {
+  ch8State.chapter8Complete = true;
+  autoSave();
+  showDialogue({
+    id: 'ch8-epilogue-henrik',
+    lines: [
+      { speaker: null,    text: "The kitchen is quiet. Henrik is alone at the table — well, not alone. Pätu is on the table beside him. The pot is on the stove. The colander is in the sink. Erik is gone, but the photograph in Henrik's hand is warm to the touch in a way photographs are not usually warm.", italic: true },
+      { speaker: null,    text: "Henrik picks up another pierogi. He bites into it. His eyes are wet. He smiles anyway.", italic: true },
+      { speaker: null,    text: "He has a job now. He knows what to do. There will be another ghost-child on the Mnemosyne, eventually. He will know the fold. He will teach them.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      showDialogue({
+        id: 'ch8-epilogue-babcia',
+        lines: [
+          { speaker: null,   text: "Two blocks away, Babcia is at her own kitchen table. Dziadek beside her. The pot of water has been turned off. They have not made pierogi yet, but they will. Soon.", italic: true },
+          { speaker: null,   text: "Babcia's eyes are closed. She is tasting something on the air.", italic: true },
+          { speaker: 'BABCIA', text: '"Filipek."', italic: false },
+          { speaker: null,   text: "Dziadek's hand tightens on hers.", italic: true },
+          { speaker: null,   text: "The screen holds on them for a long beat.", italic: true },
+          { speaker: null,   text: "Fade out.", italic: true },
+        ],
+        choices: null,
+        onEnd: () => showGameEnd(),
+      });
+    },
+  });
+}
+
+function showGameEnd() {
+  const fade = document.getElementById('room-transition');
+  fade.style.transition = 'opacity 3.0s ease';
+  fade.style.opacity = '1';
+  setTimeout(() => {
+    // Show credits / title card
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(240,230,200,0.90)';
+    ctx.font = 'italic 18px "Special Elite", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('The Last Bites', W / 2, H / 2 - 16);
+    ctx.font = '12px "Special Elite", monospace';
+    ctx.fillStyle = 'rgba(200,180,140,0.70)';
+    ctx.fillText('A story about being fed, and feeding others.', W / 2, H / 2 + 8);
+    ctx.textAlign = 'left';
+    setControlsStrip('end-of-game');
+  }, 3000);
+}
+
+function addPierogiRecipe() {
+  if (notebook.items.some(i => i.id === 'recipe-pierogi')) return;
+  notebook.items.push({
+    id:         'recipe-pierogi',
+    name:       "Babcia's Pierogi with Farmer's Cheese",
+    annotation: "Dough: flour, egg, salt, warm water. Work until smooth. Rest. Filling: farmer's cheese (twaróg), onion fried in butter, salt. Roll dough thin — not too thin. Spoon filling in center. Fold over. Wave-crimp the edge — index finger meeting thumb, pressing the seam into a small repeated wave. Boil until they float, then one minute more. Finish in a pan with butter and onion until lightly golden. The fold is the thing Babcia taught me.",
+    kind:       'recipe',
+    sprite:     'pierogi',
+  });
+  renderNotebookItems();
+  autoSave();
+}
+
+/* ----------------------------------------------------------------
+   Ch8 cinematic draw functions
+   ---------------------------------------------------------------- */
+
+/* The bottom of the well — the kitchen table with all 6 chairs filled. */
+function drawPierogiTableCinematic(now) {
+  const t = now / 1000;
+
+  ctx.fillStyle = '#040204';
+  ctx.fillRect(0, 0, W, H);
+
+  // Warm golden light from center
+  const cG = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, 200);
+  cG.addColorStop(0,   'rgba(255,210,120,0.55)');
+  cG.addColorStop(0.4, 'rgba(200,140,50,0.22)');
+  cG.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = cG;
+  ctx.fillRect(0, 0, W, H);
+
+  // Kitchen table (round-ish, central)
+  const tbl = W / 2;
+  const tblY = H / 2 + 10;
+  ctx.fillStyle = '#281808';
+  ctx.fillRect(tbl - 80, tblY - 12, 160, 24);
+  ctx.fillRect(tbl - 60, tblY + 12, 120, 28);
+  // Table cloth
+  ctx.fillStyle = '#f0e8d0';
+  ctx.fillRect(tbl - 78, tblY - 10, 156, 22);
+
+  // Pot of pierogi in center
+  ctx.fillStyle = '#281808';
+  ctx.beginPath();
+  ctx.arc(tbl, tblY - 2, 22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#c0a870';
+  ctx.fillRect(tbl - 10, tblY - 16, 20, 4);
+
+  // 6 chairs (faint ghost-people shapes around table)
+  const chairs = [
+    { x: tbl - 90, y: tblY - 20 },
+    { x: tbl + 90, y: tblY - 20 },
+    { x: tbl - 60, y: tblY - 40 },
+    { x: tbl + 60, y: tblY - 40 },
+    { x: tbl - 30, y: tblY + 36 },
+    { x: tbl + 30, y: tblY + 36 },
+  ];
+  const chairA = 0.15 + Math.sin(t * 0.6) * 0.06;
+  chairs.forEach((ch3, i) => {
+    // Ghost person
+    const personA = 0.22 + Math.sin(t * 0.8 + i * 1.4) * 0.08;
+    ctx.fillStyle = `rgba(255,220,160,${(personA).toFixed(2)})`;
+    ctx.fillRect(Math.round(ch3.x - 6), Math.round(ch3.y - 30), 12, 30);
+    ctx.beginPath();
+    ctx.arc(Math.round(ch3.x), Math.round(ch3.y - 36), 8, 0, Math.PI * 2);
+    ctx.fill();
+    // Chair back
+    ctx.fillStyle = `rgba(80,40,10,${chairA.toFixed(2)})`;
+    ctx.fillRect(Math.round(ch3.x - 8), Math.round(ch3.y - 48), 16, 20);
+  });
+
+  // Small-Pip in high chair (in the corner position, extra small, warm)
+  const pipSmall = chairs[4];
+  const smallA   = 0.30 + Math.sin(t * 1.4) * 0.10;
+  ctx.fillStyle = `rgba(255,230,180,${smallA.toFixed(2)})`;
+  ctx.fillRect(Math.round(pipSmall.x - 4), Math.round(pipSmall.y - 22), 8, 20);
+  ctx.beginPath();
+  ctx.arc(Math.round(pipSmall.x), Math.round(pipSmall.y - 28), 6, 0, Math.PI * 2);
+  ctx.fill();
+  // Hands on dough (pale dough blob)
+  ctx.fillStyle = `rgba(240,230,200,${(smallA * 0.8).toFixed(2)})`;
+  ctx.fillRect(Math.round(pipSmall.x - 10), Math.round(pipSmall.y - 8), 20, 10);
+
+  ctx.fillStyle = 'rgba(220,190,100,0.88)';
+  ctx.font = 'italic 11px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  if (t < 5) {
+    ctx.fillText('The kitchen table with all six chairs filled.', W / 2, H - 26);
+  } else if (t < 10) {
+    ctx.fillText("Babcia's hands, taking the small hands. Showing the fold.", W / 2, H - 26);
+  } else {
+    ctx.fillText('No one missing. No one dead. No one lost.', W / 2, H - 26);
+    ctx.fillStyle = 'rgba(200,170,80,0.65)';
+    ctx.fillText('This is the memory before all losses.', W / 2, H - 12);
+  }
+  ctx.textAlign = 'left';
+}
+
+/* Parents through the veil — the pantry curtain parting. */
+function drawParentsThroughVeilCinematic(now) {
+  const t = now / 1000;
+
+  ctx.fillStyle = '#040206';
+  ctx.fillRect(0, 0, W, H);
+
+  // The kitchen — vaguely recognizable
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#100c08');
+  wallG.addColorStop(0.7, '#1a1208');
+  wallG.addColorStop(1,   '#100e06');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+  ctx.fillStyle = '#100e08';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+
+  // Pantry curtain — parting to reveal the light beyond
+  const openA = Math.min(1, t * 0.3);  // grows from 0 to 1 over ~3s
+  const curtainWidth = Math.round(80 * (1 - openA));
+  // Left side of curtain
+  ctx.fillStyle = '#281808';
+  ctx.fillRect(W / 2 - curtainWidth - 6, 20, curtainWidth, FLOOR_Y - 20);
+  // Right side of curtain
+  ctx.fillRect(W / 2 + 6, 20, curtainWidth, FLOOR_Y - 20);
+  // The light beyond the curtain
+  const lightA = openA * 0.60;
+  const beyondG = ctx.createRadialGradient(W / 2, FLOOR_Y / 2, 0, W / 2, FLOOR_Y / 2, 120);
+  beyondG.addColorStop(0,   `rgba(255,240,180,${lightA.toFixed(2)})`);
+  beyondG.addColorStop(0.5, `rgba(220,190,100,${(lightA * 0.5).toFixed(2)})`);
+  beyondG.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = beyondG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Mother figure emerging
+  if (t > 1.5) {
+    const momA  = Math.min(0.55, (t - 1.5) * 0.22);
+    const momX  = W / 2 - 30;
+    ctx.fillStyle = `rgba(220,190,150,${momA.toFixed(2)})`;
+    ctx.fillRect(momX - 8, FLOOR_Y - 60, 16, 60);
+    ctx.beginPath();
+    ctx.arc(momX, FLOOR_Y - 68, 10, 0, Math.PI * 2);
+    ctx.fill();
+    // Father behind her
+    const dadA  = Math.min(0.50, (t - 2.0) * 0.20);
+    if (dadA > 0) {
+      const dadX = W / 2 + 30;
+      ctx.fillStyle = `rgba(200,170,130,${dadA.toFixed(2)})`;
+      ctx.fillRect(dadX - 8, FLOOR_Y - 70, 16, 70);
+      ctx.beginPath();
+      ctx.arc(dadX, FLOOR_Y - 78, 11, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  ctx.fillStyle = 'rgba(240,210,120,0.88)';
+  ctx.font = 'italic 11px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(t < 3 ? 'The pantry curtain pulls aside on its own.' : 'They are whole. Alive in the way the dead are alive when they are at peace.', W / 2, H - 20);
+  ctx.textAlign = 'left';
+}
+
+/* ----------------------------------------------------------------
+   Ch8 character draw functions
+   ---------------------------------------------------------------- */
+
+/* Pip's shadow — rising from Pip; black wires, static, face visible inside. */
+function drawPipShadow(sx, groundY, now, phase) {
+  const t   = now / 1000;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  const wires = phase === 1 ? 9 : phase === 2 ? 6 : phase === 3 ? 3 : 2;
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Shadow body — tall, silhouette of Pip but wider with wires
+  ctx.fillStyle = 'rgba(10,8,14,0.90)';
+  ctx.fillRect(-12, -72, 24, 72);
+
+  // Static texture
+  for (let s2 = 0; s2 < 12; s2++) {
+    const sA = 0.08 + Math.sin(t * 4.0 + s2 * 0.7) * 0.04;
+    const sx2 = -10 + (s2 % 4) * 6;
+    const sy2 = -70 + Math.floor(s2 / 4) * 20 + Math.sin(t * 6 + s2) * 4;
+    ctx.fillStyle = `rgba(180,60,180,${sA.toFixed(2)})`;
+    ctx.fillRect(Math.round(sx2), Math.round(sy2), 2, 2);
+  }
+
+  // Pip's face inside the shadow (visible but dim)
+  ctx.fillStyle = 'rgba(180,140,100,0.25)';
+  ctx.fillRect(-5, -66, 10, 10);
+  ctx.fillStyle = 'rgba(80,60,40,0.40)';
+  ctx.fillRect(-3, -62, 2, 2);
+  ctx.fillRect(2,  -62, 2, 2);
+
+  // Wires
+  for (let w = 0; w < wires; w++) {
+    const wX  = -16 + w * 4 + Math.sin(t * 1.5 + w * 0.9) * 6;
+    const wY  = -60 + (w % 3) * 22 + Math.sin(t * 2.0 + w * 1.4) * 8;
+    const wA  = 0.40 + Math.sin(t * 3.0 + w) * 0.15;
+    ctx.fillStyle = `rgba(20,10,30,${wA.toFixed(2)})`;
+    const wLen = 18 + w * 3;
+    ctx.fillRect(Math.round(wX - 1), Math.round(wY), 2, wLen);
+    ctx.fillRect(Math.round(wX + wLen / 2 - 1), Math.round(wY + wLen / 3), 2, wLen * 0.6);
+  }
+
+  ctx.restore();
+}
+
+/* Babcia — older, tired, loving, Polish grandmother. */
+function drawBabcia(sx, groundY, now, speaking) {
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.2) * 0.6) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Thick-soled shoes
+  ctx.fillStyle = '#2a2018';
+  ctx.fillRect(-7, -10, 7, 10);
+  ctx.fillRect(0,  -10, 7, 10);
+
+  // House dress (dark floral; just dark blue-grey)
+  ctx.fillStyle = '#283040';
+  ctx.fillRect(-9, -48, 18, 40);
+  ctx.fillStyle = '#202838';
+  ctx.fillRect(-9, -48, 18, 5);
+
+  // Cardigan over dress
+  ctx.fillStyle = '#483828';
+  ctx.fillRect(-11, -46, 22, 36);
+  ctx.fillStyle = '#403020';
+  ctx.fillRect(-1, -46, 2, 36);
+
+  // Arms
+  ctx.fillStyle = '#c09868';
+  ctx.fillRect(-13, -44, 4, 14);
+  ctx.fillRect(9,   -44, 4, 14);
+  ctx.fillRect(-2, -50, 4, 4);
+
+  const ht = -62 + bob;
+  ctx.fillStyle = '#c09868';
+  ctx.fillRect(-7, ht, 14, 12);
+  ctx.fillStyle = '#3a2010';
+  ctx.fillRect(-3, ht + 3, 2, 2);
+  ctx.fillRect(2,  ht + 3, 2, 2);
+  ctx.fillStyle = speaking ? '#6a3020' : '#4a3020';
+  ctx.fillRect(-2, ht + 7, 4, 1);
+
+  // White hair
+  ctx.fillStyle = '#e8e0d8';
+  ctx.fillRect(-7, ht - 2, 14, 5);
+  ctx.fillRect(-8, ht + 2, 3, 8);
+  ctx.fillRect(5,  ht + 2, 3, 8);
+  ctx.fillRect(-6, ht + 8, 12, 4);
+
+  ctx.restore();
+}
+
+/* Dziadek — strong hands, quieter, Polish grandfather. */
+function drawDziadek(sx, groundY, now, speaking) {
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.0) * 0.5) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#201808';
+  ctx.fillRect(-6, -28, 6, 28);
+  ctx.fillRect(0,  -28, 6, 28);
+
+  // Trousers + shirt
+  ctx.fillStyle = '#203040';
+  ctx.fillRect(-9, -54, 18, 28);
+  ctx.fillStyle = '#2a3848';
+  ctx.fillRect(-9, -54, 18, 6);
+
+  // Big hands (distinctive — "whittle a stick" hands)
+  ctx.fillStyle = '#b08860';
+  ctx.fillRect(-12, -50, 5, 16);
+  ctx.fillRect(7,   -50, 5, 16);
+
+  // Suspenders
+  ctx.fillStyle = '#482010';
+  ctx.fillRect(-4, -54, 2, 28);
+  ctx.fillRect(2,  -54, 2, 28);
+
+  ctx.fillRect(-2, -56, 4, 4);
+
+  const ht = -70 + bob;
+  ctx.fillStyle = '#b08860';
+  ctx.fillRect(-7, ht, 14, 13);
+  ctx.fillStyle = '#3a2010';
+  ctx.fillRect(-3, ht + 3, 2, 2);
+  ctx.fillRect(2,  ht + 3, 2, 2);
+  ctx.fillStyle = speaking ? '#5a3020' : '#3a2816';
+  ctx.fillRect(-2, ht + 7, 4, 1);
+
+  // Salt-and-pepper hair
+  ctx.fillStyle = '#808878';
+  ctx.fillRect(-7, ht - 2, 14, 5);
+  ctx.fillStyle = '#c0c0b8';
+  ctx.fillRect(-6, ht - 1, 4, 3);
+  ctx.fillRect(2,  ht - 1, 4, 3);
+
+  ctx.restore();
+}
+
+/* Pip's parents — manifested, whole. Mother and father together. */
+function drawPipsParents(sx, groundY, now) {
+  const t   = now / 1000;
+  const parA = 0.45 + Math.sin(t * 0.8) * 0.08;
+
+  // Mother (left of sx, dress, dark hair)
+  const momX = Math.round(sx - 20);
+  ctx.fillStyle = `rgba(200,160,120,${parA.toFixed(2)})`;
+  ctx.fillRect(momX - 7, Math.round(groundY - 62), 14, 62);
+  ctx.beginPath();
+  ctx.arc(momX, Math.round(groundY - 70), 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = `rgba(80,40,10,${(parA * 0.7).toFixed(2)})`;
+  ctx.fillRect(momX - 8, Math.round(groundY - 72), 16, 5);
+
+  // Father (right of sx, broader)
+  const dadX = Math.round(sx + 22);
+  ctx.fillStyle = `rgba(180,140,100,${parA.toFixed(2)})`;
+  ctx.fillRect(dadX - 9, Math.round(groundY - 70), 18, 70);
+  ctx.beginPath();
+  ctx.arc(dadX, Math.round(groundY - 80), 11, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = `rgba(60,30,8,${(parA * 0.7).toFixed(2)})`;
+  ctx.fillRect(dadX - 9, Math.round(groundY - 82), 18, 5);
+
+  // Arms around each other / around Pip
+  ctx.fillStyle = `rgba(200,160,120,${(parA * 0.8).toFixed(2)})`;
+  ctx.fillRect(momX + 6,  Math.round(groundY - 50), 20, 4);
+  ctx.fillRect(dadX - 22, Math.round(groundY - 52), 20, 4);
+}
+
+/* ----------------------------------------------------------------
+   Ch8 room draw functions
+   ---------------------------------------------------------------- */
+
+function drawCh8Street(camX, now) {
+  const t = now / 1000;
+
+  // Greenpoint streets — overcast evening, brick buildings
+  const skyG = ctx.createLinearGradient(0, 0, 0, 60);
+  skyG.addColorStop(0,   '#1a1820');
+  skyG.addColorStop(1,   '#242028');
+  ctx.fillStyle = skyG;
+  ctx.fillRect(0, 0, W, 60);
+
+  // Buildings (brick three-story walk-ups)
+  for (let b = 0; b < 5; b++) {
+    const bx = Math.round(b * 140 - camX * 0.4);
+    if (bx < -80 || bx > W + 80) continue;
+    const bH = 110 + (b % 3) * 20;
+    ctx.fillStyle = '#281808';
+    ctx.fillRect(bx, 60 - bH, 110, bH);
+    ctx.fillStyle = '#2a1c10';
+    ctx.fillRect(bx + 2, 62 - bH, 106, bH - 2);
+    // Windows (some lit, some dark)
+    for (let wRow = 0; wRow < 3; wRow++) {
+      for (let wCol = 0; wCol < 3; wCol++) {
+        const wx = bx + 10 + wCol * 32;
+        const wy = 62 - bH + 12 + wRow * 30;
+        const lit = (b * 7 + wRow * 3 + wCol) % 4 !== 0;
+        ctx.fillStyle = lit ? 'rgba(220,190,80,0.45)' : '#1a1408';
+        ctx.fillRect(wx, wy, 20, 14);
+      }
+    }
+    // Iron fire escape (vertical slats)
+    ctx.fillStyle = '#201818';
+    ctx.fillRect(bx + 80, 60 - bH + 20, 2, bH - 20);
+    ctx.fillRect(bx + 90, 60 - bH + 20, 2, bH - 20);
+    for (let fRow = 0; fRow < 3; fRow++) {
+      ctx.fillRect(bx + 72, 60 - bH + 30 + fRow * 30, 26, 2);
+    }
+  }
+
+  // Sidewalk
+  ctx.fillStyle = '#1c1c1e';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#242428';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+  // Sidewalk cracks
+  for (let cr = 0; cr < 4; cr++) {
+    const crX = Math.round(80 + cr * 120 - camX * 0.8);
+    if (crX < 0 || crX > W) continue;
+    ctx.fillStyle = '#181818';
+    ctx.fillRect(crX, FLOOR_Y, 1, 12);
+  }
+
+  // Polish shop sign (world-x 200)
+  const signSX = Math.round(200 - camX);
+  if (signSX > -40 && signSX < W + 40) {
+    ctx.fillStyle = '#e0d8b0';
+    ctx.fillRect(signSX - 24, FLOOR_Y - 44, 48, 16);
+    ctx.fillStyle = '#1a1408';
+    ctx.font = 'bold 7px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('PIEKARNIA', Math.round(signSX), FLOOR_Y - 32);
+    ctx.textAlign = 'left';
+  }
+
+  // Echo vermin: cockroaches (scatter from a grate, world-x ~280)
+  const grateSX = Math.round(280 - camX);
+  if (grateSX > -40 && grateSX < W + 60) {
+    ctx.fillStyle = '#181614';
+    ctx.fillRect(grateSX, FLOOR_Y + 4, 24, 6);
+    for (let c2 = 0; c2 < 5; c2++) {
+      const cx2  = grateSX + c2 * 10 + Math.sin(t * 3.0 + c2) * 8;
+      const cA2  = 0.25 + Math.sin(t * 4.0 + c2 * 1.4) * 0.10;
+      ctx.fillStyle = `rgba(80,60,30,${cA2.toFixed(2)})`;
+      ctx.fillRect(Math.round(cx2), FLOOR_Y + 2, 6, 3);
+    }
+  }
+
+  // Echo rat along the curb
+  const ratX = Math.round(((t * 60 + 180) % (rooms.ch8Street.width + 80)) - 40 - camX);
+  if (ratX > -20 && ratX < W + 20) {
+    const rA = 0.20 + Math.sin(t * 2.0) * 0.06;
+    ctx.fillStyle = `rgba(80,70,50,${rA.toFixed(2)})`;
+    ctx.fillRect(Math.round(ratX), FLOOR_Y + 1, 12, 6);
+    ctx.fillRect(Math.round(ratX + 10), FLOOR_Y + 3, 8, 2);
+  }
+
+  // Infection flicker (partial blocking overlay)
+  const flickPhase = Math.floor(t * 0.4) % 10;
+  if (flickPhase < 2) {
+    const flickA = 0.15 + Math.sin(t * 8.0) * 0.06;
+    ctx.fillStyle = `rgba(20,10,30,${flickA.toFixed(2)})`;
+    ctx.fillRect(0, FLOOR_Y - 80, W, 60);
+  }
+
+  // Apartment building at end of street (world-x ~650)
+  const aptSX = Math.round(640 - camX);
+  if (aptSX > -80 && aptSX < W + 80) {
+    ctx.fillStyle = '#200c04';
+    ctx.fillRect(aptSX - 50, 0, 100, FLOOR_Y);
+    ctx.fillStyle = '#2a1008';
+    ctx.fillRect(aptSX - 48, 2, 96, FLOOR_Y - 2);
+    // Red door
+    ctx.fillStyle = '#6a1008';
+    ctx.fillRect(aptSX - 10, FLOOR_Y - 56, 20, 56);
+    // Door buzzer panel
+    ctx.fillStyle = '#403020';
+    ctx.fillRect(aptSX - 22, FLOOR_Y - 40, 8, 20);
+    // Stoop steps
+    ctx.fillStyle = '#2a2018';
+    ctx.fillRect(aptSX - 30, FLOOR_Y - 8, 60, 8);
+    ctx.fillRect(aptSX - 26, FLOOR_Y - 4, 52, 4);
+  }
+}
+
+function drawCh8ApartmentHall(camX, now) {
+  const t = now / 1000;
+
+  // Narrow hallway, old wallpaper, wood stairs
+  ctx.fillStyle = '#180e06';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#201408';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#281808';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Wallpaper (textured — faded olive)
+  for (let wx = 0; wx < W; wx += 14) {
+    ctx.fillStyle = '#1e1408';
+    ctx.fillRect(wx, 0, 12, FLOOR_Y);
+    ctx.fillStyle = '#1a1006';
+    ctx.fillRect(wx, 0, 2, FLOOR_Y);
+  }
+  // Watermarks near ceiling
+  ctx.fillStyle = 'rgba(10,8,4,0.35)';
+  ctx.fillRect(60, 0, 80, 18);
+  ctx.fillRect(180, 0, 50, 12);
+
+  // Wood stairs (going up, right side)
+  for (let step = 0; step < 6; step++) {
+    const stepX = Math.round(rooms.ch8ApartmentHall.width - 60 - step * 14 - camX);
+    if (stepX < -20 || stepX > W + 20) continue;
+    ctx.fillStyle = '#281808';
+    ctx.fillRect(stepX, FLOOR_Y - step * 14, 18, 14 + step * 14);
+    ctx.fillStyle = '#382010';
+    ctx.fillRect(stepX, FLOOR_Y - step * 14, 18, 3);
+  }
+
+  // 2B apartment door (right side of hall)
+  const doorSX = Math.round(150 - camX);
+  if (doorSX > -40 && doorSX < W + 40) {
+    ctx.fillStyle = '#381c08';
+    ctx.fillRect(doorSX - 18, FLOOR_Y - 72, 36, 72);
+    ctx.fillStyle = '#2a1404';
+    ctx.fillRect(doorSX - 16, FLOOR_Y - 70, 32, 70);
+    // Door number (2B)
+    ctx.fillStyle = '#b09050';
+    ctx.font = 'bold 8px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('2B', Math.round(doorSX), FLOOR_Y - 40);
+    ctx.textAlign = 'left';
+  }
+}
+
+function drawCh8PipKitchen(camX, now) {
+  const t = now / 1000;
+
+  // Pip's childhood kitchen — linoleum, yellow-and-white, refrigerator hum
+  // Floor
+  ctx.fillStyle = '#e8d8a0';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  // Linoleum pattern (worn yellow-and-white check)
+  for (let fy = FLOOR_Y; fy < H; fy += 12) {
+    for (let fx2 = 0; fx2 < W; fx2 += 12) {
+      const even = ((Math.floor(fx2 / 12) + Math.floor(fy / 12)) % 2 === 0);
+      ctx.fillStyle = even ? '#e0d098' : '#d8c888';
+      ctx.fillRect(fx2, fy, 12, 12);
+    }
+  }
+  ctx.fillStyle = '#c0aa70';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Walls (warm cream)
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#181408');
+  wallG.addColorStop(0.5, '#201c0e');
+  wallG.addColorStop(1,   '#302818');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Room warmth — from window over sink (world-x 380)
+  const warmG = ctx.createRadialGradient(Math.round(380 - camX), 20, 0, Math.round(380 - camX), 20, 150);
+  warmG.addColorStop(0,   'rgba(255,200,80,0.18)');
+  warmG.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = warmG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Kitchen table + 4 chairs (world-x 150-250)
+  const tbl2 = Math.round(200 - camX);
+  if (tbl2 > -80 && tbl2 < W + 80) {
+    // Table
+    ctx.fillStyle = '#3a2010';
+    ctx.fillRect(tbl2 - 60, FLOOR_Y - 30, 120, 6);
+    ctx.fillStyle = '#2a1808';
+    ctx.fillRect(tbl2 - 54, FLOOR_Y - 24, 108, 24);
+    // Table cloth
+    ctx.fillStyle = '#f0e8d8';
+    ctx.fillRect(tbl2 - 58, FLOOR_Y - 28, 116, 4);
+    // Chairs (4, around table)
+    [-48, -28, 28, 48].forEach(cOff => {
+      ctx.fillStyle = '#382010';
+      ctx.fillRect(tbl2 + cOff - 8, FLOOR_Y - 50, 16, 22);
+      ctx.fillStyle = '#2a1808';
+      ctx.fillRect(tbl2 + cOff - 6, FLOOR_Y - 48, 12, 20);
+    });
+    // Colander (after fold is taught)
+    if (ch8State.foldTaught) {
+      ctx.fillStyle = '#c0a870';
+      ctx.fillRect(tbl2 - 18, FLOOR_Y - 44, 36, 16);
+      // Pierogi in colander (yellowish lumps)
+      for (let p2 = 0; p2 < 5; p2++) {
+        ctx.fillStyle = '#d0b870';
+        ctx.fillRect(tbl2 - 14 + p2 * 6, FLOOR_Y - 42, 6, 8);
+      }
+    }
+  }
+
+  // Pantry curtain (world-x 300)
+  const curtSX = Math.round(300 - camX);
+  if (curtSX > -40 && curtSX < W + 40) {
+    const curtA = ch8State.veilOpened ? 0.08 : 1.0;
+    ctx.fillStyle = `rgba(120,80,40,${curtA.toFixed(2)})`;
+    ctx.fillRect(curtSX - 22, 0, 16, FLOOR_Y);
+    ctx.fillRect(curtSX + 6,  0, 16, FLOOR_Y);
+    if (ch8State.veilOpened) {
+      // Warm light beyond
+      const beyG = ctx.createRadialGradient(curtSX, FLOOR_Y / 2, 0, curtSX, FLOOR_Y / 2, 80);
+      beyG.addColorStop(0,   'rgba(255,220,120,0.50)');
+      beyG.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = beyG;
+      ctx.fillRect(curtSX - 60, 0, 120, FLOOR_Y);
+    }
+  }
+
+  // Refrigerator (world-x 450)
+  const fridgeSX = Math.round(450 - camX);
+  if (fridgeSX > -40 && fridgeSX < W + 40) {
+    ctx.fillStyle = '#f0f0e8';
+    ctx.fillRect(fridgeSX - 20, FLOOR_Y - 90, 40, 90);
+    ctx.fillStyle = '#d0d0c8';
+    ctx.fillRect(fridgeSX - 18, FLOOR_Y - 88, 36, 56);
+    ctx.fillRect(fridgeSX - 18, FLOOR_Y - 30, 36, 28);
+    ctx.fillStyle = '#a0a098';
+    ctx.fillRect(fridgeSX + 14, FLOOR_Y - 60, 3, 24);
+    ctx.fillRect(fridgeSX + 14, FLOOR_Y - 20, 3, 10);
+  }
+
+  // Window over sink (world-x 370)
+  const winSX2 = Math.round(370 - camX);
+  if (winSX2 > -40 && winSX2 < W + 40) {
+    ctx.fillStyle = '#2a1c0a';
+    ctx.fillRect(winSX2 - 24, 10, 48, 56);
+    ctx.fillStyle = 'rgba(60,60,80,0.55)';
+    ctx.fillRect(winSX2 - 22, 12, 44, 52);
+    // Sky outside (overcast dusk through the window)
+    ctx.fillStyle = 'rgba(30,25,40,0.40)';
+    ctx.fillRect(winSX2 - 20, 14, 40, 48);
+    // Sink below window
+    ctx.fillStyle = '#c0b8a0';
+    ctx.fillRect(winSX2 - 30, FLOOR_Y - 24, 60, 24);
+    ctx.fillStyle = '#a0a098';
+    ctx.fillRect(winSX2 - 28, FLOOR_Y - 22, 56, 22);
+  }
+
+  // Counter (world-x 80-150)
+  const ctrSX = Math.round(80 - camX);
+  if (ctrSX < W + 40 && ctrSX + 140 > 0) {
+    ctx.fillStyle = '#381c08';
+    ctx.fillRect(ctrSX, FLOOR_Y - 30, 140, 6);
+    ctx.fillStyle = '#281408';
+    ctx.fillRect(ctrSX, FLOOR_Y - 24, 140, 24);
+    // Flour bag
+    if (ch8State.henrikArrived) {
+      ctx.fillStyle = '#f0e8d8';
+      ctx.fillRect(ctrSX + 10, FLOOR_Y - 46, 18, 18);
+      ctx.fillStyle = '#c0a870';
+      ctx.fillRect(ctrSX + 12, FLOOR_Y - 50, 14, 6);
+      // Cheese wheel
+      ctx.fillStyle = '#d8c890';
+      ctx.fillRect(ctrSX + 38, FLOOR_Y - 42, 20, 14);
+    }
+    // Rolling pin (after cooking starts)
+    if (ch8State.henrikArrived) {
+      ctx.fillStyle = '#a08060';
+      ctx.fillRect(ctrSX + 70, FLOOR_Y - 34, 40, 6);
+    }
+  }
+
+  // Shadow-pip overlay (when shadow phase active)
+  if (ch8State.shadowRisen && !ch8State.shadowReintegrated) {
+    const pipVx = Math.round(pip.x - camX);
+    const shadowPhase = ch8State.phase1Done ? (ch8State.phase2Done ? 3 : 2) : 1;
+    drawPipShadow(pipVx, FLOOR_Y, now, shadowPhase);
+  }
+
+  // Henrik (visible after he arrives)
+  if (ch8State.henrikArrived) {
+    const hSpeaking = dialogue.active && dialogue.node && dialogue.node.lines &&
+      dialogue.node.lines[dialogue.lineIndex] &&
+      dialogue.node.lines[dialogue.lineIndex].speaker === 'HENRIK';
+    drawHenrikStanding(Math.round(240 - camX), FLOOR_Y, now, hSpeaking);
+  }
+
+  // Parents visible after veil opens
+  if (ch8State.parentsSeen) {
+    drawPipsParents(Math.round(300 - camX), FLOOR_Y, now);
+  }
+
+  // Erik (after veil)
+  if (ch8State.erikSeen) {
+    const eSpeaking = dialogue.active && dialogue.node && dialogue.node.lines &&
+      dialogue.node.lines[dialogue.lineIndex] &&
+      dialogue.node.lines[dialogue.lineIndex].speaker === 'ERIK';
+    drawErik(Math.round(330 - camX), FLOOR_Y, now, eSpeaking);
+  }
+
+  // Pätu in doorway when shadow rises
+  if (ch8State.shadowRisen) {
+    drawPatu(Math.round(pip.x - 50 - camX), FLOOR_Y, now);
+  }
+}
+
+function drawCh8BabciaApartment(camX, now) {
+  const t = now / 1000;
+
+  // Grandparents' kitchen — warmer, more lived-in, plants, small TV
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#1a1208');
+  wallG.addColorStop(0.6, '#241808');
+  wallG.addColorStop(1,   '#1c1408');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Warmer linoleum than Pip's kitchen
+  ctx.fillStyle = '#d8b870';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  for (let fy = FLOOR_Y; fy < H; fy += 10) {
+    for (let fx2 = 0; fx2 < W; fx2 += 10) {
+      ctx.fillStyle = ((Math.floor(fx2 / 10) + Math.floor(fy / 10)) % 2 === 0) ? '#d0b068' : '#c8a860';
+      ctx.fillRect(fx2, fy, 10, 10);
+    }
+  }
+  ctx.fillStyle = '#b09050';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Room warmth (warmer than Pip's kitchen)
+  const rG2 = ctx.createRadialGradient(W / 2, FLOOR_Y / 2, 0, W / 2, FLOOR_Y / 2, 180);
+  rG2.addColorStop(0,   'rgba(255,180,60,0.20)');
+  rG2.addColorStop(0.5, 'rgba(200,130,30,0.08)');
+  rG2.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = rG2;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Kitchen table (world-x 200-320)
+  const tbl3 = Math.round(260 - camX);
+  if (tbl3 > -80 && tbl3 < W + 80) {
+    ctx.fillStyle = '#3a2010';
+    ctx.fillRect(tbl3 - 70, FLOOR_Y - 28, 140, 6);
+    ctx.fillStyle = '#2c1a0a';
+    ctx.fillRect(tbl3 - 64, FLOOR_Y - 22, 128, 22);
+    // Oil-cloth table cover (Babcia detail)
+    ctx.fillStyle = '#6080c0';
+    ctx.fillRect(tbl3 - 68, FLOOR_Y - 26, 136, 4);
+    // Table chairs (2 chairs visible — Babcia and Dziadek)
+    [-48, 48].forEach(cOff => {
+      ctx.fillStyle = '#402010';
+      ctx.fillRect(tbl3 + cOff - 9, FLOOR_Y - 52, 18, 26);
+    });
+    // Pot of water on table (unboiled)
+    ctx.fillStyle = '#503820';
+    ctx.fillRect(tbl3 - 20, FLOOR_Y - 44, 40, 18);
+    ctx.fillStyle = '#382810';
+    ctx.beginPath();
+    ctx.arc(tbl3, FLOOR_Y - 36, 18, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Window with plants (world-x 80)
+  const winSX3 = Math.round(80 - camX);
+  if (winSX3 > -40 && winSX3 < W + 40) {
+    ctx.fillStyle = '#2a1c0a';
+    ctx.fillRect(winSX3 - 28, 8, 56, 64);
+    ctx.fillStyle = 'rgba(40,50,60,0.50)';
+    ctx.fillRect(winSX3 - 26, 10, 52, 60);
+    // Windowsill plants
+    ctx.fillStyle = '#382810';
+    ctx.fillRect(winSX3 - 28, FLOOR_Y - 18, 56, 8);
+    ctx.fillStyle = '#204010';
+    for (let pl = 0; pl < 3; pl++) {
+      const plX = winSX3 - 22 + pl * 16;
+      ctx.fillRect(plX - 5, FLOOR_Y - 30, 10, 12);
+      ctx.fillRect(plX - 7, FLOOR_Y - 40, 14, 12);
+    }
+  }
+
+  // Small TV in corner (world-x 400, on counter)
+  const tvSX = Math.round(400 - camX);
+  if (tvSX > -40 && tvSX < W + 40) {
+    ctx.fillStyle = '#201808';
+    ctx.fillRect(tvSX - 20, FLOOR_Y - 58, 40, 32);
+    // Screen (dim glow — playing but not watched)
+    const tvA = 0.10 + Math.sin(t * 0.3) * 0.04;
+    ctx.fillStyle = `rgba(80,100,120,${tvA.toFixed(2)})`;
+    ctx.fillRect(tvSX - 16, FLOOR_Y - 54, 32, 24);
+    // Counter
+    ctx.fillStyle = '#2a1808';
+    ctx.fillRect(tvSX - 30, FLOOR_Y - 28, 70, 6);
+    ctx.fillStyle = '#201408';
+    ctx.fillRect(tvSX - 28, FLOOR_Y - 22, 66, 22);
+  }
+
+  // Photograph of young Pip on the wall (world-x 300, high up)
+  const photoSX = Math.round(300 - camX);
+  if (photoSX > -40 && photoSX < W + 40) {
+    ctx.fillStyle = '#f0e8d0';
+    ctx.fillRect(photoSX - 14, 30, 28, 22);
+    ctx.fillStyle = '#c09050';
+    ctx.fillRect(photoSX - 12, 32, 24, 18);
+    // Small boy (Pip at 8, missing front teeth)
+    ctx.fillStyle = '#e8d0a8';
+    ctx.fillRect(photoSX - 5, 34, 10, 10);
+    ctx.beginPath();
+    ctx.arc(photoSX, 36, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#c8a030';
+    ctx.fillRect(photoSX - 6, 32, 12, 5);
+    // Frame
+    ctx.strokeStyle = '#806040';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(photoSX - 14, 30, 28, 22);
+  }
+
+  // Babcia and Dziadek at the table
+  if (ch8State.visitedBabcia) {
+    const babSpeaking = dialogue.active && dialogue.node && dialogue.node.lines &&
+      dialogue.node.lines[dialogue.lineIndex] &&
+      dialogue.node.lines[dialogue.lineIndex].speaker === 'BABCIA';
+    const dziadSpeaking = dialogue.active && dialogue.node && dialogue.node.lines &&
+      dialogue.node.lines[dialogue.lineIndex] &&
+      dialogue.node.lines[dialogue.lineIndex].speaker === 'DZIADEK';
+    drawBabcia(Math.round(220 - camX),  FLOOR_Y, now, babSpeaking);
+    drawDziadek(Math.round(310 - camX), FLOOR_Y, now, dziadSpeaking);
+  }
+}
+
+/* ----------------------------------------------------------------
+   Ch8 room definitions
+   ---------------------------------------------------------------- */
+
+rooms.ch8Street = {
+  width:         800,
+  pipMaxX:       760,
+  pipMinX:       30,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch8StreetObjects,
+  collectibles:  [],
+  draw:          drawCh8Street,
+};
+
+rooms.ch8ApartmentHall = {
+  width:         200,
+  pipMaxX:       160,
+  pipMinX:       20,
+  pipEntryX:     30,
+  portholeScene: null,
+  objects:       ch8HallObjects,
+  collectibles:  [],
+  draw:          drawCh8ApartmentHall,
+};
+
+rooms.ch8PipKitchen = {
+  width:         560,
+  pipMaxX:       520,
+  pipMinX:       20,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch8PipKitchenObjects,
+  collectibles:  [],
+  draw:          drawCh8PipKitchen,
+};
+
+rooms.ch8BabciaApartment = {
+  width:         520,
+  pipMaxX:       480,
+  pipMinX:       20,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch8BabciaObjects,
+  collectibles:  [],
+  draw:          drawCh8BabciaApartment,
 };
 
 /* ================================================================

@@ -1506,6 +1506,7 @@ function buildSaveObject() {
     ch3State:        { ...ch3State },
     ch4State:        { ...ch4State },
     ch4WalnutsHeld:  ch4WalnutsHeld,
+    ch5State:        { ...ch5State },
     patuAboard:      patuState.aboard,
     darkCorridor:    { lit: darkCorridor.lit, cartRemoved: darkCorridor.cartRemoved, cartX: darkCorridor.cartX },
     cinematicPlayed: Array.from(cinematic.played),
@@ -1565,6 +1566,8 @@ function applySave(data) {
   if (data.ch3State)   Object.assign(ch3State,   data.ch3State);
   if (data.ch4State)   Object.assign(ch4State,   data.ch4State);
   if (data.ch4WalnutsHeld !== undefined) ch4WalnutsHeld = data.ch4WalnutsHeld;
+  if (data.ch5State)   Object.assign(ch5State,   data.ch5State);
+  if (data.ch5State && data.ch5State.switchbladeHeld && !pip.abilities.memoryGifting) pip.abilities.memoryGifting = true;
   if (data.patuAboard) patuState.aboard = data.patuAboard;
 
   // Restore dark corridor state (additive — missing fields default to initial values)
@@ -3477,6 +3480,64 @@ function update(dt) {
       && !dialogue.active && !cinematic.active) {
     if (pip.x > 80) {
       triggerHenrikPhotographBeat();
+    }
+  }
+
+  // ---- Ch5 room transitions ----
+
+  if (!transition.active && !dialogue.active && !cinematic.active) {
+    if (currentRoom === 'ch5LowerDeck' && pip.x >= rooms.ch5LowerDeck.pipMaxX - 1) {
+      ch5State.enteredStorageRoom = true;
+      startTransition('ch5StorageRoom', 'fromLeft');
+    } else if (currentRoom === 'ch5StorageRoom' && pip.x <= rooms.ch5StorageRoom.pipMinX + 1
+               && !ch5State.mamlamboDefeated) {
+      startTransition('ch5LowerDeck', 'fromRight', rooms.ch5LowerDeck.pipMaxX - 40);
+    } else if (currentRoom === 'ch5StorageRoom' && pip.x <= rooms.ch5StorageRoom.pipMinX + 1
+               && ch5State.mamlamboDefeated && ch5State.brusselsBagRetrieved) {
+      ch5State.arrivedSaldanha = true;
+      startTransition('ch5Saldanha', 'fromLeft');
+    } else if (currentRoom === 'ch5Saldanha' && pip.x <= rooms.ch5Saldanha.pipMinX + 1
+               && ch5State.cookingComplete) {
+      startTransition('ch5StorageRoom', 'fromRight', 40);
+    } else if (currentRoom === 'ch5Saldanha' && pip.x >= rooms.ch5Saldanha.pipMaxX - 1
+               && ch5State.arrivedSaldanha) {
+      ch5State.foundJohannes = true;
+      startTransition('ch5JohannesPlace', 'fromLeft');
+    } else if (currentRoom === 'ch5JohannesPlace' && pip.x <= rooms.ch5JohannesPlace.pipMinX + 1
+               && ch5State.cookingComplete) {
+      startTransition('ch5Saldanha', 'fromRight', rooms.ch5Saldanha.pipMaxX - 40);
+    } else if (currentRoom === 'ch5Saldanha' && pip.x <= rooms.ch5Saldanha.pipMinX + 1
+               && ch5State.cookingComplete && ch5State.tasteMemorySeen) {
+      // Return to ship — Henrik scene
+      ch5State.arrivedSaldanha = false;
+      startTransition('kitchen', 'fromLeft');
+    }
+  }
+
+  // ---- Ch5 beat triggers ----
+
+  // Ch5: Iris emerges in storage room
+  if (currentRoom === 'ch5StorageRoom' && ch5State.chapter5Active
+      && !ch5State.irisEmerged && !dialogue.active && !cinematic.active) {
+    if (pip.x > 100) {
+      triggerIrisEmerge();
+    }
+  }
+
+  // Ch5: Johannes courtyard — trigger when Pip enters
+  if (currentRoom === 'ch5JohannesPlace' && ch5State.foundJohannes
+      && !ch5State.patuModeMessenger && !dialogue.active && !cinematic.active) {
+    if (pip.x > 80) {
+      triggerJohannesFound();
+    }
+  }
+
+  // Ch5: Henrik scene 5 — after cooking + taste, walking into kitchen with stew
+  if (currentRoom === 'kitchen' && ch5State.chapter5Active
+      && ch5State.tasteMemorySeen && !ch5State.henrikScene5Done
+      && !dialogue.active && !cinematic.active) {
+    if (pip.x > 80) {
+      triggerHenrikScene5();
     }
   }
 
@@ -6927,6 +6988,21 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null, text: 'The warmth of doing it. The completeness of being the one who feeds them.',         italic: true  },
     { speaker: null, text: 'The memory holds for a beat. Then Pip is back at the doorway.',                     italic: true  },
   ],
+  'switchblade-memory': [
+    { speaker: null, text: "A dining room on a ship. Edwardian. Long table, white tablecloths, candles.", italic: true },
+    { speaker: null, text: "Iris's father shows her how to fold the switchblade. Always away from yourself, dear.", italic: true },
+    { speaker: null, text: "Her mother, across the table. Her brother making a face. Four others. All alive, all mid-meal.", italic: true },
+  ],
+  'iris-dining-room': [
+    { speaker: null, text: "The storage room dissolves. The dining room blooms in.", italic: true },
+    { speaker: null, text: "Long table, white tablecloths, candles. Her father. Her mother. Her brother. All alive.", italic: true },
+    { speaker: null, text: "Iris walks toward them. She does not look back.", italic: true },
+  ],
+  'potjie-child-fire': [
+    { speaker: null, text: "A clearing in the veld, decades ago. A fire going.", italic: true },
+    { speaker: null, text: "A young couple tending a black cast-iron pot. The same pot, when it was new.", italic: true },
+    { speaker: null, text: "A small boy on a blanket. Watching. He is Johannes, when he was a child.", italic: true },
+  ],
   'muhammara-orchard': [
     { speaker: null, text: 'An autumn orchard. Walnut trees, leaves coming down.', italic: true },
     { speaker: null, text: 'A grandmother kneels between two boys. She cracks a walnut. Hands it over.', italic: true },
@@ -6980,6 +7056,12 @@ function showCinematic(name, onEnd) {
   } else if (name === 'curry-taste-memory') {
     cinematic.isMemory  = true;
   } else if (name === 'muhammara-orchard') {
+    cinematic.isMemory  = true;
+  } else if (name === 'switchblade-memory') {
+    cinematic.isMemory  = true;
+  } else if (name === 'iris-dining-room') {
+    cinematic.isMemory  = false;
+  } else if (name === 'potjie-child-fire') {
     cinematic.isMemory  = true;
   }
 
@@ -7102,6 +7184,9 @@ function drawCinematicScene(name, now) {
   else if (name === 'lunchbox-taste')      drawLunchboxTasteCinematic(now);
   else if (name === 'curry-taste-memory')  drawCurryTasteMemoryCinematic(now);
   else if (name === 'muhammara-orchard')   drawMuhamamaraOrchardCinematic(now);
+  else if (name === 'switchblade-memory')   drawSwitchbladeMemoryCinematic(now);
+  else if (name === 'iris-dining-room')     drawIrisDiningRoomCinematic(now);
+  else if (name === 'potjie-child-fire')    drawPotjieChildFireCinematic(now);
   // Sprint 11: memory mist opt-in — drawn on top of scene, below dialogue overlay
   if (cinematic.isMemory) drawMemoryMist(now);
 }
@@ -16484,7 +16569,7 @@ function triggerHenriettaStory() {
 }
 
 function showChapter4End() {
-  triggerDeckStub();   // Ch4→Ch5 transition (wired when Ch5 is built)
+  startChapter5();
 }
 
 function addMuhamamaraRecipe() {
@@ -17147,6 +17232,1410 @@ rooms.ch4MuhittiKitchen = {
   objects:       ch4KitchenObjects,
   collectibles:  [],
   draw:          drawCh4MuhittiKitchen,
+};
+
+/* ================================================================
+   CHAPTER 5 — South Africa / Saldanha Bay
+   A Stew for the Crew (Potjiekos)
+   GOAL-1 Sprint build: 2026-06-16
+   ================================================================ */
+
+const ch5State = {
+  chapter5Active:        false,
+  enteredStorageRoom:    false,
+  irisEmerged:           false,
+  irisDialogueDone:      false,
+  switchbladeMemorySeen: false,
+  memoryGiftingEarned:   false,
+  irisGoneHome:          false,
+  switchbladeHeld:       false,
+  mamlamboAppeared:      false,
+  portalOpenAttempted:   false,
+  mamlamboDefeated:      false,
+  brusselsBagRetrieved:  false,
+  arrivedSaldanha:       false,
+  foundJohannes:         false,
+  patuModeMessenger:     false,
+  cookingComplete:       false,
+  tasteMemorySeen:       false,
+  henrikScene5Done:      false,
+  chapter5Complete:      false,
+};
+
+/* Pip's new ability flag */
+/* pip.abilities.memoryGifting is set to true when earned */
+
+const ch5LowerDeckObjects  = [];
+const ch5StorageObjects    = [];
+const ch5SaldanhaObjects   = [];
+const ch5JohannesObjects   = [];
+
+/* ----------------------------------------------------------------
+   Ch5 Beat functions
+   ---------------------------------------------------------------- */
+
+function startChapter5() {
+  ch5State.chapter5Active = true;
+  currentChapter = 5;
+  hideHUD();
+  const fade = document.getElementById('room-transition');
+  fade.style.opacity = '1';
+  setTimeout(() => {
+    currentRoom = 'ch5LowerDeck';
+    pip.x = 60;
+    pip.body.facing = 'right';
+    pip.float.altitude = 0;
+    fade.style.transition = 'opacity 0.8s ease';
+    fade.style.opacity = '0';
+    setTimeout(() => {
+      showHUD();
+      setRoomStrip();
+      autoSave();
+      showDialogue({
+        id: 'ch5-opening',
+        lines: [
+          { speaker: null, text: 'The Mnemosyne has stopped. The engines are quiet. The hull does not hum.', italic: true },
+          { speaker: null, text: "A part of the ship Pip hasn't been in before. Low ceiling, old wood, the smell of damp. Crates on either side.", italic: true },
+          { speaker: null, text: "Translucent forms dart along the baseboards. Rats — the residue of an old infestation. They skitter and vanish.", italic: true },
+          { speaker: null, text: "Pätu walks beside Pip. She doesn't chase them. She's a cat who chooses what to fear.", italic: true },
+        ],
+        choices: null, onEnd: null,
+      });
+    }, 900);
+  }, 600);
+}
+
+function triggerIrisEmerge() {
+  ch5State.irisEmerged = true;
+  showDialogue({
+    id: 'ch5-iris-emerge',
+    lines: [
+      { speaker: null, text: 'The storage room at the end of the corridor. Moonlight through one porthole.', italic: true },
+      { speaker: null, text: 'A sound from the floorboards. A squeeze, then a pop.', italic: true },
+      { speaker: null, text: 'A wet shape rises from between two boards — a child, small, Edwardian clothes, soaked from the sea.', italic: true },
+      { speaker: 'IRIS', text: '"Oh. Hello."', italic: false },
+      { speaker: 'PIP',  text: '"Are you — are you all right? You\'re soaked. I\'ll find you a—"', italic: false },
+      { speaker: null,   text: "Pip turns to look. Behind him, Iris shakes off the water like a dog — head, shoulders, whole body in a fast shudder. By the time Pip turns back, she is dry. Her hair is settled. Her dress is unwrinkled.", italic: true },
+      { speaker: 'IRIS', text: '"Don\'t be rude. It\'s not polite to stare."', italic: false },
+      { speaker: 'IRIS', text: '"You\'re a ghost."', italic: false },
+      { speaker: 'PIP',  text: '"...yes. So are you?"', italic: false },
+      { speaker: 'IRIS', text: '"Obviously."', italic: false },
+      { speaker: null,   text: "Pätu trots over and head-butts Iris's leg. Iris pets her expertly, the way someone who has loved a cat in a previous century pets a cat.", italic: true },
+      { speaker: 'IRIS', text: '"Hello. You\'re a good girl. Yes you are."', italic: false },
+    ],
+    choices: null,
+    onEnd: () => triggerIrisDialogue(),
+  });
+}
+
+function triggerIrisDialogue() {
+  showDialogue({
+    id: 'ch5-iris-talk',
+    lines: [
+      { speaker: 'IRIS', text: '"My name is Iris. I died on a ship called The Lethe. An English ocean liner. A long time ago."', italic: false },
+      { speaker: 'IRIS', text: '"The ship sank off the Horn of Africa. I was eating dinner with my family when it happened. I didn\'t finish my meal."', italic: false },
+      { speaker: 'IRIS', text: '"This ship stalled above the wreck. The proximity let me reach up. I don\'t usually get to go above the water."', italic: false },
+      { speaker: 'PIP',  text: '"Why didn\'t you finish?"', italic: false },
+      { speaker: null,   text: "Iris is quiet for a moment. The wallpaper of the storage room is faintly visible through her shoulder. She is fading at the edges.", italic: true },
+      { speaker: 'IRIS', text: '"Because if I finish, I\'ll forget them."', italic: false },
+      { speaker: 'PIP',  text: '"...I forget things too sometimes. About the people I miss."', italic: false },
+      { speaker: 'IRIS', text: '"Then you understand why I won\'t."', italic: false },
+      { speaker: null,   text: "She reaches into a pocket in her pinafore and pulls out a small folding switchblade — mother-of-pearl handle, Edwardian make.", italic: true },
+      { speaker: 'IRIS', text: '"My father gave me this. For sharpening my pencils. He said a girl who studies should always be able to sharpen her own pencils."', italic: false },
+      { speaker: 'IRIS', text: '"Would you like to hold it? I don\'t let just anyone."', italic: false },
+    ],
+    choices: [
+      {
+        text: '"I would. Thank you."',
+        onSelect() {
+          ch5State.irisDialogueDone = true;
+          showCinematic('switchblade-memory', () => {
+            ch5State.switchbladeMemorySeen = true;
+            autoSave();
+            showDialogue({
+              id: 'ch5-after-switchblade',
+              lines: [
+                { speaker: 'IRIS', text: '"You saw something."', italic: false },
+                { speaker: 'PIP',  text: '"...your father. The dining room. Your mother told you to eat your sprouts."', italic: false },
+                { speaker: null,   text: "Iris stares at him. Her edges are no longer translucent.", italic: true },
+                { speaker: 'IRIS', text: '"You saw them?"', italic: false },
+                { speaker: 'PIP',  text: '"I saw them."', italic: false },
+                { speaker: 'IRIS', text: '"...I\'d forgotten what his voice sounded like."', italic: false },
+              ],
+              choices: null,
+              onEnd: () => triggerMemoryGifting(),
+            });
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function triggerMemoryGifting() {
+  showDialogue({
+    id: 'ch5-gifting-setup',
+    lines: [
+      { speaker: null, text: "Pip has the memory now. He looks at Iris. He understands what she needs.", italic: true },
+      { speaker: null, text: "The journal entry formed when he touched the switchblade: Iris's family at dinner. The dining room. Her father's hands. Her mother saying eat your sprouts.", italic: true },
+      { speaker: null, text: "He could send it back.", italic: true },
+    ],
+    choices: [
+      {
+        text: "Give the memory back to Iris.",
+        onSelect() {
+          ch5State.memoryGiftingEarned = true;
+          if (!pip.abilities) pip.abilities = {};
+          pip.abilities.memoryGifting = true;
+          showCinematic('iris-dining-room', () => {
+            ch5State.irisGoneHome = true;
+            ch5State.switchbladeHeld = true;
+            autoSave();
+            addSwitchbladeToInventory();
+            showDialogue({
+              id: 'ch5-iris-leaves',
+              lines: [
+                { speaker: null,   text: "The dining room blooms in — not as a vision, but as a place that is, briefly, real.", italic: true },
+                { speaker: null,   text: "The long table, white tablecloths, candles. Her father in his dark suit. Her mother. Her brother. All of them alive, mid-meal, laughing.", italic: true },
+                { speaker: 'FATHER',  text: '"There you are, darling. Come and finish your dinner."', italic: false },
+                { speaker: 'MOTHER',  text: '"And eat your sprouts, too."', italic: false },
+                { speaker: null,   text: "Iris is crying — a child's clean crying, not a sad cry. She turns to Pip.", italic: true },
+                { speaker: 'IRIS', text: '"Thank you, ghost-boy."', italic: false },
+                { speaker: 'PIP',  text: '"Pip. My name is Pip."', italic: false },
+                { speaker: 'IRIS', text: '"Pip. Thank you."', italic: false },
+                { speaker: null,   text: "She closes her hand around his on the switchblade. Then she opens his fingers and presses the blade into his palm.", italic: true },
+                { speaker: 'IRIS', text: '"Keep it. You\'ll need it. I think — I think where you\'re going, you\'ll need something to hold."', italic: false },
+              ],
+              choices: null,
+              onEnd: () => triggerIrisFinishMeal(),
+            });
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function addSwitchbladeToInventory() {
+  if (notebook.items.some(i => i.id === 'switchblade-iris')) return;
+  notebook.items.push({
+    id:         'switchblade-iris',
+    name:       "Iris's father's switchblade",
+    annotation: "Mother-of-pearl handle. For sharpening pencils. She said a girl who studies should always be able to sharpen her own pencils.",
+    kind:       'object',
+    sprite:     'switchblade',
+  });
+  renderNotebookItems();
+}
+
+function triggerIrisFinishMeal() {
+  showDialogue({
+    id: 'ch5-iris-meal',
+    lines: [
+      { speaker: null,   text: "Iris turns toward the floorboards. She kneels. She reaches between the boards.", italic: true },
+      { speaker: null,   text: "A squeeze, then a pop — and she pulls something up. A small plate of brussels sprouts, soaked from the sea. They look perfect anyway.", italic: true },
+      { speaker: 'IRIS', text: '"They\'re cold."', italic: false },
+      { speaker: 'PIP',  text: '"They\'re not bad. They\'re really not."', italic: false },
+      { speaker: null,   text: "They finish the sprouts together. The plate empties. The dining room around them is still there — her family still warm, still waiting.", italic: true },
+      { speaker: null,   text: "Iris stands. Her father holds out his arm.", italic: true },
+      { speaker: 'FATHER', text: '"Come on, darling."', italic: false },
+      { speaker: null,   text: "Iris walks toward the table. She does not turn back to Pip. The last thing visible is Iris taking her seat, picking up her fork, beginning to eat.", italic: true },
+      { speaker: null,   text: "The room is the storage room again. Pip is alone with Pätu. The plate is empty. The switchblade is in his pocket.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      autoSave();
+      triggerMamlamboAppear();
+    },
+  });
+}
+
+function triggerMamlamboAppear() {
+  ch5State.mamlamboAppeared = true;
+  showDialogue({
+    id: 'ch5-mamlambo-appear',
+    lines: [
+      { speaker: null, text: 'A loud thud. The ship rocks.', italic: true },
+      { speaker: null, text: "Pip stumbles. Pätu's fur stands up. Through the porthole — a long shape coiling against the hull. Eyes the size of dinner plates. The Mamlambo.", italic: true },
+      { speaker: null, text: "Another thud. Crates topple. Pip braces against a crate.", italic: true },
+      { speaker: null, text: "The Mamlambo's head appears at the glass — eye to the porthole. Looking in.", italic: true },
+      { speaker: null, text: "Pätu hisses — sharp and intentional. This is something she fears.", italic: true },
+      { speaker: null, text: "Pip cannot leave the ship until the Mamlambo is gone.", italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerMamlamboPort(),
+  });
+}
+
+function triggerMamlamboPort() {
+  showDialogue({
+    id: 'ch5-open-porthole',
+    lines: [
+      { speaker: null, text: "The porthole. A heavy iron clasp. The Mamlambo is battering the hull but hasn't fixed on Pip yet.", italic: true },
+      { speaker: null, text: "A metal lantern has skidded across the floor. If Pip could open the porthole and throw something through—", italic: true },
+    ],
+    choices: [
+      {
+        text: "Open the porthole clasp and throw the lantern.",
+        onSelect() {
+          ch5State.portalOpenAttempted = true;
+          showDialogue({
+            id: 'ch5-throw-lantern',
+            lines: [
+              { speaker: null, text: 'Pip wrestles the heavy clasp open. Salty spray. He grabs the lantern and pitches it through the porthole.', italic: true },
+              { speaker: null, text: "It bounces off the hull. The Mamlambo's body stops coiling. Its head turns.", italic: true },
+              { speaker: null, text: "Eye to the glass. Looking at Pip. Found.", italic: true },
+              { speaker: null, text: "The Mamlambo opens its mouth. Something invisible reaches through the porthole — a pull at the inside of Pip's head. A tug at memory.", italic: true },
+              { speaker: null, text: "He's trying to suck Pip's brain.", italic: true },
+              { speaker: null, text: "But Pip is dead. There's nothing to take by force. The Mamlambo has access — but Pip can reach back.", italic: true },
+            ],
+            choices: null,
+            onEnd: () => triggerMamlamboGift(),
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function triggerMamlamboGift() {
+  showDialogue({
+    id: 'ch5-mamlambo-gift',
+    lines: [
+      { speaker: null, text: "The creature is reading every memory in Pip's journal. Pip feels it.", italic: true },
+      { speaker: null, text: "He doesn't push it out. He reaches back — the way he just did with Iris — and sends the warmest memory he has directly into the pull.", italic: true },
+    ],
+    choices: [
+      {
+        text: "Send the Iris dining-room memory into the Mamlambo's pull.",
+        onSelect() {
+          showDialogue({
+            id: 'ch5-mamlambo-recoil',
+            lines: [
+              { speaker: null, text: "The memory hits the Mamlambo. The long table. The candles. Iris's father's hands. Her mother: eat your sprouts, too.", italic: true },
+              { speaker: null, text: "He cannot hold it.", italic: true },
+              { speaker: null, text: "The creature shrieks — a sound that rattles the porthole glass — and recoils. Body convulsing. Head whipping away. He is disgusted by the warmth.", italic: true },
+              { speaker: null, text: "The Mamlambo retreats into the deep water. His body slides past the porthole one last time. Then he is gone. The ship steadies.", italic: true },
+              { speaker: null, text: "Something floats up to the surface and bobs against the hull — a small canvas bag, sodden but intact. Brussels sprouts. Iris's last meal. Floating up to feed the next one.", italic: true },
+              { speaker: 'PIP', text: '"From Iris."', italic: false },
+            ],
+            choices: null,
+            onEnd() {
+              ch5State.mamlamboDefeated = true;
+              autoSave();
+              showDialogue({
+                id: 'ch5-grab-bag',
+                lines: [{ speaker: null, text: "Pip phases through the hull to the dock. He retrieves the canvas bag from the water. Pätu trots out behind him through the door.", italic: true }],
+                choices: null,
+                onEnd() {
+                  ch5State.brusselsBagRetrieved = true;
+                  ch5State.arrivedSaldanha = true;
+                  autoSave();
+                  startTransition('ch5Saldanha', 'fromLeft');
+                },
+              });
+            },
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function triggerJohannesFound() {
+  ch5State.foundJohannes = true;
+  showDialogue({
+    id: 'ch5-courtyard',
+    lines: [
+      { speaker: null,      text: "Saldanha Bay. Deep red-ochre walls. Cool evening. Pätu sniffs the air and trots ahead — purposeful, knowing.", italic: true },
+      { speaker: null,      text: "A single warm-amber light visible from blocks away. A fire. A black cast-iron pot on three legs. A potjie. The chef, tending it.", italic: true },
+      { speaker: 'JOHANNES', text: '"Ach, no, no, no — out, cat. Out. I am cooking. There is no scrap for you yet. Out."', italic: false },
+      { speaker: null,      text: "He waves a wooden spoon at Pätu. She retreats. She pads back to Pip, looks up at him, looks at the canvas bag, looks back at the chef.", italic: true },
+      { speaker: null,      text: "Pip understands. The cat is the messenger.", italic: true },
+    ],
+    choices: [
+      {
+        text: "Tie the canvas bag loosely around Pätu's neck.",
+        onSelect() {
+          ch5State.patuModeMessenger = true;
+          showDialogue({
+            id: 'ch5-patu-messenger',
+            lines: [
+              { speaker: null,      text: "Pätu walks back into the courtyard, head high, the bag swaying.", italic: true },
+              { speaker: 'JOHANNES', text: '"...what is this. What have you brought me, hmm? Brussels sprouts? Cat with brussels sprouts? Where did you get these? Ach — fine. Fine. You can stay. Come, cat. Come and watch."', italic: false },
+              { speaker: null,      text: "He laughs. He kneels, takes the bag from around Pätu's neck, tips the sprouts onto a board. Pätu settles by the fire and purrs.", italic: true },
+              { speaker: null,      text: "Pip — invisible to the chef — slips into the courtyard behind her.", italic: true },
+            ],
+            choices: null,
+            onEnd: () => startJohannesCooking(),
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function startJohannesCooking() {
+  showDialogue({
+    id: 'ch5-cooking-intro',
+    lines: [
+      { speaker: 'JOHANNES', text: '"Now. The oxtail is browning. Next we need the onions — where did I put the — ach. There they are."', italic: false },
+      { speaker: null,      text: "Johannes is singing something. He forgets a lyric and talks instead. He talks to the pot. He talks to Pätu. He glances skyward as if to someone who isn't there.", italic: true },
+      { speaker: 'JOHANNES', text: '"Onions, garlic, carrots, potatoes. And the herbs — the thyme is — hmm. I had it right here—"', italic: false },
+      { speaker: null,      text: "The thyme is exactly where he left it. Pip floats it gently into his line of sight.", italic: true },
+      { speaker: 'JOHANNES', text: '"Ah, there you are. I see you, little herb."', italic: false },
+    ],
+    choices: null,
+    onEnd: () => showCh5CookingStep1(),
+  });
+}
+
+function showCh5CookingStep1() {
+  showDialogue({
+    id: 'ch5-step1',
+    lines: [{ speaker: 'JOHANNES', text: '"Now — the sprouts! These go in slow — the bitterness goes, you see. My mother used to — ach." He trails off. He stirs. "What do we add next?"', italic: false }],
+    choices: [
+      {
+        text: 'The spices — thyme, bay leaves, peppercorns, paprika, cumin, coriander seed.',
+        onSelect() {
+          showDialogue({
+            id: 'ch5-step1-right',
+            lines: [
+              { speaker: null,      text: "Pip nudges the spice jars toward the front of the shelf, one by one, as Johannes gestures vaguely.", italic: true },
+              { speaker: 'JOHANNES', text: '"Ha! There they are. Paprika. Cumin. Yes yes. Thyme. Bay leaves. And the peppercorns — always peppercorns."', italic: false },
+            ],
+            choices: null, onEnd: () => showCh5CookingStep2(),
+          });
+        },
+      },
+      {
+        text: 'More oxtail.',
+        onSelect() {
+          showDialogue({
+            id: 'ch5-step1-wrong',
+            lines: [{ speaker: 'JOHANNES', text: '"No no, the meat is already in. The spices first."', italic: false }],
+            choices: null, onEnd: () => showCh5CookingStep1(),
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function showCh5CookingStep2() {
+  showDialogue({
+    id: 'ch5-step2',
+    lines: [{ speaker: 'JOHANNES', text: '"The liquid. The pot needs to breathe. What do we pour in?"', italic: false }],
+    choices: [
+      {
+        text: 'Beef stock, red wine, and a splash of brandy.',
+        onSelect() {
+          showDialogue({
+            id: 'ch5-step2-right',
+            lines: [
+              { speaker: 'JOHANNES', text: '"For the soul, you see. The brandy is for the soul. Don\'t tell my doctor."', italic: false },
+              { speaker: null,      text: "He laughs, puts the lid on the potjie, and sits down beside the fire. Pätu climbs into his lap.", italic: true },
+              { speaker: 'JOHANNES', text: '"Now. We wait. The pot does the rest."', italic: false },
+            ],
+            choices: null,
+            onEnd() {
+              ch5State.cookingComplete = true;
+              addPotjieRecipe();
+              autoSave();
+              triggerJohannesTaste();
+            },
+          });
+        },
+      },
+      {
+        text: 'Just water.',
+        onSelect() {
+          showDialogue({
+            id: 'ch5-step2-wrong',
+            lines: [{ speaker: 'JOHANNES', text: '"Water? No no. Beef stock and red wine. And brandy."', italic: false }],
+            choices: null, onEnd: () => showCh5CookingStep2(),
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function triggerJohannesTaste() {
+  showDialogue({
+    id: 'ch5-taste-offer',
+    lines: [
+      { speaker: 'JOHANNES', text: '"For our cat-friend\'s friend, whoever they may be. You eat first, ghost."', italic: false },
+      { speaker: null,      text: "He says it as a joke, half to himself, half to the air. He doesn't know Pip is there. But the bowl is there. Pip takes it.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      showCinematic('potjie-child-fire', () => {
+        ch5State.tasteMemorySeen = true;
+        autoSave();
+        showDialogue({
+          id: 'ch5-after-taste',
+          lines: [
+            { speaker: null,      text: "Pip swallows. His strength rises — a visible, real jump.", italic: true },
+            { speaker: null,      text: "Johannes is across the fire, eyes half-closed, spoon paused. He is also remembering.", italic: true },
+            { speaker: 'JOHANNES', text: '"Eat well, friend."', italic: false },
+          ],
+          choices: null,
+          onEnd: () => triggerJohannesFarewell(),
+        });
+      });
+    },
+  });
+}
+
+function triggerJohannesFarewell() {
+  showDialogue({
+    id: 'ch5-farewell',
+    lines: [
+      { speaker: 'JOHANNES', text: '"You have a crew? Good. Always feed the crew." He ladles extra into a covered pot. "Take this with you. For your crew, ghost."', italic: false },
+      { speaker: null,      text: "Pätu leads the way back toward the dock.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      autoSave();
+      showDialogue({
+        id: 'ch5-back-to-ship',
+        lines: [{ speaker: null, text: "Walk left to return to the ship.", italic: true }],
+        choices: null, onEnd: null,
+      });
+    },
+  });
+}
+
+function triggerHenrikScene5() {
+  ch5State.henrikScene5Done = true;
+  showDialogue({
+    id: 'ch5-henrik',
+    lines: [
+      { speaker: null,    text: "Henrik's kitchen. Warm, steady. The rhythm of his hands.", italic: true },
+      { speaker: 'HENRIK', text: '"Pip. You\'re back."', italic: false },
+      { speaker: null,    text: "Pip sets the pot on the counter. He explains briefly — Johannes in Saldanha Bay, the fire, the slow-cook, the brussels sprouts.", italic: true },
+      { speaker: 'HENRIK', text: '"That\'s good. That\'s a real one. Tell me about the cook."', italic: false },
+      { speaker: 'PIP',   text: '"He talked to himself. He talked to the cat. He forgot half the ingredients and found them again and kept stirring."', italic: false },
+      { speaker: 'HENRIK', text: '"The best cooks are the ones who can forget and still feed people."', italic: false },
+    ],
+    choices: null,
+    onEnd: () => triggerHenrikIrisMoment(),
+  });
+}
+
+function triggerHenrikIrisMoment() {
+  showDialogue({
+    id: 'ch5-henrik-iris',
+    lines: [
+      { speaker: 'PIP',   text: '"Henrik — there was a girl on the ship today. From a wreck. I helped her finish her meal, and she went home."', italic: false },
+      { speaker: null,    text: "Henrik stops. He sets down his knife.", italic: true },
+      { speaker: 'HENRIK', text: '"...did she now."', italic: false },
+      { speaker: null,    text: "He looks at Pip for a long moment. He doesn't ask any of the questions Pip can see in his face. He picks up his knife again.", italic: true },
+      { speaker: 'HENRIK', text: '"Good. That\'s good, Pip. That was kind of you."', italic: false },
+      { speaker: null,    text: "He tosses Pätu a piece of fish from the cutting board. She catches it cleanly. He doesn't say anything else.", italic: true },
+      { speaker: null,    text: "Pip stands in the kitchen, the pot of potjie cooling on the counter, Henrik's hands working on into the night.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      ch5State.chapter5Complete = true;
+      autoSave();
+      showChapter5End();
+    },
+  });
+}
+
+function showChapter5End() {
+  triggerDeckStub();   // Ch5→Ch6 transition (wired when Ch6 is built)
+}
+
+function addPotjieRecipe() {
+  if (notebook.items.some(i => i.id === 'recipe-potjie')) return;
+  notebook.items.push({
+    id:         'recipe-potjie',
+    name:       "Johannes Delport's parents' potjiekos",
+    annotation: "Oxtail, onions, garlic, carrots, potatoes, brussels sprouts (slow). Thyme, bay leaves, peppercorns, paprika, cumin, coriander. Beef stock, red wine, brandy for the soul.",
+    kind:       'recipe',
+    sprite:     'potjie',
+  });
+  renderNotebookItems();
+  autoSave();
+}
+
+/* ----------------------------------------------------------------
+   Ch5 cinematic draw functions
+   ---------------------------------------------------------------- */
+
+/* Switchblade-memory — Iris's dining room as object-memory (Pip's POV). */
+function drawSwitchbladeMemoryCinematic(now) {
+  const t = now / 1000;
+
+  ctx.fillStyle = '#060408';
+  ctx.fillRect(0, 0, W, H);
+
+  // Amber warm glow
+  const g = ctx.createRadialGradient(W / 2, 90, 0, W / 2, 90, 200);
+  g.addColorStop(0,   'rgba(255,190,60,0.35)');
+  g.addColorStop(0.5, 'rgba(180,110,20,0.15)');
+  g.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // Long dining table (white tablecloth)
+  ctx.fillStyle = '#e8e4d8';
+  ctx.fillRect(40, 100, W - 80, 6);
+  ctx.fillStyle = '#d0ccc0';
+  ctx.fillRect(40, 106, W - 80, 60);
+
+  // Candles (5 along the table)
+  for (let c = 0; c < 5; c++) {
+    const cx2 = 70 + c * 80;
+    const flicker = 0.06 + Math.sin(t * 2.3 + c * 1.7) * 0.04;
+    ctx.fillStyle = '#f8f0d8';
+    ctx.fillRect(cx2, 80, 4, 22);
+    ctx.fillStyle = `rgba(255,220,80,${(0.60 + flicker).toFixed(2)})`;
+    ctx.fillRect(cx2 - 2, 68, 8, 14);
+  }
+
+  // Figures at table (silhouettes — warm brown)
+  const figures = [[80,60],[160,58],[240,62],[320,58],[400,60]];
+  figures.forEach(([fx, fh]) => {
+    ctx.fillStyle = '#3a2010';
+    ctx.fillRect(fx - 10, 100 - fh, 20, fh);
+    ctx.fillStyle = '#c89860';
+    ctx.fillRect(fx - 8, 100 - fh - 14, 16, 14);
+  });
+
+  // Iris (highlighted — teal)
+  ctx.fillStyle = '#1a3a3a';
+  ctx.fillRect(152, 58, 16, 42);
+  ctx.fillStyle = '#88b8b0';
+  ctx.fillRect(155, 44, 10, 14);
+  // Father beside her (dark suit)
+  ctx.fillStyle = '#1a1820';
+  ctx.fillRect(72, 52, 16, 48);
+  ctx.fillStyle = '#c89860';
+  ctx.fillRect(75, 38, 10, 14);
+
+  // Plates and dishes (decorative dots)
+  ctx.fillStyle = '#c0b898';
+  for (let p = 0; p < 5; p++) {
+    ctx.beginPath();
+    ctx.arc(80 + p * 80, 112, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Brussels sprouts (bright green, small, on Iris's plate)
+  ctx.fillStyle = '#486038';
+  ctx.fillRect(164, 110, 5, 4);
+  ctx.fillRect(170, 109, 4, 4);
+
+  ctx.fillStyle = 'rgba(220,190,100,0.85)';
+  ctx.font = 'italic 11px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(t < 4 ? "Always away from yourself, dear. Always away from your fingers." : "Everyone is alive.", W / 2, H - 26);
+  ctx.textAlign = 'left';
+}
+
+/* Iris dining-room — the full memory-gifting cinematic. */
+function drawIrisDiningRoomCinematic(now) {
+  const t  = now / 1000;
+
+  // Slightly brighter, fuller, more crowded than the switchblade version — this is manifest, not memory
+  ctx.fillStyle = '#040208';
+  ctx.fillRect(0, 0, W, H);
+
+  const g = ctx.createRadialGradient(W / 2, 80, 0, W / 2, 80, 220);
+  g.addColorStop(0,   'rgba(255,200,80,0.45)');
+  g.addColorStop(0.5, 'rgba(200,130,40,0.20)');
+  g.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // Table
+  ctx.fillStyle = '#f0ece0';
+  ctx.fillRect(20, 98, W - 40, 8);
+  ctx.fillStyle = '#d8d4c8';
+  ctx.fillRect(20, 106, W - 40, 62);
+
+  // Candles
+  for (let c = 0; c < 6; c++) {
+    const cx2    = 55 + c * 65;
+    const flk    = 0.08 + Math.sin(t * 2.0 + c * 1.3) * 0.05;
+    ctx.fillStyle = '#f8f4e0';
+    ctx.fillRect(cx2, 76, 4, 24);
+    ctx.fillStyle = `rgba(255,230,90,${(0.70 + flk).toFixed(2)})`;
+    ctx.fillRect(cx2 - 3, 62, 10, 16);
+  }
+
+  // Many figures at table
+  const figs = [[55,58],[120,56],[185,60],[250,56],[315,60],[380,58],[430,54]];
+  figs.forEach(([fx, fh], i) => {
+    ctx.fillStyle = i === 1 ? '#1a3a3a' : '#2a1810';
+    ctx.fillRect(fx - 9, 98 - fh, 18, fh);
+    ctx.fillStyle = i === 1 ? '#88b8b0' : '#c89860';
+    ctx.fillRect(fx - 6, 98 - fh - 14, 12, 14);
+  });
+
+  // Iris walking toward them (center-right, walking right)
+  const irisX = Math.round(200 + Math.min(t * 18, 60));
+  ctx.fillStyle = '#1a3a3a';
+  ctx.fillRect(irisX - 7, 108, 14, 50);
+  ctx.fillStyle = '#88b8b0';
+  ctx.fillRect(irisX - 5, 94, 10, 14);
+
+  const fadeIn = Math.min(1.0, t * 0.4);
+  ctx.fillStyle = `rgba(220,195,110,${(0.88 * fadeIn).toFixed(2)})`;
+  ctx.font = 'italic 11px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(t < 5 ? "Come and finish your dinner." : "Moving on is not forgetting. Moving on is reconnecting.", W / 2, H - 26);
+  ctx.textAlign = 'left';
+}
+
+/* Potjie-child-fire — taste memory: young Johannes watching parents by fire. */
+function drawPotjieChildFireCinematic(now) {
+  const t = now / 1000;
+
+  ctx.fillStyle = '#060804';
+  ctx.fillRect(0, 0, W, H);
+
+  // Night sky / veld
+  ctx.fillStyle = '#0a0c08';
+  ctx.fillRect(0, 0, W, 140);
+  ctx.fillStyle = '#141808';
+  ctx.fillRect(0, 140, W, H - 140);
+
+  // Stars
+  ctx.fillStyle = 'rgba(220,220,180,0.25)';
+  const stars = [[40,20],[90,8],[150,30],[220,12],[310,22],[380,9],[440,28],[80,40],[350,35]];
+  stars.forEach(([sx, sy]) => ctx.fillRect(sx, sy, 1, 1));
+
+  // Fire (center)
+  const fireA = 0.20 + Math.sin(t * 2.4) * 0.08;
+  const fg = ctx.createRadialGradient(W / 2, 140, 0, W / 2, 140, 90);
+  fg.addColorStop(0,   `rgba(255,130,30,${(0.55 + fireA).toFixed(2)})`);
+  fg.addColorStop(0.3, `rgba(200,70,10,${(0.25 + fireA * 0.5).toFixed(2)})`);
+  fg.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = fg;
+  ctx.fillRect(0, 50, W, H - 50);
+
+  // Flame body
+  ctx.fillStyle = '#e05010';
+  ctx.fillRect(W / 2 - 14, 130, 28, 20);
+  ctx.fillStyle = '#f08020';
+  ctx.fillRect(W / 2 - 10, 118, 20, 18);
+  ctx.fillStyle = '#f8c040';
+  ctx.fillRect(W / 2 - 5, 108, 10, 14);
+
+  // Potjie pot on legs (three legs, black pot)
+  ctx.fillStyle = '#1a1010';
+  ctx.fillRect(W / 2 - 22, 136, 44, 30);
+  ctx.beginPath();
+  ctx.arc(W / 2, 138, 22, 0, Math.PI * 2);
+  ctx.fillStyle = '#141010';
+  ctx.fill();
+  ctx.fillStyle = '#1a1010';
+  ctx.fillRect(W / 2 - 4, 164, 3, 16);
+  ctx.fillRect(W / 2 + 2, 164, 3, 16);
+  ctx.fillRect(W / 2 - 14, 162, 3, 14);
+
+  // Steam
+  for (let s = 0; s < 3; s++) {
+    const sAlpha = 0.08 + Math.sin(t * 1.5 + s * 2) * 0.04;
+    ctx.fillStyle = `rgba(180,180,160,${sAlpha.toFixed(2)})`;
+    ctx.fillRect(Math.round(W / 2 - 8 + s * 6 + Math.sin(t + s) * 2), Math.round(100 + s * 4), 3, 14);
+  }
+
+  // Mother (left of pot)
+  ctx.fillStyle = '#3a2810';
+  ctx.fillRect(W / 2 - 68, 138, 14, 42);
+  ctx.fillStyle = '#c89060';
+  ctx.fillRect(W / 2 - 65, 124, 10, 14);
+  ctx.fillStyle = '#2a1a08';
+  ctx.fillRect(W / 2 - 67, 118, 14, 8);
+
+  // Father (right of pot, stoking coals)
+  ctx.fillStyle = '#2a1c08';
+  ctx.fillRect(W / 2 + 52, 140, 16, 40);
+  ctx.fillStyle = '#c89060';
+  ctx.fillRect(W / 2 + 55, 126, 12, 14);
+
+  // Child Johannes (seated on blanket, watching)
+  ctx.fillStyle = '#362008';
+  ctx.fillRect(W / 2 - 130, 160, 10, 20);
+  ctx.fillStyle = '#c89060';
+  ctx.fillRect(W / 2 - 128, 150, 8, 12);
+  // Blanket
+  ctx.fillStyle = '#4a3828';
+  ctx.fillRect(W / 2 - 136, 176, 24, 4);
+
+  ctx.fillStyle = 'rgba(220,190,100,0.88)';
+  ctx.font = 'italic 11px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(t < 4 ? 'A fire in the clearing. A pot doing the rest.' : 'Parents at a fire. A child watching. Warmth.', W / 2, H - 26);
+  ctx.textAlign = 'left';
+}
+
+/* ----------------------------------------------------------------
+   Ch5 character draw functions
+   ---------------------------------------------------------------- */
+
+/* Iris — Edwardian child, ~10. White pinafore, dark stockings, hair ribbon.
+   translucent: 0.0 (fully opaque) to 1.0 (very translucent). */
+function drawIris(sx, groundY, now, translucent) {
+  const t     = now / 1000;
+  const alpha = 1.0 - translucent * 0.70;
+  const cx    = Math.round(sx);
+  const cy    = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = Math.max(0.15, alpha);
+
+  // Teal color signature (#88b8b0 range)
+  ctx.fillStyle = '#1a3a3a';
+  ctx.fillRect(-5, -24, 5, 24);
+  ctx.fillRect(0,  -24, 5, 24);
+
+  // Pinafore (white over dark dress)
+  ctx.fillStyle = '#2a3c3c';   // dark dress underneath
+  ctx.fillRect(-8, -48, 16, 26);
+  ctx.fillStyle = '#d8e8e4';   // white pinafore
+  ctx.fillRect(-6, -48, 12, 22);
+  ctx.fillRect(-5, -50, 10, 4);   // pinafore bib
+
+  // Dark stockings
+  ctx.fillStyle = '#1a1820';
+  ctx.fillRect(-5, -24, 5, 24);
+  ctx.fillRect(0,  -24, 5, 24);
+
+  // Shoes
+  ctx.fillStyle = '#0c0c14';
+  ctx.fillRect(-6, -4, 6, 4);
+  ctx.fillRect(0,  -4, 6, 4);
+
+  // Arms
+  ctx.fillStyle = '#c8a880';
+  ctx.fillRect(-10, -46, 3, 10);
+  ctx.fillRect(7,   -46, 3, 10);
+
+  // Neck
+  ctx.fillStyle = '#c8a880';
+  ctx.fillRect(-2, -52, 4, 4);
+
+  // Head
+  const ht  = -63;
+  const bob = Math.round(Math.sin(t * 1.4) * 0.5);
+  ctx.fillStyle = '#c8a880';
+  ctx.fillRect(-6, ht + bob, 12, 12);
+  // Eyes
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-3, ht + bob + 3, 2, 2);
+  ctx.fillRect(2,  ht + bob + 3, 2, 2);
+  // Hair (dark, with ribbon)
+  ctx.fillStyle = '#1a1008';
+  ctx.fillRect(-7, ht + bob - 3, 14, 6);
+  ctx.fillRect(4,  ht + bob - 2, 3, 8);
+  // Hair ribbon (teal)
+  ctx.fillStyle = '#88b8b0';
+  ctx.fillRect(2, ht + bob - 4, 6, 3);
+
+  // Switchblade in hand (if shown)
+  ctx.fillStyle = '#d0c8c0';
+  ctx.fillRect(-12, -38, 4, 2);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+/* Mamlambo — massive serpent, blood-iron, seen through porthole. */
+function drawMamlamboPorthole(now) {
+  const t = now / 1000;
+
+  // Draw the porthole frame
+  ctx.fillStyle = '#181c24';
+  const cx2 = W - 90;
+  const cy2 = 70;
+  const pr  = 40;
+  ctx.beginPath();
+  ctx.arc(cx2, cy2, pr + 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#080a0e';
+  ctx.beginPath();
+  ctx.arc(cx2, cy2, pr, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Sea through porthole
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx2, cy2, pr, 0, Math.PI * 2);
+  ctx.clip();
+
+  ctx.fillStyle = '#040612';
+  ctx.fillRect(cx2 - pr, cy2 - pr, pr * 2, pr * 2);
+
+  // Mamlambo body — coiling sinusoidal snake
+  const segments = 20;
+  const bodyAlpha = ch5State.mamlamboAppeared && !ch5State.mamlamboDefeated ? 0.85 : 0.0;
+  if (bodyAlpha > 0) {
+    ctx.fillStyle = `rgba(122,20,24,${bodyAlpha.toFixed(2)})`;
+    for (let s = 0; s < segments; s++) {
+      const sx2   = cx2 - pr + (s / segments) * (pr * 2);
+      const sy2   = cy2 + Math.sin(t * 1.8 + s * 0.6) * 18;
+      const thick = s < 5 ? 10 : (s > 15 ? 6 : 8);
+      ctx.fillRect(Math.round(sx2 - 3), Math.round(sy2 - thick / 2), 8, thick);
+    }
+
+    // Eye at glass (if mamlambo appeared)
+    if (ch5State.portalOpenAttempted) {
+      const eyePulse = 0.40 + Math.sin(t * 3.0) * 0.20;
+      ctx.fillStyle = `rgba(200,40,30,${eyePulse.toFixed(2)})`;
+      ctx.beginPath();
+      ctx.arc(cx2, cy2, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0a0204';
+      ctx.beginPath();
+      ctx.arc(cx2, cy2, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  ctx.restore();
+
+  // Iron clasp
+  ctx.fillStyle = '#2a2830';
+  ctx.fillRect(cx2 - pr - 8, cy2 - 4, 8, 8);
+}
+
+/* Johannes — older Afrikaner man, bearded, warm. */
+function drawJohannes(sx, groundY, now, speaking) {
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.4) * 0.7) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Legs
+  ctx.fillStyle = '#2a2010';
+  ctx.fillRect(-6, -26, 5, 26);
+  ctx.fillRect(1,  -26, 5, 26);
+  ctx.fillStyle = '#1a1408';
+  ctx.fillRect(-7, -4, 6, 4);
+  ctx.fillRect(2,  -4, 6, 4);
+
+  // Body — worn flannel-like (warm ochre-brown)
+  ctx.fillStyle = '#6a4820';
+  ctx.fillRect(-9, -54, 18, 30);
+
+  // Apron (cooking apron, off-white stained)
+  ctx.fillStyle = '#c8b888';
+  ctx.fillRect(-6, -52, 12, 26);
+  ctx.fillStyle = '#a89870';
+  ctx.fillRect(-4, -52, 8, 2);  // stain
+
+  // Arms (wide, bear-like)
+  ctx.fillStyle = '#6a4820';
+  ctx.fillRect(-12, -52, 4, 16);
+  ctx.fillRect(8,   -52, 4, 16);
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(-13, -38, 4, 10);
+  ctx.fillRect(9,   -38, 4, 10);
+
+  // Wooden spoon in hand
+  ctx.fillStyle = '#8a5828';
+  ctx.fillRect(9, -46, 2, 22);
+  ctx.fillRect(8, -46, 4, 6);
+
+  // Neck
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(-3, -58, 6, 4);
+
+  // Head (broad)
+  const ht = bob - 70;
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(-8, ht, 16, 14);
+
+  // Eyes, kind
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-5, ht + 4, 2, 2);
+  ctx.fillRect(3,  ht + 4, 2, 2);
+
+  // Big beard (salt-and-pepper)
+  ctx.fillStyle = '#888078';
+  ctx.fillRect(-7, ht + 6, 14, 10);
+  ctx.fillRect(-8, ht + 9, 16, 6);
+  ctx.fillStyle = '#c0b8b0';
+  ctx.fillRect(-5, ht + 8, 4, 6);
+  ctx.fillRect(3,  ht + 8, 4, 4);
+
+  // Hair (grey-white, thin on top)
+  ctx.fillStyle = '#888080';
+  ctx.fillRect(-8, ht - 3, 16, 5);
+  ctx.fillStyle = '#a09890';
+  ctx.fillRect(-9, ht, 3, 4);
+  ctx.fillRect(6,  ht, 3, 4);
+
+  ctx.restore();
+}
+
+/* Echo rat — translucent amber, darting low. */
+function drawEchoRat(sx, groundY, now, idx) {
+  const t   = now / 1000;
+  const vis = 0.25 + Math.sin(t * 3.0 + idx * 2.3) * 0.15;
+  const cx  = Math.round(sx + Math.sin(t * 4 + idx) * 3);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = Math.max(0.05, vis);
+  ctx.fillStyle = '#c07830';
+
+  // Tiny rat silhouette (8px long)
+  ctx.fillRect(-4, -5, 8, 4);
+  ctx.fillRect(-5, -4, 4, 3);   // head
+  // Tail
+  ctx.fillRect(4, -6, 2, 3);
+  ctx.fillRect(5, -7, 2, 2);
+  ctx.fillRect(6, -8, 2, 2);
+  // Ears
+  ctx.fillRect(-4, -7, 2, 2);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+/* ----------------------------------------------------------------
+   Ch5 room draw functions
+   ---------------------------------------------------------------- */
+
+function drawCh5LowerDeck(camX, now) {
+  const t = now / 1000;
+
+  // Dark, narrow wood corridor
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#0a0806');
+  wallG.addColorStop(0.7, '#100c08');
+  wallG.addColorStop(1,   '#0c0a06');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#0e0a08';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#180e08';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Old wood panelling
+  ctx.fillStyle = '#1a1208';
+  for (let bx = 0; bx < W; bx += 18) {
+    ctx.fillRect(bx, 10, 16, FLOOR_Y - 10);
+  }
+  ctx.fillStyle = '#140e06';
+  for (let bx = 0; bx < W; bx += 18) {
+    ctx.fillRect(bx, 10, 2, FLOOR_Y - 10);
+  }
+
+  // Crates along walls (world parallax 0.5x)
+  const crateOff = Math.round(camX * 0.5);
+  const cratePositions = [60, 160, 280, 420, 560, 680];
+  cratePositions.forEach(cpx => {
+    const csx = Math.round(cpx - crateOff);
+    if (csx < -40 || csx > W + 40) return;
+    ctx.fillStyle = '#2a1c0c';
+    ctx.fillRect(csx - 18, FLOOR_Y - 36, 36, 36);
+    ctx.fillStyle = '#3a2c1c';
+    ctx.fillRect(csx - 16, FLOOR_Y - 34, 32, 32);
+    ctx.fillStyle = '#201408';
+    ctx.fillRect(csx - 18, FLOOR_Y - 22, 36, 4);
+    ctx.fillRect(csx - 4, FLOOR_Y - 36, 8, 36);
+  });
+
+  // Low ceiling
+  ctx.fillStyle = '#0c0806';
+  ctx.fillRect(0, 0, W, 16);
+  for (let bx = 0; bx < W; bx += 40) {
+    ctx.fillStyle = '#181008';
+    ctx.fillRect(bx, 14, 40, 6);
+    ctx.fillStyle = '#100c06';
+    ctx.fillRect(bx + 19, 14, 2, 14);
+  }
+
+  // Echo rats (scattered, translucent amber)
+  const ratPositions = [80, 200, 340, 460, 580, 680, 740];
+  ratPositions.forEach((rpx, idx) => {
+    const dart  = (t * 80 + idx * 40) % 120 - 60;  // dart forward and back
+    const rsx   = Math.round(rpx + dart - camX);
+    if (rsx < -20 || rsx > W + 20) return;
+    drawEchoRat(rsx, FLOOR_Y, now, idx);
+  });
+
+  // Heavy door at far end (world-x 800+)
+  const doorSX = Math.round(800 - camX);
+  if (doorSX > -30 && doorSX < W + 30) {
+    ctx.fillStyle = '#1a1008';
+    ctx.fillRect(doorSX - 18, FLOOR_Y - 80, 36, 80);
+    ctx.fillStyle = '#2a1810';
+    ctx.fillRect(doorSX - 14, FLOOR_Y - 76, 28, 72);
+    // Slightly ajar
+    ctx.fillStyle = '#080604';
+    ctx.fillRect(doorSX + 12, FLOOR_Y - 76, 4, 72);
+    // Handle
+    ctx.fillStyle = '#6a5828';
+    ctx.fillRect(doorSX - 4, FLOOR_Y - 42, 4, 8);
+  }
+
+  // Moonlight from far end
+  const moonG = ctx.createLinearGradient(W - 40, 0, W, 0);
+  moonG.addColorStop(0, 'rgba(160,180,200,0)');
+  moonG.addColorStop(1, 'rgba(160,180,200,0.06)');
+  ctx.fillStyle = moonG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+}
+
+function drawCh5StorageRoom(camX, now) {
+  const t = now / 1000;
+
+  // Small dim storage room — moonlit through porthole
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#080a0e');
+  wallG.addColorStop(0.8, '#0c1018');
+  wallG.addColorStop(1,   '#080c12');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#0a0e14';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#10141c';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Moonlight through porthole (world-x ~310)
+  const moonSX = Math.round(310 - camX);
+  if (moonSX > -70 && moonSX < W + 70) {
+    const mG = ctx.createRadialGradient(moonSX, 60, 0, moonSX, 60, 100);
+    mG.addColorStop(0,   'rgba(160,180,210,0.22)');
+    mG.addColorStop(0.6, 'rgba(120,140,180,0.06)');
+    mG.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = mG;
+    ctx.fillRect(0, 0, W, FLOOR_Y);
+  }
+
+  // Crates stacked on walls
+  const cratePositions5 = [40, 90, 220, 290];
+  cratePositions5.forEach(cpx => {
+    const csx = Math.round(cpx - camX);
+    if (csx < -40 || csx > W + 40) return;
+    ctx.fillStyle = '#1a1408';
+    ctx.fillRect(csx - 22, FLOOR_Y - 44, 44, 44);
+    ctx.fillStyle = '#241a0e';
+    ctx.fillRect(csx - 20, FLOOR_Y - 42, 40, 40);
+    ctx.fillStyle = '#141008';
+    ctx.fillRect(csx - 22, FLOOR_Y - 28, 44, 4);
+    ctx.fillRect(csx - 4, FLOOR_Y - 44, 8, 44);
+    // Stack a second crate on some
+    if (cpx === 90 || cpx === 290) {
+      ctx.fillStyle = '#1a1408';
+      ctx.fillRect(csx - 18, FLOOR_Y - 82, 36, 38);
+      ctx.fillStyle = '#241a0e';
+      ctx.fillRect(csx - 16, FLOOR_Y - 80, 32, 34);
+    }
+  });
+
+  // Porthole (world-x ~310)
+  drawMamlamboPorthole(now);
+
+  // Floorboard cracks (where Iris emerges, world-x 180)
+  const floorSX = Math.round(180 - camX);
+  if (floorSX > -30 && floorSX < W + 30) {
+    if (ch5State.irisGoneHome) {
+      // Empty floorboards, slightly open
+      ctx.fillStyle = '#040608';
+      ctx.fillRect(floorSX - 8, FLOOR_Y - 1, 16, 3);
+    } else {
+      ctx.fillStyle = '#181210';
+      ctx.fillRect(floorSX - 6, FLOOR_Y - 1, 1, 3);
+      ctx.fillRect(floorSX - 2, FLOOR_Y - 1, 1, 3);
+      ctx.fillRect(floorSX + 4, FLOOR_Y - 1, 1, 3);
+    }
+  }
+
+  // Iris character
+  if (ch5State.irisEmerged && !ch5State.irisGoneHome) {
+    const irisSX = Math.round(180 - camX);
+    if (irisSX > -30 && irisSX < W + 30) {
+      const translucent = ch5State.irisDialogueDone && !ch5State.memoryGiftingEarned ? 0.50 : 0.0;
+      drawIris(irisSX, FLOOR_Y, now, translucent);
+    }
+  }
+
+  // Lantern on floor (before thrown)
+  if (!ch5State.portalOpenAttempted) {
+    const lanternSX = Math.round(120 - camX);
+    if (lanternSX > -20 && lanternSX < W + 20) {
+      ctx.fillStyle = '#4a3818';
+      ctx.fillRect(lanternSX - 5, FLOOR_Y - 14, 10, 14);
+      ctx.fillStyle = '#886028';
+      ctx.fillRect(lanternSX - 3, FLOOR_Y - 12, 6, 10);
+      const dL = 0.04 + Math.sin(now / 900) * 0.02;
+      ctx.fillStyle = `rgba(200,160,60,${dL.toFixed(2)})`;
+      ctx.fillRect(lanternSX - 2, FLOOR_Y - 11, 4, 8);
+    }
+  }
+}
+
+function drawCh5Saldanha(camX, now) {
+  const t = now / 1000;
+
+  // Deep red-ochre port: walls baked with the day's color
+  const skyG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  skyG.addColorStop(0,   '#0a0808');
+  skyG.addColorStop(0.5, '#140c08');
+  skyG.addColorStop(1,   '#1a0e08');
+  ctx.fillStyle = skyG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#140c08';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#201008';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Buildings — red-ochre walls
+  const buildings = [
+    [0,   120, 90],
+    [95,  100, 80],
+    [180, 130, 70],
+    [260, 110, 95],
+    [360, 125, 80],
+    [450, 100, 90],
+    [550, 118, 90],
+    [648, 108, 80],
+    [740, 122, 90],
+  ];
+  buildings.forEach(([bx, bh, bw]) => {
+    const bsx = Math.round(bx - camX * 0.85);
+    if (bsx + bw < 0 || bsx > W) return;
+    ctx.fillStyle = '#3a1808';
+    ctx.fillRect(bsx, FLOOR_Y - bh, bw, bh);
+    ctx.fillStyle = '#4a2010';
+    ctx.fillRect(bsx, FLOOR_Y - bh, bw, 4);
+    // Window (warm amber)
+    ctx.fillStyle = '#c87030';
+    ctx.fillRect(bsx + 12, FLOOR_Y - bh + 20, 16, 14);
+    ctx.fillStyle = '#e08030';
+    ctx.fillRect(bsx + 14, FLOOR_Y - bh + 22, 12, 10);
+  });
+
+  // Deep water to the left (harbor)
+  const waterG = ctx.createLinearGradient(0, FLOOR_Y - 8, 0, H);
+  waterG.addColorStop(0, '#080810');
+  waterG.addColorStop(1, '#040408');
+  ctx.fillStyle = waterG;
+  ctx.fillRect(0, FLOOR_Y - 6, 180 - Math.round(camX), H - FLOOR_Y + 6);
+
+  // Cape West Coast fynbos hills (far parallax)
+  ctx.fillStyle = '#1a1208';
+  for (let h2 = 0; h2 < 3; h2++) {
+    const hx = 50 + h2 * 140 - Math.round(camX * 0.15);
+    ctx.fillRect(hx, FLOOR_Y - 50, 100, 50);
+    ctx.fillRect(hx - 10, FLOOR_Y - 38, 120, 38);
+  }
+
+  // Fire beacon ahead (world-x ~800) — draws from ch5JohannesPlace entrance
+  const fireSX = Math.round(800 - camX);
+  if (fireSX > -20 && fireSX < W + 20) {
+    const fA = 0.15 + Math.sin(t * 2.1) * 0.07;
+    const fG = ctx.createRadialGradient(fireSX, FLOOR_Y - 30, 0, fireSX, FLOOR_Y - 30, 80);
+    fG.addColorStop(0,   `rgba(255,150,30,${(0.40 + fA).toFixed(2)})`);
+    fG.addColorStop(0.5, `rgba(180,80,10,${(0.12 + fA * 0.5).toFixed(2)})`);
+    fG.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = fG;
+    ctx.fillRect(fireSX - 80, 0, 160, FLOOR_Y);
+    // Smoke
+    ctx.fillStyle = `rgba(80,60,40,${(0.08 + Math.sin(t) * 0.03).toFixed(2)})`;
+    ctx.fillRect(fireSX - 4, FLOOR_Y - 80, 8, 50);
+  }
+}
+
+function drawCh5JohannesPlace(camX, now) {
+  const t = now / 1000;
+
+  // Warm courtyard, outdoor, night sky above
+  const skyG = ctx.createLinearGradient(0, 0, 0, 80);
+  skyG.addColorStop(0,   '#060408');
+  skyG.addColorStop(1,   '#10080a');
+  ctx.fillStyle = skyG;
+  ctx.fillRect(0, 0, W, 80);
+
+  // Courtyard walls / small building behind
+  ctx.fillStyle = '#3a1808';
+  ctx.fillRect(0, 30, W, FLOOR_Y - 30);
+  ctx.fillStyle = '#2a1206';
+  ctx.fillRect(0, 30, W, 6);
+
+  // Low ceiling/overhang
+  ctx.fillStyle = '#1a0c06';
+  ctx.fillRect(0, 0, 80, FLOOR_Y);   // left kitchen structure
+  ctx.fillRect(W - 60, 0, 60, FLOOR_Y);  // right wall
+
+  ctx.fillStyle = '#140c08';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#201408';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Fire / potjie (world-x 250)
+  const fireSX = Math.round(250 - camX);
+  if (fireSX > -80 && fireSX < W + 80) {
+    // Fire glow
+    const fA = 0.18 + Math.sin(t * 2.3) * 0.08;
+    const fG = ctx.createRadialGradient(fireSX, FLOOR_Y - 20, 0, fireSX, FLOOR_Y - 20, 120);
+    fG.addColorStop(0,   `rgba(255,140,30,${(0.55 + fA).toFixed(2)})`);
+    fG.addColorStop(0.4, `rgba(180,70,10,${(0.20 + fA * 0.5).toFixed(2)})`);
+    fG.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = fG;
+    ctx.fillRect(0, 0, W, FLOOR_Y);
+
+    // Potjie legs (three legs)
+    ctx.fillStyle = '#1a0e08';
+    ctx.fillRect(fireSX - 3, FLOOR_Y - 42, 3, 20);
+    ctx.fillRect(fireSX + 1, FLOOR_Y - 42, 3, 20);
+    ctx.fillRect(fireSX - 12, FLOOR_Y - 40, 3, 18);
+
+    // Pot (round, black cast iron)
+    ctx.fillStyle = '#0e0a08';
+    ctx.beginPath();
+    ctx.arc(fireSX, FLOOR_Y - 48, 26, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#160e0a';
+    ctx.beginPath();
+    ctx.arc(fireSX - 3, FLOOR_Y - 51, 14, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Flames
+    ctx.fillStyle = '#c04010';
+    ctx.fillRect(fireSX - 18, FLOOR_Y - 30, 36, 14);
+    ctx.fillStyle = '#e06010';
+    ctx.fillRect(fireSX - 12, FLOOR_Y - 38, 24, 16);
+    ctx.fillStyle = '#f08030';
+    ctx.fillRect(fireSX - 6, FLOOR_Y - 46, 12, 14);
+    ctx.fillStyle = `rgba(255,180,60,${(0.40 + fA).toFixed(2)})`;
+    ctx.fillRect(fireSX - 3, FLOOR_Y - 52, 6, 10);
+
+    // Steam from pot
+    for (let s = 0; s < 3; s++) {
+      const sA = 0.06 + Math.sin(t * 1.8 + s * 2.1) * 0.03;
+      ctx.fillStyle = `rgba(160,140,100,${sA.toFixed(2)})`;
+      ctx.fillRect(Math.round(fireSX - 6 + s * 5 + Math.sin(t * 0.9 + s) * 2), Math.round(FLOOR_Y - 72 + s * 4), 4, 16);
+    }
+  }
+
+  // Herbs hanging from overhang (world-x 60-160)
+  ctx.fillStyle = '#284018';
+  for (let h3 = 0; h3 < 5; h3++) {
+    const hsx = Math.round(60 + h3 * 24 - camX);
+    if (hsx < -10 || hsx > W + 10) continue;
+    ctx.fillRect(hsx - 1, 20, 2, 14);
+    ctx.fillStyle = '#304828';
+    ctx.fillRect(hsx - 3, 30, 6, 8);
+    ctx.fillStyle = '#284018';
+  }
+
+  // Spice shelf (world-x 80, low)
+  const shelfSX = Math.round(80 - camX);
+  if (shelfSX > -60 && shelfSX < W + 30) {
+    ctx.fillStyle = '#3a1808';
+    ctx.fillRect(shelfSX - 4, FLOOR_Y - 48, 80, 4);
+    const jColors = ['#8a2010','#208a30','#6a4010','#2a2080','#801060'];
+    for (let j = 0; j < 5; j++) {
+      const jx = shelfSX + j * 14;
+      ctx.fillStyle = jColors[j];
+      ctx.fillRect(jx, FLOOR_Y - 64, 10, 18);
+      ctx.fillStyle = '#c8b890';
+      ctx.fillRect(jx + 1, FLOOR_Y - 67, 8, 4);
+    }
+  }
+
+  // Dinner table (world-x 370-500, set for several guests)
+  const tSX = Math.round(370 - camX);
+  if (tSX > -40 && tSX < W + 40) {
+    ctx.fillStyle = '#2a1808';
+    ctx.fillRect(tSX, FLOOR_Y - 24, 130, 6);
+    ctx.fillStyle = '#1e1006';
+    ctx.fillRect(tSX + 6, FLOOR_Y - 18, 6, 18);
+    ctx.fillRect(tSX + 120, FLOOR_Y - 18, 6, 18);
+    // Bowls on table
+    ctx.fillStyle = '#a89870';
+    for (let b = 0; b < 4; b++) {
+      ctx.beginPath();
+      ctx.arc(tSX + 20 + b * 28, FLOOR_Y - 24, 7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Johannes (world-x 250, tending pot)
+  const johannesSX = Math.round(250 + 56 - camX);  // right side of fire
+  if (johannesSX > -30 && johannesSX < W + 30 && ch5State.foundJohannes) {
+    const johSpeaking = dialogue.active && dialogue.node && dialogue.node.lines &&
+      dialogue.node.lines[dialogue.lineIndex] &&
+      dialogue.node.lines[dialogue.lineIndex].speaker === 'JOHANNES';
+    drawJohannes(johannesSX, FLOOR_Y, now, johSpeaking);
+  }
+
+  // Pätu (by the fire when inside)
+  if (ch5State.patuModeMessenger) {
+    drawPatu(Math.round(fireSX - 40), FLOOR_Y, now);
+  }
+}
+
+/* ----------------------------------------------------------------
+   Ch5 room definitions
+   ---------------------------------------------------------------- */
+
+rooms.ch5LowerDeck = {
+  width:         900,
+  pipMaxX:       860,
+  pipMinX:       30,
+  pipEntryX:     60,
+  portholeScene: null,
+  objects:       ch5LowerDeckObjects,
+  collectibles:  [],
+  draw:          drawCh5LowerDeck,
+};
+
+rooms.ch5StorageRoom = {
+  width:         400,
+  pipMaxX:       360,
+  pipMinX:       20,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch5StorageObjects,
+  collectibles:  [],
+  draw:          drawCh5StorageRoom,
+};
+
+rooms.ch5Saldanha = {
+  width:         950,
+  pipMaxX:       910,
+  pipMinX:       30,
+  pipEntryX:     60,
+  portholeScene: null,
+  objects:       ch5SaldanhaObjects,
+  collectibles:  [],
+  draw:          drawCh5Saldanha,
+};
+
+rooms.ch5JohannesPlace = {
+  width:         550,
+  pipMaxX:       510,
+  pipMinX:       20,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch5JohannesObjects,
+  collectibles:  [],
+  draw:          drawCh5JohannesPlace,
 };
 
 /* ================================================================

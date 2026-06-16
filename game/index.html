@@ -1507,6 +1507,7 @@ function buildSaveObject() {
     ch4State:        { ...ch4State },
     ch4WalnutsHeld:  ch4WalnutsHeld,
     ch5State:        { ...ch5State },
+    ch6State:        { ...ch6State },
     patuAboard:      patuState.aboard,
     darkCorridor:    { lit: darkCorridor.lit, cartRemoved: darkCorridor.cartRemoved, cartX: darkCorridor.cartX },
     cinematicPlayed: Array.from(cinematic.played),
@@ -1568,6 +1569,7 @@ function applySave(data) {
   if (data.ch4WalnutsHeld !== undefined) ch4WalnutsHeld = data.ch4WalnutsHeld;
   if (data.ch5State)   Object.assign(ch5State,   data.ch5State);
   if (data.ch5State && data.ch5State.switchbladeHeld && !pip.abilities.memoryGifting) pip.abilities.memoryGifting = true;
+  if (data.ch6State)   Object.assign(ch6State,   data.ch6State);
   if (data.patuAboard) patuState.aboard = data.patuAboard;
 
   // Restore dark corridor state (additive — missing fields default to initial values)
@@ -3538,6 +3540,61 @@ function update(dt) {
       && !dialogue.active && !cinematic.active) {
     if (pip.x > 80) {
       triggerHenrikScene5();
+    }
+  }
+
+  // ---- Ch6 room transitions ----
+
+  if (!transition.active && !dialogue.active && !cinematic.active) {
+    if (currentRoom === 'ch6LowerDeck' && pip.x >= rooms.ch6LowerDeck.pipMaxX - 1) {
+      ch6State.enteredBananaGrove = true;
+      startTransition('ch6BananaGrove', 'fromLeft');
+    } else if (currentRoom === 'ch6BananaGrove' && pip.x <= rooms.ch6BananaGrove.pipMinX + 1) {
+      startTransition('ch6LowerDeck', 'fromRight', rooms.ch6LowerDeck.pipMaxX - 40);
+    } else if (currentRoom === 'ch6BananaGrove' && pip.x >= rooms.ch6BananaGrove.pipMaxX - 1
+               && ch6State.pocongFreed && ch6State.flashbackSoothed) {
+      startTransition('ch6Kolonodale', 'fromLeft');
+    } else if (currentRoom === 'ch6Kolonodale' && pip.x <= rooms.ch6Kolonodale.pipMinX + 1
+               && ch6State.arrivedKolonodale && !ch6State.tasteMemorySeen) {
+      startTransition('ch6BananaGrove', 'fromRight', rooms.ch6BananaGrove.pipMaxX - 40);
+    } else if (currentRoom === 'ch6Kolonodale' && pip.x >= rooms.ch6Kolonodale.pipMaxX - 1
+               && ch6State.arrivedKolonodale) {
+      startTransition('ch6Warung', 'fromLeft');
+    } else if (currentRoom === 'ch6Warung' && pip.x <= rooms.ch6Warung.pipMinX + 1
+               && ch6State.cookingStep >= 4) {
+      startTransition('ch6Kolonodale', 'fromRight', rooms.ch6Kolonodale.pipMaxX - 40);
+    } else if (currentRoom === 'ch6Kolonodale' && pip.x <= rooms.ch6Kolonodale.pipMinX + 1
+               && ch6State.returningFromTirta) {
+      ch6State.arrivedKolonodale = false;
+      startTransition('kitchen', 'fromLeft');
+    }
+  }
+
+  // ---- Ch6 beat triggers ----
+
+  // Ch6: Pocong in banana grove
+  if (currentRoom === 'ch6BananaGrove' && ch6State.chapter6Active
+      && !ch6State.pocongMet && !dialogue.active && !cinematic.active) {
+    if (pip.x > 150) {
+      triggerPocongMeeting();
+    }
+  }
+
+  // Ch6: Tirta in warung
+  if (currentRoom === 'ch6Warung' && ch6State.chapter6Active
+      && !ch6State.tirtaMet && ch6State.bananaBundleHeld
+      && !dialogue.active && !cinematic.active) {
+    if (pip.x > 80) {
+      triggerTirtaMeeting();
+    }
+  }
+
+  // Ch6: Erik photograph / Henrik scene when returning to kitchen
+  if (currentRoom === 'kitchen' && ch6State.chapter6Active
+      && ch6State.returningFromTirta && !ch6State.erikPhotoSeen
+      && !dialogue.active && !cinematic.active) {
+    if (pip.x > 80) {
+      triggerErikPhotoBeat();
     }
   }
 
@@ -7003,6 +7060,11 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null, text: "A young couple tending a black cast-iron pot. The same pot, when it was new.", italic: true },
     { speaker: null, text: "A small boy on a blanket. Watching. He is Johannes, when he was a child.", italic: true },
   ],
+  'lemper-family-courtyard': [
+    { speaker: null, text: 'A courtyard at night. Hanging lamps. A long table covered in banana leaves.', italic: true },
+    { speaker: null, text: "A family of eight — Tirta among them, much younger. An assembly line of love. Hundreds of lemper, going to an orphanage tomorrow.", italic: true },
+    { speaker: 'GRANDMOTHER', text: "Someone else's child is also a child.", italic: false },
+  ],
   'muhammara-orchard': [
     { speaker: null, text: 'An autumn orchard. Walnut trees, leaves coming down.', italic: true },
     { speaker: null, text: 'A grandmother kneels between two boys. She cracks a walnut. Hands it over.', italic: true },
@@ -7062,6 +7124,8 @@ function showCinematic(name, onEnd) {
   } else if (name === 'iris-dining-room') {
     cinematic.isMemory  = false;
   } else if (name === 'potjie-child-fire') {
+    cinematic.isMemory  = true;
+  } else if (name === 'lemper-family-courtyard') {
     cinematic.isMemory  = true;
   }
 
@@ -7187,6 +7251,7 @@ function drawCinematicScene(name, now) {
   else if (name === 'switchblade-memory')   drawSwitchbladeMemoryCinematic(now);
   else if (name === 'iris-dining-room')     drawIrisDiningRoomCinematic(now);
   else if (name === 'potjie-child-fire')    drawPotjieChildFireCinematic(now);
+  else if (name === 'lemper-family-courtyard') drawLemperFamilyCourtyardCinematic(now);
   // Sprint 11: memory mist opt-in — drawn on top of scene, below dialogue overlay
   if (cinematic.isMemory) drawMemoryMist(now);
 }
@@ -17753,7 +17818,7 @@ function triggerHenrikIrisMoment() {
 }
 
 function showChapter5End() {
-  triggerDeckStub();   // Ch5→Ch6 transition (wired when Ch6 is built)
+  startChapter6();
 }
 
 function addPotjieRecipe() {
@@ -18636,6 +18701,1150 @@ rooms.ch5JohannesPlace = {
   objects:       ch5JohannesObjects,
   collectibles:  [],
   draw:          drawCh5JohannesPlace,
+};
+
+/* ================================================================
+   CHAPTER 6 — Indonesia / Kolonodale, Central Sulawesi
+   A Knot of Banana Leaves (Lemper Ayam)
+   GOAL-1 Sprint build: 2026-06-16
+   ================================================================ */
+
+const ch6State = {
+  chapter6Active:       false,
+  enteredBananaGrove:   false,
+  pocongMet:            false,
+  knot1Cut:             false,
+  knot2Cut:             false,
+  knot3Cut:             false,
+  pocongFreed:          false,
+  infectionReceived:    false,
+  flashbackSoothed:     false,
+  arrivedKolonodale:    false,
+  tirtaMet:             false,
+  cookingStep:          0,
+  tasteMemorySeen:      false,
+  bananaBundleHeld:     false,
+  returningFromTirta:   false,
+  erikPhotoSeen:        false,
+  henriettaBananaBeat:  false,
+  chapter6Complete:     false,
+};
+
+const ch6LowerDeckObjects = [];
+const ch6GroveObjects     = [];
+const ch6KolonodalObjects = [];
+const ch6WarungObjects    = [];
+
+/* ----------------------------------------------------------------
+   Ch6 Beat functions
+   ---------------------------------------------------------------- */
+
+function startChapter6() {
+  ch6State.chapter6Active = true;
+  currentChapter = 6;
+  hideHUD();
+  const fade = document.getElementById('room-transition');
+  fade.style.opacity = '1';
+  setTimeout(() => {
+    currentRoom = 'ch6LowerDeck';
+    pip.x = 60;
+    pip.body.facing = 'right';
+    pip.float.altitude = 0;
+    fade.style.transition = 'opacity 0.8s ease';
+    fade.style.opacity = '0';
+    setTimeout(() => {
+      showHUD();
+      setRoomStrip();
+      autoSave();
+      showDialogue({
+        id: 'ch6-opening',
+        lines: [
+          { speaker: null, text: 'This latitude makes the lower deck sweat. Condensation on the brass. The lights flicker low.', italic: true },
+          { speaker: null, text: "Small shapes cluster on the pipes and ceiling beams. Pygmy tarsiers — translucent, glowing-eyed. They do not attack. They stare.", italic: true },
+          { speaker: null, text: "When Pip passes near one, it tilts its head and follows him with its gaze.", italic: true },
+          { speaker: null, text: "Pätu watches them without curiosity. She knows what can be ignored.", italic: true },
+        ],
+        choices: null, onEnd: null,
+      });
+    }, 900);
+  }, 600);
+}
+
+function triggerPocongMeeting() {
+  ch6State.pocongMet = true;
+  showDialogue({
+    id: 'ch6-pocong-meet',
+    lines: [
+      { speaker: null,   text: "The banana grove at the edge of town. Air cool. Light dimming under the broad leaves. Old graves through the trees — kept clean.", italic: true },
+      { speaker: null,   text: "A clearing. A figure — upright, bound. White burial cloth wrapped around the body, tied at the feet with multiple knots. He cannot walk. He hops.", italic: true },
+      { speaker: null,   text: "The hops are not aggression. They are panic. He has been trying to leave for a very long time.", italic: true },
+      { speaker: null,   text: "When he sees Pip, he goes very still. Pätu looks up at him. She does not hiss. He is not bad. He is lost.", italic: true },
+      { speaker: 'POCONG', text: '"Little one. Little one. Will you cut?"', italic: false },
+      { speaker: null,   text: "Pip reaches into his pocket. The switchblade. Iris's father's. He has not used it yet.", italic: true },
+      { speaker: 'POCONG', text: '"Wait. Wait. I cannot let you near. The cloth pulls. I jerk. The blade will slip. Soothe me first. Sing me something I can hold."', italic: false },
+      { speaker: 'POCONG', text: '"Three knots. Three songs. Each true. Then we rest."', italic: false },
+    ],
+    choices: null,
+    onEnd: () => runPocongKnot(1),
+  });
+}
+
+function runPocongKnot(knot) {
+  const riddles = [
+    {
+      riddle: '"Once a patient hand guided mine. A lesson given slow, in careful time. No one stays to help me learn — show me a child being taught in turn."',
+      choices: [
+        { text: 'Gravlaks memory — Henrik as a small boy with his grandfather, learning to slice salmon. A patient hand on his.', correct: true,
+          right: 'The Pocong stills. His shoulders soften. His head tips back. He is ready.' },
+        { text: 'Johannes\'s parents — the fire, the child watching.', correct: false,
+          wrong: '"Closer. But that child only watched. I want the one whose hand was held and guided. Show me the lesson given."' },
+        { text: 'Leida\'s lunchbox — the boy on the cold step.', correct: false,
+          wrong: '"Closer. But that was a door opened, not a hand teaching. I want a child being shown how."' },
+      ],
+    },
+    {
+      riddle: '"I came to a house that was not my own. No name on my tongue, no kin, no home. The bowl was filled before I could speak — show me a door opened to one who was weak."',
+      choices: [
+        { text: 'Lunchbox-taste memory — young Leida sharing kotletid with the starving boy on the cold step. No name in that house, no kin.', correct: true,
+          right: 'He exhales. Something that sounds like thank you in a language Pip does not know.' },
+        { text: 'Sandy\'s curry — the table was for family.', correct: false,
+          wrong: '"Closer. But that table was already theirs. I had no kin there, no claim. Show me a stranger let in."' },
+        { text: 'Johannes\'s potjie — the fire, strangers fed.', correct: false,
+          wrong: '"Closer. But those two were already a family. I was not anyone\'s. Show me one let in from the cold."' },
+      ],
+    },
+    {
+      riddle: '"Two stood close where the dark pressed in. No walls between them, only the night. They tended a flame that the cold could not reach — show me the fire they kept alight."',
+      choices: [
+        { text: "Johannes's potjie memory — his parents tending a fire together in the veld clearing. Two against the dark.", correct: true,
+          right: 'The third knot. The blade. The cord falls away entirely. The Pocong stands free.' },
+        { text: "Iris's dining room — warm, but indoors, many at the table.", correct: false,
+          wrong: '"Closer. But that was a table indoors. I want the fire when there are no walls. Show me two in the open dark."' },
+        { text: "Muhammara orchard — grandmother and two boys.", correct: false,
+          wrong: '"Closer. But that had three, and daylight. I want only two, and the night around them."' },
+      ],
+    },
+  ];
+
+  const r   = riddles[knot - 1];
+  const rcs = r.choices.filter(c =>  c.correct).map(c => ({
+    text: c.text,
+    onSelect() {
+      showDialogue({
+        id: `pocong-knot${knot}-right`,
+        lines: [
+          { speaker: null,     text: c.right, italic: true },
+          { speaker: null,     text: 'Pip presses space at the Pocong\'s feet. The switchblade cuts clean. One cord falls.', italic: true },
+          { speaker: 'POCONG', text: '"Thank you."', italic: false },
+        ],
+        choices: null,
+        onEnd() {
+          if (knot === 1) { ch6State.knot1Cut = true; runPocongKnot(2); }
+          else if (knot === 2) { ch6State.knot2Cut = true; runPocongKnot(3); }
+          else { ch6State.knot3Cut = true; triggerPocongFreed(); }
+        },
+      });
+    },
+  }));
+  const wcs = r.choices.filter(c => !c.correct).map(c => ({
+    text: c.text,
+    onSelect() {
+      showDialogue({
+        id: `pocong-knot${knot}-wrong`,
+        lines: [{ speaker: 'POCONG', text: c.wrong, italic: false }],
+        choices: null,
+        onEnd: () => runPocongKnot(knot),
+      });
+    },
+  }));
+
+  showDialogue({
+    id: `pocong-knot${knot}`,
+    lines: [{ speaker: 'POCONG', text: r.riddle, italic: false }],
+    choices: [...rcs, ...wcs],
+    onEnd: null,
+  });
+}
+
+function triggerPocongFreed() {
+  ch6State.pocongFreed = true;
+  showDialogue({
+    id: 'ch6-pocong-freed',
+    lines: [
+      { speaker: null,    text: 'The cloth at his feet falls away entirely. He stands free. He looks down at his own unbound feet.', italic: true },
+      { speaker: 'POCONG', text: '"Oh. Oh, thank you. Take these. I have nothing else."', italic: false },
+      { speaker: null,    text: 'He reaches inside the folds of his shroud and pulls out a stack of large fresh banana leaves — somehow perfect through everything. He presses them into Pip\'s arms.', italic: true },
+      { speaker: null,    text: "As a final gesture of gratitude, he places his hand on Pip's small shoulder.", italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerInfection(),
+  });
+}
+
+function triggerInfection() {
+  ch6State.infectionReceived = true;
+  ch6State.bananaBundleHeld  = true;
+  showDialogue({
+    id: 'ch6-infection',
+    lines: [
+      { speaker: null, text: "The screen darkens at the edges. Brief flashing fragments: a figure looking out from inside cloth, hands tied, watching a family through a window who cannot hear him calling.", italic: true },
+      { speaker: null, text: "Running shapes in the dark, fleeing. A long stretch of being alone in a clearing at night while the world moved on.", italic: true },
+      { speaker: null, text: "The infection lands.", italic: true },
+      { speaker: null, text: "Pätu's ears go back. She hisses — not at the Pocong, but at the moment. She presses her body against Pip's leg, urgent: enough. let go. move on.", italic: true },
+      { speaker: 'POCONG', text: '"I\'m sorry. I\'m sorry. I didn\'t know it would do that. I\'m sorry."', italic: false },
+      { speaker: null, text: "He bows his head. He walks — walks, not hops — down the path toward the graves. Then between the trees. Then he is gone.", italic: true },
+      { speaker: null, text: "Pip is standing with an armful of banana leaves and a journal that has just gained a small dark section in its back pages.", italic: true },
+      { speaker: null, text: "Pätu meows urgently.", italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerInfectionSoothe(),
+  });
+}
+
+function triggerInfectionSoothe() {
+  showDialogue({
+    id: 'ch6-soothe',
+    lines: [
+      { speaker: null, text: "Pip sways. He looks down at Pätu. He breathes.", italic: true },
+      { speaker: null, text: "He thinks of a warm memory. He reaches for it, the way he reached for the Iris-family memory to send to the Mamlambo.", italic: true },
+    ],
+    choices: [
+      {
+        text: "Summon the potjie-child-fire memory — Johannes's parents at the fire in the veld clearing.",
+        onSelect() {
+          ch6State.flashbackSoothed = true;
+          showDialogue({
+            id: 'ch6-soothe-result',
+            lines: [
+              { speaker: null, text: 'The dark edges recede. The flashbacks quiet, for now.', italic: true },
+              { speaker: null, text: "They are quieter. Not gone. He carries them now.", italic: true },
+              { speaker: null, text: "Pätu meows, less urgently. She trots forward on the path. She is leading him back.", italic: true },
+            ],
+            choices: null,
+            onEnd() {
+              ch6State.arrivedKolonodale = true;
+              autoSave();
+              startTransition('ch6Kolonodale', 'fromLeft');
+            },
+          });
+        },
+      },
+      {
+        text: "Summon the iris-dining-room memory — the long table, the candles, her family.",
+        onSelect() {
+          ch6State.flashbackSoothed = true;
+          showDialogue({
+            id: 'ch6-soothe-result2',
+            lines: [
+              { speaker: null, text: "The dining room's warmth floods in. The dark edges thin.", italic: true },
+              { speaker: null, text: "He carries the Pocong's grief. But he also carries this. Pätu leads him forward.", italic: true },
+            ],
+            choices: null,
+            onEnd() {
+              ch6State.arrivedKolonodale = true;
+              autoSave();
+              startTransition('ch6Kolonodale', 'fromLeft');
+            },
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function triggerTirtaMeeting() {
+  ch6State.tirtaMet = true;
+  showDialogue({
+    id: 'ch6-tirta-meet',
+    lines: [
+      { speaker: null,   text: "Tirta — late twenties, ponytail, apron streaked with chili oil, dish towel over one shoulder — is in mild theatrical distress.", italic: true },
+      { speaker: 'TIRTA', text: '"Why. Why today. There were a hundred today. A hundred. They were perfect this morning. I leave for one hour to get the chicken and they turn into — what is this — origami? Paper? Aduh."', italic: false },
+      { speaker: null,   text: "She picks up a dried leaf, tries to bend it; it cracks. She drops it back on the pile.", italic: true },
+      { speaker: null,   text: "Pätu trots into the warung and sits in the middle of the floor with the dignity of someone arriving for an appointment.", italic: true },
+      { speaker: null,   text: "Tirta blinks at the cat. Looks up. Pip is in the doorway with an armful of fresh, perfect banana leaves.", italic: true },
+      { speaker: 'TIRTA', text: '"Are those — wait — are you — are those leaves real? You\'re a — okay. Okay! I have so many questions, but listen. Will you trade me those leaves for the best lemper you have ever eaten in your afterlife? Yes? Yes. Come in. Come in, come in, come in."', italic: false },
+    ],
+    choices: null,
+    onEnd() {
+      ch6State.bananaBundleHeld = false;
+      startCh6Cooking();
+    },
+  });
+}
+
+function startCh6Cooking() {
+  ch6State.cookingStep = 1;
+  showDialogue({
+    id: 'ch6-cooking-intro',
+    lines: [
+      { speaker: 'TIRTA', text: '"This is the body — glutinous rice, cooked with coconut milk and salt and pandan. Smell that. Bayi. The baby."', italic: false },
+      { speaker: 'TIRTA', text: '"And this is the heart — shredded chicken, cooked down with shallot, garlic, lemongrass, coriander, kemiri — candlenut — galangal, salt, sugar, tamarind, coconut milk."', italic: false },
+      { speaker: 'TIRTA', text: '"Like a love story — slow, slow, then suddenly tender."', italic: false },
+      { speaker: 'TIRTA', text: '"Now — the dress. The leaf. You pass it over the flame. Quick — just enough to soften. How long?"', italic: false },
+    ],
+    choices: null,
+    onEnd: () => showCh6CookingStep1(),
+  });
+}
+
+function showCh6CookingStep1() {
+  showDialogue({
+    id: 'ch6-step1',
+    lines: [{ speaker: 'TIRTA', text: '"How long do you pass the leaf over the flame?"', italic: false }],
+    choices: [
+      {
+        text: 'A quick pass — two or three seconds. Just soften it, not cook it.',
+        onSelect() {
+          showDialogue({
+            id: 'ch6-step1-right',
+            lines: [{ speaker: 'TIRTA', text: '"Yes! Quick, quick. You don\'t want to cook it — just soften. Like warming hands."', italic: false }],
+            choices: null, onEnd: () => showCh6CookingStep2(),
+          });
+        },
+      },
+      {
+        text: 'Hold it longer — you want it pliable, cook out any bitterness.',
+        onSelect() {
+          showDialogue({
+            id: 'ch6-step1-wrong',
+            lines: [{ speaker: 'TIRTA', text: '"Ah, no no — if you cook it, it tears. Quick pass. Two seconds. Try again."', italic: false }],
+            choices: null, onEnd: () => showCh6CookingStep1(),
+          });
+        },
+      },
+    ], onEnd: null,
+  });
+}
+
+function showCh6CookingStep2() {
+  ch6State.cookingStep = 2;
+  showDialogue({
+    id: 'ch6-step2',
+    lines: [{ speaker: 'TIRTA', text: '"You lay rice flat on the leaf. How thick?"', italic: false }],
+    choices: [
+      {
+        text: 'Thin and even — leave room for the chicken in the middle.',
+        onSelect() {
+          showDialogue({
+            id: 'ch6-step2-right',
+            lines: [{ speaker: 'TIRTA', text: '"Good! Room in the middle. The chicken is the heart — you don\'t want to bury it. Spread and leave center open."', italic: false }],
+            choices: null, onEnd: () => showCh6CookingStep3(),
+          });
+        },
+      },
+      {
+        text: 'Thick — more rice means more structure for folding.',
+        onSelect() {
+          showDialogue({
+            id: 'ch6-step2-wrong',
+            lines: [{ speaker: 'TIRTA', text: '"No no — too thick and it doesn\'t close. And where does the chicken go? Thin and even. Try."', italic: false }],
+            choices: null, onEnd: () => showCh6CookingStep2(),
+          });
+        },
+      },
+    ], onEnd: null,
+  });
+}
+
+function showCh6CookingStep3() {
+  ch6State.cookingStep = 3;
+  showDialogue({
+    id: 'ch6-step3',
+    lines: [
+      { speaker: 'TIRTA', text: '"Chicken in the middle. Now you fold. Fold the leaf over — long sides first — then fold the ends. Like a little gift. Then tie. How do you tie?"', italic: false },
+    ],
+    choices: [
+      {
+        text: 'Fold long sides first, then tuck and tie the short ends.',
+        onSelect() {
+          showDialogue({
+            id: 'ch6-step3-right',
+            lines: [
+              { speaker: 'TIRTA', text: '"There! There — you\'ve got it. See? You are a ghost natural. I have never said that sentence before."', italic: false },
+              { speaker: null,   text: "She is laughing. Pip is holding a small wrapped lemper of his own.", italic: true },
+            ],
+            choices: null,
+            onEnd() {
+              ch6State.cookingStep = 4;
+              addLemperRecipe();
+              autoSave();
+              triggerTirtaTaste();
+            },
+          });
+        },
+      },
+      {
+        text: 'Short ends first, then the long sides.',
+        onSelect() {
+          showDialogue({
+            id: 'ch6-step3-wrong',
+            lines: [{ speaker: 'TIRTA', text: '"Ah — no, like this — long sides first — no like this — there, there. Long sides first, then tuck the ends. Try again."', italic: false }],
+            choices: null, onEnd: () => showCh6CookingStep3(),
+          });
+        },
+      },
+    ], onEnd: null,
+  });
+}
+
+function triggerTirtaTaste() {
+  showDialogue({
+    id: 'ch6-taste-offer',
+    lines: [
+      { speaker: 'TIRTA', text: '"Eat. Tell me what you see."', italic: false },
+      { speaker: null,   text: 'She unwraps a steamed lemper and passes it to Pip.', italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      showCinematic('lemper-family-courtyard', () => {
+        ch6State.tasteMemorySeen = true;
+        autoSave();
+        showDialogue({
+          id: 'ch6-after-taste',
+          lines: [
+            { speaker: 'TIRTA', text: '"You saw it?"', italic: false },
+            { speaker: 'PIP',   text: '"Your grandmother. The courtyard. The boxes — they were going to an orphanage."', italic: false },
+            { speaker: 'TIRTA', text: '"Every two months, she did this. For years. I do it once a month. Smaller than her. But — someone\'s child is hungry today."', italic: false },
+            { speaker: null,   text: 'She picks up another leaf.', italic: true },
+          ],
+          choices: null,
+          onEnd: () => triggerTirtaFarewell(),
+        });
+      });
+    },
+  });
+}
+
+function triggerTirtaFarewell() {
+  showDialogue({
+    id: 'ch6-tirta-farewell',
+    lines: [
+      { speaker: null,   text: "Tirta gives Pip a small bundle of unused banana leaves.", italic: true },
+      { speaker: 'TIRTA', text: '"In case you meet another chef. Pass it on."', italic: false },
+      { speaker: 'TIRTA', text: '"Come back if you find your way back, ya? I have other recipes. Many. Many. And I have so many more questions for you. But next time. Next time."', italic: false },
+    ],
+    choices: null,
+    onEnd() {
+      ch6State.bananaBundleHeld = true;   // leftover leaves for Henrik
+      ch6State.returningFromTirta = true;
+      autoSave();
+      showDialogue({
+        id: 'ch6-walk-back',
+        lines: [
+          { speaker: null, text: "A flashback flickers in on the walk back — the figure in the cloth, the family on the wrong side of the window.", italic: true },
+          { speaker: null, text: "Pip pauses. He summons the lamp-lit courtyard from the lemper memory. The long table, the many hands.", italic: true },
+          { speaker: null, text: "The flashback fades.", italic: true },
+          { speaker: null, text: "He keeps walking. Pätu beside him. Walk left to return to the ship.", italic: true },
+        ],
+        choices: null, onEnd: null,
+      });
+    },
+  });
+}
+
+function triggerErikPhotoBeat() {
+  ch6State.erikPhotoSeen = true;
+  showDialogue({
+    id: 'ch6-erik-photo',
+    lines: [
+      { speaker: null,    text: "Henrik is alone at the prep counter, between dinner services. Hands flat on the wood. Looking at something in his hand.", italic: true },
+      { speaker: null,    text: "As Pip enters, Henrik startles slightly. The thing in his hand falls — a small photograph — and slides face-down across the counter toward Pip.", italic: true },
+      { speaker: null,    text: "Pip floats it back up to him. He looks at it on the way.", italic: true },
+      { speaker: null,    text: "A boy of eleven. Blond hair, blue eyes, fair skin, a slight gap between his front teeth, an open expression — caught laughing. Standing in a kitchen Pip does not recognize, holding a wooden spoon almost too big for him.", italic: true },
+      { speaker: null,    text: "Pip hands it to Henrik. He does not ask.", italic: true },
+      { speaker: null,    text: "Henrik takes it. He looks at it a moment longer. He puts it in a drawer.", italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerHenriettaBananaBeat(),
+  });
+}
+
+function triggerHenriettaBananaBeat() {
+  ch6State.henriettaBananaBeat = true;
+  showDialogue({
+    id: 'ch6-henrik-banana',
+    lines: [
+      { speaker: 'HENRIK', text: '"Henrietta liked banana. Strange thing. Norwegian woman, banana lover. She used to put it in things she shouldn\'t. Pancakes. Yes, fine. But also fish stews. Once or twice. We had a —"', italic: false },
+      { speaker: null,    text: "The kitchen radio crackles to life. The second cook calling for him, dinner prep starting up. Henrik exhales.", italic: true },
+      { speaker: 'HENRIK', text: '"Another day. Tell me about your port."', italic: false },
+      { speaker: 'PIP',   text: '"Lemper. A young woman named Tirta. She talked the whole time and made a hundred of them."', italic: false },
+      { speaker: 'HENRIK', text: '"Good. Good."', italic: false },
+    ],
+    choices: null,
+    onEnd() {
+      // Give Henrik the banana leaves
+      ch6State.bananaBundleHeld = false;
+      showDialogue({
+        id: 'ch6-henrik-leaves',
+        lines: [
+          { speaker: null,    text: "Pip offers him the bundle of leftover banana leaves.", italic: true },
+          { speaker: 'HENRIK', text: '"Ah. Smart. These keep, you know. We will use them."', italic: false },
+          { speaker: null,    text: "He tucks them away. He nods at Pip — good work — and turns to the radio.", italic: true },
+          { speaker: null,    text: "At the porthole: the harbor lights of Kolonodale fading. The open sea ahead.", italic: true },
+        ],
+        choices: null,
+        onEnd() {
+          ch6State.chapter6Complete = true;
+          autoSave();
+          showChapter6End();
+        },
+      });
+    },
+  });
+}
+
+function showChapter6End() {
+  triggerDeckStub();   // Ch6→Ch7 transition (wired when Ch7 is built)
+}
+
+function addLemperRecipe() {
+  if (notebook.items.some(i => i.id === 'recipe-lemper')) return;
+  notebook.items.push({
+    id:         'recipe-lemper',
+    name:       "Tirta's lemper ayam",
+    annotation: "Sticky rice (glutinous, coconut milk, salt, pandan). Chicken filling: shallot, garlic, lemongrass, coriander, kemiri, galangal, salt, sugar, tamarind, coconut milk — slow-cooked till tender. Wrap in banana leaf (flame-softened), fold long sides first, tie. Steam.",
+    kind:       'recipe',
+    sprite:     'lemper',
+  });
+  renderNotebookItems();
+  autoSave();
+}
+
+/* ----------------------------------------------------------------
+   Ch6 cinematic draw functions
+   ---------------------------------------------------------------- */
+
+function drawLemperFamilyCourtyardCinematic(now) {
+  const t = now / 1000;
+
+  ctx.fillStyle = '#040606';
+  ctx.fillRect(0, 0, W, H);
+
+  // Night courtyard — hanging lamp warmth
+  const lampG = ctx.createRadialGradient(W / 2, 50, 0, W / 2, 50, 200);
+  lampG.addColorStop(0,   'rgba(255,210,80,0.40)');
+  lampG.addColorStop(0.4, 'rgba(180,130,30,0.16)');
+  lampG.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = lampG;
+  ctx.fillRect(0, 0, W, H);
+
+  // Hanging lamps (3)
+  for (let l = 0; l < 3; l++) {
+    const lx   = 90 + l * 140;
+    ctx.fillStyle = '#e0c060';
+    ctx.fillRect(lx - 8, 22, 16, 20);
+    ctx.fillStyle = '#f0e090';
+    ctx.fillRect(lx - 6, 24, 12, 16);
+    ctx.fillStyle = '#201808';
+    ctx.fillRect(lx, 0, 2, 24);
+    // Warm glow
+    const glA = 0.14 + Math.sin(t * 1.5 + l * 2) * 0.04;
+    ctx.fillStyle = `rgba(255,210,80,${glA.toFixed(2)})`;
+    ctx.beginPath();
+    ctx.arc(lx, 40, 30, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Long table (banana leaves covering it)
+  ctx.fillStyle = '#2a4018';
+  ctx.fillRect(20, 110, W - 40, 6);
+  ctx.fillStyle = '#304820';
+  ctx.fillRect(20, 116, W - 40, 50);
+
+  // Wrapped lemper stacked in boxes (center of table)
+  ctx.fillStyle = '#384020';
+  ctx.fillRect(W / 2 - 30, 108, 60, 18);
+  ctx.fillStyle = '#2a3818';
+  for (let lp = 0; lp < 4; lp++) {
+    ctx.fillRect(W / 2 - 24 + lp * 12, 106, 10, 5);
+  }
+  // Box label
+  ctx.fillStyle = '#e8e0c8';
+  ctx.fillRect(W / 2 - 22, 112, 44, 8);
+
+  // People at table (silhouettes)
+  const people = [[60,70],[130,66],[200,72],[280,68],[360,70],[430,66]];
+  people.forEach(([px, ph], i) => {
+    ctx.fillStyle = '#201808';
+    ctx.fillRect(px - 8, 110 - ph, 16, ph);
+    ctx.fillStyle = '#c89868';
+    ctx.fillRect(px - 6, 110 - ph - 13, 12, 14);
+    // Working hands
+    ctx.fillStyle = '#c89868';
+    ctx.fillRect(px - 10, 110 - 28, 4, 8);
+    ctx.fillRect(px + 6,  110 - 28, 4, 8);
+  });
+
+  // Tirta (young, highlighted) — second from left
+  ctx.fillStyle = '#2a3830';
+  ctx.fillRect(122, 44, 16, 66);
+  ctx.fillStyle = '#c89868';
+  ctx.fillRect(125, 30, 12, 14);
+  // Grandmother at head of table
+  ctx.fillStyle = '#3a2018';
+  ctx.fillRect(52, 40, 16, 70);
+  ctx.fillStyle = '#c89868';
+  ctx.fillRect(55, 26, 12, 14);
+  // Headscarf
+  ctx.fillStyle = '#2a2840';
+  ctx.fillRect(53, 22, 14, 8);
+
+  // Small cousins (shorter)
+  const cousins = [[380, 50],[420, 46]];
+  cousins.forEach(([cx2, ch2]) => {
+    ctx.fillStyle = '#201808';
+    ctx.fillRect(cx2 - 5, 110 - ch2, 10, ch2);
+    ctx.fillStyle = '#c89868';
+    ctx.fillRect(cx2 - 4, 110 - ch2 - 10, 8, 10);
+  });
+
+  ctx.fillStyle = 'rgba(220,195,100,0.88)';
+  ctx.font = 'italic 11px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(t < 5 ? "Someone else's child is also a child." : "A kind of family. A small one. But a real one.", W / 2, H - 26);
+  ctx.textAlign = 'left';
+}
+
+/* ----------------------------------------------------------------
+   Ch6 character draw functions
+   ---------------------------------------------------------------- */
+
+/* Pocong — tall shrouded figure, bound at feet, hops in small panicked jumps. */
+function drawPocong(sx, groundY, now, knotsLeft) {
+  const t   = now / 1000;
+  const hop = knotsLeft > 0 ? Math.abs(Math.sin(t * 0.8) * 4) : 0;  // hops when bound
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy - Math.round(hop));
+  ctx.globalAlpha = 0.92;
+
+  // White burial cloth body
+  ctx.fillStyle = '#e8e8e0';
+  ctx.fillRect(-14, -90, 28, 90);
+  // Head cloth (visible at top)
+  ctx.fillStyle = '#f0f0e8';
+  ctx.fillRect(-12, -102, 24, 18);
+  ctx.fillStyle = '#d8d8d0';
+  ctx.fillRect(-14, -92, 28, 8);
+
+  // Closed eyes (closed, flickering open slightly)
+  const eyeOpen = Math.max(0, Math.sin(t * 0.3) * 0.5);
+  ctx.fillStyle = '#c0c0b8';
+  ctx.fillRect(-7, -96, 5, 2);
+  ctx.fillRect(2,  -96, 5, 2);
+  if (eyeOpen > 0.2) {
+    ctx.fillStyle = '#1a1810';
+    ctx.fillRect(-6, -96, 4, Math.round(eyeOpen * 3));
+    ctx.fillRect(3,  -96, 4, Math.round(eyeOpen * 3));
+  }
+
+  // Knot ropes at feet (count visible = knotsLeft)
+  if (knotsLeft > 0) {
+    ctx.fillStyle = '#8a7850';
+    for (let k = 0; k < knotsLeft; k++) {
+      ctx.fillRect(-16 + k * 8, -8, 32 - k * 8, 4);
+      ctx.fillRect(-14 + k * 6, -4, 28 - k * 6, 3);
+      ctx.fillRect(-10 + k * 4, 0,  20 - k * 4, 2);
+    }
+  }
+
+  // Wet-eyes glow (very subtle, if knotsLeft > 0)
+  if (knotsLeft > 0) {
+    const eyeA = 0.06 + Math.sin(t * 2) * 0.03;
+    ctx.fillStyle = `rgba(160,200,220,${eyeA.toFixed(2)})`;
+    ctx.fillRect(-7, -98, 5, 4);
+    ctx.fillRect(2,  -98, 5, 4);
+  }
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+/* Tirta — young Indonesian woman, ponytail, apron, dish towel. */
+function drawTirta(sx, groundY, now, speaking) {
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.6) * 0.8) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Legs
+  ctx.fillStyle = '#1a1208';
+  ctx.fillRect(-5, -26, 5, 26);
+  ctx.fillRect(0,  -26, 5, 26);
+
+  // Apron (chili-oil streaked)
+  ctx.fillStyle = '#e8e0c8';
+  ctx.fillRect(-7, -54, 14, 30);
+  ctx.fillStyle = '#c87030';
+  ctx.fillRect(-4, -48, 4, 3);   // chili streak
+  ctx.fillRect(2,  -40, 3, 4);
+
+  // Shirt (under apron)
+  ctx.fillStyle = '#3a3028';
+  ctx.fillRect(-9, -56, 18, 32);
+
+  // Arms
+  ctx.fillStyle = '#c89868';
+  ctx.fillRect(-12, -54, 4, 14);
+  ctx.fillRect(8,   -54, 4, 14);
+  // Dish towel on shoulder
+  ctx.fillStyle = '#c8c0a0';
+  ctx.fillRect(-14, -56, 4, 16);
+
+  // Neck
+  ctx.fillStyle = '#c89868';
+  ctx.fillRect(-2, -58, 4, 4);
+
+  const ht = -68 + bob;
+  ctx.fillStyle = '#c89868';
+  ctx.fillRect(-6, ht, 12, 12);
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-3, ht + 3, 2, 2);
+  ctx.fillRect(2,  ht + 3, 2, 2);
+  ctx.fillStyle = speaking ? '#7a2810' : '#6a4030';
+  ctx.fillRect(-2, ht + 7, 4, 1);
+
+  // Ponytail (dark hair, tied back)
+  ctx.fillStyle = '#1a0e06';
+  ctx.fillRect(-6, ht - 3, 14, 6);
+  ctx.fillRect(6,  ht - 1, 2, 14);   // ponytail
+  ctx.fillRect(6,  ht + 12, 4, 3);   // tie
+
+  ctx.restore();
+}
+
+/* Echo tarsier — small, enormous reflective eyes, clings to ceiling/pipes. */
+function drawEchoTarsier(sx, sy, now, idx) {
+  const t   = now / 1000;
+  const vis = 0.20 + Math.sin(t * 0.8 + idx * 2.5) * 0.12;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(sy);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = Math.max(0.08, vis);
+  ctx.fillStyle = '#b8a868';
+
+  // Tiny body (8px)
+  ctx.fillRect(-3, -3, 6, 6);
+  ctx.fillRect(-2, -6, 4, 4);   // head
+
+  // HUGE eyes (the tarsier's signature)
+  const eyeG1 = ctx.createRadialGradient(-2, -5, 0, -2, -5, 3);
+  eyeG1.addColorStop(0, 'rgba(200,230,255,0.60)');
+  eyeG1.addColorStop(1, 'rgba(60,100,140,0.20)');
+  ctx.fillStyle = eyeG1;
+  ctx.beginPath();
+  ctx.arc(-2, -5, 3, 0, Math.PI * 2);
+  ctx.fill();
+  const eyeG2 = ctx.createRadialGradient(2, -5, 0, 2, -5, 3);
+  eyeG2.addColorStop(0, 'rgba(200,230,255,0.60)');
+  eyeG2.addColorStop(1, 'rgba(60,100,140,0.20)');
+  ctx.fillStyle = eyeG2;
+  ctx.beginPath();
+  ctx.arc(2, -5, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Pupils (dark, blinking)
+  const blink = Math.sin(t * 0.4 + idx * 3) > 0.85;
+  if (!blink) {
+    ctx.fillStyle = '#0a0808';
+    ctx.beginPath();
+    ctx.arc(-2, -5, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(2, -5, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Long fingers (clinging)
+  ctx.fillStyle = '#b8a860';
+  ctx.fillRect(-5, -2, 2, 4);
+  ctx.fillRect(4,  -2, 2, 4);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+/* ----------------------------------------------------------------
+   Ch6 room draw functions
+   ---------------------------------------------------------------- */
+
+function drawCh6LowerDeck(camX, now) {
+  const t = now / 1000;
+
+  // Humid lower deck — warmer, slightly green-tinted
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#060808');
+  wallG.addColorStop(0.7, '#0a0c08');
+  wallG.addColorStop(1,   '#080c08');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#080a08';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#0c100a';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Dripping condensation on brass pipes
+  const dripA = 0.06 + Math.sin(t * 0.6) * 0.02;
+  ctx.fillStyle = `rgba(100,140,100,${dripA.toFixed(2)})`;
+  for (let d = 0; d < 6; d++) {
+    const dx = 50 + d * 72;
+    ctx.fillRect(Math.round(dx - camX * 0.8) % W, 40, 2, FLOOR_Y - 40);
+  }
+
+  // Horizontal brass pipe along ceiling
+  ctx.fillStyle = '#3a3010';
+  ctx.fillRect(0, 18, W, 4);
+  // Vertical pipes (supports)
+  for (let p = 0; p < 8; p++) {
+    const px = Math.round(60 + p * 80 - camX * 0.7) % W;
+    ctx.fillStyle = '#3a3010';
+    ctx.fillRect(px, 0, 4, FLOOR_Y);
+  }
+
+  // Flickering light
+  const flickA = 0.08 + Math.sin(t * 3.5) * 0.04;
+  ctx.fillStyle = `rgba(200,200,160,${flickA.toFixed(2)})`;
+  for (let li = 0; li < 4; li++) {
+    const lx = 100 + li * 120;
+    const lsx = Math.round(lx - camX * 0.8);
+    if (lsx > -20 && lsx < W + 20) {
+      ctx.fillRect(lsx - 3, 16, 6, 4);
+    }
+  }
+
+  // Echo tarsiers on ceiling and pipes
+  const tarsierPositions = [
+    [80, 22], [200, 28], [320, 22], [440, 30], [560, 24], [650, 22],
+  ];
+  tarsierPositions.forEach(([tx2, ty], idx) => {
+    const tsx = Math.round(tx2 - camX);
+    if (tsx < -20 || tsx > W + 20) return;
+    // Draw multiple tarsiers near each position (groups of 2-3)
+    for (let g = 0; g < 3; g++) {
+      drawEchoTarsier(tsx + g * 10 - 10, ty + g * 3, now, idx * 3 + g);
+    }
+  });
+
+  // Crates and boxes
+  [40, 180, 380, 560].forEach(cx2 => {
+    const csx = Math.round(cx2 - camX);
+    if (csx < -30 || csx > W + 30) return;
+    ctx.fillStyle = '#1a1408';
+    ctx.fillRect(csx - 16, FLOOR_Y - 32, 32, 32);
+    ctx.fillStyle = '#241a0e';
+    ctx.fillRect(csx - 14, FLOOR_Y - 30, 28, 28);
+  });
+
+  // Humidity haze
+  const hazeA = 0.04 + Math.sin(t * 0.3) * 0.01;
+  ctx.fillStyle = `rgba(100,140,100,${hazeA.toFixed(2)})`;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+}
+
+function drawCh6BananaGrove(camX, now) {
+  const t = now / 1000;
+
+  // Golden hour light fading to dusk through broad leaves
+  const skyG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  skyG.addColorStop(0,   '#120c04');
+  skyG.addColorStop(0.4, '#1a1006');
+  skyG.addColorStop(1,   '#0e0c04');
+  ctx.fillStyle = skyG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Dusk sky peek
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(0, 0, W, 20);
+  ctx.fillStyle = '#c84810';
+  ctx.fillRect(0, 0, W, 4);
+
+  ctx.fillStyle = '#0c0c08';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#181408';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Banana tree trunks + large leaves
+  const trees = [50, 160, 280, 380, 480, 580, 650];
+  trees.forEach((tx2, idx) => {
+    const tsx = Math.round(tx2 - camX * 0.8);
+    if (tsx < -80 || tsx > W + 80) return;
+    // Trunk
+    ctx.fillStyle = '#1e2a10';
+    ctx.fillRect(tsx - 8, FLOOR_Y - 120, 16, 120);
+    ctx.fillStyle = '#283a18';
+    ctx.fillRect(tsx - 6, FLOOR_Y - 118, 12, 116);
+    // Large banana leaves (two)
+    const sway = Math.sin(t * 0.5 + idx) * 4;
+    ctx.fillStyle = '#1a3010';
+    // Left leaf
+    ctx.save();
+    ctx.translate(tsx, FLOOR_Y - 80);
+    ctx.rotate((-0.5 + Math.sin(t * 0.3 + idx) * 0.05) + sway * 0.01);
+    ctx.fillRect(-60, -4, 60, 12);
+    ctx.restore();
+    // Right leaf
+    ctx.save();
+    ctx.translate(tsx, FLOOR_Y - 100);
+    ctx.rotate(0.4 + Math.sin(t * 0.4 + idx + 1) * 0.04);
+    ctx.fillRect(0, -4, 70, 10);
+    ctx.restore();
+    ctx.fillStyle = '#243818';
+    ctx.fillRect(tsx - 4, FLOOR_Y - 120, 8, 10);
+  });
+
+  // Old graves at edges
+  const graves = [20, 420];
+  graves.forEach(gx => {
+    const gsx = Math.round(gx - camX * 0.6);
+    if (gsx < -30 || gsx > W + 30) return;
+    ctx.fillStyle = '#201a14';
+    ctx.fillRect(gsx - 10, FLOOR_Y - 28, 20, 28);
+    ctx.fillStyle = '#2a2418';
+    ctx.fillRect(gsx - 1, FLOOR_Y - 38, 2, 12);
+    ctx.fillRect(gsx - 4, FLOOR_Y - 34, 8, 2);
+  });
+
+  // Pocong (world-x 260)
+  if (ch6State.pocongMet && !ch6State.pocongFreed) {
+    const pocSX = Math.round(260 - camX);
+    if (pocSX > -30 && pocSX < W + 30) {
+      const knotsLeft = (ch6State.knot1Cut ? 0 : 1) + (ch6State.knot2Cut ? 0 : 1) + (ch6State.knot3Cut ? 0 : 1);
+      drawPocong(pocSX, FLOOR_Y, now, knotsLeft);
+    }
+  }
+
+  // Dappled light through leaves
+  const dapple = 0.04 + Math.sin(t * 0.7) * 0.02;
+  ctx.fillStyle = `rgba(255,200,80,${dapple.toFixed(2)})`;
+  for (let d = 0; d < 6; d++) {
+    const dx  = (d * 80 + Math.sin(t * 0.4 + d) * 10) % W;
+    const dy  = 20 + (d * 30) % (FLOOR_Y - 40);
+    ctx.fillRect(Math.round(dx), Math.round(dy), 8, 4);
+  }
+}
+
+function drawCh6Kolonodale(camX, now) {
+  const t = now / 1000;
+
+  // Early evening — golden fading to warm charcoal
+  const skyG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  skyG.addColorStop(0,   '#100804');
+  skyG.addColorStop(0.5, '#180e06');
+  skyG.addColorStop(1,   '#100a04');
+  ctx.fillStyle = skyG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#0e0a06';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#181008';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Wooden stilt houses — coastal texture
+  const houses = [[0,90,80],[85,80,75],[170,95,85],[260,85,70],[345,92,80],[430,78,80],[520,88,75]];
+  houses.forEach(([hx, hh, hw]) => {
+    const hsx = Math.round(hx - camX * 0.85);
+    if (hsx + hw < 0 || hsx > W) return;
+    ctx.fillStyle = '#2a1808';
+    ctx.fillRect(hsx, FLOOR_Y - hh, hw, hh);
+    ctx.fillStyle = '#3a2010';
+    ctx.fillRect(hsx, FLOOR_Y - hh, hw, 4);
+    // Stilts
+    ctx.fillStyle = '#201008';
+    ctx.fillRect(hsx + 8, FLOOR_Y - 20, 6, 20);
+    ctx.fillRect(hsx + hw - 14, FLOOR_Y - 20, 6, 20);
+    // Window warm light
+    ctx.fillStyle = '#e09040';
+    ctx.fillRect(hsx + 14, FLOOR_Y - hh + 20, 18, 14);
+    ctx.fillStyle = '#f0b050';
+    ctx.fillRect(hsx + 16, FLOOR_Y - hh + 22, 14, 10);
+  });
+
+  // Cooking smoke / charcoal smell (ambient wisps)
+  for (let s = 0; s < 4; s++) {
+    const sa  = 0.05 + Math.sin(t * 0.6 + s * 2) * 0.02;
+    const sx2 = (80 + s * 130 + Math.sin(t * 0.3 + s) * 8) % W;
+    ctx.fillStyle = `rgba(80,60,40,${sa.toFixed(2)})`;
+    ctx.fillRect(Math.round(sx2 - camX * 0.2), 30, 4, 30);
+  }
+
+  // Coconut palms (far bg parallax)
+  const palms = [120, 300, 480, 620];
+  palms.forEach(px => {
+    const psx = Math.round(px - camX * 0.15);
+    if (psx < -20 || psx > W + 20) return;
+    ctx.fillStyle = '#1a1c08';
+    ctx.fillRect(psx - 2, FLOOR_Y - 80, 4, 80);
+    ctx.fillStyle = '#243010';
+    ctx.fillRect(psx - 18, FLOOR_Y - 85, 36, 10);
+    ctx.fillRect(psx - 14, FLOOR_Y - 90, 28, 8);
+  });
+
+  // Children (faint silhouettes in street)
+  [160, 310].forEach(cx2 => {
+    const csx = Math.round(cx2 - camX);
+    if (csx < -20 || csx > W + 20) return;
+    ctx.fillStyle = '#1a1008';
+    ctx.fillRect(csx - 4, FLOOR_Y - 26, 8, 26);
+    ctx.fillStyle = '#c89060';
+    ctx.fillRect(csx - 3, FLOOR_Y - 35, 6, 10);
+  });
+}
+
+function drawCh6Warung(camX, now) {
+  const t = now / 1000;
+
+  // Open-front warung — warm charcoal grill glow
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#0c0804');
+  wallG.addColorStop(0.7, '#181008');
+  wallG.addColorStop(1,   '#0e0c06');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#0e0a06';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#1a1008';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Thatched roof (texture at top)
+  ctx.fillStyle = '#281c0a';
+  ctx.fillRect(0, 0, W, 24);
+  for (let tx2 = 0; tx2 < W; tx2 += 8) {
+    ctx.fillStyle = tx2 % 16 === 0 ? '#201808' : '#301e0a';
+    ctx.fillRect(tx2, 0, 7, 22);
+  }
+
+  // Charcoal grill (world-x 120)
+  const grillSX = Math.round(120 - camX);
+  if (grillSX > -40 && grillSX < W + 40) {
+    ctx.fillStyle = '#2a1408';
+    ctx.fillRect(grillSX - 22, FLOOR_Y - 34, 44, 34);
+    ctx.fillStyle = '#1a0c04';
+    ctx.fillRect(grillSX - 18, FLOOR_Y - 30, 36, 26);
+    // Grill lines
+    ctx.fillStyle = '#3a2010';
+    for (let g = 0; g < 4; g++) {
+      ctx.fillRect(grillSX - 16 + g * 10, FLOOR_Y - 28, 2, 22);
+    }
+    // Hot coals glow
+    const coA = 0.12 + Math.sin(t * 2.1) * 0.05;
+    ctx.fillStyle = `rgba(200,80,10,${coA.toFixed(2)})`;
+    ctx.fillRect(grillSX - 16, FLOOR_Y - 14, 32, 8);
+    ctx.fillStyle = `rgba(255,120,20,${(coA * 0.5).toFixed(2)})`;
+    ctx.fillRect(grillSX - 10, FLOOR_Y - 18, 20, 6);
+  }
+
+  // Counter / prep surface (world-x 230-430)
+  const cL = Math.round(230 - camX), cR = Math.round(430 - camX);
+  if (cR > 0 && cL < W) {
+    ctx.fillStyle = '#3a2010';
+    ctx.fillRect(cL, FLOOR_Y - 30, cR - cL, 6);
+    ctx.fillStyle = '#281808';
+    ctx.fillRect(cL, FLOOR_Y - 24, cR - cL, 24);
+    // Dried banana leaves (old pile)
+    ctx.fillStyle = '#4a3018';
+    ctx.fillRect(cL + 10, FLOOR_Y - 34, 60, 6);
+    // Bowl of sticky rice
+    ctx.fillStyle = '#c8c0a0';
+    ctx.fillRect(cL + 90, FLOOR_Y - 36, 30, 12);
+    ctx.fillStyle = '#e8e8d8';
+    ctx.fillRect(cL + 92, FLOOR_Y - 34, 26, 8);
+    // Shredded chicken
+    ctx.fillStyle = '#c89060';
+    ctx.fillRect(cL + 136, FLOOR_Y - 34, 28, 10);
+    // Fresh banana leaves (Pocong's gift)
+    if (ch6State.bananaBundleHeld) {
+      ctx.fillStyle = '#2a4018';
+      ctx.fillRect(cL + 176, FLOOR_Y - 38, 50, 10);
+      ctx.fillStyle = '#304820';
+      ctx.fillRect(cL + 178, FLOOR_Y - 36, 46, 8);
+    }
+  }
+
+  // Iron pan on grill
+  ctx.fillStyle = '#181010';
+  ctx.fillRect(Math.round(110 - camX), FLOOR_Y - 38, 26, 6);
+
+  // Tirta character
+  if (ch6State.tirtaMet) {
+    const tSX = Math.round(200 - camX);
+    if (tSX > -30 && tSX < W + 30) {
+      const tirtaSpeaking = dialogue.active && dialogue.node && dialogue.node.lines &&
+        dialogue.node.lines[dialogue.lineIndex] &&
+        dialogue.node.lines[dialogue.lineIndex].speaker === 'TIRTA';
+      drawTirta(tSX, FLOOR_Y, now, tirtaSpeaking);
+    }
+    // Pätu on stool
+    drawPatu(Math.round(310 - camX), FLOOR_Y - 14, now);
+  }
+
+  // Racks of pre-prepared ingredients (world-x 440-500)
+  const rSX = Math.round(440 - camX);
+  if (rSX > -40 && rSX < W + 40) {
+    ctx.fillStyle = '#2a1a08';
+    ctx.fillRect(rSX, 50, 4, FLOOR_Y - 50);
+    for (let r = 0; r < 4; r++) {
+      ctx.fillStyle = '#2a1a08';
+      ctx.fillRect(rSX, 50 + r * 32, 50, 4);
+      // Bowl on each shelf
+      ctx.fillStyle = '#c8c0a0';
+      ctx.fillRect(rSX + 10, 46 + r * 32, 20, 8);
+    }
+  }
+}
+
+/* ----------------------------------------------------------------
+   Ch6 room definitions
+   ---------------------------------------------------------------- */
+
+rooms.ch6LowerDeck = {
+  width:         700,
+  pipMaxX:       660,
+  pipMinX:       30,
+  pipEntryX:     60,
+  portholeScene: null,
+  objects:       ch6LowerDeckObjects,
+  collectibles:  [],
+  draw:          drawCh6LowerDeck,
+};
+
+rooms.ch6BananaGrove = {
+  width:         500,
+  pipMaxX:       460,
+  pipMinX:       20,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch6GroveObjects,
+  collectibles:  [],
+  draw:          drawCh6BananaGrove,
+};
+
+rooms.ch6Kolonodale = {
+  width:         650,
+  pipMaxX:       610,
+  pipMinX:       30,
+  pipEntryX:     60,
+  portholeScene: null,
+  objects:       ch6KolonodalObjects,
+  collectibles:  [],
+  draw:          drawCh6Kolonodale,
+};
+
+rooms.ch6Warung = {
+  width:         540,
+  pipMaxX:       500,
+  pipMinX:       20,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch6WarungObjects,
+  collectibles:  [],
+  draw:          drawCh6Warung,
 };
 
 /* ================================================================

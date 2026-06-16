@@ -1503,6 +1503,7 @@ function buildSaveObject() {
     cabinState:      { ...cabinState },
     chapterState:    { ...chapterState },
     ch2State:        { ...ch2State },
+    ch3State:        { ...ch3State },
     patuAboard:      patuState.aboard,
     darkCorridor:    { lit: darkCorridor.lit, cartRemoved: darkCorridor.cartRemoved, cartX: darkCorridor.cartX },
     cinematicPlayed: Array.from(cinematic.played),
@@ -1559,6 +1560,7 @@ function applySave(data) {
   Object.assign(cabinState,   data.cabinState);
   Object.assign(chapterState, data.chapterState);
   if (data.ch2State)   Object.assign(ch2State,   data.ch2State);
+  if (data.ch3State)   Object.assign(ch3State,   data.ch3State);
   if (data.patuAboard) patuState.aboard = data.patuAboard;
 
   // Restore dark corridor state (additive — missing fields default to initial values)
@@ -3266,6 +3268,27 @@ function update(dt) {
                && ch2State.sincerityDone && ch2State.altarSeen) {
       // Leave cottage after sincerity puzzle + altar scene
       startTransition('ch2Kasmu', 'fromRight', rooms.ch2Kasmu.pipMaxX - 40);
+
+    // ---- Ch3 room transitions ----
+    } else if (currentRoom === 'ch3LowerDeck' && pip.x >= rooms.ch3LowerDeck.pipMaxX - 1) {
+      ch3State.arrivedDockyard = true;
+      startTransition('ch3Dockyard', 'fromLeft');
+    } else if (currentRoom === 'ch3Dockyard' && pip.x <= rooms.ch3Dockyard.pipMinX + 1) {
+      startTransition('ch3LowerDeck', 'fromRight', rooms.ch3LowerDeck.pipMaxX - 40);
+    } else if (currentRoom === 'ch3Dockyard' && pip.x >= rooms.ch3Dockyard.pipMaxX - 1
+               && ch3State.shuckDefeated && ch3State.edieMet) {
+      ch3State.arrivedBevois = true;
+      startTransition('ch3BevoisStreet', 'fromLeft');
+    } else if (currentRoom === 'ch3BevoisStreet' && pip.x <= rooms.ch3BevoisStreet.pipMinX + 1
+               && ch3State.sandyFarewellSeen) {
+      startTransition('ch3Dockyard', 'fromRight', rooms.ch3Dockyard.pipMaxX - 40);
+    } else if (currentRoom === 'ch3BevoisStreet' && pip.x >= rooms.ch3BevoisStreet.pipMaxX - 1
+               && ch3State.arrivedBevois) {
+      ch3State.arrivedKitchen = true;
+      startTransition('ch3Kitchen', 'fromLeft');
+    } else if (currentRoom === 'ch3Kitchen' && pip.x <= rooms.ch3Kitchen.pipMinX + 1
+               && ch3State.sandyFarewellSeen) {
+      startTransition('ch3BevoisStreet', 'fromRight', rooms.ch3BevoisStreet.pipMaxX - 40);
     }
   }
 
@@ -3357,6 +3380,55 @@ function update(dt) {
     const targetX = pip.x - 40;
     patuState.x += (targetX - patuState.x) * 0.04;
     patuState.facing = pip.body.facing;
+  }
+
+  // Ch3: man-from-sea trigger
+  if (currentRoom === 'ch3Dockyard' && ch3State.chapter3Active
+      && !ch3State.manFromSeaSeen && !dialogue.active && !cinematic.active) {
+    if (pip.x > 320 && pip.x < 480) {
+      triggerManFromSea();
+    }
+  }
+
+  // Ch3: Shuck puzzle activation
+  if (currentRoom === 'ch3Dockyard' && ch3State.manFromSeaSeen
+      && !ch3State.shuckPuzzleStarted && !ch3State.shuckDefeated
+      && !dialogue.active && !cinematic.active) {
+    if (pip.x > 530) {
+      startShuckPuzzle();
+    }
+  }
+
+  // Ch3: Shuck puzzle update (runs each frame during puzzle)
+  if (ch3State.shuckPuzzleStarted && !ch3State.shuckDefeated) {
+    updateShuckPuzzle(dt);
+    // Block Pip from advancing past the Shuck zone
+    if (pip.x > 570) pip.x = 570;
+  }
+
+  // Ch3: Edie trigger
+  if (currentRoom === 'ch3Dockyard' && ch3State.shuckDefeated
+      && !ch3State.edieMet && !dialogue.active && !cinematic.active) {
+    if (pip.x > 700 && pip.x < 820) {
+      triggerEdie();
+    }
+  }
+
+  // Ch3: Sandy intro trigger in kitchen
+  if (currentRoom === 'ch3Kitchen' && ch3State.arrivedKitchen
+      && !ch3State.sandyMet && !dialogue.active && !cinematic.active) {
+    if (pip.x > 120 && pip.x < 280) {
+      triggerSandyIntro();
+    }
+  }
+
+  // Ch3: Chapter end — after farewell + matches (if collected), on walk back to dock
+  if (currentRoom === 'ch3BevoisStreet' && ch3State.sandyFarewellSeen
+      && ch3State.matchesCollected && !ch3State.chapter3Complete
+      && !dialogue.active && !cinematic.active) {
+    if (pip.x < 200) {
+      showChapter3End();
+    }
   }
 
   updatePassenger(dt);
@@ -6798,6 +6870,14 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null,        text: 'He takes it carefully, the way someone eats who has learned not to rush food.',                            italic: false },
     { speaker: null,        text: 'They sit on the step. The wind moves in the birches. No words. Just the warmth of a meatball passed between cold hands.', italic: true },
   ],
+
+  /* Ch3: curry-taste-memory — Pip sees through Sandy's eyes. */
+  'curry-taste-memory': [
+    { speaker: null, text: 'For a held second, Pip sees the kitchen through Sandy\'s eyes.',                      italic: true  },
+    { speaker: null, text: 'A similar dinner from before. Sandy at the stove. The family already gathered.',     italic: false },
+    { speaker: null, text: 'The warmth of doing it. The completeness of being the one who feeds them.',         italic: true  },
+    { speaker: null, text: 'The memory holds for a beat. Then Pip is back at the doorway.',                     italic: true  },
+  ],
 };
 
 function showCinematic(name, onEnd) {
@@ -6841,6 +6921,8 @@ function showCinematic(name, onEnd) {
     lunchboxCin.phase   = 'A';
     cinematic.isMemory  = true;
   } else if (name === 'object-memory-pan') {
+    cinematic.isMemory  = true;
+  } else if (name === 'curry-taste-memory') {
     cinematic.isMemory  = true;
   }
 
@@ -6961,6 +7043,7 @@ function drawCinematicScene(name, now) {
   else if (name === 'henriks-offer')       drawHenriksOfferCinematic(now);
   else if (name === 'object-memory-pan')   drawObjectMemoryPanCinematic(now);
   else if (name === 'lunchbox-taste')      drawLunchboxTasteCinematic(now);
+  else if (name === 'curry-taste-memory')  drawCurryTasteMemoryCinematic(now);
   // Sprint 11: memory mist opt-in — drawn on top of scene, below dialogue overlay
   if (cinematic.isMemory) drawMemoryMist(now);
 }
@@ -13449,13 +13532,7 @@ function triggerAltarScene() {
 function showChapter2End() {
   ch2State.chapter2Complete = true;
   autoSave();
-  // Replace triggerDeckStub's overlay text with "End of Chapter 2."
-  const overlay = document.getElementById('end-sprint-overlay');
-  if (overlay) {
-    const msg = overlay.querySelector('p');
-    if (msg) msg.textContent = 'End of Chapter 2.';
-  }
-  triggerDeckStub();
+  startChapter3();   // Ch2→Ch3 transition (Ch3 built in GOAL-1 sprint)
 }
 
 function addKotletidRecipe() {
@@ -14208,6 +14285,1664 @@ rooms.ch2Cottage = {
   objects:       ch2CottageObjects,
   collectibles:  [],
   draw:          drawCh2Cottage,
+};
+
+/* ================================================================
+   CHAPTER 3 — Southampton
+   A Scotsman's Red Curry
+   GOAL-1 Sprint build: 2026-06-15
+   ================================================================ */
+
+const ch3State = {
+  chapter3Active:     false,
+  arrivedDockyard:    false,
+  manFromSeaSeen:     false,
+  shuckPuzzleStarted: false,
+  shuckDefeated:      false,
+  edieMet:            false,
+  wineBottleHeld:     false,
+  arrivedBevois:      false,
+  arrivedKitchen:     false,
+  sandyMet:           false,
+  cookingStep:        0,
+  mikeAnecdoteDone:   false,
+  jesseAnecdoteDone:  false,
+  michelArrived:      false,
+  archieShiver1:      false,
+  archieShiver2:      false,
+  archieShiver3:      false,
+  dinnerStarted:      false,
+  tasteMemorySeen:    false,
+  sandyFarewellSeen:  false,
+  matchesCollected:   false,
+  chapter3Complete:   false,
+};
+
+/* ---- Black Shuck mini-game state ---- */
+const shuckGame = {
+  active:     false,
+  items:      [],   // { type: 'meat'|'obstacle', x, y }
+  feedCount:  0,
+  spawnTimer: 0,
+  floatTimer: 0,
+  hitFlash:   0,
+  upPrev:     false,
+  won:        false,
+};
+
+const ch3LowerDeckObjects = [];
+const ch3DockyardObjects  = [];
+const ch3BevoisObjects    = [];
+const ch3KitchenObjects   = [];
+
+/* ---- Ch3 matches collectible at newsstand ---- */
+const ch3MatchesObject = {
+  id: 'newsstand-matches',
+  x:  870,
+  get node() {
+    if (ch3State.matchesCollected) {
+      return { id: 'matches-held', lines: [{ speaker: null, text: 'Pip already has the matches.', italic: true }], choices: null, onEnd: null };
+    }
+    return {
+      id:   'matches-pickup',
+      lines: [{ speaker: null, text: "Pätu taps the box once with her paw. Pip pockets the matches. Somehow these and Henrik's candle feel like a pair.", italic: true }],
+      choices: null,
+      onEnd() { triggerMatchesPickup(); },
+    };
+  },
+};
+ch3BevoisObjects.push(ch3MatchesObject);
+
+/* ----------------------------------------------------------------
+   Ch3 Beat functions
+   ---------------------------------------------------------------- */
+
+function startChapter3() {
+  ch3State.chapter3Active = true;
+  currentChapter = 3;
+  hideHUD();
+  const fade = document.getElementById('room-transition');
+  fade.style.opacity = '1';
+  setTimeout(() => {
+    currentRoom = 'ch3LowerDeck';
+    pip.x = 60;
+    pip.body.facing = 'right';
+    pip.float.altitude = 0;
+    fade.style.transition = 'opacity 0.8s ease';
+    fade.style.opacity = '0';
+    setTimeout(() => {
+      showHUD();
+      setRoomStrip();
+      autoSave();
+      showDialogue({
+        id: 'ch3-opening',
+        lines: [
+          { speaker: null, text: 'Lower decks. The carpet is crimson. The portholes glow sea-blue. Something amber drifts through the corridor air.', italic: true },
+          { speaker: null, text: 'Fish. Translucent, warm, slow. The ghosts of fish that died for fish-and-chips.', italic: true },
+          { speaker: null, text: "Pätu watches them. She doesn't chase. She knows what they are.", italic: true },
+        ],
+        choices: null, onEnd: null,
+      });
+    }, 900);
+  }, 600);
+}
+
+function triggerManFromSea() {
+  ch3State.manFromSeaSeen = true;
+  showDialogue({
+    id: 'man-from-sea',
+    lines: [
+      { speaker: null, text: "A man walks out of the water. Ghost-translucent, carrying a bag of groceries. He doesn't look at Pip. He has somewhere to be.", italic: true },
+      { speaker: null, text: 'Pätu runs ahead. She trots after him, purposeful.', italic: true },
+      { speaker: 'PIP',  text: "'Pätu — where are you going?'", italic: false },
+      { speaker: null, text: 'She glances back once. Then keeps trotting. She knows.', italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      autoSave();
+      showDialogue({
+        id: 'shuck-warning',
+        lines: [
+          { speaker: null, text: 'A massive black dog steps into the road ahead. Eyes glowing. Still as an omen.', italic: true },
+          { speaker: null, text: 'In the old stories, the Black Shuck means someone has died. He stands at thresholds. He is always hungry.', italic: true },
+        ],
+        choices: null,
+        onEnd() { startShuckPuzzle(); },
+      });
+    },
+  });
+}
+
+function startShuckPuzzle() {
+  ch3State.shuckPuzzleStarted = true;
+  shuckGame.active    = true;
+  shuckGame.feedCount = 0;
+  shuckGame.spawnTimer = 0;
+  shuckGame.items     = [];
+  shuckGame.floatTimer = 0;
+  shuckGame.hitFlash  = 0;
+  shuckGame.upPrev    = false;
+  shuckGame.won       = false;
+  showDialogue({
+    id:  'shuck-puzzle-start',
+    lines: [
+      { speaker: null, text: 'You feed an omen-dog to pass him. The dock is covered in scraps.', italic: true },
+      { speaker: null, text: 'ARROW UP — throw meat when it is in front of you. SPACE — float to dodge obstacles. Feed the Shuck three times.', italic: false },
+    ],
+    choices: null, onEnd: null,
+  });
+}
+
+function updateShuckPuzzle(dt) {
+  if (!shuckGame.active || shuckGame.won) return;
+  if (dialogue.active) return;
+
+  const SPEED   = 130;  // px/s
+  const ZONE_LO = 65;
+  const ZONE_HI = 155;
+
+  // Move items
+  for (let i = shuckGame.items.length - 1; i >= 0; i--) {
+    shuckGame.items[i].x -= SPEED * dt;
+    if (shuckGame.items[i].x < -40) shuckGame.items.splice(i, 1);
+  }
+
+  // Spawn
+  shuckGame.spawnTimer -= dt;
+  if (shuckGame.spawnTimer <= 0) {
+    const isMeat = shuckGame.feedCount < 3 && (Math.random() < 0.42 || shuckGame.items.filter(it => it.type === 'meat').length === 0);
+    shuckGame.items.push({ type: isMeat ? 'meat' : 'obstacle', x: W + 10, y: FLOOR_Y - 32 });
+    shuckGame.spawnTimer = 0.85 + Math.random() * 0.9;
+  }
+
+  // Float cooldown
+  if (shuckGame.floatTimer > 0) shuckGame.floatTimer = Math.max(0, shuckGame.floatTimer - dt);
+
+  // Hit flash
+  if (shuckGame.hitFlash > 0) shuckGame.hitFlash = Math.max(0, shuckGame.hitFlash - dt);
+
+  // Obstacle collision (only if not floating)
+  if (shuckGame.floatTimer <= 0) {
+    for (let i = shuckGame.items.length - 1; i >= 0; i--) {
+      const it = shuckGame.items[i];
+      if (it.type === 'obstacle' && it.x > ZONE_LO - 10 && it.x < ZONE_HI + 10) {
+        shuckGame.hitFlash = 0.35;
+        shuckGame.items.splice(i, 1);
+        break;
+      }
+    }
+  }
+
+  // ArrowUp throw (debounced)
+  const upNow = keys && keys['ArrowUp'];
+  if (upNow && !shuckGame.upPrev) {
+    // Find nearest meat in throw zone
+    const meat = shuckGame.items.find(it => it.type === 'meat' && it.x >= ZONE_LO && it.x <= ZONE_HI);
+    if (meat) {
+      shuckGame.items = shuckGame.items.filter(it => it !== meat);
+      shuckGame.feedCount++;
+      if (shuckGame.feedCount >= 3) {
+        shuckGame.won = true;
+        shuckGame.active = false;
+        setTimeout(() => resolveShuck(), 600);
+      }
+    }
+  }
+  shuckGame.upPrev = upNow;
+
+  // Space = float (dodge)
+  const spaceNow = keys && keys[' '];
+  if (spaceNow && shuckGame.floatTimer <= 0) {
+    shuckGame.floatTimer = 1.8;
+  }
+}
+
+function resolveShuck() {
+  ch3State.shuckDefeated = true;
+  autoSave();
+  showDialogue({
+    id: 'shuck-resolve',
+    lines: [
+      { speaker: null, text: 'The Shuck catches the third piece of meat and chews, slowly, with enormous dignity.', italic: true },
+      { speaker: null, text: 'He barks once — deep, resonant — and trots away down the dock, satisfied. The road is clear.', italic: true },
+      { speaker: null, text: "Pätu watches him go with the expression of someone who already knew this would work.", italic: true },
+    ],
+    choices: null, onEnd: null,
+  });
+}
+
+function triggerEdie() {
+  ch3State.edieMet = true;
+  showDialogue({
+    id: 'edie-wine-shop',
+    lines: [
+      { speaker: null,  text: 'An old woman stands behind the counter of a wine shop. Ghost-translucent. Apron. Headscarf. Hands always wet.', italic: true },
+      { speaker: 'EDIE', text: '"That man there from the sea comes through on Tuesdays. Cooks for his family. They still miss him like it was the day after he passed. They never let on, but Caitlin always makes too much rice."', italic: false },
+      { speaker: 'EDIE', text: '"Off you go. And tell that bloody Scotsman he forgot to pick up the wine again."', italic: false },
+      { speaker: null,  text: 'She hands Pip a bottle of white wine. It is cold and real.', italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      ch3State.wineBottleHeld = true;
+      autoSave();
+    },
+  });
+}
+
+function triggerSandyIntro() {
+  ch3State.sandyMet = true;
+  showDialogue({
+    id: 'sandy-intro',
+    lines: [
+      { speaker: null,   text: 'The kitchen is loud. Curry smells. Someone is talking about a fish. Caitlin is at the range.', italic: true },
+      { speaker: null,   text: 'A brash, broad-shouldered ghost turns around. Ghost-translucent, but somehow more present than Pip feels.', italic: true },
+      { speaker: 'SANDY', text: '"Oh hello, mate. You\'re new."', italic: false },
+      { speaker: 'PIP',   text: '"Hi, sir. The lady at the wine store said you forgot this and sent me to give it to you."', italic: false },
+      { speaker: 'SANDY', text: '"Well, that\'ll do."', italic: false },
+      { speaker: null,   text: "He uncorks the bottle, pours a glass, sets the rest down for Caitlin. Caitlin reaches for the limes without looking. They're just where the limes are.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      ch3State.wineBottleHeld = false;
+      autoSave();
+      setTimeout(() => startSandyCooking(), 600);
+    },
+  });
+}
+
+function startSandyCooking() {
+  ch3State.cookingStep = 1;
+  showDialogue({
+    id: 'cooking-ch3-start',
+    lines: [
+      { speaker: 'SANDY', text: '"Right, then. You want to learn the curry? Push the right ingredients over when I say. Watch Caitlin."', italic: false },
+    ],
+    choices: null,
+    onEnd: () => showCh3CookingStep1(),
+  });
+}
+
+function showCh3CookingStep1() {
+  showDialogue({
+    id: 'ch3-cooking-step1',
+    lines: [{ speaker: 'SANDY', text: '"What goes in first? The paste, the coconut milk, or the onions?"', italic: false }],
+    choices: [
+      {
+        text: 'Red curry paste — coat the tofu and vegetables in it first.',
+        onSelect() {
+          ch3State.cookingStep = 2;
+          showDialogue({
+            id: 'ch3-cooking-step1-right',
+            lines: [
+              { speaker: 'SANDY', text: '"Exactly. The paste is the base. Everything else answers to it."', italic: false },
+            ],
+            choices: null,
+            onEnd: () => showCh3CookingStep2(),
+          });
+        },
+      },
+      {
+        text: 'Coconut milk first — it is the main ingredient.',
+        onSelect() {
+          showDialogue({
+            id: 'ch3-cooking-step1-wrong',
+            lines: [{ speaker: 'SANDY', text: '"No no no — coconut milk last. The paste goes first. Try again."', italic: false }],
+            choices: null,
+            onEnd: () => showCh3CookingStep1(),
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function showCh3CookingStep2() {
+  showDialogue({
+    id: 'ch3-cooking-step2',
+    lines: [{ speaker: 'SANDY', text: '"Next — the vegetables go in with the paste. Which ones?"', italic: false }],
+    choices: [
+      {
+        text: 'Onions, ginger, garlic, chilis, bell pepper.',
+        onSelect() {
+          ch3State.cookingStep = 3;
+          showDialogue({
+            id: 'ch3-cooking-step2-right',
+            lines: [
+              { speaker: 'SANDY', text: '"Right. Trick is, don\'t overcook them. My mate Mike never learned that. Cooks his steak till it\'s leather. Like he\'s punishing it."', italic: false },
+              { speaker: 'SANDY', text: '"I tell him — you don\'t grill a cow, you have a conversation with it. He doesn\'t listen. Loves him anyway. Just don\'t ever let him cook your dinner."', italic: false },
+            ],
+            choices: null,
+            onEnd() {
+              ch3State.mikeAnecdoteDone = true;
+              if (!ch3State.archieShiver1) triggerArchieShiver1();
+              else showCh3CookingStep3();
+            },
+          });
+        },
+      },
+      {
+        text: 'Potatoes and cream.',
+        onSelect() {
+          showDialogue({
+            id: 'ch3-cooking-step2-wrong',
+            lines: [{ speaker: 'SANDY', text: '"What do you think this is, a Scottish stew? Onions, ginger, garlic, chilis, bell pepper. Try again."', italic: false }],
+            choices: null,
+            onEnd: () => showCh3CookingStep2(),
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function triggerArchieShiver1() {
+  ch3State.archieShiver1 = true;
+  showDialogue({
+    id: 'archie-shiver1',
+    lines: [
+      { speaker: null,   text: 'Archie pauses mid-cut. He looks toward the room — toward the space where Sandy stands.', italic: true },
+      { speaker: 'ARCHIE', text: '"Did you hear something?"', italic: false },
+      { speaker: null,   text: 'The room glances toward the head of the table. No one says anything. Archie goes back to the fish.', italic: true },
+    ],
+    choices: null,
+    onEnd: () => showCh3CookingStep3(),
+  });
+}
+
+function showCh3CookingStep3() {
+  showDialogue({
+    id: 'ch3-cooking-step3',
+    lines: [{ speaker: 'SANDY', text: '"Stir it. When the paste activates you\'ll smell it — that\'s the signal."', italic: false }],
+    choices: [
+      {
+        text: 'Stir steadily until hot and fragrant.',
+        onSelect() {
+          ch3State.cookingStep = 4;
+          showDialogue({
+            id: 'ch3-cooking-step3-right',
+            lines: [
+              { speaker: 'SANDY', text: '"Good. Now — last thing. The coconut milk."', italic: false },
+            ],
+            choices: null,
+            onEnd() {
+              if (!ch3State.archieShiver2) triggerArchieShiver2();
+              else showCh3CookingStep4();
+            },
+          });
+        },
+      },
+      {
+        text: 'Add the coconut milk now.',
+        onSelect() {
+          showDialogue({
+            id: 'ch3-cooking-step3-wrong',
+            lines: [{ speaker: 'SANDY', text: '"Not yet — stir first. Let the paste speak. Then the coconut milk."', italic: false }],
+            choices: null,
+            onEnd: () => showCh3CookingStep3(),
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function triggerArchieShiver2() {
+  ch3State.archieShiver2 = true;
+  showDialogue({
+    id: 'archie-shiver2',
+    lines: [
+      { speaker: null,   text: 'Sandy passes close to Archie. Archie shivers — a tiny shiver. Then smiles a tiny smile.', italic: true },
+      { speaker: null,   text: 'Caitlin sees it from across the room. Her expression softens. She does not say anything.', italic: true },
+    ],
+    choices: null,
+    onEnd: () => showCh3CookingStep4(),
+  });
+}
+
+function showCh3CookingStep4() {
+  showDialogue({
+    id: 'ch3-cooking-step4',
+    lines: [{ speaker: 'SANDY', text: '"Last. The coconut milk. Pour it in slow."', italic: false }],
+    choices: [
+      {
+        text: 'Pour the coconut milk in steadily.',
+        onSelect() {
+          showDialogue({
+            id: 'ch3-cooking-step4-right',
+            lines: [
+              { speaker: 'SANDY', text: '"There. Now it simmers. Good lad."', italic: false },
+              { speaker: null,   text: "Sandy drifts off for a moment. He's looking at something that isn't in the room.", italic: true },
+              { speaker: 'SANDY', text: '"This American lad Jesse I know loves this curry. He\'s been coming up to visit more before..."', italic: false },
+              { speaker: null,   text: 'He trails off. He picks up the spoon and stirs the pan.', italic: true },
+              { speaker: 'SANDY', text: '"Hard man, Jesse. Climbed a mountain with me once after we\'d been drinking till two in the morning. Good lad."', italic: false },
+              { speaker: null,   text: 'Caitlin glances toward the head of the table. She has heard this story before. She loves it.', italic: true },
+            ],
+            choices: null,
+            onEnd() {
+              ch3State.cookingStep    = 5;
+              ch3State.jesseAnecdoteDone = true;
+              addCurryRecipe();
+              setTimeout(() => triggerMichelArrival(), 500);
+            },
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function triggerMichelArrival() {
+  ch3State.michelArrived = true;
+  showDialogue({
+    id: 'michel-arrival',
+    lines: [
+      { speaker: 'SANDY', text: '"Michel should be arriving soon with dessert."', italic: false },
+      { speaker: null,   text: 'The doorbell rings. Caitlin wipes her hands. Robert looks up from his book.', italic: true },
+      { speaker: null,   text: 'A French man and his brunette wife walk in with dessert. Greetings. Coats off.', italic: true },
+      { speaker: null,   text: 'The table now has nine settings instead of seven. It looks right.', italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerDinner(),
+  });
+}
+
+function triggerDinner() {
+  ch3State.dinnerStarted = true;
+  showDialogue({
+    id: 'dinner-start',
+    lines: [
+      { speaker: null, text: "Caitlin ladles the curry into bowls. Nine seats. All filled. Sandy at the head, holding a translucent bowl. He doesn't eat. He just sits there with them.", italic: true },
+      { speaker: null, text: "Bibi narrates her own meal. Robert continues something about a fishing trip. Michel is warmly part of the table.", italic: true },
+      { speaker: null, text: "Caitlin set a small bowl aside for Pip, without knowing quite why she did.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      if (!ch3State.archieShiver3) triggerArchieShiver3();
+      else triggerCh3TasteMemory();
+    },
+  });
+}
+
+function triggerArchieShiver3() {
+  ch3State.archieShiver3 = true;
+  showDialogue({
+    id: 'archie-shiver3',
+    lines: [
+      { speaker: null,   text: "At the dinner table, Archie's eyes drift to the head of the table. They stay there a beat too long.", italic: true },
+      { speaker: null,   text: "Caitlin's hand finds his shoulder. No one says anything. The curry is still warm.", italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerCh3TasteMemory(),
+  });
+}
+
+function triggerCh3TasteMemory() {
+  showDialogue({
+    id: 'pip-tastes-curry',
+    lines: [
+      { speaker: null, text: 'Pip takes a bite.', italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      showCinematic('curry-taste-memory', () => {
+        ch3State.tasteMemorySeen = true;
+        autoSave();
+        showDialogue({
+          id: 'after-curry-taste',
+          lines: [
+            { speaker: null, text: 'He is back at the doorway, watching the family eat the curry he just helped make.', italic: true },
+            { speaker: null, text: 'The chair is always occupied. The chair will always be occupied as long as Tuesdays come.', italic: true },
+          ],
+          choices: null,
+          onEnd: () => triggerSandyFarewell(),
+        });
+      });
+    },
+  });
+}
+
+function triggerSandyFarewell() {
+  ch3State.sandyFarewellSeen = true;
+  showDialogue({
+    id: 'sandy-farewell',
+    lines: [
+      { speaker: null,    text: "The kids clear their plates. Sandy walks Pip to the door. He's quieter than before — the way he was at the end of nights.", italic: true },
+      { speaker: 'SANDY', text: '"Right then. On you go, ghost-boy. And listen — you\'re not actually gone if you just keep showing up. Doesn\'t matter how. Just show up. Life\'s short, mate."', italic: false },
+      { speaker: null,    text: "Pip walks out. Pätu is on the front step. She has been there a while. She always knows when to come back.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      autoSave();
+      showDialogue({
+        id: 'bevois-walk-back',
+        lines: [{ speaker: null, text: "Walk left to return to the docks.", italic: true }],
+        choices: null, onEnd: null,
+      });
+    },
+  });
+}
+
+function triggerMatchesPickup() {
+  ch3State.matchesCollected = true;
+  if (!notebook.items.some(i => i.id === 'matches')) {
+    notebook.items.push({
+      id:         'matches',
+      name:       'Box of matches',
+      annotation: "Pätu found them. They go with Henrik's candle.",
+      kind:       'object',
+      sprite:     'matches',
+    });
+    renderNotebookItems();
+  }
+  autoSave();
+}
+
+function addCurryRecipe() {
+  if (notebook.items.some(i => i.id === 'recipe-red-curry')) return;
+  notebook.items.push({
+    id:         'recipe-red-curry',
+    name:       "Sandy's red curry",
+    annotation: "Red curry paste, tofu, onions, ginger, garlic, chilis, bell pepper, coconut milk. Don't overcook the vegetables.",
+    kind:       'recipe',
+    sprite:     'curry',
+  });
+  renderNotebookItems();
+  autoSave();
+}
+
+function showChapter3End() {
+  ch3State.chapter3Complete = true;
+  autoSave();
+  // Dedication card then Ch4 stub
+  showDialogue({
+    id:    'ch3-dedication',
+    lines: [
+      { speaker: null, text: 'In memory of Sandy Duncan and his wife Caitlin and children Robert, Archie, Max, Gus, and Bibi.', italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerDeckStub(),
+  });
+}
+
+/* ----------------------------------------------------------------
+   Ch3 cinematic draw functions
+   ---------------------------------------------------------------- */
+
+function drawCurryTasteMemoryCinematic(now) {
+  const t = now / 1000;
+
+  // Sandy's eyes — warm yellow kitchen, family at table
+  ctx.fillStyle = '#1a1000';
+  ctx.fillRect(0, 0, W, H);
+
+  // Memory warmth — yellow-gold
+  const glow = ctx.createRadialGradient(W / 2, H / 2, 5, W / 2, H / 2, 180);
+  glow.addColorStop(0,   'rgba(255,200,60,0.30)');
+  glow.addColorStop(0.6, 'rgba(200,130,30,0.12)');
+  glow.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // Floor
+  ctx.fillStyle = '#1c1408';
+  ctx.fillRect(0, 150, W, H - 150);
+  ctx.fillStyle = '#241c08';
+  ctx.fillRect(0, 148, W, 4);
+
+  // Long pine table
+  ctx.fillStyle = '#3a2810';
+  ctx.fillRect(20, 126, W - 40, 24);
+  ctx.fillStyle = '#2a1c08';
+  ctx.fillRect(24, 150, 8, 30);
+  ctx.fillRect(W - 32, 150, 8, 30);
+
+  // Table-top items
+  ctx.fillStyle = '#6a3820';
+  for (let b = 0; b < 8; b++) {
+    ctx.beginPath(); ctx.arc(50 + b * 52, 134, 6, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = '#8a5040';
+  for (let b = 0; b < 8; b++) {
+    ctx.beginPath(); ctx.arc(50 + b * 52, 134, 5, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Seated family silhouettes (7 chairs)
+  ctx.fillStyle = '#2a2020';
+  for (let s = 0; s < 7; s++) {
+    const sx = 45 + s * 56;
+    ctx.fillRect(sx, 78, 24, 50);
+    ctx.beginPath(); ctx.arc(sx + 12, 74, 12, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Sandy at head (ghost-translucent, blue-white)
+  ctx.globalAlpha = 0.55 + Math.sin(t * 1.5) * 0.08;
+  ctx.fillStyle = '#c8d8f0';
+  ctx.fillRect(412, 68, 32, 62);
+  ctx.beginPath(); ctx.arc(428, 60, 16, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1.0;
+
+  // Candles (flickering warm)
+  for (let c = 0; c < 4; c++) {
+    const cx = 85 + c * 100;
+    const flk = 0.7 + Math.sin(t * 3.1 + c * 1.4) * 0.18;
+    ctx.fillStyle = `rgba(255,200,70,${(0.18 * flk).toFixed(2)})`;
+    ctx.fillRect(cx - 8, 80, 16, 46);
+    ctx.fillStyle = `rgba(255,230,100,${(0.6 * flk).toFixed(2)})`;
+    ctx.fillRect(cx, 80, 1, 3);
+  }
+
+  ctx.fillStyle = 'rgba(255,220,120,0.90)';
+  ctx.font = 'italic 11px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  const msg = t < 4.5 ? "The warmth of being the one who feeds them."
+                       : "The chair is occupied. The chair has always been occupied.";
+  ctx.fillText(msg, W / 2, H - 28);
+  ctx.textAlign = 'left';
+}
+
+/* ----------------------------------------------------------------
+   Ch3 character draw functions
+   ---------------------------------------------------------------- */
+
+/* Sandy — ghost-translucent, brash, broader than Pip, ~58px tall. */
+function drawSandy(sx, groundY, now, speaking) {
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 3.1) * 0.8) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Ghost glow (brighter than Pip)
+  const gg = ctx.createRadialGradient(0, -30, 0, 0, -30, 40);
+  gg.addColorStop(0, 'rgba(180,200,255,0.20)');
+  gg.addColorStop(1, 'rgba(180,200,255,0)');
+  ctx.fillStyle = gg;
+  ctx.fillRect(-40, -70, 80, 70);
+
+  ctx.globalAlpha = 0.75;
+
+  // Legs
+  ctx.fillStyle = '#2038a0';
+  ctx.fillRect(-9, -28, 8, 28);
+  ctx.fillRect(1,  -28, 8, 28);
+  ctx.fillStyle = '#101840';
+  ctx.fillRect(-9, -4, 8, 4);
+  ctx.fillRect(1,  -4, 8, 4);
+
+  // Body (broader — 22px wide)
+  ctx.fillStyle = '#5080c0';
+  ctx.fillRect(-11, -54, 22, 28);
+  ctx.fillStyle = '#4068a8';
+  ctx.fillRect(-11, -54, 22, 4);
+  ctx.fillRect(-2,  -50, 4, 24);
+
+  // Arms
+  ctx.fillStyle = '#5080c0';
+  ctx.fillRect(-16, -52, 6, 18);
+  ctx.fillRect(10,  -52, 6, 18);
+  ctx.fillStyle = '#c8a068';
+  ctx.fillRect(-16, -35, 6, 7);
+  ctx.fillRect(10,  -35, 6, 7);
+
+  // Neck + head
+  ctx.fillStyle = '#c8a068';
+  ctx.fillRect(-4, -58, 8, 4);
+
+  const hb = bob;
+  ctx.fillRect(-8, -68 + hb, 16, 10);
+
+  // Eyes
+  ctx.fillStyle = '#f0e8d0';
+  ctx.fillRect(-6, -65 + hb, 3, 3);
+  ctx.fillRect(3,  -65 + hb, 3, 3);
+  ctx.fillStyle = '#2a1810';
+  ctx.fillRect(-5, -64 + hb, 2, 2);
+  ctx.fillRect(4,  -64 + hb, 2, 2);
+  // Mouth
+  ctx.fillStyle = speaking ? '#7a3018' : '#6a4030';
+  ctx.fillRect(-3, -61 + hb, 6, 2);
+  ctx.fillRect(-2, -60 + hb, 4, 1);
+
+  // Hair (red-brown, Sandy's)
+  ctx.fillStyle = '#8a3818';
+  ctx.fillRect(-9, -70 + hb, 18, 4);
+  ctx.fillRect(-10, -68 + hb, 2, 3);
+  ctx.fillRect(8,   -68 + hb, 2, 3);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+/* Caitlin — blond pixie cut, at range, ~52px tall. */
+function drawCaitlin(sx, groundY, now, speaking) {
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.8) * 0.6) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Legs
+  ctx.fillStyle = '#383028';
+  ctx.fillRect(-5, -24, 5, 24);
+  ctx.fillRect(0,  -24, 5, 24);
+
+  // Apron body
+  ctx.fillStyle = '#e8d8a0';
+  ctx.fillRect(-7, -48, 14, 26);
+  ctx.fillStyle = '#2a2028';
+  ctx.fillRect(-7, -48, 14, 2);
+  ctx.fillStyle = '#c8a870';
+  ctx.fillRect(-5, -36, 10, 2);
+
+  // Arms
+  ctx.fillStyle = '#d0a878';
+  ctx.fillRect(-10, -46, 4, 14);
+  ctx.fillRect(6,   -46, 4, 14);
+
+  // Neck
+  ctx.fillStyle = '#d0a878';
+  ctx.fillRect(-2, -52, 4, 4);
+
+  const hb = bob;
+  ctx.fillRect(-7, -62 + hb, 14, 10);
+  // Eyes
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(-5, -59 + hb, 2, 2);
+  ctx.fillRect(3,  -59 + hb, 2, 2);
+  ctx.fillStyle = '#2a1f28';
+  ctx.fillRect(-4, -58 + hb, 1, 1);
+  ctx.fillRect(4,  -58 + hb, 1, 1);
+  // Mouth
+  ctx.fillStyle = speaking ? '#7a3020' : '#8a5040';
+  ctx.fillRect(-2, -55 + hb, 4, 1);
+  // Blond pixie cut
+  ctx.fillStyle = '#d8c060';
+  ctx.fillRect(-8, -64 + hb, 16, 4);
+  ctx.fillRect(-9, -62 + hb, 3, 5);
+  ctx.fillRect(6,  -62 + hb, 3, 5);
+  ctx.fillRect(-8, -66 + hb, 16, 2);
+
+  ctx.restore();
+}
+
+/* Robert — tall muscular, brown hair, ~60px tall. */
+function drawRobert(sx, groundY, now) {
+  const cx = Math.round(sx);
+  const cy = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#282030';
+  ctx.fillRect(-8, -30, 7, 30);
+  ctx.fillRect(1,  -30, 7, 30);
+
+  ctx.fillStyle = '#2a3a60';
+  ctx.fillRect(-11, -58, 22, 30);
+  ctx.fillStyle = '#d0a870';
+  ctx.fillRect(-13, -55, 4, 16);
+  ctx.fillRect(9,   -55, 4, 16);
+  ctx.fillStyle = '#d0a870';
+  ctx.fillRect(-4, -63, 8, 5);
+
+  const ht = -72;
+  ctx.fillRect(-8, ht, 16, 10);
+  ctx.fillStyle = '#e0d0b0';
+  ctx.fillRect(-6, ht + 3, 2, 2);
+  ctx.fillRect(4,  ht + 3, 2, 2);
+  ctx.fillStyle = '#2a1810';
+  ctx.fillRect(-5, ht + 4, 1, 1);
+  ctx.fillRect(5,  ht + 4, 1, 1);
+  ctx.fillStyle = '#5a3018';
+  ctx.fillRect(-9, ht - 2, 18, 4);
+  ctx.fillRect(-10, ht, 3, 3);
+  ctx.fillRect(7,  ht, 3, 3);
+
+  ctx.restore();
+}
+
+/* Archie — tall skinny, brown hair, ~60px tall. */
+function drawArchie(sx, groundY, now, looking) {
+  const cx = Math.round(sx);
+  const cy = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#281820';
+  ctx.fillRect(-5, -28, 5, 28);
+  ctx.fillRect(0,  -28, 5, 28);
+
+  ctx.fillStyle = '#3a4858';
+  ctx.fillRect(-8, -56, 16, 30);
+  ctx.fillStyle = '#d0a870';
+  ctx.fillRect(-10, -54, 4, 14);
+  ctx.fillRect(6,   -54, 4, 14);
+  ctx.fillStyle = '#d0a870';
+  ctx.fillRect(-3, -60, 6, 4);
+
+  const ht = -70;
+  ctx.fillRect(-6, ht, 12, 10);
+  // Eyes — if looking, shifted slightly
+  const eyeX = looking ? 1 : 0;
+  ctx.fillStyle = '#e0d0c0';
+  ctx.fillRect(-4 + eyeX, ht + 3, 2, 2);
+  ctx.fillRect(2 + eyeX,  ht + 3, 2, 2);
+  ctx.fillStyle = '#2a1810';
+  ctx.fillRect(-3 + eyeX, ht + 4, 1, 1);
+  ctx.fillRect(3 + eyeX,  ht + 4, 1, 1);
+  ctx.fillStyle = '#4a2818';
+  ctx.fillRect(-7, ht - 2, 14, 4);
+
+  ctx.restore();
+}
+
+/* Bibi — shortest, long light brown hair, ~44px tall. */
+function drawBibi(sx, groundY, now) {
+  const cx = Math.round(sx);
+  const cy = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#282028';
+  ctx.fillRect(-4, -22, 4, 22);
+  ctx.fillRect(0,  -22, 4, 22);
+
+  ctx.fillStyle = '#6a4890';
+  ctx.fillRect(-6, -44, 12, 24);
+  ctx.fillStyle = '#d0a870';
+  ctx.fillRect(-8, -42, 3, 12);
+  ctx.fillRect(5,  -42, 3, 12);
+  ctx.fillStyle = '#d0a870';
+  ctx.fillRect(-2, -48, 4, 4);
+
+  const ht = -56;
+  ctx.fillRect(-5, ht, 10, 8);
+  ctx.fillStyle = '#e8e0d0';
+  ctx.fillRect(-3, ht + 2, 2, 2);
+  ctx.fillRect(1,  ht + 2, 2, 2);
+  ctx.fillStyle = '#2a1810';
+  ctx.fillRect(-2, ht + 3, 1, 1);
+  ctx.fillRect(2,  ht + 3, 1, 1);
+  // Long brown hair
+  ctx.fillStyle = '#8a5828';
+  ctx.fillRect(-6, ht - 3, 12, 4);
+  ctx.fillRect(-7, ht, 3, 26);
+  ctx.fillRect(4,  ht, 3, 26);
+
+  ctx.restore();
+}
+
+/* Max and Gus — drawn as a pair, side by side, ~48px tall each. */
+function drawMaxGus(sx, groundY, now) {
+  for (let m = 0; m < 2; m++) {
+    const cx = Math.round(sx) + m * 22;
+    const cy = Math.round(groundY);
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    ctx.fillStyle = '#282028';
+    ctx.fillRect(-5, -26, 5, 26);
+    ctx.fillRect(0,  -26, 5, 26);
+
+    ctx.fillStyle = m === 0 ? '#2a4070' : '#3a5040';
+    ctx.fillRect(-7, -50, 14, 26);
+    ctx.fillStyle = '#d0a870';
+    ctx.fillRect(-9, -48, 3, 12);
+    ctx.fillRect(6,  -48, 3, 12);
+    ctx.fillStyle = '#d0a870';
+    ctx.fillRect(-2, -55, 4, 5);
+
+    const ht = -64;
+    ctx.fillRect(-6, ht, 12, 9);
+    ctx.fillStyle = '#e0d0b0';
+    ctx.fillRect(-4, ht + 3, 2, 2);
+    ctx.fillRect(2,  ht + 3, 2, 2);
+    ctx.fillStyle = '#2a1810';
+    ctx.fillRect(-3, ht + 4, 1, 1);
+    ctx.fillRect(3,  ht + 4, 1, 1);
+    ctx.fillStyle = '#5a3818';
+    ctx.fillRect(-7, ht - 2, 14, 3);
+
+    ctx.restore();
+  }
+}
+
+/* Edie — old Cockney ghost, apron, headscarf, ~48px tall. */
+function drawEdie(sx, groundY, now, speaking) {
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.5) * 0.5) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = 0.70;
+
+  // Legs
+  ctx.fillStyle = '#1a1010';
+  ctx.fillRect(-5, -18, 5, 18);
+  ctx.fillRect(0,  -18, 5, 18);
+
+  // Apron body
+  ctx.fillStyle = '#c8c0a0';
+  ctx.fillRect(-7, -42, 14, 26);
+  ctx.fillStyle = '#1a1210';
+  ctx.fillRect(-7, -42, 14, 4);
+  ctx.fillStyle = '#a8a080';
+  ctx.fillRect(-5, -34, 10, 2);
+
+  // Cardigan buttons
+  ctx.fillStyle = '#7a6830';
+  for (let b = 0; b < 3; b++) ctx.fillRect(0, -40 + b * 6, 2, 2);
+
+  // Arms
+  ctx.fillStyle = '#c0a890';
+  ctx.fillRect(-10, -40, 4, 12);
+  ctx.fillRect(6,   -40, 4, 12);
+
+  // Neck
+  ctx.fillStyle = '#c0a890';
+  ctx.fillRect(-2, -46, 4, 4);
+
+  const ht = -56 + bob;
+  ctx.fillRect(-6, ht, 12, 10);
+  ctx.fillStyle = '#e0d8c8';
+  ctx.fillRect(-4, ht + 3, 2, 2);
+  ctx.fillRect(2,  ht + 3, 2, 2);
+  ctx.fillStyle = '#2a1810';
+  ctx.fillRect(-3, ht + 4, 1, 1);
+  ctx.fillRect(3,  ht + 4, 1, 1);
+  ctx.fillStyle = speaking ? '#7a2810' : '#6a4030';
+  ctx.fillRect(-2, ht + 7, 4, 1);
+
+  // Headscarf
+  ctx.fillStyle = '#1a3080';
+  ctx.fillRect(-7, ht - 3, 14, 2);
+  ctx.fillRect(-8, ht, 3, 8);
+  ctx.fillRect(5,  ht, 3, 8);
+  ctx.fillStyle = '#0a1850';
+  ctx.fillRect(-8, ht + 1, 1, 6);
+  ctx.fillRect(7,  ht + 1, 1, 6);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+/* Michel and wife — warm brief presences, ~50px tall each. */
+function drawMichelPair(sx, groundY, now) {
+  const defs = [
+    { col: '#3a4830', hairCol: '#181010', hW: 14, note: 'michel' },
+    { col: '#483028', hairCol: '#2a1818', hW: 16, note: 'wife'   },
+  ];
+  for (let m = 0; m < 2; m++) {
+    const d  = defs[m];
+    const cx = Math.round(sx) + m * 20;
+    const cy = Math.round(groundY);
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    ctx.fillStyle = '#201818';
+    ctx.fillRect(-4, -24, 4, 24);
+    ctx.fillRect(0,  -24, 4, 24);
+
+    ctx.fillStyle = d.col;
+    ctx.fillRect(-6, -48, 12, 26);
+    ctx.fillStyle = '#c8a070';
+    ctx.fillRect(-8, -46, 3, 12);
+    ctx.fillRect(5,  -46, 3, 12);
+    ctx.fillStyle = '#c8a070';
+    ctx.fillRect(-2, -52, 4, 4);
+
+    const ht = -61;
+    ctx.fillRect(-6, ht, 12, 9);
+    ctx.fillStyle = '#e8e0d0';
+    ctx.fillRect(-4, ht + 3, 2, 2);
+    ctx.fillRect(2,  ht + 3, 2, 2);
+    ctx.fillStyle = '#2a1810';
+    ctx.fillRect(-3, ht + 4, 1, 1);
+    ctx.fillRect(3,  ht + 4, 1, 1);
+    ctx.fillStyle = d.hairCol;
+    ctx.fillRect(-(d.hW / 2), ht - 2, d.hW, 4);
+
+    ctx.restore();
+  }
+}
+
+/* Black Shuck — massive black dog, glowing red eyes, ~50px tall, 70px wide. */
+function drawBlackShuck(sx, groundY, now) {
+  const t  = now / 1000;
+  const cx = Math.round(sx);
+  const cy = Math.round(groundY);
+
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Aura
+  const aura = ctx.createRadialGradient(0, -30, 0, 0, -30, 60);
+  aura.addColorStop(0, 'rgba(60,0,0,0.20)');
+  aura.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = aura;
+  ctx.fillRect(-60, -80, 120, 80);
+
+  // Body
+  ctx.fillStyle = '#0a0808';
+  ctx.fillRect(-32, -38, 64, 38);
+  ctx.fillStyle = '#121010';
+  ctx.fillRect(-30, -36, 60, 6);
+
+  // Tail
+  ctx.fillRect(28,  -48, 8, 12);
+  ctx.fillRect(34,  -56, 6, 10);
+  ctx.fillRect(38,  -60, 4, 6);
+
+  // Head (massive)
+  ctx.fillStyle = '#0a0808';
+  ctx.fillRect(-40, -56, 30, 20);
+  ctx.fillRect(-46, -50, 8, 14);
+
+  // Ears
+  ctx.fillRect(-48, -64, 8, 14);
+  ctx.fillRect(-28, -64, 6, 12);
+
+  // Glowing red eyes
+  const eyeGlow = 0.7 + Math.sin(t * 2.0) * 0.2;
+  ctx.fillStyle = `rgba(255,30,0,${eyeGlow.toFixed(2)})`;
+  ctx.fillRect(-42, -52, 6, 4);
+  ctx.fillRect(-28, -52, 5, 4);
+  ctx.fillStyle = '#ff5020';
+  ctx.fillRect(-40, -51, 3, 2);
+  ctx.fillRect(-27, -51, 3, 2);
+
+  // Legs
+  ctx.fillStyle = '#0c0a0a';
+  ctx.fillRect(-28, -4, 8, 12);
+  ctx.fillRect(-12, -4, 8, 12);
+  ctx.fillRect(4,   -4, 8, 12);
+  ctx.fillRect(18,  -4, 8, 12);
+
+  ctx.restore();
+}
+
+/* Fish echo — small warm-amber luminous ghost fish, ~10px. */
+function drawFishEcho(sx, sy, now, idx) {
+  const t  = now / 1000;
+  const cx = Math.round(sx);
+  const cy = Math.round(sy);
+  const alpha = 0.5 + Math.sin(t * 1.5 + idx * 1.7) * 0.25;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = Math.max(0, alpha);
+
+  ctx.fillStyle = '#ffa030';
+  ctx.fillRect(-5, -2, 10, 4);
+  ctx.fillRect(-3, -3, 6, 6);
+  ctx.fillStyle = '#ffe870';
+  ctx.fillRect(-2, -1, 4, 2);
+  ctx.fillRect(4,  -3, 4, 6);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+/* Echo deer — translucent amber, ~40px tall. */
+function drawEchoDeer(sx, groundY, now) {
+  const cx = Math.round(sx);
+  const cy = Math.round(groundY);
+  const alpha = 0.30 + Math.sin(now / 1100) * 0.12;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = Math.max(0, alpha);
+  ctx.fillStyle = '#c07830';
+
+  // Legs
+  ctx.fillRect(-8, -30, 4, 30);
+  ctx.fillRect(-2, -30, 4, 30);
+  ctx.fillRect(4,  -30, 4, 30);
+  ctx.fillRect(10, -30, 4, 30);
+
+  // Body
+  ctx.fillRect(-10, -50, 36, 22);
+
+  // Neck + head
+  ctx.fillRect(8,  -64, 8, 16);
+  ctx.fillRect(4,  -70, 14, 8);
+
+  // Antlers
+  ctx.fillStyle = '#c07830';
+  ctx.fillRect(4,  -76, 2, 8);
+  ctx.fillRect(14, -76, 2, 8);
+  ctx.fillRect(2,  -80, 6, 2);
+  ctx.fillRect(12, -80, 6, 2);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+/* ----------------------------------------------------------------
+   Ch3 Shuck mini-game draw overlay
+   ---------------------------------------------------------------- */
+
+function drawShuckPuzzleOverlay(now) {
+  const t = now / 1000;
+
+  // Dim overlay
+  ctx.fillStyle = 'rgba(0,0,8,0.40)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Conveyor belt track
+  ctx.fillStyle = '#2a2820';
+  ctx.fillRect(0, FLOOR_Y - 50, W, 22);
+  ctx.fillStyle = '#3a3828';
+  ctx.fillRect(0, FLOOR_Y - 50, W, 3);
+  ctx.fillStyle = '#2a2820';
+  ctx.fillRect(0, FLOOR_Y - 29, W, 3);
+  // Belt dividers (moving)
+  const beltOff = (t * 80) % 32;
+  ctx.fillStyle = '#1a1810';
+  for (let bx = -beltOff; bx < W; bx += 32) ctx.fillRect(Math.round(bx), FLOOR_Y - 48, 3, 20);
+
+  // Items on belt
+  for (const item of shuckGame.items) {
+    const ix = Math.round(item.x);
+    if (item.type === 'meat') {
+      ctx.fillStyle = '#8a2010';
+      ctx.fillRect(ix - 8, FLOOR_Y - 46, 16, 14);
+      ctx.fillStyle = '#a84030';
+      ctx.fillRect(ix - 6, FLOOR_Y - 44, 12, 10);
+    } else {
+      // Obstacle: seagull or trash
+      const isGull = Math.floor(item.x / 31) % 2 === 0;
+      if (isGull) {
+        const oy = Math.round(Math.sin(t * 3.0 + item.x * 0.05) * 8);
+        ctx.fillStyle = '#c8c0b0';
+        ctx.fillRect(ix - 9, FLOOR_Y - 55 + oy, 18, 8);
+        ctx.fillRect(ix - 4, FLOOR_Y - 60 + oy, 8, 6);
+        ctx.fillStyle = '#e8e0d0';
+        ctx.fillRect(ix - 12, FLOOR_Y - 54 + oy, 7, 4);
+        ctx.fillRect(ix + 5,  FLOOR_Y - 54 + oy, 7, 4);
+      } else {
+        ctx.fillStyle = '#382810';
+        ctx.fillRect(ix - 7, FLOOR_Y - 46, 14, 14);
+        ctx.fillStyle = '#5a4828';
+        ctx.fillRect(ix - 5, FLOOR_Y - 44, 10, 10);
+      }
+    }
+  }
+
+  // Throw zone indicator
+  ctx.fillStyle = 'rgba(80,200,80,0.15)';
+  ctx.fillRect(65, FLOOR_Y - 52, 90, 26);
+  ctx.fillStyle = 'rgba(80,200,80,0.40)';
+  ctx.fillRect(65, FLOOR_Y - 54, 90, 3);
+
+  // Pip (in mini-game)
+  const floatY = shuckGame.floatTimer > 0 ? Math.round(-20 * Math.min(1, shuckGame.floatTimer / 1.8)) : 0;
+  const pipColor = shuckGame.hitFlash > 0 ? '#ff4040' : '#c0d0f0';
+  ctx.fillStyle = pipColor;
+  ctx.fillRect(80, FLOOR_Y - 56 + floatY, 14, 30);
+  ctx.fillRect(83, FLOOR_Y - 64 + floatY, 8, 10);
+
+  // Feed counter
+  ctx.fillStyle = '#c8a870';
+  ctx.font = '9px monospace';
+  for (let f = 0; f < 3; f++) {
+    ctx.fillStyle = f < shuckGame.feedCount ? '#ffd870' : '#3a3020';
+    ctx.fillRect(W - 60 + f * 16, 12, 12, 12);
+    if (f < shuckGame.feedCount) {
+      ctx.fillStyle = '#c87030';
+      ctx.font = '8px monospace';
+      ctx.fillText('x', W - 58 + f * 16, 22);
+    }
+  }
+
+  // The Shuck
+  drawBlackShuck(W - 60, FLOOR_Y, now);
+
+  // Instructions strip
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(0, H - 20, W, 20);
+  ctx.fillStyle = '#c8a870';
+  ctx.font = '8px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('ARROW UP — throw  |  SPACE — float to dodge', W / 2, H - 7);
+  ctx.textAlign = 'left';
+}
+
+/* ----------------------------------------------------------------
+   Ch3 room draw functions
+   ---------------------------------------------------------------- */
+
+function drawCh3LowerDeck(camX, now) {
+  // Crimson-carpet lower deck
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#100820');
+  wallG.addColorStop(0.7, '#180c2a');
+  wallG.addColorStop(1,   '#0c0818');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Crimson carpet
+  ctx.fillStyle = '#3a0808';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#4a0c0c';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Baseboard
+  ctx.fillStyle = '#1a0a18';
+  ctx.fillRect(0, FLOOR_Y - 7, W, 7);
+
+  // Sea-blue portholes
+  const portXs = [60, 220, 420, 620, 820].map(x => Math.round(x - camX));
+  for (const px of portXs) {
+    if (px < -20 || px > W + 20) continue;
+    ctx.fillStyle = '#1a1a28';
+    ctx.beginPath(); ctx.arc(px, 36, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#0a1428';
+    ctx.beginPath(); ctx.arc(px, 36, 11, 0, Math.PI * 2); ctx.fill();
+    const seaG = ctx.createRadialGradient(px, 36, 0, px, 36, 11);
+    seaG.addColorStop(0,   'rgba(60,120,180,0.35)');
+    seaG.addColorStop(1,   'rgba(20,50,80,0)');
+    ctx.fillStyle = seaG;
+    ctx.beginPath(); ctx.arc(px, 36, 11, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Fish echoes drifting
+  const fishDefs = [
+    { wx: 200, baseY: FLOOR_Y - 45, speed: 0.4 },
+    { wx: 350, baseY: FLOOR_Y - 60, speed: 0.6 },
+    { wx: 480, baseY: FLOOR_Y - 35, speed: 0.3 },
+    { wx: 570, baseY: FLOOR_Y - 55, speed: 0.5 },
+    { wx: 680, baseY: FLOOR_Y - 48, speed: 0.7 },
+    { wx: 760, baseY: FLOOR_Y - 38, speed: 0.4 },
+  ];
+  fishDefs.forEach((fd, idx) => {
+    const fsx = Math.round(fd.wx - camX + Math.sin(now / 1800 + idx) * 22);
+    if (fsx < -20 || fsx > W + 20) return;
+    const fsy = Math.round(fd.baseY + Math.sin(now / 1200 + idx * 0.9) * 8);
+    drawFishEcho(fsx, fsy, now, idx);
+  });
+
+  // Pätu walking
+  if (ch3State.chapter3Active) {
+    drawPatu(Math.round(pip.x + 35 - camX), FLOOR_Y, now);
+  }
+}
+
+function drawCh3Dockyard(camX, now) {
+  // Southampton dock — slate-blue night
+  const skyG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  skyG.addColorStop(0,   '#0c1420');
+  skyG.addColorStop(0.6, '#101c2c');
+  skyG.addColorStop(1,   '#0e1828');
+  ctx.fillStyle = skyG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Wet ground
+  ctx.fillStyle = '#0c1218';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#141c22';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Rain lines (subtle)
+  ctx.fillStyle = 'rgba(100,140,180,0.07)';
+  for (let rx = 0; rx < W; rx += 6) {
+    const rh = 8 + (rx % 3) * 4;
+    ctx.fillRect(rx + Math.round((now / 200) % 6), 0, 1, rh);
+  }
+
+  // Streetlamp warm pool (world-x 320)
+  const lampSX = Math.round(320 - camX);
+  if (lampSX > -80 && lampSX < W + 40) {
+    const lampG = ctx.createRadialGradient(lampSX, FLOOR_Y - 4, 0, lampSX, FLOOR_Y - 4, 80);
+    lampG.addColorStop(0,   'rgba(255,200,80,0.28)');
+    lampG.addColorStop(0.5, 'rgba(200,140,40,0.10)');
+    lampG.addColorStop(1,   'rgba(255,180,40,0)');
+    ctx.fillStyle = lampG;
+    ctx.fillRect(lampSX - 80, FLOOR_Y - 84, 160, 84);
+    // Pole
+    ctx.fillStyle = '#1a1810';
+    ctx.fillRect(lampSX - 1, FLOOR_Y - 90, 3, 90);
+    ctx.fillStyle = '#302820';
+    ctx.fillRect(lampSX - 6, FLOOR_Y - 92, 12, 4);
+    const lFlicker = 0.7 + Math.sin(now / 1500) * 0.15;
+    ctx.fillStyle = `rgba(255,230,120,${(0.8 * lFlicker).toFixed(2)})`;
+    ctx.fillRect(lampSX - 3, FLOOR_Y - 90, 6, 3);
+  }
+
+  // Cranes (parallax 0.25×)
+  const craneOff = Math.round(camX * 0.25);
+  for (const [crx, crh] of [[120, 110],[380, 140],[650, 120],[900, 150],[1100, 130]]) {
+    const csx = Math.round(crx - craneOff);
+    if (csx < -30 || csx > W + 30) continue;
+    ctx.fillStyle = '#1a1c20';
+    ctx.fillRect(csx - 3, FLOOR_Y - crh, 6, crh);
+    ctx.fillRect(csx - 2, FLOOR_Y - crh, 36, 5);
+  }
+
+  // Moored boat (world-x 50-200)
+  const boatSX = Math.round(75 - camX);
+  if (boatSX > -160 && boatSX < W + 60) {
+    ctx.fillStyle = '#1a1810';
+    ctx.fillRect(boatSX - 50, FLOOR_Y - 22, 100, 22);
+    ctx.fillStyle = '#242018';
+    ctx.fillRect(boatSX - 55, FLOOR_Y - 12, 110, 12);
+    ctx.fillStyle = '#3a3020';
+    ctx.fillRect(boatSX - 3, FLOOR_Y - 50, 6, 30);
+  }
+
+  // Edie's wine shop (world-x 700-800)
+  const shopSX = Math.round(750 - camX);
+  if (shopSX > -80 && shopSX < W + 60) {
+    ctx.fillStyle = '#1a1208';
+    ctx.fillRect(shopSX - 50, FLOOR_Y - 70, 100, 70);
+    ctx.fillStyle = '#3a2810';
+    ctx.fillRect(shopSX - 45, FLOOR_Y - 65, 90, 60);
+    const shopGlow = ctx.createRadialGradient(shopSX, FLOOR_Y - 38, 0, shopSX, FLOOR_Y - 38, 55);
+    shopGlow.addColorStop(0, 'rgba(255,180,60,0.20)');
+    shopGlow.addColorStop(1, 'rgba(255,180,60,0)');
+    ctx.fillStyle = shopGlow;
+    ctx.fillRect(shopSX - 55, FLOOR_Y - 78, 110, 78);
+    ctx.fillStyle = '#140e08';
+    ctx.fillRect(shopSX - 20, FLOOR_Y - 62, 40, 52);
+    ctx.fillStyle = '#201810';
+    ctx.fillRect(shopSX - 18, FLOOR_Y - 60, 36, 48);
+    ctx.fillStyle = '#3a2a18';
+    ctx.fillRect(shopSX - 30, FLOOR_Y - 14, 60, 14);
+  }
+
+  // Edie inside shop
+  if (ch3State.shuckDefeated && !ch3State.edieMet) {
+    drawEdie(Math.round(750 - camX), FLOOR_Y - 2, now, false);
+  }
+
+  // Black Shuck blocks passage at world-x 600
+  if (!ch3State.shuckDefeated) {
+    const shuckSX = Math.round(600 - camX);
+    if (shuckSX > -80 && shuckSX < W + 80) {
+      drawBlackShuck(shuckSX, FLOOR_Y, now);
+    }
+  }
+
+  // Sandy (man from sea) heading to Bevois at far right
+  if (ch3State.manFromSeaSeen && !ch3State.shuckDefeated) {
+    const manSX = Math.round(900 - camX);
+    if (manSX > -40 && manSX < W + 40) {
+      drawSandy(manSX, FLOOR_Y, now, false);
+    }
+  }
+
+  // Pätu leading (before shuck), or trailing after
+  if (ch3State.chapter3Active) {
+    const patuTarget = ch3State.shuckDefeated ? pip.x - 40 : pip.x + 55;
+    drawPatu(Math.round(patuTarget - camX), FLOOR_Y, now);
+  }
+
+  // Shuck mini-game overlay
+  if (shuckGame.active || (ch3State.shuckPuzzleStarted && !ch3State.shuckDefeated && !dialogue.active)) {
+    drawShuckPuzzleOverlay(now);
+  }
+}
+
+function drawCh3BevoisStreet(camX, now) {
+  const t = now / 1000;
+
+  // Narrow street — moonlit-blue
+  const skyG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  skyG.addColorStop(0,   '#080e18');
+  skyG.addColorStop(0.6, '#0c1420');
+  skyG.addColorStop(1,   '#0a1018');
+  ctx.fillStyle = skyG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#0c1018';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#141820';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Row houses (parallax 0.35×)
+  const hOff = Math.round(camX * 0.35);
+  for (const [hx, hw, hh] of [[0,180,90],[190,160,80],[360,200,100],[570,150,85],[730,180,95],[920,160,80]]) {
+    const hsx = Math.round(hx - hOff);
+    if (hsx < -210 || hsx > W + 10) continue;
+    ctx.fillStyle = '#181410';
+    ctx.fillRect(hsx, FLOOR_Y - hh, hw, hh);
+    // Window warmth
+    const wAlpha = 0.18 + Math.sin(t * 0.7 + hx * 0.01) * 0.05;
+    ctx.fillStyle = `rgba(255,175,55,${wAlpha.toFixed(2)})`;
+    ctx.fillRect(hsx + 14, FLOOR_Y - hh + 20, 20, 14);
+    ctx.fillRect(hsx + hw - 34, FLOOR_Y - hh + 20, 20, 14);
+    // Chimney
+    ctx.fillStyle = '#141010';
+    ctx.fillRect(hsx + hw / 2 - 3, FLOOR_Y - hh - 12, 7, 14);
+  }
+
+  // Dundee house at far right — warmest pool (world-x 820-1060)
+  const dundSX = Math.round(940 - camX);
+  if (dundSX > -150 && dundSX < W + 80) {
+    ctx.fillStyle = '#e8e0d8';
+    ctx.fillRect(dundSX - 80, FLOOR_Y - 108, 160, 108);
+    ctx.fillStyle = '#181410';
+    ctx.fillRect(dundSX - 82, FLOOR_Y - 110, 164, 6);
+    // Big windows
+    const dunGlow = ctx.createRadialGradient(dundSX, FLOOR_Y - 55, 0, dundSX, FLOOR_Y - 55, 120);
+    dunGlow.addColorStop(0,   'rgba(255,210,80,0.40)');
+    dunGlow.addColorStop(0.5, 'rgba(255,180,50,0.15)');
+    dunGlow.addColorStop(1,   'rgba(255,180,50,0)');
+    ctx.fillStyle = dunGlow;
+    ctx.fillRect(dundSX - 120, FLOOR_Y - 120, 240, 120);
+    ctx.fillStyle = '#ffd050';
+    ctx.fillRect(dundSX - 48, FLOOR_Y - 90, 38, 60);
+    ctx.fillRect(dundSX + 10,  FLOOR_Y - 90, 38, 60);
+    ctx.fillStyle = '#201c10';
+    ctx.fillRect(dundSX - 24, FLOOR_Y - 108, 22, 98);
+  }
+
+  // Echo deer crossing (periodic, 3 positions)
+  const deerPositions = [180, 520, 840].map(x => {
+    const dPhase = (t * 0.12 + x * 0.001) % 1.0;
+    return { wx: x + (dPhase < 0.5 ? dPhase * 200 : 100), active: dPhase < 0.7 };
+  });
+  for (const dp of deerPositions) {
+    if (!dp.active) continue;
+    const dsx = Math.round(dp.wx - camX);
+    if (dsx < -30 && dsx > W + 30) continue;
+    drawEchoDeer(dsx, FLOOR_Y, now);
+  }
+
+  // Newsstand with matches (world-x 820)
+  const newsSX = Math.round(820 - camX);
+  if (newsSX > -30 && newsSX < W + 30 && ch3State.sandyFarewellSeen) {
+    ctx.fillStyle = '#2a2018';
+    ctx.fillRect(newsSX - 14, FLOOR_Y - 32, 28, 32);
+    ctx.fillStyle = '#382810';
+    ctx.fillRect(newsSX - 12, FLOOR_Y - 20, 24, 18);
+    // Match box
+    if (!ch3State.matchesCollected) {
+      ctx.fillStyle = '#a03010';
+      ctx.fillRect(newsSX - 4, FLOOR_Y - 36, 8, 5);
+      ctx.fillStyle = '#d04820';
+      ctx.fillRect(newsSX - 3, FLOOR_Y - 35, 6, 3);
+    }
+  }
+
+  // Pätu
+  if (ch3State.arrivedBevois) {
+    const patuLead = ch3State.sandyFarewellSeen
+      ? pip.x - 38
+      : Math.min(pip.x + 55, rooms.ch3BevoisStreet.pipMaxX - 30);
+    drawPatu(Math.round(patuLead - camX), FLOOR_Y, now);
+  }
+}
+
+function drawCh3Kitchen(camX, now) {
+  // Dundee kitchen — yellow-warm walls
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#2a2008');
+  wallG.addColorStop(0.6, '#342808');
+  wallG.addColorStop(1,   '#201808');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Pine floor
+  ctx.fillStyle = '#2a1c08';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#342408';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+  ctx.fillStyle = '#221408';
+  for (let fx = 0; fx < W; fx += 36) ctx.fillRect(fx, FLOOR_Y, 1, H - FLOOR_Y);
+
+  // Warm room glow
+  const roomG = ctx.createRadialGradient(240, 90, 0, 240, 90, 240);
+  roomG.addColorStop(0,   'rgba(255,210,80,0.22)');
+  roomG.addColorStop(0.5, 'rgba(200,140,40,0.08)');
+  roomG.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = roomG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Range cooker (world-x 60)
+  const rangeSX = Math.round(60 - camX);
+  if (rangeSX > -70 && rangeSX < W + 30) {
+    ctx.fillStyle = '#2a2018';
+    ctx.fillRect(rangeSX - 30, FLOOR_Y - 60, 60, 60);
+    ctx.fillStyle = '#181410';
+    ctx.fillRect(rangeSX - 26, FLOOR_Y - 55, 52, 46);
+    // Burner glow
+    const bA = 0.12 + Math.sin(now / 450) * 0.06;
+    ctx.fillStyle = `rgba(255,120,40,${bA.toFixed(2)})`;
+    ctx.fillRect(rangeSX - 20, FLOOR_Y - 52, 40, 30);
+    ctx.fillStyle = '#1a1818';
+    ctx.fillRect(rangeSX - 30, FLOOR_Y - 62, 60, 4);
+  }
+
+  // Long pine table (world-x 220-570)
+  const tL = Math.round(220 - camX);
+  const tR = Math.round(570 - camX);
+  if (tR > 0 && tL < W) {
+    ctx.fillStyle = '#4a3010';
+    ctx.fillRect(tL, FLOOR_Y - 28, tR - tL, 6);
+    ctx.fillStyle = '#2a1c08';
+    ctx.fillRect(tL + 6, FLOOR_Y - 22, 6, 22);
+    ctx.fillRect(tR - 12, FLOOR_Y - 22, 6, 22);
+    ctx.fillRect(tL + (tR - tL) / 2 - 3, FLOOR_Y - 22, 6, 22);
+  }
+
+  // Fridge (world-x 640) with child drawing
+  const fridgeSX = Math.round(640 - camX);
+  if (fridgeSX > -40 && fridgeSX < W + 20) {
+    ctx.fillStyle = '#e0d8c8';
+    ctx.fillRect(fridgeSX - 20, FLOOR_Y - 85, 40, 85);
+    ctx.fillStyle = '#c8c0b0';
+    ctx.fillRect(fridgeSX - 18, FLOOR_Y - 60, 36, 55);
+    // Child drawing of dragon
+    ctx.fillStyle = '#c83020';
+    ctx.fillRect(fridgeSX - 12, FLOOR_Y - 78, 24, 16);
+    ctx.fillStyle = '#e05030';
+    ctx.fillRect(fridgeSX - 8,  FLOOR_Y - 76, 16, 10);
+    ctx.fillStyle = '#1a1808';
+    ctx.fillRect(fridgeSX - 14, FLOOR_Y - 80, 1, 20);
+  }
+
+  // Sandy's hoodie on chair (world-x 180)
+  const hoodieSX = Math.round(180 - camX);
+  if (hoodieSX > -30 && hoodieSX < W + 20) {
+    ctx.fillStyle = '#384868';
+    ctx.fillRect(hoodieSX - 12, FLOOR_Y - 58, 24, 50);
+    ctx.fillRect(hoodieSX - 16, FLOOR_Y - 50, 8, 20);
+    ctx.fillRect(hoodieSX + 8,  FLOOR_Y - 50, 8, 20);
+  }
+
+  // Characters — render based on state
+  const caitlinSX = Math.round(80 - camX);
+  if (caitlinSX > -30 && caitlinSX < W + 30 && ch3State.arrivedKitchen) {
+    const caitSpeaking = dialogue.active && dialogue.node && dialogue.node.lines &&
+      dialogue.node.lines[dialogue.lineIndex] &&
+      dialogue.node.lines[dialogue.lineIndex].speaker === 'CAITLIN';
+    drawCaitlin(caitlinSX, FLOOR_Y, now, caitSpeaking);
+  }
+
+  if (ch3State.sandyMet) {
+    const sandySX = Math.round(130 - camX);
+    if (sandySX > -30 && sandySX < W + 30) {
+      const sandySpeaking = dialogue.active && dialogue.node && dialogue.node.lines &&
+        dialogue.node.lines[dialogue.lineIndex] &&
+        dialogue.node.lines[dialogue.lineIndex].speaker === 'SANDY';
+      drawSandy(sandySX, FLOOR_Y, now, sandySpeaking);
+    }
+    // Family at the table (after cooking starts)
+    if (ch3State.cookingStep >= 1) {
+      drawRobert(Math.round(285 - camX), FLOOR_Y, now);
+      const lookingNow = ch3State.archieShiver3 && !ch3State.tasteMemorySeen;
+      drawArchie(Math.round(330 - camX), FLOOR_Y, now, lookingNow);
+      drawMaxGus(Math.round(390 - camX), FLOOR_Y, now);
+      drawBibi(Math.round(460 - camX), FLOOR_Y, now);
+    }
+    // Michel and wife at dinner
+    if (ch3State.michelArrived) {
+      drawMichelPair(Math.round(510 - camX), FLOOR_Y, now);
+    }
+  }
+
+  // Pätu inside kitchen
+  if (ch3State.arrivedKitchen) {
+    drawPatu(Math.round(pip.x - 38 - camX), FLOOR_Y, now);
+  }
+}
+
+/* ----------------------------------------------------------------
+   Ch3 room definitions
+   ---------------------------------------------------------------- */
+
+rooms.ch3LowerDeck = {
+  width:         850,
+  pipMaxX:       810,
+  pipMinX:       30,
+  pipEntryX:     60,
+  portholeScene: null,
+  objects:       ch3LowerDeckObjects,
+  collectibles:  [],
+  draw:          drawCh3LowerDeck,
+};
+
+rooms.ch3Dockyard = {
+  width:         1400,
+  pipMaxX:       1360,
+  pipMinX:       30,
+  pipEntryX:     60,
+  portholeScene: null,
+  objects:       ch3DockyardObjects,
+  collectibles:  [],
+  draw:          drawCh3Dockyard,
+};
+
+rooms.ch3BevoisStreet = {
+  width:         1100,
+  pipMaxX:       1060,
+  pipMinX:       30,
+  pipEntryX:     60,
+  portholeScene: null,
+  objects:       ch3BevoisObjects,
+  collectibles:  [],
+  draw:          drawCh3BevoisStreet,
+};
+
+rooms.ch3Kitchen = {
+  width:         700,
+  pipMaxX:       660,
+  pipMinX:       20,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch3KitchenObjects,
+  collectibles:  [],
+  draw:          drawCh3Kitchen,
 };
 
 /* ================================================================

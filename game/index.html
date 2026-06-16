@@ -1504,6 +1504,8 @@ function buildSaveObject() {
     chapterState:    { ...chapterState },
     ch2State:        { ...ch2State },
     ch3State:        { ...ch3State },
+    ch4State:        { ...ch4State },
+    ch4WalnutsHeld:  ch4WalnutsHeld,
     patuAboard:      patuState.aboard,
     darkCorridor:    { lit: darkCorridor.lit, cartRemoved: darkCorridor.cartRemoved, cartX: darkCorridor.cartX },
     cinematicPlayed: Array.from(cinematic.played),
@@ -1561,6 +1563,8 @@ function applySave(data) {
   Object.assign(chapterState, data.chapterState);
   if (data.ch2State)   Object.assign(ch2State,   data.ch2State);
   if (data.ch3State)   Object.assign(ch3State,   data.ch3State);
+  if (data.ch4State)   Object.assign(ch4State,   data.ch4State);
+  if (data.ch4WalnutsHeld !== undefined) ch4WalnutsHeld = data.ch4WalnutsHeld;
   if (data.patuAboard) patuState.aboard = data.patuAboard;
 
   // Restore dark corridor state (additive — missing fields default to initial values)
@@ -3289,6 +3293,24 @@ function update(dt) {
     } else if (currentRoom === 'ch3Kitchen' && pip.x <= rooms.ch3Kitchen.pipMinX + 1
                && ch3State.sandyFarewellSeen) {
       startTransition('ch3BevoisStreet', 'fromRight', rooms.ch3BevoisStreet.pipMaxX - 40);
+
+    // ---- Ch4 room transitions ----
+    } else if (currentRoom === 'ch4CatAlley' && pip.x >= rooms.ch4CatAlley.pipMaxX - 1) {
+      startTransition('ch4FrozenSquare', 'fromLeft');
+    } else if (currentRoom === 'ch4FrozenSquare' && pip.x <= rooms.ch4FrozenSquare.pipMinX + 1) {
+      startTransition('ch4CatAlley', 'fromRight', rooms.ch4CatAlley.pipMaxX - 40);
+    } else if (currentRoom === 'ch4FrozenSquare' && pip.x >= rooms.ch4FrozenSquare.pipMaxX - 1
+               && ch4State.patuThawed) {
+      ch4State.arrivedMuhittinKitchen = true;
+      startTransition('ch4MuhittiKitchen', 'fromLeft');
+    } else if (currentRoom === 'ch4MuhittiKitchen' && pip.x <= rooms.ch4MuhittiKitchen.pipMinX + 1
+               && ch4State.muhamamaraJarHeld) {
+      startTransition('ch4FrozenSquare', 'fromRight', 40);
+    } else if (currentRoom === 'ch4MuhittiKitchen' && pip.x >= rooms.ch4MuhittiKitchen.pipMaxX - 1
+               && ch4State.muhamamaraJarHeld) {
+      // Return to the kitchen room for Henrik photograph beat
+      ch4State.returnedToShip = true;
+      startTransition('kitchen', 'fromLeft');
     }
   }
 
@@ -3428,6 +3450,33 @@ function update(dt) {
       && !dialogue.active && !cinematic.active) {
     if (pip.x < 200) {
       showChapter3End();
+    }
+  }
+
+  // ---- Ch4 beat triggers ----
+
+  // Ch4: Karakoncolos appears when Pip enters frozen square
+  if (currentRoom === 'ch4FrozenSquare' && ch4State.chapter4Active
+      && !ch4State.karakoncolosAppeared && !dialogue.active && !cinematic.active) {
+    if (pip.x > 100) {
+      triggerKarakoncolosAppeared();
+    }
+  }
+
+  // Ch4: Muhittin door — approach kitchen after thaw
+  if (currentRoom === 'ch4MuhittiKitchen' && ch4State.chapter4Active
+      && !ch4State.muhittinMet && !dialogue.active && !cinematic.active) {
+    if (pip.x > 80) {
+      triggerMuhittinDoor();
+    }
+  }
+
+  // Ch4: Henrik photograph beat — triggered when pip enters kitchen with jar
+  if (currentRoom === 'kitchen' && ch4State.returnedToShip
+      && ch4State.muhamamaraJarHeld && !ch4State.henrikPhotographSeen
+      && !dialogue.active && !cinematic.active) {
+    if (pip.x > 80) {
+      triggerHenrikPhotographBeat();
     }
   }
 
@@ -6878,6 +6927,12 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null, text: 'The warmth of doing it. The completeness of being the one who feeds them.',         italic: true  },
     { speaker: null, text: 'The memory holds for a beat. Then Pip is back at the doorway.',                     italic: true  },
   ],
+  'muhammara-orchard': [
+    { speaker: null, text: 'An autumn orchard. Walnut trees, leaves coming down.', italic: true },
+    { speaker: null, text: 'A grandmother kneels between two boys. She cracks a walnut. Hands it over.', italic: true },
+    { speaker: null, text: "The younger boy eats it without chewing properly. She doesn't scold him.", italic: true },
+    { speaker: null, text: 'Something about the taste. Something about the light. Something about being small and looked after.', italic: true },
+  ],
 };
 
 function showCinematic(name, onEnd) {
@@ -6923,6 +6978,8 @@ function showCinematic(name, onEnd) {
   } else if (name === 'object-memory-pan') {
     cinematic.isMemory  = true;
   } else if (name === 'curry-taste-memory') {
+    cinematic.isMemory  = true;
+  } else if (name === 'muhammara-orchard') {
     cinematic.isMemory  = true;
   }
 
@@ -7044,6 +7101,7 @@ function drawCinematicScene(name, now) {
   else if (name === 'object-memory-pan')   drawObjectMemoryPanCinematic(now);
   else if (name === 'lunchbox-taste')      drawLunchboxTasteCinematic(now);
   else if (name === 'curry-taste-memory')  drawCurryTasteMemoryCinematic(now);
+  else if (name === 'muhammara-orchard')   drawMuhamamaraOrchardCinematic(now);
   // Sprint 11: memory mist opt-in — drawn on top of scene, below dialogue overlay
   if (cinematic.isMemory) drawMemoryMist(now);
 }
@@ -14864,7 +14922,7 @@ function showChapter3End() {
       { speaker: null, text: 'In memory of Sandy Duncan and his wife Caitlin and children Robert, Archie, Max, Gus, and Bibi.', italic: true },
     ],
     choices: null,
-    onEnd: () => triggerDeckStub(),
+    onEnd: () => startChapter4(),
   });
 }
 
@@ -15943,6 +16001,1152 @@ rooms.ch3Kitchen = {
   objects:       ch3KitchenObjects,
   collectibles:  [],
   draw:          drawCh3Kitchen,
+};
+
+/* ================================================================
+   CHAPTER 4 — Istanbul / Türkiye
+   Muhittin's Muhammara
+   GOAL-1 Sprint build: 2026-06-15
+   ================================================================ */
+
+const ch4State = {
+  chapter4Active:        false,
+  arrivedFrozenSquare:   false,
+  karakoncolosAppeared:  false,
+  candlePuzzleStarted:   false,
+  candlePuzzleRound:     0,   // 0-3; each correct dodge increments
+  patuThawed:            false,
+  arrivedMuhittinKitchen: false,
+  muhittinMet:           false,
+  cookingStep:           0,
+  tasteMemorySeen:       false,
+  omerArrived:           false,
+  muhamamaraJarHeld:     false,
+  returnedToShip:        false,
+  henrikPhotographSeen:  false,
+  henriettaTold:         false,
+  chapter4Complete:      false,
+};
+
+const ch4LowerDeckObjects = [];
+const ch4CatAlleyObjects  = [];
+const ch4SquareObjects    = [];
+const ch4KitchenObjects   = [];
+
+/* ---- Walnuts from Karakoncolos (hand to Muhittin) ---- */
+let ch4WalnutsHeld = false;
+
+/* ----------------------------------------------------------------
+   Ch4 Beat functions
+   ---------------------------------------------------------------- */
+
+function startChapter4() {
+  ch4State.chapter4Active = true;
+  currentChapter = 4;
+  hideHUD();
+  const fade = document.getElementById('room-transition');
+  fade.style.opacity = '1';
+  setTimeout(() => {
+    currentRoom = 'ch4CatAlley';
+    pip.x = 60;
+    pip.body.facing  = 'right';
+    pip.float.altitude = 0;
+    fade.style.transition = 'opacity 0.8s ease';
+    fade.style.opacity = '0';
+    setTimeout(() => {
+      showHUD();
+      setRoomStrip();
+      autoSave();
+      showDialogue({
+        id: 'ch4-opening',
+        lines: [
+          { speaker: null, text: 'Istanbul. The streets narrow and climb from the harbor. Stone and plaster and lit windows.', italic: true },
+          { speaker: null, text: "The alley ahead is full of cats. Translucent, amber-warm, sleeping on every stoop. Pätu's family, if she'd stayed.", italic: true },
+          { speaker: null, text: "Pätu sees them. Her ears flatten. She bolts ahead — low, fast, through every ghost-cat without touching one.", italic: true },
+          { speaker: 'PIP', text: "'Pätu!'", italic: false },
+          { speaker: null, text: "She doesn't stop. She knows where she's going.", italic: true },
+        ],
+        choices: null, onEnd: null,
+      });
+    }, 900);
+  }, 600);
+}
+
+function triggerKarakoncolosAppeared() {
+  ch4State.arrivedFrozenSquare  = true;
+  ch4State.karakoncolosAppeared = true;
+  showDialogue({
+    id: 'karakoncolos-appear',
+    lines: [
+      { speaker: null, text: "Pip emerges into a small open square. Snow on the cobblestones. A fountain with ice at its edges. A single dying brazier.", italic: true },
+      { speaker: null, text: "Pätu is there — planted, fur bristled, hissing fiercely. At a shadow.", italic: true },
+      { speaker: null, text: "Tall. Cloaked. Hollow-faced. Breath visible in the cold air. The Karakoncolos.", italic: true },
+      { speaker: null, text: "He blows. Pätu seizes mid-hiss. Frost spreads up her fur. She's frozen — not gone, just held.", italic: true },
+      { speaker: 'PIP',  text: "'Pätu!'", italic: false },
+      { speaker: null, text: 'Pip reaches into his pocket. The candle Henrik gave him. The matches Pätu found. He lights it.', italic: true },
+      { speaker: null, text: 'The Karakoncolos turns toward him. Fills his lungs.', italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      ch4State.candlePuzzleStarted = true;
+      autoSave();
+      runCandlePuzzleRound();
+    },
+  });
+}
+
+function runCandlePuzzleRound() {
+  const round = ch4State.candlePuzzleRound;
+  const scenarios = [
+    {
+      setup: 'The Karakoncolos drifts to the LEFT side of the square. His breath will come from the left. Where do you take cover?',
+      choices: [
+        { text: 'Step behind the fountain — it is on the LEFT side.', correct: false,
+          wrong: "The fountain is on his side — the blast hits it directly. The candle gutters. Pip steps back and tries again." },
+        { text: "Position yourself at the BRAZIER corner — it blocks his left-side breath.", correct: true,
+          right: 'The brazier corner shields the flame. The Karakoncolos blows long and cold. The candle holds.' },
+        { text: 'Hold the candle behind your back and run straight at Pätu.', correct: false,
+          wrong: "The blast catches the candle full-on. It goes out. Pip steps back, strikes a match, lights it again." },
+      ],
+    },
+    {
+      setup: 'The Karakoncolos drifts to the RIGHT — between Pip and Pätu. His next breath will come from ahead.',
+      choices: [
+        { text: 'Wait. Let him drift past. He is not patient.', correct: true,
+          right: 'The Karakoncolos drifts. Pip holds still. The candle cupped in both hands. The monster exhales at empty air.' },
+        { text: 'Rush for Pätu while he is close.', correct: false,
+          wrong: 'He is too close. The candle goes out instantly in the blast. Try again.' },
+        { text: 'Shield at the fountain — the fountain is between you and him.', correct: false,
+          wrong: "He drifts right past the fountain. The blast comes from the wrong angle. The candle sputters. Relight and try again." },
+      ],
+    },
+    {
+      setup: 'The Karakoncolos rises ABOVE the square and blows DOWN. Cold from everywhere at once. Only one thing helps.',
+      choices: [
+        { text: 'Cup the candle with your whole body. Stand still.', correct: true,
+          right: 'Pip curls around the flame. The cold presses in from all sides. The candle shrinks to a thread — and holds.' },
+        { text: 'Run for the wall corner — the wall is overhead protection.', correct: false,
+          wrong: "The wall has no roof. The blast comes straight down. Candle out. Try again." },
+        { text: 'Float up to meet him.', correct: false,
+          wrong: 'Floating raises the candle into the full blast. Out immediately. Try again.' },
+      ],
+    },
+  ];
+
+  const sc = scenarios[round];
+  const rightChoices  = sc.choices.filter(c =>  c.correct).map(c => ({
+    text: c.text,
+    onSelect() {
+      showDialogue({
+        id: `candle-round${round}-right`,
+        lines: [{ speaker: null, text: c.right, italic: true }],
+        choices: null,
+        onEnd() {
+          ch4State.candlePuzzleRound++;
+          if (ch4State.candlePuzzleRound >= 3) resolveKarakoncolos();
+          else runCandlePuzzleRound();
+        },
+      });
+    },
+  }));
+  const wrongChoices  = sc.choices.filter(c => !c.correct).map(c => ({
+    text: c.text,
+    onSelect() {
+      showDialogue({
+        id: `candle-round${round}-wrong`,
+        lines: [{ speaker: null, text: c.wrong, italic: true }],
+        choices: null,
+        onEnd: () => runCandlePuzzleRound(),
+      });
+    },
+  }));
+
+  showDialogue({
+    id: `candle-round${round}`,
+    lines: [{ speaker: null, text: sc.setup, italic: true }],
+    choices: [...rightChoices, ...wrongChoices],
+    onEnd: null,
+  });
+}
+
+function resolveKarakoncolos() {
+  ch4State.patuThawed = true;
+  ch4WalnutsHeld      = true;
+  showDialogue({
+    id: 'karakoncolos-resolved',
+    lines: [
+      { speaker: null, text: "Pip reaches Pätu. The candle touches her fur. The frost melts. She unfreezes mid-hiss.", italic: true },
+      { speaker: null, text: "She blinks. Then turns and charges the Karakoncolos — fierce, fast, all four paws.", italic: true },
+      { speaker: null, text: "The monster shrieks. He drops a leather pouch — walnuts spill across the cobblestones.", italic: true },
+      { speaker: 'KARAKONCOLOS', text: '"I don\'t remember the words. I don\'t remember the cold. I don\'t remember—"', italic: false },
+      { speaker: null, text: 'He vanishes into the dark.', italic: true },
+      { speaker: null, text: 'Pätu trots back to Pip, pleased. She head-butts his hand.', italic: true },
+      { speaker: 'PIP',  text: "'Are you all right?'", italic: false },
+      { speaker: null, text: 'She spots the walnuts. Sniffs them. Then notices a house up the slope — chimney smoking, warm-amber light.', italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      autoSave();
+      // Gather walnuts, transition to Muhittin's kitchen
+      showDialogue({
+        id: 'ch4-move-up',
+        lines: [{ speaker: null, text: "Pip gathers the walnuts into the leather pouch. Pätu is already walking toward the warm light. Walk right.", italic: true }],
+        choices: null, onEnd: null,
+      });
+    },
+  });
+}
+
+function triggerMuhittinDoor() {
+  ch4State.muhittinMet = true;
+  showDialogue({
+    id: 'muhittin-door',
+    lines: [
+      { speaker: null,      text: "Pätu reaches the door first. She sits, meows once, twice, three times.", italic: true },
+      { speaker: null,      text: "The door opens. A young man stands in the doorway. He looks down.", italic: true },
+      { speaker: 'MUHITTIN', text: '"Hello, little one."', italic: false },
+      { speaker: null,      text: "He kneels to pet Pätu. She purrs immediately. He looks up. Pip is right there.", italic: true },
+      { speaker: 'MUHITTIN', text: '"Oh. Hello. Are you... new? Did something happen tonight, near here?"', italic: false },
+      { speaker: 'PIP',     text: '"I died. I\'m traveling. I collect recipes. The monster in the square froze my cat."', italic: false },
+      { speaker: 'MUHITTIN', text: '"Come in, ghost-boy. Both of you. It\'s cold out there."', italic: false },
+    ],
+    choices: null,
+    onEnd() {
+      ch4State.arrivedMuhittinKitchen = true;
+      autoSave();
+      setTimeout(() => triggerWalnutReveal(), 600);
+    },
+  });
+}
+
+function triggerWalnutReveal() {
+  showDialogue({
+    id: 'ch4-walnuts',
+    lines: [
+      { speaker: null,      text: "Inside. Warmth, woodsmoke, charred peppers. Pätu curls in front of the oven.", italic: true },
+      { speaker: 'MUHITTIN', text: '"The peppers are roasted. The bread is rising. The walnuts — ah. I forgot the walnuts at the market."', italic: false },
+      { speaker: 'PIP',     text: '"I have walnuts. The monster dropped them."', italic: false },
+      { speaker: 'MUHITTIN', text: '"That monster owes me a tip, then. Come, ghost-boy. I\'ll show you how my grandmother made this."', italic: false },
+    ],
+    choices: null,
+    onEnd() {
+      ch4WalnutsHeld = false;
+      startMuhittiCooking();
+    },
+  });
+}
+
+function startMuhittiCooking() {
+  ch4State.cookingStep = 1;
+  showCh4CookingStep1();
+}
+
+function showCh4CookingStep1() {
+  showDialogue({
+    id: 'ch4-cooking-step1',
+    lines: [{ speaker: 'MUHITTIN', text: '"The peppers first. They go in the bowl — but tell me: how dark should the char be?"', italic: false }],
+    choices: [
+      {
+        text: '"Almost burnt. That\'s where the sweetness comes from."',
+        onSelect() {
+          showDialogue({
+            id: 'ch4-cooking-step1-right',
+            lines: [{ speaker: 'MUHITTIN', text: '"Yes. Exactly. My grandmother always said the same."', italic: false }],
+            choices: null, onEnd: () => showCh4CookingStep2(),
+          });
+        },
+      },
+      {
+        text: '"Just a light char — you don\'t want it too dark."',
+        onSelect() {
+          showDialogue({
+            id: 'ch4-cooking-step1-wrong',
+            lines: [{ speaker: 'MUHITTIN', text: '"No no — you go almost burnt. That\'s the sweetness. Try again."', italic: false }],
+            choices: null, onEnd: () => showCh4CookingStep1(),
+          });
+        },
+      },
+    ], onEnd: null,
+  });
+}
+
+function showCh4CookingStep2() {
+  ch4State.cookingStep = 2;
+  showDialogue({
+    id: 'ch4-cooking-step2',
+    lines: [{ speaker: 'MUHITTIN', text: '"Now the walnuts. They go in the mortar. Grind them. What texture?', italic: false }],
+    choices: [
+      {
+        text: 'Coarse — some texture remaining, not a powder.',
+        onSelect() {
+          showDialogue({
+            id: 'ch4-cooking-step2-right',
+            lines: [
+              { speaker: 'MUHITTIN', text: '"Good. This is how she showed me. The mortar was her mother\'s. She used it every day."', italic: false },
+              { speaker: null, text: "He says 'was' without a pause. Pip notices. He doesn't ask.", italic: true },
+            ],
+            choices: null, onEnd: () => showCh4CookingStep3(),
+          });
+        },
+      },
+      {
+        text: 'Fine — grind them to a smooth paste.',
+        onSelect() {
+          showDialogue({
+            id: 'ch4-cooking-step2-wrong',
+            lines: [{ speaker: 'MUHITTIN', text: '"Too fine — you lose the texture. Coarse. Some walnut in every bite."', italic: false }],
+            choices: null, onEnd: () => showCh4CookingStep2(),
+          });
+        },
+      },
+    ], onEnd: null,
+  });
+}
+
+function showCh4CookingStep3() {
+  ch4State.cookingStep = 3;
+  showDialogue({
+    id: 'ch4-cooking-step3',
+    lines: [{ speaker: 'MUHITTIN', text: '"The secret ingredient. Not sumac, not tarragon — what is it?"', italic: false }],
+    choices: [
+      {
+        text: 'Pomegranate molasses.',
+        onSelect() {
+          showDialogue({
+            id: 'ch4-cooking-step3-right',
+            lines: [
+              { speaker: 'MUHITTIN', text: '"Yes. You can find it in any Turkish market. Don\'t use too much — it should hum, not sing."', italic: false },
+            ],
+            choices: null, onEnd: () => showCh4CookingStep4(),
+          });
+        },
+      },
+      {
+        text: 'Lemon juice.',
+        onSelect() {
+          showDialogue({
+            id: 'ch4-cooking-step3-wrong',
+            lines: [{ speaker: 'MUHITTIN', text: '"Lemon comes later. The secret is pomegranate molasses."', italic: false }],
+            choices: null, onEnd: () => showCh4CookingStep3(),
+          });
+        },
+      },
+    ], onEnd: null,
+  });
+}
+
+function showCh4CookingStep4() {
+  ch4State.cookingStep = 4;
+  showDialogue({
+    id: 'ch4-cooking-step4',
+    lines: [{ speaker: 'MUHITTIN', text: '"Last — breadcrumbs, cumin, paprika, lemon, olive oil. You select and push them to me. Which goes first?"', italic: false }],
+    choices: [
+      {
+        text: 'Cumin.',
+        onSelect() {
+          ch4State.cookingStep = 5;
+          showDialogue({
+            id: 'ch4-cooking-step4-right',
+            lines: [
+              { speaker: 'MUHITTIN', text: '"Cumin first. Good. Then paprika. Then breadcrumbs. Then lemon and olive oil last."', italic: false },
+              { speaker: 'MUHITTIN', text: '"The dip needs to rest a few minutes. The flavors need to find each other."', italic: false },
+              { speaker: null, text: 'He slides the bread into the oven. Pätu sleeps. The kitchen smells of cumin, char, and yeast.', italic: true },
+            ],
+            choices: null,
+            onEnd() {
+              addMuhamamaraRecipe();
+              triggerMuhittiTaste();
+            },
+          });
+        },
+      },
+      {
+        text: 'Paprika.',
+        onSelect() {
+          showDialogue({
+            id: 'ch4-cooking-step4-wrong',
+            lines: [{ speaker: 'MUHITTIN', text: '"No no, that\'s sumac — save that for kebab. Cumin first."', italic: false }],
+            choices: null, onEnd: () => showCh4CookingStep4(),
+          });
+        },
+      },
+    ], onEnd: null,
+  });
+}
+
+function triggerMuhittiTaste() {
+  showDialogue({
+    id: 'ch4-taste-offer',
+    lines: [
+      { speaker: 'MUHITTIN', text: '"Tell me what you think, ghost-boy."', italic: false },
+      { speaker: null, text: 'He scoops muhammara into a small bowl, tears off bread, holds it out.', italic: true },
+      { speaker: null, text: 'Pip takes a bite.', italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      showCinematic('muhammara-orchard', () => {
+        ch4State.tasteMemorySeen = true;
+        autoSave();
+        showDialogue({
+          id: 'ch4-after-taste',
+          lines: [
+            { speaker: 'PIP',      text: "'...your grandmother. She made this.'", italic: false },
+            { speaker: 'MUHITTIN', text: '"She did. She used to."', italic: false },
+            { speaker: null,      text: 'A small pause. He smiles — settled, not sad.', italic: true },
+            { speaker: 'MUHITTIN', text: '"I\'m making it for Omer because he hasn\'t been home in a while. He needs to eat it again."', italic: false },
+          ],
+          choices: null,
+          onEnd: () => triggerOmerArrival(),
+        });
+      });
+    },
+  });
+}
+
+function triggerOmerArrival() {
+  ch4State.omerArrived = true;
+  showDialogue({
+    id: 'ch4-omer-arrival',
+    lines: [
+      { speaker: null,      text: "The doorbell. Voices. Omer and Brian come in, flushed from tennis, coats off.", italic: true },
+      { speaker: null,      text: "Pip stands by the oven, near Pätu. He takes a step toward the door.", italic: true },
+      { speaker: null,      text: "Muhittin crosses to Pip quickly. He produces a small jar, spoons in a generous portion of muhammara, seals it, holds it out.", italic: true },
+      { speaker: 'MUHITTIN', text: '"Take this with you. For your friend on the boat. The one who feeds you."', italic: false },
+      { speaker: null,      text: "Pip takes the jar. He hadn't mentioned Henrik. Muhittin guessed.", italic: true },
+      { speaker: null,      text: "Pätu walks to the door, looks back at Pip, meows. Time to go.", italic: true },
+      { speaker: 'MUHITTIN', text: '"Come back if you\'re ever in Istanbul again, ghost-boy. Bring the cat."', italic: false },
+    ],
+    choices: null,
+    onEnd() {
+      ch4State.muhamamaraJarHeld = true;
+      autoSave();
+      showDialogue({
+        id: 'ch4-leave-kitchen',
+        lines: [{ speaker: null, text: "Walk left to return to the docks.", italic: true }],
+        choices: null, onEnd: null,
+      });
+    },
+  });
+}
+
+function triggerHenrikPhotographBeat() {
+  ch4State.henrikPhotographSeen = true;
+  showDialogue({
+    id: 'ch4-henrik-photo',
+    lines: [
+      { speaker: null,   text: 'Henrik is alone at the counter. His back to the door. He is holding a photograph.', italic: true },
+      { speaker: null,   text: 'He tucks it into his apron pocket — quick, almost guilty — when he registers Pip.', italic: true },
+      { speaker: 'HENRIK', text: '"You\'re back."', italic: false },
+      { speaker: null,   text: 'He turns. The smile takes a beat to arrive.', italic: true },
+      { speaker: 'PIP',   text: '"I brought you something."', italic: false },
+    ],
+    choices: null,
+    onEnd() {
+      showDialogue({
+        id: 'ch4-henrik-muhammara',
+        lines: [
+          { speaker: null,   text: 'Pip floats the jar across the kitchen. Henrik opens it. Smells it. His face changes.', italic: true },
+          { speaker: 'HENRIK', text: '"Muhammara. I haven\'t eaten this in..."', italic: false },
+          { speaker: null,   text: 'He gets out bread, dips it, tastes. Closes his eyes.', italic: true },
+          { speaker: 'HENRIK', text: '"Pomegranate molasses. The secret was always pomegranate molasses."', italic: false },
+          { speaker: 'HENRIK', text: '"Henrietta loved pomegranate molasses. She put it on everything. Even things that shouldn\'t have it."', italic: false },
+        ],
+        choices: null,
+        onEnd() {
+          triggerHenriettaStory();
+        },
+      });
+    },
+  });
+}
+
+function triggerHenriettaStory() {
+  ch4State.henriettaTold = true;
+  showDialogue({
+    id: 'ch4-henrietta',
+    lines: [
+      { speaker: 'HENRIK', text: '"She was my wife. She died — eleven years now, more or less. One forgets the counting."', italic: false },
+      { speaker: 'HENRIK', text: '"She laughed at her own jokes before she finished telling them. She couldn\'t help it. You couldn\'t stay cross."', italic: false },
+      { speaker: 'HENRIK', text: '"She put pomegranate molasses in the beet salad, which is wrong, but she was right about it."', italic: false },
+      { speaker: 'HENRIK', text: '"After she was gone, we had a—"', italic: false },
+      { speaker: null,   text: 'The service bell rings. The steward calls down. Dinner service.', italic: true },
+      { speaker: 'HENRIK', text: '"...I should get back. Thank you for this, Pip. It was kind of you to bring it."', italic: false },
+      { speaker: null,   text: "He tosses Pätu a piece of salmon. She catches it cleanly.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      ch4State.muhamamaraJarHeld = false;
+      ch4State.chapter4Complete  = true;
+      autoSave();
+      showChapter4End();
+    },
+  });
+}
+
+function showChapter4End() {
+  triggerDeckStub();   // Ch4→Ch5 transition (wired when Ch5 is built)
+}
+
+function addMuhamamaraRecipe() {
+  if (notebook.items.some(i => i.id === 'recipe-muhammara')) return;
+  notebook.items.push({
+    id:         'recipe-muhammara',
+    name:       "Muhittin's grandmother's muhammara",
+    annotation: "Roasted red peppers (almost burnt), coarse walnuts, pomegranate molasses, breadcrumbs, cumin, paprika, lemon, olive oil. Rest before serving.",
+    kind:       'recipe',
+    sprite:     'muhammara',
+  });
+  renderNotebookItems();
+  autoSave();
+}
+
+/* ----------------------------------------------------------------
+   Ch4 cinematic draw functions
+   ---------------------------------------------------------------- */
+
+function drawMuhamamaraOrchardCinematic(now) {
+  const t = now / 1000;
+
+  ctx.fillStyle = '#080c08';
+  ctx.fillRect(0, 0, W, H);
+
+  // Autumn warmth — golden light through bare branches
+  const glow = ctx.createRadialGradient(W / 2, 60, 0, W / 2, 60, 220);
+  glow.addColorStop(0,   'rgba(220,180,60,0.30)');
+  glow.addColorStop(0.5, 'rgba(160,110,30,0.12)');
+  glow.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // Ground (orchard)
+  ctx.fillStyle = '#1a1608';
+  ctx.fillRect(0, 148, W, H - 148);
+  ctx.fillStyle = '#221e08';
+  ctx.fillRect(0, 146, W, 4);
+
+  // Bare walnut tree branches
+  ctx.fillStyle = '#2a2010';
+  for (let tx2 = 0; tx2 < 5; tx2++) {
+    const treeX = 40 + tx2 * 90;
+    ctx.fillRect(treeX - 2, 20, 4, 130);
+    // Branches
+    for (let b = 0; b < 5; b++) {
+      const angle = (b / 5) * Math.PI * 2;
+      const bLen  = 20 + b * 8;
+      ctx.fillRect(
+        Math.round(treeX + Math.cos(angle) * 4), Math.round(40 + b * 20),
+        Math.round(Math.cos(angle + 0.3) * bLen), 2
+      );
+    }
+  }
+
+  // Grandmother (center, slightly raised)
+  ctx.fillStyle = '#3a2818';
+  ctx.fillRect(214, 88, 28, 62);
+  ctx.fillStyle = '#c0a868';
+  ctx.fillRect(218, 70, 20, 20);
+  // Headscarf
+  ctx.fillStyle = '#1a2840';
+  ctx.fillRect(215, 64, 22, 10);
+  ctx.fillStyle = '#1a3060';
+  ctx.fillRect(212, 72, 6, 18);
+  ctx.fillRect(228, 72, 6, 18);
+  // Arms embracing two boys
+  ctx.fillStyle = '#3a2818';
+  ctx.fillRect(185, 96, 32, 10);
+  ctx.fillRect(240, 96, 32, 10);
+
+  // Muhittin (boy, left)
+  ctx.fillStyle = '#2a2428';
+  ctx.fillRect(178, 100, 16, 50);
+  ctx.fillStyle = '#c0a060';
+  ctx.fillRect(181, 82, 12, 20);
+  ctx.fillStyle = '#3a2810';
+  ctx.fillRect(180, 76, 14, 8);
+
+  // Omer (boy, right)
+  ctx.fillStyle = '#2a2428';
+  ctx.fillRect(260, 102, 14, 48);
+  ctx.fillStyle = '#c0a060';
+  ctx.fillRect(263, 84, 10, 20);
+  ctx.fillStyle = '#3a2810';
+  ctx.fillRect(262, 78, 12, 8);
+
+  // Walnuts on ground
+  ctx.fillStyle = '#4a3018';
+  for (let w = 0; w < 8; w++) {
+    ctx.beginPath();
+    ctx.arc(100 + w * 37, 155, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Warm text
+  ctx.fillStyle = 'rgba(220,190,100,0.88)';
+  ctx.font = 'italic 11px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  const line = t < 5 ? 'They smell like walnut hulls and grandmother.'
+                     : 'The dead are alive in the food their grandchildren still cook.';
+  ctx.fillText(line, W / 2, H - 28);
+  ctx.textAlign = 'left';
+}
+
+/* ----------------------------------------------------------------
+   Ch4 character draw functions
+   ---------------------------------------------------------------- */
+
+/* Karakoncolos — tall shadow figure, hollow face, cold breath. */
+function drawKarakoncolos(sx, groundY, now) {
+  const t  = now / 1000;
+  const cx = Math.round(sx);
+  const cy = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Shadow aura
+  const aura = ctx.createRadialGradient(0, -50, 0, 0, -50, 65);
+  aura.addColorStop(0, 'rgba(0,20,40,0.30)');
+  aura.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = aura;
+  ctx.fillRect(-65, -115, 130, 115);
+
+  ctx.globalAlpha = 0.80;
+
+  // Cloak body — wide, flowing
+  ctx.fillStyle = '#080c10';
+  ctx.fillRect(-20, -80, 40, 80);
+  ctx.fillRect(-28, -66, 56, 50);
+  ctx.fillRect(-14, -96, 28, 18);
+
+  // Cloak taper at bottom
+  ctx.fillStyle = '#060a0e';
+  ctx.fillRect(-32, -40, 4, 28);
+  ctx.fillRect(28, -40, 4, 28);
+
+  // Face — hollow (no eyes or nose, just darkness)
+  ctx.fillStyle = '#040608';
+  ctx.fillRect(-10, -104, 20, 18);
+  // Hollow eye sockets (very subtle blue-grey)
+  ctx.fillStyle = 'rgba(80,120,160,0.25)';
+  ctx.fillRect(-7, -102, 5, 4);
+  ctx.fillRect(2,  -102, 5, 4);
+
+  // Breath (icy blue, pulse)
+  const breathA = 0.15 + Math.sin(t * 2.2) * 0.10;
+  ctx.fillStyle = `rgba(140,200,255,${breathA.toFixed(2)})`;
+  ctx.fillRect(-4, -88, 8, 12);
+  ctx.fillRect(-8, -82, 16, 8);
+  ctx.fillRect(-12, -78, 24, 6);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+/* Frozen Pätu — ice-encased version of Pätu, pale blue. */
+function drawFrozenPatu(sx, groundY, now) {
+  const t     = now / 1000;
+  const cx    = Math.round(sx);
+  const cy    = Math.round(groundY);
+  const glint = 0.25 + Math.sin(t * 2.5) * 0.10;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = 0.90;
+
+  // Ice shell glow
+  const iceG = ctx.createRadialGradient(0, -10, 0, 0, -10, 22);
+  iceG.addColorStop(0, 'rgba(180,220,255,0.30)');
+  iceG.addColorStop(1, 'rgba(80,140,200,0)');
+  ctx.fillStyle = iceG;
+  ctx.fillRect(-22, -28, 44, 28);
+
+  // Ice block
+  ctx.fillStyle = '#8ab8d8';
+  ctx.fillRect(-12, -24, 26, 24);
+  ctx.fillStyle = `rgba(200,230,255,${glint.toFixed(2)})`;
+  ctx.fillRect(-10, -22, 6, 4);
+  ctx.fillRect(4,   -16, 5, 3);
+
+  // Pätu silhouette inside ice (pale blue)
+  ctx.fillStyle = '#4a7098';
+  ctx.fillRect(-8, -22, 18, 22);
+  ctx.fillRect(-10, -16, 22, 12);
+  ctx.fillRect(-8,  -28, 8, 8);   // ears
+  ctx.fillRect(4,   -28, 6, 8);
+  ctx.fillStyle = '#90b8d0';
+  ctx.fillRect(-3, -20, 6, 6);    // head
+  // Frozen hiss expression
+  ctx.fillStyle = '#2a4860';
+  ctx.fillRect(-2, -17, 4, 1);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+/* Muhittin — young Turkish man, warm, curious, ~56px tall. */
+function drawMuhittin(sx, groundY, now, speaking) {
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.8) * 0.6) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#281810';
+  ctx.fillRect(-5, -26, 5, 26);
+  ctx.fillRect(0,  -26, 5, 26);
+
+  // Apron / shirt
+  ctx.fillStyle = '#e0c880';
+  ctx.fillRect(-2, -50, 4, 30);
+  ctx.fillStyle = '#2a3828';
+  ctx.fillRect(-8, -52, 16, 28);
+  ctx.fillRect(-2, -52, 4, 28);   // apron tie
+
+  // Arms
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(-11, -50, 4, 14);
+  ctx.fillRect(7,   -50, 4, 14);
+
+  // Neck
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(-3, -56, 6, 4);
+
+  const ht = -66 + bob;
+  ctx.fillRect(-7, ht, 14, 10);
+  ctx.fillStyle = '#e0c890';
+  ctx.fillRect(-5, ht + 3, 2, 2);
+  ctx.fillRect(3,  ht + 3, 2, 2);
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-4, ht + 4, 1, 1);
+  ctx.fillRect(4,  ht + 4, 1, 1);
+  ctx.fillStyle = speaking ? '#7a2810' : '#6a4030';
+  ctx.fillRect(-2, ht + 7, 4, 1);
+  // Dark curly hair
+  ctx.fillStyle = '#1a1008';
+  ctx.fillRect(-8, ht - 3, 16, 5);
+  ctx.fillRect(-9, ht, 3, 4);
+  ctx.fillRect(6,  ht, 3, 4);
+  ctx.fillRect(-6, ht - 5, 12, 3);
+
+  ctx.restore();
+}
+
+/* Omer — Muhittin's younger brother, slightly different palette. */
+function drawOmer(sx, groundY, now) {
+  const cx = Math.round(sx);
+  const cy = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#201808';
+  ctx.fillRect(-5, -24, 5, 24);
+  ctx.fillRect(0,  -24, 5, 24);
+
+  ctx.fillStyle = '#2a4060';
+  ctx.fillRect(-8, -50, 16, 28);
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(-10, -48, 4, 12);
+  ctx.fillRect(6,   -48, 4, 12);
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(-3, -54, 6, 4);
+
+  const ht = -64;
+  ctx.fillRect(-7, ht, 14, 10);
+  ctx.fillStyle = '#e0c890';
+  ctx.fillRect(-5, ht + 3, 2, 2);
+  ctx.fillRect(3,  ht + 3, 2, 2);
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-4, ht + 4, 1, 1);
+  ctx.fillRect(4,  ht + 4, 1, 1);
+  ctx.fillStyle = '#1a1008';
+  ctx.fillRect(-8, ht - 3, 16, 5);
+
+  ctx.restore();
+}
+
+/* Brian — American, slightly different hair/build. */
+function drawBrian(sx, groundY, now) {
+  const cx = Math.round(sx);
+  const cy = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#281810';
+  ctx.fillRect(-5, -26, 5, 26);
+  ctx.fillRect(0,  -26, 5, 26);
+
+  ctx.fillStyle = '#4a3828';
+  ctx.fillRect(-8, -52, 16, 28);
+  ctx.fillStyle = '#d0a870';
+  ctx.fillRect(-10, -50, 4, 14);
+  ctx.fillRect(6,   -50, 4, 14);
+  ctx.fillStyle = '#d0a870';
+  ctx.fillRect(-3, -56, 6, 4);
+
+  const ht = -66;
+  ctx.fillRect(-7, ht, 14, 10);
+  ctx.fillStyle = '#e8d8b0';
+  ctx.fillRect(-5, ht + 3, 2, 2);
+  ctx.fillRect(3,  ht + 3, 2, 2);
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-4, ht + 4, 1, 1);
+  ctx.fillRect(4,  ht + 4, 1, 1);
+  // Sandy-blond hair
+  ctx.fillStyle = '#a07830';
+  ctx.fillRect(-8, ht - 3, 16, 5);
+  ctx.fillRect(-9, ht, 3, 4);
+  ctx.fillRect(6,  ht, 3, 4);
+
+  ctx.restore();
+}
+
+/* Echo cat — small translucent amber feline form. */
+function drawEchoCat(sx, groundY, now, idx) {
+  const t     = now / 1000;
+  const alpha = 0.35 + Math.sin(t * 1.2 + idx * 1.8) * 0.15;
+  const cx    = Math.round(sx + Math.sin(t * 0.5 + idx) * 1.5);
+  const cy    = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = Math.max(0.1, alpha);
+  ctx.fillStyle = '#c07030';
+
+  // Tiny cat silhouette (12px)
+  ctx.fillRect(-6, -12, 12, 12);
+  ctx.fillRect(-8, -8, 16, 8);
+  ctx.fillRect(-5, -15, 4, 4);
+  ctx.fillRect(1,  -15, 4, 4);
+  // Tail
+  ctx.fillRect(6, -16, 2, 8);
+  ctx.fillRect(7, -19, 2, 5);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+/* ----------------------------------------------------------------
+   Ch4 room draw functions
+   ---------------------------------------------------------------- */
+
+function drawCh4CatAlley(camX, now) {
+  const t = now / 1000;
+
+  // Cool stone-blue narrow alley
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#080c14');
+  wallG.addColorStop(0.7, '#0c1018');
+  wallG.addColorStop(1,   '#0a0e14');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#080c10';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#10141a';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Stone wall texture
+  const wallColors = ['#14181e', '#161a20', '#121618'];
+  for (let s = 0; s < 3; s++) {
+    ctx.fillStyle = wallColors[s];
+    for (let bx = 0; bx < W; bx += 24) {
+      ctx.fillRect(bx, 20 + s * 38, 22, 16);
+    }
+  }
+
+  // Narrowing walls (alley sides)
+  ctx.fillStyle = '#0c1018';
+  ctx.fillRect(0,     0, 40, FLOOR_Y);
+  ctx.fillRect(W - 40, 0, 40, FLOOR_Y);
+
+  // Lit window at end (warm amber beacon)
+  const winSX = Math.round(640 - camX);
+  if (winSX > -20 && winSX < W + 20) {
+    const wG = ctx.createRadialGradient(winSX, 60, 0, winSX, 60, 70);
+    wG.addColorStop(0,   'rgba(255,190,60,0.28)');
+    wG.addColorStop(1,   'rgba(255,190,60,0)');
+    ctx.fillStyle = wG;
+    ctx.fillRect(winSX - 70, 0, 140, FLOOR_Y);
+    ctx.fillStyle = '#ffc850';
+    ctx.fillRect(winSX - 10, 40, 20, 20);
+    ctx.fillStyle = '#201808';
+    ctx.fillRect(winSX - 12, 38, 24, 24);
+    ctx.fillStyle = '#ffc850';
+    ctx.fillRect(winSX - 9, 40, 18, 18);
+  }
+
+  // Echo cats along the alley
+  const catPositions = [90, 180, 260, 380, 480, 550, 620];
+  catPositions.forEach((cx2, idx) => {
+    const csx = Math.round(cx2 - camX);
+    if (csx < -20 || csx > W + 20) return;
+    const catY = FLOOR_Y - Math.round(Math.abs(Math.sin(idx * 1.4)) * 24);
+    drawEchoCat(csx, catY, now, idx);
+  });
+
+  // Pätu ahead (she fled)
+  if (!ch4State.arrivedFrozenSquare) {
+    const patuSX = Math.round(Math.min(pip.x + 120, rooms.ch4CatAlley.pipMaxX - 20) - camX);
+    if (patuSX > -20 && patuSX < W + 20) {
+      const pAlpha = 0.6 + Math.sin(now / 500) * 0.2;
+      ctx.globalAlpha = pAlpha;
+      drawPatu(patuSX, FLOOR_Y, now);
+      ctx.globalAlpha = 1.0;
+    }
+  }
+
+  // Float particles (Pip is floating in this room)
+  const fpA = 0.12 + Math.sin(now / 600) * 0.05;
+  ctx.fillStyle = `rgba(180,210,255,${fpA.toFixed(2)})`;
+  const fpBase = Math.round(pip.x - camX);
+  ctx.fillRect(fpBase - 2, FLOOR_Y - 40, 1, 3);
+  ctx.fillRect(fpBase + 6, FLOOR_Y - 50, 1, 3);
+  ctx.fillRect(fpBase - 6, FLOOR_Y - 34, 1, 2);
+}
+
+function drawCh4FrozenSquare(camX, now) {
+  const t = now / 1000;
+
+  // Cold open square — deepest blue
+  ctx.fillStyle = '#060a10';
+  ctx.fillRect(0, 0, W, H);
+
+  // Snow ground
+  ctx.fillStyle = '#b8c4d0';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#d0dce8';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Stone buildings around square (parallax 0.2x)
+  const bOff = Math.round(camX * 0.2);
+  for (const [bx, bh, bw] of [[0,130,100],[110,100,90],[210,120,80],[300,110,100]]) {
+    const bsx = Math.round(bx - bOff);
+    ctx.fillStyle = '#10141a';
+    ctx.fillRect(bsx, FLOOR_Y - bh, bw, bh);
+    ctx.fillStyle = '#1a2028';
+    ctx.fillRect(bsx, FLOOR_Y - bh, bw, 3);
+  }
+
+  // Dying brazier (world-x 120)
+  const brazSX = Math.round(120 - camX);
+  if (brazSX > -30 && brazSX < W + 30) {
+    ctx.fillStyle = '#2a1808';
+    ctx.fillRect(brazSX - 8, FLOOR_Y - 28, 16, 28);
+    ctx.fillStyle = '#3a2010';
+    ctx.fillRect(brazSX - 10, FLOOR_Y - 32, 20, 8);
+    const fireA = 0.06 + Math.sin(t * 2.0) * 0.04;
+    ctx.fillStyle = `rgba(255,80,20,${fireA.toFixed(2)})`;
+    ctx.fillRect(brazSX - 6, FLOOR_Y - 32, 12, 12);
+  }
+
+  // Fountain (world-x 260)
+  const fountSX = Math.round(260 - camX);
+  if (fountSX > -40 && fountSX < W + 40) {
+    ctx.fillStyle = '#181c24';
+    ctx.fillRect(fountSX - 20, FLOOR_Y - 28, 40, 28);
+    ctx.fillStyle = '#202840';
+    ctx.fillRect(fountSX - 24, FLOOR_Y - 6, 48, 6);
+    ctx.fillStyle = '#8aacc8';
+    ctx.fillRect(fountSX - 14, FLOOR_Y - 24, 28, 18);
+    ctx.fillStyle = '#b0d0e8';
+    ctx.fillRect(fountSX - 12, FLOOR_Y - 22, 8, 4);
+  }
+
+  // Snow on ground
+  ctx.fillStyle = '#c8d8e8';
+  for (let sx2 = 0; sx2 < W; sx2 += 8) {
+    const sh = Math.round(Math.sin(sx2 * 0.4 + t * 0.1) * 2) + 3;
+    ctx.fillRect(sx2, FLOOR_Y - sh, 7, sh);
+  }
+
+  // Frozen Pätu (world-x 380)
+  if (ch4State.karakoncolosAppeared && !ch4State.patuThawed) {
+    const frozenSX = Math.round(380 - camX);
+    if (frozenSX > -30 && frozenSX < W + 30) {
+      drawFrozenPatu(frozenSX, FLOOR_Y, now);
+    }
+  }
+
+  // Pätu unfrozen after puzzle (walks with Pip)
+  if (ch4State.patuThawed) {
+    drawPatu(Math.round(pip.x - 38 - camX), FLOOR_Y, now);
+  }
+
+  // Karakoncolos (world-x ~220, before resolved)
+  if (ch4State.karakoncolosAppeared && !ch4State.patuThawed) {
+    const monSX = Math.round(220 + Math.sin(t * 0.5) * 30 - camX);
+    if (monSX > -70 && monSX < W + 70) {
+      drawKarakoncolos(monSX, FLOOR_Y, now);
+    }
+  }
+
+  // Snowfall particles
+  const snowParticles = 15;
+  ctx.fillStyle = 'rgba(200,220,240,0.40)';
+  for (let sp = 0; sp < snowParticles; sp++) {
+    const sx3  = (sp * 32 + (t * 20) % (W + 20) + sp * 7) % (W + 20) - 10;
+    const sy3  = (sp * 18 + t * 25 + sp * 11) % (FLOOR_Y + 10);
+    ctx.fillRect(Math.round(sx3), Math.round(sy3), 2, 2);
+  }
+}
+
+function drawCh4MuhittiKitchen(camX, now) {
+  const t = now / 1000;
+
+  // Low-ceilinged warm kitchen — ember-red undertone
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#281408');
+  wallG.addColorStop(0.6, '#342008');
+  wallG.addColorStop(1,   '#201008');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#1a1008';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#281808';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Warm glow
+  const rG = ctx.createRadialGradient(160, 80, 0, 160, 80, 180);
+  rG.addColorStop(0,   'rgba(255,180,60,0.28)');
+  rG.addColorStop(0.5, 'rgba(180,80,20,0.08)');
+  rG.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = rG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Wood-fired oven (world-x 60)
+  const ovenSX = Math.round(60 - camX);
+  if (ovenSX > -60 && ovenSX < W + 30) {
+    ctx.fillStyle = '#281808';
+    ctx.fillRect(ovenSX - 28, FLOOR_Y - 60, 56, 60);
+    ctx.fillStyle = '#1a0c04';
+    ctx.fillRect(ovenSX - 22, FLOOR_Y - 54, 44, 46);
+    const fireB = 0.14 + Math.sin(t * 2.8) * 0.07;
+    ctx.fillStyle = `rgba(255,110,30,${fireB.toFixed(2)})`;
+    ctx.fillRect(ovenSX - 18, FLOOR_Y - 50, 36, 34);
+    ctx.fillStyle = '#3a1e08';
+    ctx.fillRect(ovenSX - 28, FLOOR_Y - 8, 56, 8);
+  }
+
+  // İznik tile accent (world-x 0-40) — deep blue
+  const tileOff = Math.round(camX * 0);
+  ctx.fillStyle = '#1a3060';
+  ctx.fillRect(0, FLOOR_Y - 30, 30, 30);
+  ctx.fillStyle = '#2a4880';
+  for (let ty = 0; ty < 3; ty++) {
+    for (let tx3 = 0; tx3 < 2; tx3++) {
+      ctx.fillRect(tx3 * 14 + 1, FLOOR_Y - 28 + ty * 9, 12, 8);
+    }
+  }
+  ctx.fillStyle = '#e8c040';
+  ctx.fillRect(4,  FLOOR_Y - 24, 4, 4);
+  ctx.fillRect(18, FLOOR_Y - 18, 4, 4);
+
+  // Table (world-x 200-500)
+  const tL = Math.round(200 - camX), tR = Math.round(500 - camX);
+  if (tR > 0 && tL < W) {
+    ctx.fillStyle = '#3a2010';
+    ctx.fillRect(tL, FLOOR_Y - 26, tR - tL, 6);
+    ctx.fillStyle = '#221408';
+    ctx.fillRect(tL + 6, FLOOR_Y - 20, 6, 20);
+    ctx.fillRect(tR - 12, FLOOR_Y - 20, 6, 20);
+  }
+
+  // Roasted peppers on rack (world-x 130)
+  const pepSX = Math.round(130 - camX);
+  if (pepSX > -30 && pepSX < W + 20) {
+    ctx.fillStyle = '#3a1808';
+    ctx.fillRect(pepSX - 20, FLOOR_Y - 44, 40, 6);
+    ctx.fillStyle = '#a02808';
+    for (let p = 0; p < 3; p++) {
+      ctx.fillRect(pepSX - 14 + p * 12, FLOOR_Y - 42, 8, 22);
+    }
+    ctx.fillStyle = '#c03020';
+    for (let p = 0; p < 3; p++) {
+      ctx.fillRect(pepSX - 12 + p * 12, FLOOR_Y - 40, 5, 16);
+    }
+  }
+
+  // Bread rising (world-x 380)
+  const breadSX = Math.round(380 - camX);
+  if (breadSX > -30 && breadSX < W + 20) {
+    ctx.fillStyle = '#c8a060';
+    ctx.fillRect(breadSX - 18, FLOOR_Y - 26, 36, 20);
+    ctx.fillStyle = '#e8c080';
+    ctx.fillRect(breadSX - 14, FLOOR_Y - 24, 28, 14);
+    // Rising dome
+    ctx.fillRect(breadSX - 10, FLOOR_Y - 30, 20, 6);
+  }
+
+  // Spice jars on shelf (world-x 460-620)
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(Math.round(460 - camX), 52, 160, 4);
+  const jarColors = ['#8a2010','#208a30','#2a2080','#8a7010','#801060'];
+  for (let j = 0; j < 5; j++) {
+    const jx = Math.round(470 + j * 26 - camX);
+    if (jx < -14 || jx > W + 14) continue;
+    ctx.fillStyle = jarColors[j];
+    ctx.fillRect(jx - 5, 30, 10, 22);
+    ctx.fillStyle = '#c8b890';
+    ctx.fillRect(jx - 4, 26, 8, 5);
+  }
+
+  // Characters
+  if (ch4State.muhittinMet) {
+    const mSX = Math.round(150 - camX);
+    if (mSX > -30 && mSX < W + 30) {
+      const muhSpeaking = dialogue.active && dialogue.node && dialogue.node.lines &&
+        dialogue.node.lines[dialogue.lineIndex] &&
+        dialogue.node.lines[dialogue.lineIndex].speaker === 'MUHITTIN';
+      drawMuhittin(mSX, FLOOR_Y, now, muhSpeaking);
+    }
+    // Omer and Brian after arrival
+    if (ch4State.omerArrived) {
+      drawOmer(Math.round(280 - camX),  FLOOR_Y, now);
+      drawBrian(Math.round(310 - camX), FLOOR_Y, now);
+    }
+  }
+
+  // Pätu in front of oven
+  if (ch4State.arrivedMuhittinKitchen) {
+    drawPatu(Math.round(80 - camX), FLOOR_Y, now);
+  }
+}
+
+/* ----------------------------------------------------------------
+   Ch4 room definitions
+   ---------------------------------------------------------------- */
+
+rooms.ch4CatAlley = {
+  width:         750,
+  pipMaxX:       710,
+  pipMinX:       30,
+  pipEntryX:     60,
+  portholeScene: null,
+  objects:       ch4CatAlleyObjects,
+  collectibles:  [],
+  draw:          drawCh4CatAlley,
+};
+
+rooms.ch4FrozenSquare = {
+  width:         500,
+  pipMaxX:       460,
+  pipMinX:       20,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch4SquareObjects,
+  collectibles:  [],
+  draw:          drawCh4FrozenSquare,
+};
+
+rooms.ch4MuhittiKitchen = {
+  width:         700,
+  pipMaxX:       660,
+  pipMinX:       20,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch4KitchenObjects,
+  collectibles:  [],
+  draw:          drawCh4MuhittiKitchen,
 };
 
 /* ================================================================

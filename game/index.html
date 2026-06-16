@@ -1508,6 +1508,7 @@ function buildSaveObject() {
     ch4WalnutsHeld:  ch4WalnutsHeld,
     ch5State:        { ...ch5State },
     ch6State:        { ...ch6State },
+    ch7State:        { ...ch7State },
     patuAboard:      patuState.aboard,
     darkCorridor:    { lit: darkCorridor.lit, cartRemoved: darkCorridor.cartRemoved, cartX: darkCorridor.cartX },
     cinematicPlayed: Array.from(cinematic.played),
@@ -1570,6 +1571,7 @@ function applySave(data) {
   if (data.ch5State)   Object.assign(ch5State,   data.ch5State);
   if (data.ch5State && data.ch5State.switchbladeHeld && !pip.abilities.memoryGifting) pip.abilities.memoryGifting = true;
   if (data.ch6State)   Object.assign(ch6State,   data.ch6State);
+  if (data.ch7State)   Object.assign(ch7State,   data.ch7State);
   if (data.patuAboard) patuState.aboard = data.patuAboard;
 
   // Restore dark corridor state (additive — missing fields default to initial values)
@@ -3597,6 +3599,74 @@ function update(dt) {
       triggerErikPhotoBeat();
     }
   }
+
+  // ---- Ch7 room transitions ----
+
+  if (ch7State.chapter7Active && !dialogue.active && !cinematic.active) {
+    if (currentRoom === 'ch7LowerDeck' && pip.x >= rooms.ch7LowerDeck.pipMaxX - 1) {
+      ch7State.enteredDock = true;
+      startTransition('ch7Dock', 'fromLeft');
+    } else if (currentRoom === 'ch7Dock' && pip.x <= rooms.ch7Dock.pipMinX + 1) {
+      startTransition('ch7LowerDeck', 'fromRight', rooms.ch7LowerDeck.pipMaxX - 40);
+    } else if (currentRoom === 'ch7Dock' && pip.x >= rooms.ch7Dock.pipMaxX - 1
+               && ch7State.boitataDefeated) {
+      startTransition('ch7ForestPath', 'fromLeft');
+    } else if (currentRoom === 'ch7ForestPath' && pip.x <= rooms.ch7ForestPath.pipMinX + 1
+               && !ch7State.arrivedJoanaHouse) {
+      startTransition('ch7Dock', 'fromRight', rooms.ch7Dock.pipMaxX - 40);
+    } else if (currentRoom === 'ch7ForestPath' && pip.x >= rooms.ch7ForestPath.pipMaxX - 1) {
+      ch7State.arrivedJoanaHouse = true;
+      startTransition('ch7JoanaHouse', 'fromLeft');
+    } else if (currentRoom === 'ch7JoanaHouse' && pip.x <= rooms.ch7JoanaHouse.pipMinX + 1
+               && ch7State.tasteMemorySeen) {
+      startTransition('ch7ForestPath', 'fromRight', rooms.ch7ForestPath.pipMaxX - 40);
+    } else if (currentRoom === 'ch7ForestPath' && pip.x <= rooms.ch7ForestPath.pipMinX + 1
+               && ch7State.tasteMemorySeen) {
+      startTransition('ch7Dock', 'fromRight', rooms.ch7Dock.pipMaxX - 40);
+    } else if (currentRoom === 'ch7Dock' && pip.x <= rooms.ch7Dock.pipMinX + 1
+               && ch7State.tasteMemorySeen && ch7State.boitataDefeated) {
+      startTransition('ch7LowerDeck', 'fromRight', rooms.ch7LowerDeck.pipMaxX - 40);
+    } else if (currentRoom === 'ch7LowerDeck' && pip.x <= rooms.ch7LowerDeck.pipMinX + 1
+               && ch7State.tasteMemorySeen) {
+      startTransition('kitchen', 'fromLeft');
+    }
+  }
+
+  // ---- Ch7 beat triggers ----
+
+  // Ch7: Boitatá appears on dock
+  if (currentRoom === 'ch7Dock' && ch7State.chapter7Active
+      && !ch7State.boitataAppeared && !dialogue.active && !cinematic.active) {
+    if (pip.x > 80) {
+      triggerBoitataAppear();
+    }
+  }
+
+  // Ch7: capuchin on forest path
+  if (currentRoom === 'ch7ForestPath' && ch7State.chapter7Active
+      && !ch7State.capuchinMet && !dialogue.active && !cinematic.active) {
+    if (pip.x > 120) {
+      triggerCapuchinMeet();
+    }
+  }
+
+  // Ch7: Joana house arrival
+  if (currentRoom === 'ch7JoanaHouse' && ch7State.chapter7Active
+      && !ch7State.joanaMet && !dialogue.active && !cinematic.active) {
+    if (pip.x > 60) {
+      triggerJoanaHouseArrival();
+    }
+  }
+
+  // Ch7: Erik beat — Pip returns to Henrik's kitchen after tasting moqueca
+  if (currentRoom === 'kitchen' && ch7State.chapter7Active
+      && ch7State.tasteMemorySeen && !ch7State.erikRecognized
+      && !dialogue.active && !cinematic.active) {
+    if (pip.x > 80) {
+      triggerErikBeat();
+    }
+  }
+
 
   updatePassenger(dt);
 
@@ -7065,6 +7135,22 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null, text: "A family of eight — Tirta among them, much younger. An assembly line of love. Hundreds of lemper, going to an orphanage tomorrow.", italic: true },
     { speaker: 'GRANDMOTHER', text: "Someone else's child is also a child.", italic: false },
   ],
+  'moqueca-chain': [
+    { speaker: null, text: 'The stew on the fire. A clay pot. The same stew, different hands, different kitchens — but the same pot.', italic: true },
+    { speaker: null, text: 'An old woman in a coastal kitchen, generations ago. Fish from the morning catch, palm oil poured without measuring. She knows the color by feel.', italic: true },
+    { speaker: null, text: "A neighbor's door, a difficult week. The stew arrives in a wrapped cloth. No words. Just the pot.", italic: true },
+    { speaker: null, text: 'A wartime kitchen. One fish. The cook stretches it to feed twelve. Eats last. Does not count what is left.', italic: true },
+    { speaker: null, text: 'A celebration — a pot the size of a child. A whole community around it, eating outside, in the dark, under hung lights.', italic: true },
+    { speaker: null, text: 'A modern kitchen. Two women learning together. Both laugh at once at the same moment of too much dendê. The orange is right. It is exactly right.', italic: true },
+    { speaker: null, text: 'The gesture, traveling. The same arm. The same pour. The unbroken chain of it.', italic: true },
+  ],
+  'erik-birthday-memory': [
+    { speaker: null, text: "Erik's favorite memory: a birthday, when he was seven.", italic: true },
+    { speaker: null, text: "Seen through his eyes — looking up. His father leaning down, holding something wrapped in blue paper. His father's face, alive and present and only for him.", italic: true },
+    { speaker: null, text: "The wrapping paper tears loudly. The thing inside doesn't matter. What matters is the face leaning down.", italic: true },
+    { speaker: null, text: "Henrik, receiving this memory, feels the weight of his son's love for him — not grief. Love. Erik, in that kitchen, bouncing on his heels and so happy.", italic: true },
+    { speaker: null, text: '"Papa,"', italic: false, speaker: 'ERIK (MEMORY)' },
+  ],
   'muhammara-orchard': [
     { speaker: null, text: 'An autumn orchard. Walnut trees, leaves coming down.', italic: true },
     { speaker: null, text: 'A grandmother kneels between two boys. She cracks a walnut. Hands it over.', italic: true },
@@ -7126,6 +7212,10 @@ function showCinematic(name, onEnd) {
   } else if (name === 'potjie-child-fire') {
     cinematic.isMemory  = true;
   } else if (name === 'lemper-family-courtyard') {
+    cinematic.isMemory  = true;
+  } else if (name === 'moqueca-chain') {
+    cinematic.isMemory  = true;
+  } else if (name === 'erik-birthday-memory') {
     cinematic.isMemory  = true;
   }
 
@@ -7252,6 +7342,8 @@ function drawCinematicScene(name, now) {
   else if (name === 'iris-dining-room')     drawIrisDiningRoomCinematic(now);
   else if (name === 'potjie-child-fire')    drawPotjieChildFireCinematic(now);
   else if (name === 'lemper-family-courtyard') drawLemperFamilyCourtyardCinematic(now);
+  else if (name === 'moqueca-chain') drawMoquecaChainCinematic(now);
+  else if (name === 'erik-birthday-memory') drawErikBirthdayMemoryCinematic(now);
   // Sprint 11: memory mist opt-in — drawn on top of scene, below dialogue overlay
   if (cinematic.isMemory) drawMemoryMist(now);
 }
@@ -19195,7 +19287,7 @@ function triggerHenriettaBananaBeat() {
 }
 
 function showChapter6End() {
-  triggerDeckStub();   // Ch6→Ch7 transition (wired when Ch7 is built)
+  startChapter7();   // wired Ch6→Ch7 (wired when Ch7 is built)
 }
 
 function addLemperRecipe() {
@@ -19845,6 +19937,1225 @@ rooms.ch6Warung = {
   objects:       ch6WarungObjects,
   collectibles:  [],
   draw:          drawCh6Warung,
+};
+
+/* ================================================================
+   CHAPTER 7 — Brazil / Alter do Chão, Tapajós
+   A Stew for the Smoke-Child (Bahian Moqueca)
+   GOAL-1 Sprint build: 2026-06-16
+   ================================================================ */
+
+const ch7State = {
+  chapter7Active:        false,
+  enteredDock:           false,
+  boitataAppeared:       false,
+  boitataPuzzleAttempts: 0,
+  boitataDefeated:       false,
+  enteredForest:         false,
+  capuchinMet:           false,
+  arrivedJoanaHouse:     false,
+  joanaMet:              false,
+  cookingDone:           false,
+  tasteMemorySeen:       false,
+  erikRecognized:        false,
+  erikMemoryGifted:      false,
+  chapter7Complete:      false,
+};
+
+const ch7LowerDeckObjects = [];
+const ch7DockObjects      = [];
+const ch7ForestObjects    = [];
+const ch7HouseObjects     = [];
+
+/* ----------------------------------------------------------------
+   Ch7 Beat functions
+   ---------------------------------------------------------------- */
+
+function startChapter7() {
+  ch7State.chapter7Active = true;
+  currentChapter = 7;
+  hideHUD();
+  const fade = document.getElementById('room-transition');
+  fade.style.opacity = '1';
+  setTimeout(() => {
+    currentRoom = 'ch7LowerDeck';
+    pip.x = 60;
+    pip.body.facing = 'right';
+    pip.float.altitude = 0;
+    fade.style.transition = 'opacity 0.8s ease';
+    fade.style.opacity = '0';
+    setTimeout(() => {
+      showHUD();
+      setRoomStrip();
+      autoSave();
+      showDialogue({
+        id: 'ch7-opening',
+        lines: [
+          { speaker: null, text: 'Pip has done this six times now. He knows the rhythm.', italic: true },
+          { speaker: null, text: 'Humid lower deck. Mosquitoes — translucent amber clouds, drifting slow. They hum. They swarm into Pätu\'s face and she swats at them irritably.', italic: true },
+          { speaker: null, text: 'An infection-flicker in the corridor: the inside of a banana-leaf cloth, looking out at a family through a small gap, calling and not being heard. Two seconds. Then the corridor returns. Pätu rubs against his ankle. He keeps walking.', italic: true },
+        ],
+        choices: null, onEnd: null,
+      });
+    }, 900);
+  }, 600);
+}
+
+function triggerBoitataAppear() {
+  ch7State.enteredDock  = true;
+  ch7State.boitataAppeared = true;
+  showDialogue({
+    id: 'ch7-boitata',
+    lines: [
+      { speaker: null,    text: "The dock at Alter do Chão. Dark — the moon behind clouds. The boat lanterns out. The air smells of river water.", italic: true },
+      { speaker: null,    text: "Pip pulls out the matches from Ch3. He needs to see. He strikes one.", italic: true },
+      { speaker: null,    text: "The world goes still.", italic: true },
+      { speaker: null,    text: "The dock's water-surface ripples without wind. Something rises. Too long. Too bright. The Boitatá unfurls from the river — a coil of fire shaped like a serpent. Eyes the size of dinner plates. He has been hunting arsonists for centuries.", italic: true },
+      { speaker: null,    text: "He looks down at Pip and the match.", italic: true },
+      { speaker: null,    text: "His exhale throws the match-flame outward in three directions. A rope catches. A tarred plank catches. A piece of sailcloth catches.", italic: true },
+      { speaker: 'BOITATÁ', text: '"Little ghost. You carry a fire I cannot see. It is not the kind I burn. Something dark rides with you. I do not know its name."', italic: false },
+      { speaker: null,    text: "The fires creep toward Pip. The match in his hand is half its size. A wooden bucket sits at the edge of the dock. The river is just below.", italic: true },
+    ],
+    choices: null,
+    onEnd: () => runBoitataPuzzle(),
+  });
+}
+
+function runBoitataPuzzle() {
+  ch7State.boitataPuzzleAttempts++;
+  const attempt = ch7State.boitataPuzzleAttempts;
+  const boitataLine = attempt === 1
+    ? '"Do not waste my time, little ghost."'
+    : attempt === 2
+    ? '"You carry something I have not seen before. It troubles me."'
+    : '"Be careful of what rides with you. Or it will eat you."';
+  showDialogue({
+    id: `ch7-boitata-puzzle-${attempt}`,
+    lines: [{ speaker: 'BOITATÁ', text: boitataLine, italic: false }],
+    choices: [
+      {
+        text: "Pick up the bucket. Fill it from the river at the dock edge. Douse all three fires before the match burns out.",
+        onSelect() {
+          showDialogue({
+            id: 'ch7-boitata-solved',
+            lines: [
+              { speaker: null, text: "Pip grabs the bucket. He scoops river water at the dock's edge, swings it over the rope fire. Out. He refills. Sails. Out. He refills one more time. Wood. Out.", italic: true },
+              { speaker: null, text: "The match is a stub in his fingers. He blows it out. His hand is shaking.", italic: true },
+              { speaker: null, text: "The dome dissipates. The night is dark again.", italic: true },
+              { speaker: 'BOITATÁ', text: '"Pass, little ghost. But you carry something I have not seen before. Be careful of it. Or it will eat you."', italic: false },
+              { speaker: null, text: "He slides back into the river without ripple. Pätu jumps down from the piling and walks ahead. She does not look at Pip. She is letting him collect himself.", italic: true },
+            ],
+            choices: null,
+            onEnd() {
+              ch7State.boitataDefeated = true;
+              autoSave();
+              startTransition('ch7ForestPath', 'fromLeft');
+            },
+          });
+        },
+      },
+      {
+        text: "Try to beat the fires out with your hands.",
+        onSelect() {
+          showDialogue({
+            id: 'ch7-boitata-wrong1',
+            lines: [
+              { speaker: null, text: "Your hands pass through them. You are a ghost. The match burns shorter. Pätu sneezes once — a small, shocked sneeze — as the dome resets.", italic: true },
+            ],
+            choices: null, onEnd: () => runBoitataPuzzle(),
+          });
+        },
+      },
+      {
+        text: "Try to float above the fires.",
+        onSelect() {
+          showDialogue({
+            id: 'ch7-boitata-wrong2',
+            lines: [
+              { speaker: null, text: "The fires aren't blocking you. They're growing. Rising. The match burns shorter. Pätu sneezes. The dome resets. Try again.", italic: true },
+            ],
+            choices: null, onEnd: () => runBoitataPuzzle(),
+          });
+        },
+      },
+    ],
+    onEnd: null,
+  });
+}
+
+function triggerCapuchinMeet() {
+  ch7State.capuchinMet = true;
+  showDialogue({
+    id: 'ch7-capuchin',
+    lines: [
+      { speaker: null, text: "The forest path. Dense canopy. Phosphorescent fungi glowing blue-green at the base of trunks. Frog calls. A capuchin drops from a branch onto the path in front of them.", italic: true },
+      { speaker: null, text: "Small. Sharp-eyed. Fur tipped white at the ears. He chitters at Pip and then at Pätu.", italic: true },
+      { speaker: null, text: "Pätu sits and considers him. He considers her. They have a conversation Pip cannot follow.", italic: true },
+      { speaker: null, text: "The capuchin turns and walks down a fork in the path. He turns back and chitters again — impatient. Pätu stands and follows. Pip floats after.", italic: true },
+    ],
+    choices: null, onEnd: null,
+  });
+}
+
+function triggerJoanaHouseArrival() {
+  ch7State.arrivedJoanaHouse = true;
+  ch7State.joanaMet = true;
+  showDialogue({
+    id: 'ch7-house-arrival',
+    lines: [
+      { speaker: null,    text: "Smoke. Cooking smell. A small wooden house raised on stilts at the edge of the forest. Light through the open doorway.", italic: true },
+      { speaker: null,    text: "Two women stand in the doorway. They have been here, and now Pip has arrived.", italic: true },
+      { speaker: null,    text: "Beatriz steps forward — sixties, gray-streaked hair, apron over a faded cotton dress. She looks at Pip and her face softens.", italic: true },
+      { speaker: 'BEATRIZ', text: '"Oh. Oh, sweetheart. Come in. Come into the light."', italic: false },
+      { speaker: null,    text: "Pätu pads in past Pip, tail up, like she's been here before.", italic: true },
+      { speaker: null,    text: "Beatriz lights a tall candle on the table between herself and the doorway. She sets it down.", italic: true },
+      { speaker: 'BEATRIZ', text: '"There. Now we can see each other properly."', italic: false },
+      { speaker: 'BEATRIZ', text: '"My boy. You carry a darkness within you."', italic: false },
+      { speaker: null,    text: "Pip's outline blurs at the edges.", italic: true },
+      { speaker: 'BEATRIZ', text: '"There is dark where there is light, child. But there is something borrowed in you too. Someone else\'s grief, sitting on top of yours."', italic: false },
+      { speaker: null,    text: "Joana steps forward — taller, browner from the sun, hands still wet from washing something. She looks at the space above Pip's chest.", italic: true },
+      { speaker: 'JOANA',  text: '"Two things, not one. I want you to know the difference. It matters."', italic: false },
+    ],
+    choices: null,
+    onEnd: () => startMoquecaCooking(),
+  });
+}
+
+function startMoquecaCooking() {
+  showDialogue({
+    id: 'ch7-cooking-talk',
+    lines: [
+      { speaker: 'BEATRIZ', text: '"Hey. Look at me. Come — let\'s cook you a meal. Moqueca will get you on your feet again— rather, feeling right again. Yes? Come."', italic: false },
+      { speaker: null,    text: "She turns toward the kitchen. Joana extends her hand — open, palm up — near Pip's shoulder. Not touching. Just close. Pip floats forward.", italic: true },
+      { speaker: 'BEATRIZ', text: '"Pick the leaves off the cilantro. Just the leaves. The little stems are fine."', italic: false },
+      { speaker: null,    text: "Pip floats up to the counter. His hands work the cilantro. His outline steadies a little.", italic: true },
+      { speaker: 'JOANA',  text: '"The one that\'s borrowed — that was put into you by someone who was hurting. It means you were kind to them."', italic: false },
+      { speaker: 'BEATRIZ', text: '"The other one — that one\'s older. It\'s been with you since before you were a ghost, sweetheart. You\'ve been carrying it your whole short life."', italic: false },
+    ],
+    choices: null,
+    onEnd: () => showCh7CookingStep1(),
+  });
+}
+
+function showCh7CookingStep1() {
+  showDialogue({
+    id: 'ch7-step1',
+    lines: [{ speaker: 'JOANA', text: '"The fish first. You cook it gently — how long does the fish go in the pot?"', italic: false }],
+    choices: [
+      {
+        text: 'Just until it flakes — not long. Five to seven minutes in the hot broth.',
+        onSelect() {
+          showDialogue({
+            id: 'ch7-step1-right',
+            lines: [
+              { speaker: 'JOANA',  text: '"Yes. Fish doesn\'t need long. You don\'t need to overcook something that is already good."', italic: false },
+              { speaker: null,    text: "She slides the fish into the clay pot. The kitchen smells extraordinary.", italic: true },
+            ],
+            choices: null, onEnd: () => showCh7CookingStep2(),
+          });
+        },
+      },
+      {
+        text: 'Long and slow — moqueca is a slow-cook stew.',
+        onSelect() {
+          showDialogue({
+            id: 'ch7-step1-wrong',
+            lines: [{ speaker: 'JOANA', text: '"The broth is slow. The fish is quick. Don\'t overcook it. Try again."', italic: false }],
+            choices: null, onEnd: () => showCh7CookingStep1(),
+          });
+        },
+      },
+    ], onEnd: null,
+  });
+}
+
+function showCh7CookingStep2() {
+  showDialogue({
+    id: 'ch7-step2',
+    lines: [
+      { speaker: 'BEATRIZ', text: '"The bad news — we can\'t take it out. The dark that\'s older. It\'s part of you."', italic: false },
+      { speaker: 'JOANA',   text: '"But here is the good news. The dark in you — it isn\'t your enemy. The way to answer it is not to escape it. It\'s to give. To give the warmth you\'ve been collecting."', italic: false },
+      { speaker: 'BEATRIZ', text: '"Pass the cilantro, sweetheart."', italic: false },
+      { speaker: null,     text: "Pip slides the bowl toward her.", italic: true },
+      { speaker: 'BEATRIZ', text: '"When the dark comes for you — and it will — you don\'t push it away. You give it the warmth. You feed it the way you\'ve been fed."', italic: false },
+      { speaker: 'JOANA',   text: '"Light and dark hold each other. The thing to do is keep giving warmth, so the dark stays in balance. That\'s the only way I know."', italic: false },
+      { speaker: 'BEATRIZ', text: '"One last thing — the dendê oil. How much?"', italic: false },
+    ],
+    choices: [
+      {
+        text: 'A generous pour — it should be vibrant orange-red. Dendê is the heart of Bahian cooking.',
+        onSelect() {
+          showDialogue({
+            id: 'ch7-step2-right',
+            lines: [
+              { speaker: 'BEATRIZ', text: '"Yes. Don\'t be shy with it. The orange is the color of the dish — if it\'s not orange, you didn\'t use enough."', italic: false },
+              { speaker: null,     text: "She pours. The pot turns vibrant. She replaces the lid.", italic: true },
+            ],
+            choices: null,
+            onEnd() {
+              ch7State.cookingDone = true;
+              addMoquecaRecipe();
+              autoSave();
+              triggerMoquecaTaste();
+            },
+          });
+        },
+      },
+      {
+        text: 'A careful spoonful — palm oil is rich, use it sparingly.',
+        onSelect() {
+          showDialogue({
+            id: 'ch7-step2-wrong',
+            lines: [{ speaker: 'BEATRIZ', text: '"No no, you need a generous pour. Be bold with the dendê."', italic: false }],
+            choices: null, onEnd: () => showCh7CookingStep2(),
+          });
+        },
+      },
+    ], onEnd: null,
+  });
+}
+
+function triggerMoquecaTaste() {
+  showDialogue({
+    id: 'ch7-taste-offer',
+    lines: [
+      { speaker: 'BEATRIZ', text: '"Try the broth."', italic: false },
+      { speaker: null,     text: "She lifts the wooden spoon from the pot, blows on it, and brings it close to Pip.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      showCinematic('moqueca-chain', () => {
+        ch7State.tasteMemorySeen = true;
+        autoSave();
+        showDialogue({
+          id: 'ch7-after-taste',
+          lines: [
+            { speaker: 'JOANA',   text: '"Did you see them?"', italic: false },
+            { speaker: null,     text: "Pip nods, very slowly.", italic: true },
+            { speaker: 'JOANA',   text: '"Good. You\'re not alone in this, even when you feel alone. You\'re part of something very long."', italic: false },
+            { speaker: 'BEATRIZ', text: '"Eat. Stay with us a little. Let it sit in you."', italic: false },
+            { speaker: null,     text: "Pip stays. He hovers near the counter. His outline steadies, then — faintly — starts to glow warmer.", italic: true },
+          ],
+          choices: null,
+          onEnd: () => triggerJoanaDeparture(),
+        });
+      });
+    },
+  });
+}
+
+function triggerJoanaDeparture() {
+  showDialogue({
+    id: 'ch7-departure',
+    lines: [
+      { speaker: null,    text: "Pip is at the door. Pätu is already on the path, looking back.", italic: true },
+      { speaker: 'JOANA', text: '"Go on, smoke-child. You have somewhere to be."', italic: false },
+      { speaker: 'BEATRIZ', text: '"Remember. Give. Don\'t escape. Don\'t fight. Give."', italic: false },
+      { speaker: null,    text: "Pip turns to go. At the porch edge he turns back once.", italic: true },
+      { speaker: null,    text: "Joana and Beatriz stand in their doorway. Beatriz's hand is in Joana's. Joana's other hand is at her own heart. Very still. Very settled.", italic: true },
+      { speaker: null,    text: "Pip carries the image with him. Pätu walks ahead, chest puffed out.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      autoSave();
+      showDialogue({
+        id: 'ch7-return-walk',
+        lines: [{ speaker: null, text: "Walk left to return to the dock and the ship.", italic: true }],
+        choices: null, onEnd: null,
+      });
+    },
+  });
+}
+
+function triggerErikBeat() {
+  ch7State.erikRecognized = true;
+  showDialogue({
+    id: 'ch7-erik-doorway',
+    lines: [
+      { speaker: null,  text: "Henrik's kitchen. Warmly lit. Henrik stands at the counter with the photograph in his hands. He has been holding it for a while.", italic: true },
+      { speaker: null,  text: "His eyes are glassy with tears he is not letting fall. He is thinking of Erik's last birthday.", italic: true },
+      { speaker: null,  text: "Pip floats into the doorway. And then — Pip and Erik see each other at the same instant.", italic: true },
+      { speaker: null,  text: "Erik — eleven, alive-looking, blond hair, blue eyes, a gap between his front teeth — is standing behind Henrik with his hand resting on his father's back. He looks up. Pip sees him.", italic: true },
+      { speaker: null,  text: "The boy in the photograph. The boy from Ch6.", italic: true },
+      { speaker: 'ERIK', text: '"Finally someone who can see me!"', italic: false },
+      { speaker: 'PIP',  text: '"Erik?"', italic: false },
+      { speaker: null,  text: "Henrik's head turns toward where Pip's voice is aimed — over Henrik's own shoulder, toward the empty air. He cannot see Erik.", italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerErikRelay(),
+  });
+}
+
+function triggerErikRelay() {
+  showDialogue({
+    id: 'ch7-erik-relay',
+    lines: [
+      { speaker: 'PIP',    text: '"He\'s right here, Henrik."', italic: false },
+      { speaker: null,     text: "Henrik's intake of breath. Not a word. A body acknowledging what it has just received.", italic: true },
+      { speaker: 'HENRIK', text: '"Who?"', italic: false },
+      { speaker: 'PIP',    text: '"Your son. Erik. He\'s here. He\'s behind you. He says he visits every year on this day."', italic: false },
+      { speaker: 'HENRIK', text: '"His birthday..."', italic: false },
+      { speaker: 'ERIK',   text: '"Tell him I love him! Tell him I never left!"', italic: false },
+      { speaker: 'PIP',    text: '"He says he loves you. He\'s saying he never left. He never left, Henrik."', italic: false },
+      { speaker: null,     text: "Henrik turns around slowly. He cannot see Erik. But he turns to face the air where Pip's eyes have been looking.", italic: true },
+      { speaker: 'HENRIK', text: '"Erik. My boy. I have missed you every day. I have wondered. Every year on this day, I have wondered. I am so sorry I could not see you."', italic: false },
+      { speaker: 'ERIK',   text: '"Tell him not to be sorry! Tell him I\'m okay! Tell him I\'ve been with him!"', italic: false },
+      { speaker: 'PIP',    text: '"He says not to be sorry. He says he\'s okay. He says he\'s been with you."', italic: false },
+      { speaker: 'HENRIK', text: '"I wish I could see you. Even once more. Just to see your face."', italic: false },
+    ],
+    choices: null,
+    onEnd: () => triggerErikMemoryGift(),
+  });
+}
+
+function triggerErikMemoryGift() {
+  showDialogue({
+    id: 'ch7-erik-gift',
+    lines: [
+      { speaker: null,    text: "Erik looks at Pip. He doesn't know how to fix this. He looks devastated for his father.", italic: true },
+      { speaker: null,    text: "Pip — who has just spent the day at Joana and Beatriz's kitchen, who has been told: give — has an idea.", italic: true },
+      { speaker: 'PIP',   text: '"Erik. Show me your favorite memory."', italic: false },
+      { speaker: null,    text: "Erik blinks. Then his face changes. He understands.", italic: true },
+      { speaker: null,    text: "He closes his eyes. The memory rises in him. Pip can see it — the way Pip's gifted memories rose in Iris.", italic: true },
+      { speaker: 'PIP',   text: '"Henrik. He\'s giving you something. I\'m going to pass it to you. Hold still."', italic: false },
+      { speaker: null,    text: "Henrik nods, barely.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      showCinematic('erik-birthday-memory', () => {
+        ch7State.erikMemoryGifted = true;
+        autoSave();
+        triggerErikGoodbye();
+      });
+    },
+  });
+}
+
+function triggerErikGoodbye() {
+  showDialogue({
+    id: 'ch7-erik-goodbye',
+    lines: [
+      { speaker: null,    text: "Henrik is sobbing now. Quietly, with his hand on the counter, not trying to hide it.", italic: true },
+      { speaker: null,    text: "Erik is crying too — happy tears.", italic: true },
+      { speaker: 'ERIK',   text: '"Thank you."', italic: false },
+      { speaker: 'ERIK',   text: '"I have to go now. The veil doesn\'t let me stay long. But — I\'ll see him again. I\'ll see you again. I\'ll see all of us. I promise."', italic: false },
+      { speaker: 'PIP',   text: '"Henrik — he says he\'ll see you again. He says he promises."', italic: false },
+      { speaker: 'HENRIK', text: '"Tell him I love him. Tell him — tell him I\'ll be all right now."', italic: false },
+      { speaker: null,    text: "Erik nods. He looks at his father one more time. Then he is gone — not faded, not walked away. Gone, the way a flame goes when it is blown out.", italic: true },
+    ],
+    choices: null,
+    onEnd: () => triggerChapter7Close(),
+  });
+}
+
+function triggerChapter7Close() {
+  showDialogue({
+    id: 'ch7-close',
+    lines: [
+      { speaker: 'HENRIK', text: '"Pip. Thank you."', italic: false },
+      { speaker: null,    text: "Pip nods. He is exhausted now.", italic: true },
+      { speaker: 'HENRIK', text: '"Tell me about your day."', italic: false },
+      { speaker: null,    text: "Pip floats up onto the counter near him — not sitting, just close — and starts to tell him about the Boitatá, and about Joana and Beatriz, and about the moqueca.", italic: true },
+      { speaker: null,    text: "Henrik listens. Pätu jumps up to the counter beside Pip. The candle Beatriz lit is, somewhere in Pip's memory, still burning.", italic: true },
+    ],
+    choices: null,
+    onEnd() {
+      ch7State.chapter7Complete = true;
+      autoSave();
+      showChapter7End();
+    },
+  });
+}
+
+function showChapter7End() {
+  triggerDeckStub();   // Ch7→Ch8 transition (wired when Ch8 is built)
+}
+
+function addMoquecaRecipe() {
+  if (notebook.items.some(i => i.id === 'recipe-moqueca')) return;
+  notebook.items.push({
+    id:         'recipe-moqueca',
+    name:       "Joana and Beatriz's Bahian moqueca",
+    annotation: "Firm white fish, dendê oil (generous — it should be orange), coconut milk, peppers, tomatoes, onion, garlic, cilantro, lime. Clay pot or heavy pot. Fish goes in quick — just until it flakes. The broth is slow; the fish is not.",
+    kind:       'recipe',
+    sprite:     'moqueca',
+  });
+  renderNotebookItems();
+  autoSave();
+}
+
+/* ----------------------------------------------------------------
+   Ch7 cinematic draw functions
+   ---------------------------------------------------------------- */
+
+/* Moqueca chain — generations of cooks sharing this stew across Brazilian history. */
+function drawMoquecaChainCinematic(now) {
+  const t = now / 1000;
+  const phase = Math.floor(t / 4) % 6;  // 6 visions, 4s each
+
+  ctx.fillStyle = '#040406';
+  ctx.fillRect(0, 0, W, H);
+
+  // Warm orange-red glow (dendê color signature)
+  const glow = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, 200);
+  glow.addColorStop(0,   'rgba(220,100,20,0.35)');
+  glow.addColorStop(0.5, 'rgba(160,60,10,0.12)');
+  glow.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // Clay pot on fire (present in all visions)
+  const potX = W / 2;
+  const potY = FLOOR_Y - 10;
+  // Fire
+  const fA = 0.12 + Math.sin(t * 2.2) * 0.06;
+  ctx.fillStyle = `rgba(220,80,10,${(0.30 + fA).toFixed(2)})`;
+  ctx.fillRect(potX - 20, potY, 40, 16);
+  ctx.fillStyle = `rgba(255,140,30,${(0.40 + fA).toFixed(2)})`;
+  ctx.fillRect(potX - 14, potY - 6, 28, 14);
+  // Pot
+  ctx.fillStyle = '#180808';
+  ctx.beginPath();
+  ctx.arc(potX, potY - 14, 34, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0a0404';
+  ctx.fillRect(potX - 32, potY - 20, 64, 12);
+  // Orange-red dendê liquid color visible
+  const dendA = 0.18 + Math.sin(t * 1.4) * 0.06;
+  ctx.fillStyle = `rgba(200,80,10,${dendA.toFixed(2)})`;
+  ctx.fillRect(potX - 28, potY - 18, 56, 8);
+
+  // Vision-specific elements
+  const visionTexts = [
+    "A coastal Bahian kitchen, generations ago. Fish from a morning's catch.",
+    "A small apartment. Moqueca brought to a neighbor who has had a hard week.",
+    "A wartime kitchen. One fish. The cook stretches it to feed twelve. Eats last.",
+    "A celebration. A pot the size of a child. A whole community around it.",
+    "A modern kitchen. Two women learning together. Both laugh at too much dendê.",
+    "A fishing village at dusk. Three families. One pot. Eaten outside under hanging lamps.",
+  ];
+
+  // Ghost figures (vague, phase-appropriate)
+  ctx.fillStyle = 'rgba(200,140,60,0.20)';
+  for (let f = 0; f < 3; f++) {
+    const fx = 80 + f * 140;
+    const fh = 50 + f * 10;
+    ctx.fillRect(fx - 8, FLOOR_Y - fh, 16, fh);
+    ctx.beginPath();
+    ctx.arc(fx, FLOOR_Y - fh - 8, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Chain gesture: hands reaching to bowls
+  const handA = 0.15 + Math.sin(t * 1.8) * 0.07;
+  ctx.fillStyle = `rgba(200,150,80,${handA.toFixed(2)})`;
+  for (let h2 = 0; h2 < 4; h2++) {
+    const hx = 60 + h2 * 100;
+    ctx.fillRect(hx - 3, FLOOR_Y - 28, 6, 14);
+    ctx.fillRect(hx - 8, FLOOR_Y - 16, 16, 8);
+  }
+
+  ctx.fillStyle = 'rgba(220,170,80,0.90)';
+  ctx.font = 'italic 10px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(visionTexts[phase], W / 2, H - 34);
+  ctx.fillStyle = 'rgba(180,130,50,0.60)';
+  ctx.fillText('The same gesture. Repeating. The chain is unbroken.', W / 2, H - 20);
+  ctx.textAlign = 'left';
+}
+
+/* Erik birthday memory — Henrik's gift, seen through Erik's eyes. */
+function drawErikBirthdayMemoryCinematic(now) {
+  const t = now / 1000;
+
+  ctx.fillStyle = '#040206';
+  ctx.fillRect(0, 0, W, H);
+
+  // Warm living-room — Christmas/birthday warmth
+  const rG = ctx.createRadialGradient(W / 2, 80, 0, W / 2, 80, 220);
+  rG.addColorStop(0,   'rgba(255,200,80,0.45)');
+  rG.addColorStop(0.5, 'rgba(200,130,30,0.18)');
+  rG.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = rG;
+  ctx.fillRect(0, 0, W, H);
+
+  // Wrapping paper on ground (festive)
+  ctx.fillStyle = '#c02028';
+  ctx.fillRect(100, FLOOR_Y - 20, 60, 20);
+  ctx.fillStyle = '#e03038';
+  ctx.fillRect(110, FLOOR_Y - 18, 40, 18);
+  ctx.fillStyle = '#f0d030';
+  ctx.fillRect(130, FLOOR_Y - 30, 16, 12);
+
+  // The wrapped gift being held out (from a tall person above)
+  const giftY = 60 + Math.sin(t * 0.8) * 4;
+  ctx.fillStyle = '#2040a0';
+  ctx.fillRect(W / 2 - 22, Math.round(giftY), 44, 36);
+  ctx.fillStyle = '#4060d0';
+  ctx.fillRect(W / 2 - 20, Math.round(giftY + 2), 40, 32);
+  // Ribbon
+  ctx.fillStyle = '#e0c030';
+  ctx.fillRect(W / 2 - 2, Math.round(giftY), 4, 36);
+  ctx.fillRect(W / 2 - 22, Math.round(giftY + 16), 44, 4);
+
+  // Tall person (Henrik — seen from below, just hands and torso visible)
+  ctx.fillStyle = '#282018';
+  ctx.fillRect(W / 2 - 28, 0, 56, 70);
+  ctx.fillStyle = '#c89060';
+  ctx.fillRect(W / 2 - 28, 58, 20, 14);   // left hand
+  ctx.fillRect(W / 2 + 8,  58, 20, 14);   // right hand
+
+  // Small shoes (Erik's POV — we see our own feet)
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(W / 2 - 22, FLOOR_Y - 12, 14, 12);
+  ctx.fillRect(W / 2 + 8,  FLOOR_Y - 12, 14, 12);
+
+  // Bounce on balls of feet
+  const bounceOff = Math.abs(Math.sin(t * 3)) * 4;
+
+  ctx.fillStyle = 'rgba(220,190,100,0.90)';
+  ctx.font = 'italic 11px "Special Elite", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(t < 4 ? 'His face. Leaning down. Alive in a way he has not been in many years.' : 'The father his son was looking up at.', W / 2, H - 26);
+  ctx.textAlign = 'left';
+}
+
+/* ----------------------------------------------------------------
+   Ch7 character draw functions
+   ---------------------------------------------------------------- */
+
+/* Boitatá — fire serpent, seen rising from the river, impossibly bright. */
+function drawBoitata(camX, now) {
+  const t   = now / 1000;
+  const cx2 = Math.round(350 - camX);   // rises from water right side of dock
+  if (cx2 < -80 || cx2 > W + 80) return;
+
+  // Coil of fire (serpentine body)
+  const segments = 14;
+  for (let s = 0; s < segments; s++) {
+    const sx2   = cx2 + Math.sin(s * 0.4 + t * 1.2) * 50;
+    const sy2   = FLOOR_Y - 20 - s * 18 + Math.sin(s * 0.6 + t) * 10;
+    const thick = s < 3 ? 12 : (s > 10 ? 6 : 10);
+    const fA    = 0.60 + Math.sin(t * 2.0 + s * 0.5) * 0.20;
+    ctx.fillStyle = `rgba(255,${Math.round(80 + s * 12)},10,${fA.toFixed(2)})`;
+    ctx.fillRect(Math.round(sx2 - thick / 2), Math.round(sy2 - thick / 2), thick, thick);
+  }
+
+  // Head (top of coil) — lantern eyes
+  const headX = cx2 + Math.sin(t * 0.9) * 30;
+  const headY = FLOOR_Y - 20 - segments * 18;
+  ctx.fillStyle = '#f05010';
+  ctx.fillRect(Math.round(headX - 14), Math.round(headY - 8), 28, 18);
+  // Lantern eyes
+  const eyeA = 0.80 + Math.sin(t * 3) * 0.15;
+  ctx.fillStyle = `rgba(255,240,60,${eyeA.toFixed(2)})`;
+  ctx.beginPath();
+  ctx.arc(Math.round(headX - 6), Math.round(headY), 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(Math.round(headX + 6), Math.round(headY), 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0a0404';
+  ctx.beginPath();
+  ctx.arc(Math.round(headX - 6), Math.round(headY), 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(Math.round(headX + 6), Math.round(headY), 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/* Joana — taller, browner, steady. */
+function drawJoana(sx, groundY, now, speaking) {
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.6) * 0.7) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#201008';
+  ctx.fillRect(-5, -26, 5, 26);
+  ctx.fillRect(0,  -26, 5, 26);
+
+  // Cotton dress (faded green)
+  ctx.fillStyle = '#2a3820';
+  ctx.fillRect(-8, -56, 16, 32);
+  ctx.fillStyle = '#203018';
+  ctx.fillRect(-10, -56, 20, 4);  // shoulders
+
+  // Arms (longer reach, browner)
+  ctx.fillStyle = '#a07840';
+  ctx.fillRect(-12, -54, 4, 16);
+  ctx.fillRect(8,   -54, 4, 16);
+
+  // Neck
+  ctx.fillStyle = '#a07840';
+  ctx.fillRect(-2, -60, 4, 4);
+
+  const ht = -70 + bob;
+  ctx.fillStyle = '#a07840';
+  ctx.fillRect(-6, ht, 12, 12);
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-3, ht + 3, 2, 2);
+  ctx.fillRect(2,  ht + 3, 2, 2);
+  ctx.fillStyle = speaking ? '#6a2010' : '#5a3020';
+  ctx.fillRect(-2, ht + 7, 4, 1);
+
+  // Dark hair pulled back
+  ctx.fillStyle = '#0a0806';
+  ctx.fillRect(-7, ht - 3, 14, 6);
+  ctx.fillRect(5,  ht - 1, 2, 14);
+  ctx.fillRect(4,  ht + 12, 4, 3);
+
+  ctx.restore();
+}
+
+/* Beatriz — sixties, gray-streaked hair, apron, candle-warmed. */
+function drawBeatriz(sx, groundY, now, speaking) {
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.4) * 0.6) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#1a1008';
+  ctx.fillRect(-5, -24, 5, 24);
+  ctx.fillRect(0,  -24, 5, 24);
+
+  // Faded cotton dress + apron (off-white)
+  ctx.fillStyle = '#483428';
+  ctx.fillRect(-8, -52, 16, 30);
+  ctx.fillStyle = '#d0c8a0';
+  ctx.fillRect(-6, -50, 12, 26);
+
+  ctx.fillStyle = '#c8a070';
+  ctx.fillRect(-10, -50, 4, 14);
+  ctx.fillRect(6,   -50, 4, 14);
+  ctx.fillStyle = '#c8a070';
+  ctx.fillRect(-2, -56, 4, 4);
+
+  const ht = -66 + bob;
+  ctx.fillStyle = '#c8a070';
+  ctx.fillRect(-6, ht, 12, 12);
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-3, ht + 3, 2, 2);
+  ctx.fillRect(2,  ht + 3, 2, 2);
+  ctx.fillStyle = speaking ? '#6a2010' : '#5a3020';
+  ctx.fillRect(-2, ht + 7, 4, 1);
+
+  // Gray-streaked hair
+  ctx.fillStyle = '#807870';
+  ctx.fillRect(-7, ht - 3, 14, 6);
+  ctx.fillStyle = '#c0b8b0';
+  ctx.fillRect(-6, ht - 1, 5, 4);
+  ctx.fillRect(2,  ht - 1, 5, 4);
+  ctx.fillRect(-5, ht + 3, 3, 8);
+  ctx.fillRect(3,  ht + 3, 3, 8);
+
+  ctx.restore();
+}
+
+/* Erik — eleven, alive-looking, blond, blue-eyed, gap-tooth, bright. */
+function drawErik(sx, groundY, now, speaking) {
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 3.0) * 0.8) : Math.round(Math.sin(t * 1.2) * 0.4);
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Legs (jeans)
+  ctx.fillStyle = '#1a2838';
+  ctx.fillRect(-5, -26, 5, 26);
+  ctx.fillRect(0,  -26, 5, 26);
+  ctx.fillStyle = '#0c1014';
+  ctx.fillRect(-6, -4, 6, 4);
+  ctx.fillRect(0,  -4, 6, 4);
+
+  // T-shirt / sweater (fair warm tone)
+  ctx.fillStyle = '#2a3868';
+  ctx.fillRect(-7, -48, 14, 24);
+
+  // Arms (boyish, small)
+  ctx.fillStyle = '#e8d0a8';
+  ctx.fillRect(-9, -46, 3, 12);
+  ctx.fillRect(6,  -46, 3, 12);
+  ctx.fillRect(-2, -56, 4, 4);
+
+  const ht = -66 + bob;
+  // Face (fair, freckled-ish)
+  ctx.fillStyle = '#e8d0a8';
+  ctx.fillRect(-6, ht, 12, 12);
+  // Blue eyes
+  ctx.fillStyle = '#4080c0';
+  ctx.fillRect(-4, ht + 3, 3, 3);
+  ctx.fillRect(2,  ht + 3, 3, 3);
+  ctx.fillStyle = '#0a0c14';
+  ctx.fillRect(-3, ht + 4, 2, 2);
+  ctx.fillRect(3,  ht + 4, 2, 2);
+  // Gap-toothed smile (when speaking)
+  ctx.fillStyle = speaking ? '#8a3020' : '#6a3020';
+  ctx.fillRect(-2, ht + 8, 4, 1);
+  if (speaking) {
+    ctx.fillStyle = '#e8d0a8';
+    ctx.fillRect(0, ht + 8, 1, 1);  // gap
+  }
+  // Blond hair
+  ctx.fillStyle = '#c8a030';
+  ctx.fillRect(-7, ht - 3, 14, 6);
+  ctx.fillRect(-8, ht, 3, 5);
+  ctx.fillRect(5,  ht, 3, 5);
+  ctx.fillRect(-6, ht - 5, 12, 3);
+
+  ctx.restore();
+}
+
+/* Capuchin monkey — small, white-tipped ears. */
+function drawCapuchin(sx, groundY, now) {
+  const t  = now / 1000;
+  const cx = Math.round(sx + Math.sin(t * 2) * 2);
+  const cy = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#3a2a10';
+  ctx.fillRect(-4, -18, 8, 18);
+  ctx.fillRect(-6, -12, 12, 10);
+  // White chest
+  ctx.fillStyle = '#e0d8b0';
+  ctx.fillRect(-3, -16, 6, 12);
+  // Head
+  ctx.fillStyle = '#3a2a10';
+  ctx.fillRect(-5, -26, 10, 10);
+  // White-tipped ears
+  ctx.fillStyle = '#e0d8b0';
+  ctx.fillRect(-7, -26, 3, 4);
+  ctx.fillRect(5,  -26, 3, 4);
+  // Eyes (sharp)
+  ctx.fillStyle = '#0a0806';
+  ctx.fillRect(-3, -22, 2, 2);
+  ctx.fillRect(1,  -22, 2, 2);
+  // Tail (long, curled)
+  ctx.fillStyle = '#3a2a10';
+  ctx.fillRect(4, -18, 2, 10);
+  ctx.fillRect(5, -10, 2, 6);
+  ctx.fillRect(6, -6,  2, 4);
+
+  ctx.restore();
+}
+
+/* ----------------------------------------------------------------
+   Ch7 room draw functions
+   ---------------------------------------------------------------- */
+
+function drawCh7LowerDeck(camX, now) {
+  const t = now / 1000;
+
+  // Tropical humid corridor — green-tinged warmth
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#060806');
+  wallG.addColorStop(0.7, '#0a0e08');
+  wallG.addColorStop(1,   '#080c06');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#080a06';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#0e100a';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Mosquito clouds (translucent amber-green, drifting)
+  for (let mc = 0; mc < 5; mc++) {
+    const mx  = (mc * 100 + t * 30 + mc * 20) % (W + 80) - 40;
+    const my  = 60 + mc * 25 + Math.sin(t * 0.8 + mc) * 20;
+    const mcA = 0.06 + Math.sin(t * 2.0 + mc) * 0.03;
+    ctx.fillStyle = `rgba(100,130,60,${mcA.toFixed(2)})`;
+    ctx.fillRect(Math.round(mx), Math.round(my), 30, 14);
+    ctx.fillRect(Math.round(mx + 6), Math.round(my - 5), 18, 20);
+  }
+
+  // Wood panelling
+  ctx.fillStyle = '#1e1808';
+  for (let bx = 0; bx < W; bx += 20) {
+    ctx.fillRect(bx, 10, 18, FLOOR_Y - 10);
+    ctx.fillStyle = '#141004';
+    ctx.fillRect(bx, 10, 2, FLOOR_Y - 10);
+    ctx.fillStyle = '#1e1808';
+  }
+
+  // Low ceiling
+  ctx.fillStyle = '#0c0a06';
+  ctx.fillRect(0, 0, W, 16);
+
+  // Gangway exit (right)
+  const gangSX = Math.round(rooms.ch7LowerDeck.width - 80 - camX);
+  if (gangSX > -40 && gangSX < W + 40) {
+    ctx.fillStyle = '#1a1008';
+    ctx.fillRect(gangSX, FLOOR_Y - 70, 36, 70);
+    ctx.fillStyle = '#e0a830';
+    ctx.fillRect(gangSX + 14, FLOOR_Y - 56, 10, 44);
+  }
+}
+
+function drawCh7Dock(camX, now) {
+  const t = now / 1000;
+
+  // Dark river dock — night, moon behind clouds
+  ctx.fillStyle = '#040408';
+  ctx.fillRect(0, 0, W, H);
+
+  // Dark river water (left/dock edge)
+  const waterSX = Math.round(-camX * 0.5 + 40);
+  ctx.fillStyle = '#060810';
+  ctx.fillRect(0, FLOOR_Y - 8, Math.max(0, waterSX), H - FLOOR_Y + 8);
+  ctx.fillStyle = '#0a0c14';
+  ctx.fillRect(0, FLOOR_Y - 8, Math.max(0, waterSX), 4);
+
+  // Dock planks
+  ctx.fillStyle = '#201808';
+  ctx.fillRect(0, FLOOR_Y - 4, W, H - FLOOR_Y + 4);
+  ctx.fillStyle = '#181208';
+  ctx.fillRect(0, FLOOR_Y - 4, W, 4);
+  for (let dx = 0; dx < W; dx += 24) {
+    ctx.fillStyle = '#1a1408';
+    ctx.fillRect(dx, FLOOR_Y - 4, 22, H - FLOOR_Y + 4);
+    ctx.fillStyle = '#141008';
+    ctx.fillRect(dx, FLOOR_Y - 4, 2, H - FLOOR_Y + 4);
+  }
+
+  // Moored fishing boat (left of dock)
+  const boatSX = Math.round(80 - camX);
+  if (boatSX > -60 && boatSX < W + 60) {
+    ctx.fillStyle = '#241808';
+    ctx.fillRect(boatSX - 40, FLOOR_Y - 28, 80, 28);
+    ctx.fillStyle = '#2a1c0a';
+    ctx.fillRect(boatSX - 38, FLOOR_Y - 26, 76, 24);
+    // Mast
+    ctx.fillStyle = '#1a1008';
+    ctx.fillRect(boatSX, FLOOR_Y - 60, 2, 32);
+  }
+
+  // Coiled rope (fire location 1, world-x 180)
+  const ropeSX = Math.round(180 - camX);
+  if (ropeSX > -20 && ropeSX < W + 20) {
+    ctx.fillStyle = '#4a3018';
+    ctx.fillRect(ropeSX - 8, FLOOR_Y - 12, 16, 12);
+    if (ch7State.boitataAppeared && !ch7State.boitataDefeated) {
+      // Fire on rope
+      const rA = 0.15 + Math.sin(t * 2.5) * 0.07;
+      ctx.fillStyle = `rgba(255,100,20,${(0.40 + rA).toFixed(2)})`;
+      ctx.fillRect(ropeSX - 8, FLOOR_Y - 20, 16, 12);
+    }
+  }
+
+  // Tarred plank (fire 2, world-x 240)
+  const plankSX = Math.round(240 - camX);
+  if (plankSX > -20 && plankSX < W + 20) {
+    ctx.fillStyle = '#1a1008';
+    ctx.fillRect(plankSX - 16, FLOOR_Y - 6, 32, 6);
+    if (ch7State.boitataAppeared && !ch7State.boitataDefeated) {
+      const pA = 0.15 + Math.sin(t * 2.3) * 0.07;
+      ctx.fillStyle = `rgba(255,80,10,${(0.35 + pA).toFixed(2)})`;
+      ctx.fillRect(plankSX - 14, FLOOR_Y - 14, 28, 10);
+    }
+  }
+
+  // Sailcloth (fire 3, world-x 300)
+  const sailSX = Math.round(300 - camX);
+  if (sailSX > -20 && sailSX < W + 20) {
+    ctx.fillStyle = '#c0b890';
+    ctx.fillRect(sailSX - 12, FLOOR_Y - 18, 24, 18);
+    if (ch7State.boitataAppeared && !ch7State.boitataDefeated) {
+      const sA = 0.15 + Math.sin(t * 2.1) * 0.07;
+      ctx.fillStyle = `rgba(255,120,30,${(0.38 + sA).toFixed(2)})`;
+      ctx.fillRect(sailSX - 12, FLOOR_Y - 28, 24, 14);
+    }
+  }
+
+  // Bucket (world-x 150)
+  const bucketSX = Math.round(150 - camX);
+  if (bucketSX > -20 && bucketSX < W + 20) {
+    ctx.fillStyle = '#3a3028';
+    ctx.fillRect(bucketSX - 6, FLOOR_Y - 14, 12, 14);
+    ctx.fillStyle = '#4a4038';
+    ctx.fillRect(bucketSX - 5, FLOOR_Y - 12, 10, 12);
+  }
+
+  // Piling (Pätu hides here)
+  const pilingSX = Math.round(40 - camX);
+  if (pilingSX > -20 && pilingSX < W + 20) {
+    ctx.fillStyle = '#201808';
+    ctx.fillRect(pilingSX - 6, FLOOR_Y - 40, 12, 40);
+  }
+
+  // Boitatá (fire serpent rising from water)
+  if (ch7State.boitataAppeared && !ch7State.boitataDefeated) {
+    drawBoitata(camX, now);
+  }
+
+  // Match in Pip's hand (world-x tracking Pip position)
+  if (ch7State.boitataAppeared && !ch7State.boitataDefeated) {
+    const pipSX = Math.round(pip.x - camX);
+    const mA    = 0.12 + Math.sin(t * 3.0) * 0.06;
+    ctx.fillStyle = '#f8f0d0';
+    ctx.fillRect(pipSX + 8, FLOOR_Y - 36, 2, 16);
+    ctx.fillStyle = `rgba(255,200,60,${(0.55 + mA).toFixed(2)})`;
+    ctx.fillRect(pipSX + 6, FLOOR_Y - 44, 6, 10);
+  }
+}
+
+function drawCh7ForestPath(camX, now) {
+  const t = now / 1000;
+
+  // Dense tropical forest — deep, dark, loud (implied)
+  const skyG = ctx.createLinearGradient(0, 0, 0, 30);
+  skyG.addColorStop(0,   '#020304');
+  skyG.addColorStop(1,   '#06080a');
+  ctx.fillStyle = skyG;
+  ctx.fillRect(0, 0, W, 30);
+
+  // Dense canopy (very dark green-black)
+  ctx.fillStyle = '#04080a';
+  ctx.fillRect(0, 0, W, FLOOR_Y - 20);
+  ctx.fillStyle = '#060e08';
+  ctx.fillRect(0, FLOOR_Y - 20, W, 20);
+
+  ctx.fillStyle = '#080c08';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#0e1008';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Tree trunks (dense)
+  for (let tr = 0; tr < 8; tr++) {
+    const tx2 = Math.round(40 + tr * 90 - camX * 0.6);
+    if (tx2 < -30 || tx2 > W + 30) continue;
+    ctx.fillStyle = '#0a0e06';
+    ctx.fillRect(tx2 - 10, 0, 20, FLOOR_Y);
+    ctx.fillStyle = '#060a04';
+    ctx.fillRect(tx2 - 8, 0, 16, FLOOR_Y);
+    // Canopy leaf shadow
+    ctx.fillStyle = '#04080a';
+    ctx.fillRect(tx2 - 40, 0, 80, 40);
+  }
+
+  // Phosphorescent fungi at base of trunks
+  for (let f = 0; f < 6; f++) {
+    const fx  = Math.round(50 + f * 120 - camX * 0.6);
+    if (fx < -20 || fx > W + 20) continue;
+    const fA  = 0.12 + Math.sin(t * 1.2 + f * 1.8) * 0.06;
+    ctx.fillStyle = `rgba(60,180,120,${fA.toFixed(2)})`;
+    ctx.fillRect(fx - 8, FLOOR_Y - 8, 16, 8);
+    ctx.fillRect(fx - 12, FLOOR_Y - 6, 24, 4);
+    // Glow
+    const gA = 0.06 + Math.sin(t * 0.8 + f) * 0.03;
+    const fungiG = ctx.createRadialGradient(fx, FLOOR_Y - 4, 0, fx, FLOOR_Y - 4, 28);
+    fungiG.addColorStop(0,   `rgba(60,200,120,${gA.toFixed(2)})`);
+    fungiG.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = fungiG;
+    ctx.fillRect(fx - 28, FLOOR_Y - 28, 56, 28);
+  }
+
+  // Mosquito clouds (thin)
+  for (let mc = 0; mc < 3; mc++) {
+    const mx  = (mc * 160 + t * 20 + mc * 50) % W;
+    const mA  = 0.03 + Math.sin(t * 1.5 + mc) * 0.01;
+    ctx.fillStyle = `rgba(100,130,60,${mA.toFixed(2)})`;
+    ctx.fillRect(Math.round(mx), 40 + mc * 20, 24, 10);
+  }
+
+  // Capuchin guide (world-x: ahead of Pip, walking with them)
+  if (ch7State.capuchinMet) {
+    const capSX = Math.round(pip.x + 80 - camX);
+    if (capSX > -20 && capSX < W + 20) {
+      drawCapuchin(capSX, FLOOR_Y, now);
+    }
+  }
+
+  // Pätu (right next to Pip, extra close after infection)
+  drawPatu(Math.round(pip.x - 24 - camX), FLOOR_Y, now);
+
+  // Light at end of path (house ahead)
+  if (!ch7State.arrivedJoanaHouse) {
+    const lightSX = Math.round(rooms.ch7ForestPath.width - 80 - camX);
+    if (lightSX > -30 && lightSX < W + 30) {
+      const lA = 0.18 + Math.sin(t * 1.2) * 0.06;
+      const lG = ctx.createRadialGradient(lightSX, FLOOR_Y - 30, 0, lightSX, FLOOR_Y - 30, 100);
+      lG.addColorStop(0,   `rgba(255,180,60,${(0.40 + lA).toFixed(2)})`);
+      lG.addColorStop(0.5, `rgba(180,100,20,${(0.10 + lA * 0.3).toFixed(2)})`);
+      lG.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = lG;
+      ctx.fillRect(lightSX - 100, 0, 200, FLOOR_Y);
+    }
+  }
+}
+
+function drawCh7JoanaHouse(camX, now) {
+  const t = now / 1000;
+
+  // Single-room kitchen / living space — warm, clay-tile roof, hearth corner
+  const wallG = ctx.createLinearGradient(0, 0, 0, FLOOR_Y);
+  wallG.addColorStop(0,   '#100c06');
+  wallG.addColorStop(0.7, '#1a1208');
+  wallG.addColorStop(1,   '#100e06');
+  ctx.fillStyle = wallG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  ctx.fillStyle = '#100e08';
+  ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
+  ctx.fillStyle = '#201408';
+  ctx.fillRect(0, FLOOR_Y, W, 3);
+
+  // Hearth corner (world-x 80) — low fire
+  const hearthSX = Math.round(80 - camX);
+  if (hearthSX > -60 && hearthSX < W + 30) {
+    ctx.fillStyle = '#281408';
+    ctx.fillRect(hearthSX - 34, FLOOR_Y - 44, 68, 44);
+    ctx.fillStyle = '#1a0c04';
+    ctx.fillRect(hearthSX - 30, FLOOR_Y - 40, 60, 40);
+    // Low fire glow
+    const fA = 0.12 + Math.sin(t * 2.0) * 0.06;
+    ctx.fillStyle = `rgba(200,80,10,${(0.28 + fA).toFixed(2)})`;
+    ctx.fillRect(hearthSX - 16, FLOOR_Y - 20, 32, 14);
+    ctx.fillStyle = `rgba(255,130,30,${(0.36 + fA).toFixed(2)})`;
+    ctx.fillRect(hearthSX - 10, FLOOR_Y - 28, 20, 16);
+    // Clay pot on fire
+    ctx.fillStyle = '#3a1808';
+    ctx.fillRect(hearthSX - 18, FLOOR_Y - 40, 36, 22);
+    ctx.fillStyle = '#2a1004';
+    ctx.beginPath();
+    ctx.arc(hearthSX, FLOOR_Y - 36, 16, 0, Math.PI * 2);
+    ctx.fill();
+    // Steam + dendê-orange color
+    const denA = 0.06 + Math.sin(t * 1.8) * 0.02;
+    ctx.fillStyle = `rgba(180,70,10,${denA.toFixed(2)})`;
+    ctx.fillRect(hearthSX - 14, FLOOR_Y - 44, 28, 8);
+  }
+
+  // Room warmth glow
+  const rG = ctx.createRadialGradient(Math.round(80 - camX), FLOOR_Y - 20, 0, Math.round(80 - camX), FLOOR_Y - 20, 180);
+  rG.addColorStop(0,   'rgba(255,140,30,0.22)');
+  rG.addColorStop(0.5, 'rgba(180,80,10,0.08)');
+  rG.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = rG;
+  ctx.fillRect(0, 0, W, FLOOR_Y);
+
+  // Counter / ingredients (world-x 200-400)
+  const cL = Math.round(200 - camX), cR = Math.round(400 - camX);
+  if (cR > 0 && cL < W) {
+    ctx.fillStyle = '#2a1808';
+    ctx.fillRect(cL, FLOOR_Y - 28, cR - cL, 6);
+    ctx.fillStyle = '#200e04';
+    ctx.fillRect(cL, FLOOR_Y - 22, cR - cL, 22);
+    // Fish (wrapped in newspaper, greenish)
+    ctx.fillStyle = '#888880';
+    ctx.fillRect(cL + 10, FLOOR_Y - 34, 44, 8);
+    // Bowl of cilantro
+    ctx.fillStyle = '#2a4818';
+    ctx.fillRect(cL + 68, FLOOR_Y - 34, 24, 8);
+    // Green bottle (dendê oil)
+    ctx.fillStyle = '#183818';
+    ctx.fillRect(cL + 110, FLOOR_Y - 42, 10, 16);
+    // Can of coconut milk
+    ctx.fillStyle = '#c0b8a0';
+    ctx.fillRect(cL + 134, FLOOR_Y - 38, 14, 12);
+    // Half lime
+    ctx.fillStyle = '#386020';
+    ctx.fillRect(cL + 162, FLOOR_Y - 32, 12, 8);
+  }
+
+  // Open window (world-x 440) — Pätu on sill
+  const winSX = Math.round(440 - camX);
+  if (winSX > -30 && winSX < W + 30) {
+    ctx.fillStyle = '#0a0c08';
+    ctx.fillRect(winSX - 18, 40, 36, 36);
+    ctx.fillStyle = '#040608';
+    ctx.fillRect(winSX - 16, 42, 32, 32);
+    // Pätu on sill
+    if (ch7State.joanaMet) {
+      drawPatu(winSX, 42, now);
+    }
+  }
+
+  // Table (world-x 160-200, small table with candle)
+  const tableSX = Math.round(160 - camX);
+  if (tableSX > -30 && tableSX < W + 30) {
+    ctx.fillStyle = '#2a1808';
+    ctx.fillRect(tableSX - 16, FLOOR_Y - 24, 32, 6);
+    ctx.fillStyle = '#201008';
+    ctx.fillRect(tableSX - 14, FLOOR_Y - 18, 28, 18);
+    // Candle on table
+    ctx.fillStyle = '#f0f0e0';
+    ctx.fillRect(tableSX - 2, FLOOR_Y - 36, 4, 14);
+    const cA = 0.08 + Math.sin(t * 2.4) * 0.04;
+    ctx.fillStyle = `rgba(255,220,80,${(0.50 + cA).toFixed(2)})`;
+    ctx.fillRect(tableSX - 4, FLOOR_Y - 44, 8, 10);
+    const candleG = ctx.createRadialGradient(tableSX, FLOOR_Y - 38, 0, tableSX, FLOOR_Y - 38, 40);
+    candleG.addColorStop(0,   `rgba(255,200,60,${(0.16 + cA).toFixed(2)})`);
+    candleG.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = candleG;
+    ctx.fillRect(tableSX - 40, FLOOR_Y - 78, 80, 40);
+  }
+
+  // Characters
+  if (ch7State.joanaMet) {
+    const jSpeaking = dialogue.active && dialogue.node && dialogue.node.lines &&
+      dialogue.node.lines[dialogue.lineIndex] &&
+      dialogue.node.lines[dialogue.lineIndex].speaker === 'JOANA';
+    const bSpeaking = dialogue.active && dialogue.node && dialogue.node.lines &&
+      dialogue.node.lines[dialogue.lineIndex] &&
+      dialogue.node.lines[dialogue.lineIndex].speaker === 'BEATRIZ';
+    drawJoana(Math.round(220 - camX),  FLOOR_Y, now, jSpeaking);
+    drawBeatriz(Math.round(270 - camX), FLOOR_Y, now, bSpeaking);
+  }
+}
+
+/* ----------------------------------------------------------------
+   Ch7 room definitions
+   ---------------------------------------------------------------- */
+
+rooms.ch7LowerDeck = {
+  width:         550,
+  pipMaxX:       510,
+  pipMinX:       30,
+  pipEntryX:     60,
+  portholeScene: null,
+  objects:       ch7LowerDeckObjects,
+  collectibles:  [],
+  draw:          drawCh7LowerDeck,
+};
+
+rooms.ch7Dock = {
+  width:         450,
+  pipMaxX:       410,
+  pipMinX:       20,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch7DockObjects,
+  collectibles:  [],
+  draw:          drawCh7Dock,
+};
+
+rooms.ch7ForestPath = {
+  width:         750,
+  pipMaxX:       710,
+  pipMinX:       30,
+  pipEntryX:     60,
+  portholeScene: null,
+  objects:       ch7ForestObjects,
+  collectibles:  [],
+  draw:          drawCh7ForestPath,
+};
+
+rooms.ch7JoanaHouse = {
+  width:         600,
+  pipMaxX:       560,
+  pipMinX:       20,
+  pipEntryX:     40,
+  portholeScene: null,
+  objects:       ch7HouseObjects,
+  collectibles:  [],
+  draw:          drawCh7JoanaHouse,
 };
 
 /* ================================================================

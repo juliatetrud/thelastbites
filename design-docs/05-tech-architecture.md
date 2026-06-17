@@ -7,14 +7,15 @@ How the prototype is built and how to extend it.
 ## Core Stack
 
 - **Single HTML file** containing CSS, JS, and HTML
-- **Vanilla JavaScript.** No frameworks, no build step, no dependencies (other than two Google Fonts).
+- **Vanilla JavaScript.** No frameworks, no dependencies (other than two Google Fonts).
+- **Lightweight Node assembler (`build.js`).** A zero-dependency Node script inlines `art/galleries/art-source.js` into `game/index.html`, replacing the `/* @@ART-SOURCE-START@@ */` … `/* @@ART-SOURCE-END@@ */` marker block. Run `node build.js` from the project root after editing `art-source.js`. No npm, no package.json — uses only Node's built-in `fs` module.
 - **HTML5 Canvas** for rendering.
 - **Internal resolution: 480×270 pixels,** scaled up to fit the viewport with `image-rendering: pixelated` for crisp pixel art. *(Bumped from 320×180 in Sprint 01 — see `06-roadmap-and-open-questions.md` §Decisions Log 2026-05-07.)*
 - **No external libraries** at the moment. If we need them later (e.g., a sound library), they should be CDN-loaded so the project stays single-file.
 
 This stack was chosen because:
 - It's trivially embeddable on any website (drop the HTML in an iframe or paste it into a page).
-- It has no build step — open in browser, it works.
+- The assembler (`node build.js`) is the only build step — zero dependencies, runs anywhere Node is installed. The deployed `game/index.html` remains self-contained (art-source.js content is inlined, not fetched at runtime).
 - It's easy for Claude Code to extend.
 - It works on mobile and desktop with the same code.
 
@@ -24,11 +25,24 @@ This stack was chosen because:
 
 The whole game is in one file: `game/index.html`. The prototype (`prototype/three-doors-demo.html`) is reference only — do not edit it.
 
-When the project grows, the recommended structure is:
+**Current art structure (Sprint G-S1+):**
+
+```
+art/
+└── galleries/
+    ├── art-source.js          # shared canonical draw functions (source of truth)
+    ├── character-gallery.html # character reference gallery (loads art-source.js)
+    └── environment-gallery.html # environment/prop reference gallery
+```
+
+`build.js` (project root) inlines `art-source.js` into `game/index.html`. One-off reference pages (`scale-reference.html`, demos, etc.) stay in their original locations.
+
+When the project grows, the recommended full structure is:
 
 ```
 last-bites/
 ├── index.html             # main entry point
+├── build.js               # art-source assembler (node build.js)
 ├── css/
 │   └── style.css          # extracted styles
 ├── js/
@@ -47,6 +61,10 @@ last-bites/
 │   ├── journal.js         # journal system (including paired-memory inventory from Ch5+)
 │   └── save.js            # localStorage save/load
 ├── art/
+│   ├── galleries/
+│   │   ├── art-source.js          # shared canonical draw functions
+│   │   ├── character-gallery.html
+│   │   └── environment-gallery.html
 │   ├── cinematics/
 │   │   ├── wakeup.png
 │   │   ├── mirror.png
@@ -162,6 +180,51 @@ ctx.restore();
 No separate left/right sprite art needed. This rule applies to every character whose silhouette has no asymmetric tells.
 
 **Why this matters.** Most of the game's emotional bandwidth from sprites lives in the eyes and the mouth — Pip widening his eyes at the mirror, his small smile when tasting Henrik's gravlaks, his eyes filling with the held-still grief on the dock. Treating those layers as independent rigs gives every future cinematic and gameplay beat the room to do that work without a new sprite commission. Same pattern extends to NPCs (Henrik's weary patience in the eyes, Marta's grief in the mouth).
+
+---
+
+## Shared-Source Pipeline (Sprint G-S1+)
+
+Character art functions live in `art/galleries/art-source.js` as the canonical source of truth. The gallery HTML files load this file via `<script src="art-source.js">` for live preview. The game gets it inlined by `build.js`.
+
+### Coordinate convention
+
+All draw functions in `art-source.js` use **local space**:
+
+- `(0, 0)` = horizontal centre of the sprite at its foot/floor anchor
+- Functions take `(ctx, t, speaking)` — no position parameters
+- Bob is applied internally by the draw function
+
+The **caller** positions the character:
+
+```javascript
+ctx.save();
+ctx.translate(anchorX, anchorY);     // screen or world position
+ctx.scale(-1, 1);                    // optional: facing left
+ctx.scale(1, scaleY);               // optional: squat, etc.
+drawCharacter(ctx, t, speaking);
+ctx.restore();
+```
+
+The **game** wraps each art-source function in a thin `renderX()` wrapper that handles game-specific state (camera offset, facing direction, squat) before calling the art-source function.
+
+The **gallery** wraps each call after drawing the cell background.
+
+### Source-of-truth rules
+
+- **Edit art in `art-source.js`, not in `game/index.html`.** The inlined block in the game is generated output; it is overwritten by every `node build.js` run.
+- **After any `art-source.js` change, run `node build.js`** before browser-testing the game.
+- **Gallery functions that are not yet migrated** (drawHenrik, drawBabcia, etc.) continue to work unchanged — they use the shared `C`, `rect`, `px`, `floorGlow` primitives provided by `art-source.js`.
+- **Migration happens per-sprint**: one asset migrates per sprint (sprint G-S1 = drawPip). Future sprints migrate other assets.
+
+### Build process
+
+```
+node build.js           # inlines art-source.js into game/index.html
+node --check /tmp/extracted.js   # optional syntax check
+```
+
+`build.js` validates that `drawPip` and `const C` are present in `art-source.js` before writing. It fails loudly rather than silently producing a broken game file.
 
 ---
 

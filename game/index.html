@@ -22581,8 +22581,10 @@ function drawPipShadow(sx, groundY, now, phase) {
   ctx.restore();
 }
 
-/* Babcia — older, tired, loving, Polish grandmother. */
-function drawBabcia(sx, groundY, now, speaking) {
+/* Babcia (Ch8 reunion) — standing at the table. Renamed from drawBabcia in G1c-1:
+   it collided with the Ch1 cabin's seated-grief drawBabcia (function-name hoisting
+   made this Ch8 version shadow the cabin one, rendering Ch1's grandparents off-model). */
+function drawBabciaStanding(sx, groundY, now, speaking) {
   const t   = now / 1000;
   const bob = speaking ? Math.round(Math.sin(t * 2.2) * 0.6) : 0;
   const cx  = Math.round(sx);
@@ -22632,8 +22634,9 @@ function drawBabcia(sx, groundY, now, speaking) {
   ctx.restore();
 }
 
-/* Dziadek — strong hands, quieter, Polish grandfather. */
-function drawDziadek(sx, groundY, now, speaking) {
+/* Dziadek (Ch8 reunion) — standing at the table. Renamed from drawDziadek in G1c-1
+   to resolve the same name collision with the Ch1 cabin's seated drawDziadek. */
+function drawDziadekStanding(sx, groundY, now, speaking) {
   const t   = now / 1000;
   const bob = speaking ? Math.round(Math.sin(t * 2.0) * 0.5) : 0;
   const cx  = Math.round(sx);
@@ -23166,8 +23169,8 @@ function drawCh8BabciaApartment(camX, now) {
     const dziadSpeaking = dialogue.active && dialogue.node && dialogue.node.lines &&
       dialogue.node.lines[dialogue.lineIndex] &&
       dialogue.node.lines[dialogue.lineIndex].speaker === 'DZIADEK';
-    drawBabcia(Math.round(220 - camX),  FLOOR_Y, now, babSpeaking);
-    drawDziadek(Math.round(310 - camX), FLOOR_Y, now, dziadSpeaking);
+    drawBabciaStanding(Math.round(220 - camX),  FLOOR_Y, now, babSpeaking);
+    drawDziadekStanding(Math.round(310 - camX), FLOOR_Y, now, dziadSpeaking);
   }
 }
 

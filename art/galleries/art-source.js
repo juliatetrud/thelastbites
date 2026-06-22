@@ -116,7 +116,7 @@ function floorGlow(ctx, cx, floor, r, hexColor, a) {
 
 /* =============================================================
    ① PIP (ghost form) — canonical pixel-art ghost sprite
-   Scale 1.6× maps the 24-row design to ~40px (PIP_H=40 in game).
+   Scale 1.45× maps the 24-row design to ~35px (slightly smaller, softer).
 
    LOCAL-SPACE CONVENTION: (0,0) = foot centre.
    Caller must ctx.translate(cx, floor) before calling this.
@@ -127,7 +127,7 @@ function floorGlow(ctx, cx, floor, r, hexColor, a) {
    ============================================================= */
 function drawPip(ctx, t, speaking) {
   const bob   = Math.round(Math.sin(t * 1.8) * (speaking ? 1.5 : 1.0));
-  const scale = 1.6;
+  const scale = 1.45;
 
   // Floor glow at (0, 0) in local space — caller has already translated here
   floorGlow(ctx, 0, 0, 18, C.pipGlow, 0.5);
@@ -147,28 +147,37 @@ function drawPip(ctx, t, speaking) {
   ctx.fillRect(-8, -4, 32, 32);
 
   const b = C.pipBody, bd = C.pipBodyDeep;
-  // Head (rows 0–8)
-  rect(ctx, 4, 0,  8, 1, b);
-  rect(ctx, 3, 1, 10, 1, b);
-  rect(ctx, 2, 2, 12, 1, b);
-  rect(ctx, 1, 3, 14, 1, b);
-  rect(ctx, 1, 4, 14, 1, b);
-  rect(ctx, 1, 5, 14, 1, b);
-  rect(ctx, 1, 6, 14, 1, b);
-  rect(ctx, 1, 7, 14, 1, b);
-  rect(ctx, 1, 8, 14, 1, b);
-  // Body (rows 9–20)
-  for (let r2 = 9; r2 <= 20; r2++) rect(ctx, 1, r2, 14, 1, b);
-  // Waves (rows 21–22)
+
+  // Slightly translucent body (the halo carries most of the "ghost" read).
+  ctx.globalAlpha = 0.9;
+
+  // Smooth body — a few TALL solid fills (each ≥2 logical px tall) so no
+  // 1px-row seams survive the scale.  Rounded crown → shoulder → tall block.
+  rect(ctx, 4, 0,  8, 2, b);   // crown   (rows 0–1)
+  rect(ctx, 2, 2, 12, 2, b);   // shoulder(rows 2–3)
+  rect(ctx, 1, 4, 14, 17, b);  // body    (rows 4–20) — one solid block
+
+  // Scalloped hem (rows 21–22) — reads fine; banding was only in the body.
   rect(ctx, 1, 21, 4, 1, b); rect(ctx, 6, 21, 4, 1, b); rect(ctx, 11, 21, 4, 1, b);
   rect(ctx, 1, 22, 3, 1, b); rect(ctx, 7, 22, 2, 1, b); rect(ctx, 12, 22, 3, 1, b);
 
-  // Subtle deep shadow on left body edge
-  rect(ctx, 1, 9, 2, 11, bd);
+  // One subtle vertical form cue — a soft shadow column on the left edge.
+  // (Vertical fill: no horizontal shading bands.)
+  rect(ctx, 1, 4, 2, 17, bd);
 
-  // Eyes
-  rect(ctx, 4, 7, 2, 2, C.pipEye);
-  rect(ctx, 10, 7, 2, 2, C.pipEye);
+  // Face stays crisp.
+  ctx.globalAlpha = 1.0;
+
+  // Eyes — open by default; one brief blink (~0.12s) every ~4s.
+  const blinking = (t % 4.0) < 0.12;
+  if (blinking) {
+    // Closed: a thin 2×1 line at the lower edge of the eye position.
+    rect(ctx, 4, 8, 2, 1, C.pipEye);
+    rect(ctx, 10, 8, 2, 1, C.pipEye);
+  } else {
+    rect(ctx, 4, 7, 2, 2, C.pipEye);
+    rect(ctx, 10, 7, 2, 2, C.pipEye);
+  }
   // Blush
   rect(ctx, 3, 10, 2, 1, C.pipBlush);
   rect(ctx, 11, 10, 2, 1, C.pipBlush);

@@ -4705,91 +4705,39 @@ function drawTears(camX) {
 
 function drawPipMaterializing(screenX, groundY, now) {
   const progress = Math.min(1, openingSeq.elapsed / openingSeq.MATERIALIZE_T);
-
-  // Draw Pip to an offscreen canvas, then composite with a pixel-mask effect
-  // For simplicity: use canvas alpha + a random-pixel overlay for the "sprinkle" feel
   const cx   = Math.round(screenX);
-  const foot = Math.round(groundY + Math.sin(now / 600) * 2);
+  const foot = Math.round(groundY);
 
+  // Sprint G-S3: materialize draws the CANONICAL Pip (smooth arc ghost) via
+  // renderPip, faded in by the materialize ramp — drawPip multiplies the
+  // incoming globalAlpha through — so there is no shape switch when the
+  // materialize sequence ends.  (The old cold-open yawn expression rode the
+  // retired drawPipEyes/Mouth global system and is not reproduced here.)
   ctx.save();
-  ctx.translate(cx, foot);
-  if (pip.body.facing === 'left') ctx.scale(-1, 1);
+  ctx.globalAlpha = progress;
+  renderPip(screenX, groundY, now);
+  ctx.restore();
 
-  // Apply overall alpha ramp (0→0.85 over MATERIALIZE_T)
-  ctx.globalAlpha = progress * 0.85;
-
-  // Apply yawn modifications before drawing
-  const savedOpenness  = pip.eyes.openness;
-  const savedMouth     = { ...pip.mouth };
-  const yawnT = openingSeq.isYawning ? openingSeq.yawnT : 0;
-
-  if (yawnT > 0) {
-    // Eyes narrow during yawn: openness → slit
-    pip.eyes.openness = Math.max(0.1, 1 - yawnT * 0.9);
-  }
-
-  drawPipBody();
-  drawPipEyes();
-
-  // Yawn mouth: open wide at peak
-  if (yawnT > 0) {
-    drawPipMouthYawn(yawnT);
-  } else {
-    drawPipMouth();
-  }
-
-  // Restore
-  pip.eyes.openness = savedOpenness;
-  Object.assign(pip.mouth, savedMouth);
-
-  // Pixel-sprinkle overlay: random dark pixels that "reveal" as progress increases
-  // Creates a dithering dissolve effect on top of the fading alpha
+  // Pixel-sprinkle overlay: deterministic dark pixels that "reveal" as
+  // progress increases — a dithering dissolve on top of the fade-in.
   if (progress < 0.95) {
+    ctx.save();
+    ctx.translate(cx, foot);
+    if (pip.body.facing === 'left') ctx.scale(-1, 1);
     const spriteW = 26, spriteH = 42;
     const left = -spriteW / 2, top = -spriteH;
     const pixelCount = spriteW * spriteH;
     const hiddenRatio = 1 - progress;
-
-    // Draw dark "hidden" pixels randomly across the sprite area
     ctx.globalAlpha = hiddenRatio * 0.6;
     ctx.fillStyle   = '#080e20';   // room background color
-    // Use a seeded-ish pattern for stability (based on position, not random each frame)
     for (let i = 0; i < pixelCount * hiddenRatio * 0.8; i++) {
-      // Use a deterministic but scattered pattern
       const seed  = (i * 1664525 + 1013904223) & 0xffffffff;
       const px    = left + ((seed & 0xff) % spriteW);
       const py    = top  + (((seed >> 8) & 0xff) % spriteH);
       ctx.fillRect(px, py, 1, 1);
     }
+    ctx.restore();
   }
-
-  ctx.restore();
-}
-
-/* Yawn mouth draw — replaces neutral dot with open oval */
-function drawPipMouthYawn(yawnT) {
-  const headCY = -PIP_H + 12;   /* −28 */
-  const m      = pip.mouth;
-
-  // Open mouth: oval shape, 4×3px at peak, tapers at start/end
-  const openW = Math.round(yawnT * 4);
-  const openH = Math.round(yawnT * 3);
-  if (openW < 2 || openH < 2) {
-    // Too small — draw the regular dot
-    ctx.globalAlpha = 0.65;
-    ctx.fillStyle   = '#1a1428';
-    ctx.fillRect(Math.round(m.offsetX), headCY + 8 + Math.round(m.offsetY), 2, 2);
-    return;
-  }
-
-  ctx.globalAlpha = 0.75;
-  ctx.fillStyle   = '#1a1428';
-  // Draw mouth oval centered at mouth position
-  const mx = Math.round(m.offsetX);
-  const my = headCY + 8 + Math.round(m.offsetY);
-  ctx.beginPath();
-  ctx.ellipse(mx + 1, my + 1, openW / 2, openH / 2, 0, 0, Math.PI * 2);
-  ctx.fill();
 }
 
 /* ================================================================
@@ -6429,8 +6377,9 @@ function drawObjectAura(camX, now) {
    The thin renderPip() wrapper handles game-specific state
    (camera offset, facing direction, squat animation); the canonical
    drawPip(ctx, t, speaking) is provided by the art-source block below.
-   Layer functions drawPipBody/Eyes/Mouth are retained for
-   drawPipMaterializing (out of scope for Sprint G-S1).
+   Sprint G-S3: there is now ONE Pip silhouette — the smooth arc ghost.
+   The cold-open materialize path also renders via renderPip/drawPip, so
+   no style switch occurs. The old drawPipBody/Eyes/Mouth are retired.
    See 05-tech-architecture.md §Shared-Source Pipeline.
    ---------------------------------------------------------------- */
 
@@ -6552,92 +6501,91 @@ function floorGlow(ctx, cx, floor, r, hexColor, a) {
 }
 
 /* =============================================================
-   ① PIP (ghost form) — canonical pixel-art ghost sprite
-   Scale 1.45× maps the 24-row design to ~35px (slightly smaller, softer).
+   ① PIP (ghost form) — canonical smooth arc/bezier ghost sprite
+   (Sprint G-S3 canon reversal: the pixel-art ghost of Sprint 51 /
+   G1-art / G-S2 is retired.  Pip is now the soft, rounded arc ghost
+   — round bald dome, smooth wavy hem, soft glow — that previously
+   lived only in the cold-open materialize path (drawPipBody).)
 
    LOCAL-SPACE CONVENTION: (0,0) = foot centre.
    Caller must ctx.translate(cx, floor) before calling this.
    All transforms (facing, squat) are applied by the caller
-   before the call; bob is applied internally.
+   before the call; bob is applied internally.  The body honours the
+   caller's incoming globalAlpha (so fades — materialize ramp,
+   blink-back — multiply through), then restores it on exit.
 
    t: time in seconds.  speaking: boolean.
    ============================================================= */
 function drawPip(ctx, t, speaking) {
   const bob   = Math.round(Math.sin(t * 1.8) * (speaking ? 1.5 : 1.0));
-  const scale = 1.45;
+  const inA   = ctx.globalAlpha;        // respect caller fades; multiply through
+  const PIP_H = 40;                     // sprite height; (0,0)=foot, top at -40
 
   // Floor glow at (0, 0) in local space — caller has already translated here
   floorGlow(ctx, 0, 0, 18, C.pipGlow, 0.5);
 
   ctx.save();
-  // Shift to sprite top-left in local space.
-  // Unscaled origin is top-left of a 16px-wide sprite; centre = x+8.
-  // Vertical: sprite is 24 rows tall; translate so bottom row lands at y=0.
-  ctx.translate(-8 * scale, -24 * scale - bob);
-  ctx.scale(scale, scale);
+  ctx.translate(0, -bob);               // gentle bob lifts the whole sprite
 
-  // Soft halo
-  const halo = ctx.createRadialGradient(8, 12, 0, 8, 12, 16);
-  halo.addColorStop(0, 'rgba(240,248,255,0.25)');
-  halo.addColorStop(1, 'rgba(240,248,255,0)');
-  ctx.fillStyle = halo;
-  ctx.fillRect(-8, -4, 32, 32);
+  const headCY  = -PIP_H + 12;          // -28: centre of the head dome
+  const bodyBot = -10;                  // straight body ends 10px above foot
 
-  const b = C.pipBody, bd = C.pipBodyDeep;
+  // ---- Body: round dome + three smooth downward waves, soft glow ----
+  ctx.shadowColor = 'rgba(240,248,255,0.85)';
+  ctx.shadowBlur  = 12;
+  ctx.globalAlpha = inA * 0.85;         // slightly translucent
+  ctx.fillStyle   = '#dce8ff';
+  ctx.beginPath();
+  ctx.arc(0, headCY, 12, Math.PI, 0);   // bald semicircle dome
+  ctx.lineTo(12, bodyBot);              // right wall down to the hem
+  ctx.quadraticCurveTo( 8, 0,  4, bodyBot);   // wave 1
+  ctx.quadraticCurveTo( 0, 0, -4, bodyBot);   // wave 2
+  ctx.quadraticCurveTo(-8, 0, -12, bodyBot);  // wave 3
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
 
-  // Slightly translucent body (the halo carries most of the "ghost" read).
-  ctx.globalAlpha = 0.9;
+  // Cool underglow pooled beneath Pip
+  ctx.globalAlpha = inA * 0.12;
+  const glowGrad = ctx.createRadialGradient(0, 2, 0, 0, 2, 17);
+  glowGrad.addColorStop(0, '#c0d8ff');
+  glowGrad.addColorStop(1, 'rgba(180, 210, 255, 0)');
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, 2, 17, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Smooth body — a few TALL solid fills (each ≥2 logical px tall) so no
-  // 1px-row seams survive the scale.  Rounded crown → shoulder → tall block.
-  rect(ctx, 4, 0,  8, 2, b);   // crown   (rows 0–1)
-  rect(ctx, 2, 2, 12, 2, b);   // shoulder(rows 2–3)
-  rect(ctx, 1, 4, 14, 17, b);  // body    (rows 4–20) — one solid block
-
-  // Scalloped hem (rows 21–22) — reads fine; banding was only in the body.
-  rect(ctx, 1, 21, 4, 1, b); rect(ctx, 6, 21, 4, 1, b); rect(ctx, 11, 21, 4, 1, b);
-  rect(ctx, 1, 22, 3, 1, b); rect(ctx, 7, 22, 2, 1, b); rect(ctx, 12, 22, 3, 1, b);
-
-  // One subtle vertical form cue — a soft shadow column on the left edge.
-  // (Vertical fill: no horizontal shading bands.)
-  rect(ctx, 1, 4, 2, 17, bd);
-
-  // Face stays crisp.
-  ctx.globalAlpha = 1.0;
-
-  // Eyes — open by default; one brief blink (~0.12s) every ~4s.
+  // ---- Eyes — open by default; one brief blink (~0.12s) every ~4s ----
   const blinking = (t % 4.0) < 0.12;
+  ctx.globalAlpha = inA * 0.92;
+  ctx.fillStyle   = C.pipEye;
   if (blinking) {
-    // Closed: a thin 2×1 line at the lower edge of the eye position.
-    rect(ctx, 4, 8, 2, 1, C.pipEye);
-    rect(ctx, 10, 8, 2, 1, C.pipEye);
+    // Closed: a thin line at the lower edge of the eye position.
+    ctx.fillRect(-5, headCY + 2, 3, 1);
+    ctx.fillRect( 3, headCY + 2, 3, 1);
   } else {
-    rect(ctx, 4, 7, 2, 2, C.pipEye);
-    rect(ctx, 10, 7, 2, 2, C.pipEye);
-  }
-  // Blush
-  rect(ctx, 3, 10, 2, 1, C.pipBlush);
-  rect(ctx, 11, 10, 2, 1, C.pipBlush);
-  // Mouth
-  if (!speaking) {
-    rect(ctx, 7, 10, 2, 1, C.pipEye);
-  } else {
-    const phase = Math.floor((t % 0.6) * 6.67) % 4;
-    if (phase === 0) {
-      rect(ctx, 7, 10, 2, 1, C.pipEye);
-    } else if (phase === 1 || phase === 3) {
-      px(ctx, 7, 10, C.pipEye);
-      px(ctx, 9, 10, C.pipEye);
-      rect(ctx, 7, 11, 3, 1, C.pipEye);
-    } else {
-      rect(ctx, 7, 10, 3, 1, C.pipEye);
-      rect(ctx, 7, 12, 3, 1, C.pipEye);
-      px(ctx, 6, 11, C.pipEye);
-      px(ctx, 10, 11, C.pipEye);
-    }
+    ctx.fillRect(-5, headCY - 2, 3, 5);
+    ctx.fillRect( 3, headCY - 2, 3, 5);
   }
 
-  ctx.restore();
+  // Blush
+  ctx.globalAlpha = inA * 0.18;
+  ctx.fillStyle   = '#e8a0a0';
+  ctx.fillRect(-8, headCY + 3, 5, 3);
+  ctx.fillRect( 4, headCY + 3, 5, 3);
+
+  // ---- Mouth — neutral dot, or a simple open/close while speaking ----
+  ctx.globalAlpha = inA * 0.65;
+  ctx.fillStyle   = C.pipEye;
+  if (!speaking) {
+    ctx.fillRect(0, headCY + 8, 2, 2);
+  } else {
+    const open = Math.floor((t % 0.6) * 6.67) % 2;
+    if (open) ctx.fillRect(-1, headCY + 7, 4, 3);
+    else      ctx.fillRect( 0, headCY + 8, 2, 2);
+  }
+
+  ctx.restore();                        // restores globalAlpha to inA, shadow state
 }
 
 /* @@ART-SOURCE-END@@ */
@@ -6665,95 +6613,12 @@ function renderPip(screenX, groundY, now) {
   ctx.restore();
 }
 
-/* ---- Layer 1: Body ----
-   Ghost silhouette and underglow. Local coords: (0,0) = center/foot.
-   The wavy bottom has three downward bumps (classic ghost shape). No apron on
-   the gameplay ghost sprite. See 03-art-and-aesthetic.md §Pip Sprite Specification. */
-
-function drawPipBody() {
-  const topY    = -PIP_H;       /* −40: top of sprite                   */
-  const headCY  = topY + 12;   /* −28: centre of head arc               */
-  const bodyBot = -10;          /* straight body ends 10px above foot    */
-
-  /* Ghost body glow */
-  ctx.shadowColor = 'rgba(240, 248, 255, 0.85)';
-  ctx.shadowBlur  = 12;
-  ctx.globalAlpha = 0.85;
-
-  /* Ghost body fill */
-  ctx.fillStyle = '#dce8ff';
-  ctx.beginPath();
-
-  /* Head: semicircle from left arc-start (−12, headCY) up and over to (12, headCY) */
-  ctx.arc(0, headCY, 12, Math.PI, 0);
-
-  /* Right wall down to where bumps begin */
-  ctx.lineTo(12, bodyBot);
-
-  /* Three downward bumps (right → left). Each bump spans ~8px. */
-  ctx.quadraticCurveTo( 8, 0,  4, bodyBot);
-  ctx.quadraticCurveTo( 0, 0, -4, bodyBot);
-  ctx.quadraticCurveTo(-8, 0, -12, bodyBot);
-
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.shadowBlur = 0;
-
-  /* Cool underglow beneath Pip */
-  ctx.globalAlpha = 0.12;
-  const glowGrad = ctx.createRadialGradient(0, 2, 0, 0, 2, 17);
-  glowGrad.addColorStop(0, '#c0d8ff');
-  glowGrad.addColorStop(1, 'rgba(180, 210, 255, 0)');
-  ctx.fillStyle = glowGrad;
-  ctx.beginPath();
-  ctx.ellipse(0, 2, 17, 5, 0, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-/* ---- Layer 2: Eyes ----
-   Two dark eye-dots driven by pip.eyes state. Blinks animate
-   openness 1→0→1 via updateBlink(). The flip applied by drawPip()
-   means left/right eye positions stay the same in local coords in
-   both facing directions — no manual swap needed. */
-
-function drawPipEyes() {
-  const headCY = -PIP_H + 12;   /* −28 */
-  const e      = pip.eyes;
-
-  /* Eye height driven by openness; minimum 1px so they're never invisible */
-  const eyeH = Math.max(1, Math.round(5 * e.openness));
-
-  const offX = Math.round(e.offsetX);
-  const offY = Math.round(e.offsetY);
-
-  ctx.globalAlpha = 0.92;
-  ctx.fillStyle   = '#1a1428';
-  ctx.fillRect(-5 + offX, headCY - 2 + offY, 3, eyeH);   /* left eye  */
-  ctx.fillRect( 3 + offX, headCY - 2 + offY, 3, eyeH);   /* right eye */
-
-  /* Subtle blush */
-  ctx.globalAlpha = 0.18;
-  ctx.fillStyle   = '#e8a0a0';
-  ctx.fillRect(-8, headCY + 3, 5, 3);
-  ctx.fillRect( 4, headCY + 3, 5, 3);
-}
-
-/* ---- Layer 3: Mouth ----
-   Ships as a single neutral pixel. 'shape' and 'openness' in
-   pip.mouth are reserved for future emotional expressions (small
-   smile, gasp) driven by story beats. The rig is in place; future
-   sprints add those shapes without re-architecting. */
-
-function drawPipMouth() {
-  const headCY = -PIP_H + 12;   /* −28 */
-  const m      = pip.mouth;
-
-  ctx.globalAlpha = 0.65;
-  ctx.fillStyle   = '#1a1428';
-  /* Neutral: 2×2 dot centered just below mid-face */
-  ctx.fillRect(Math.round(m.offsetX), headCY + 8 + Math.round(m.offsetY), 2, 2);
-}
+/* Sprint G-S3: the legacy arc-ghost layer functions drawPipBody /
+   drawPipEyes / drawPipMouth (and drawPipMouthYawn) were retired here.
+   Their smooth arc/bezier silhouette IS the new canonical Pip and now
+   lives in the shared art-source drawPip(ctx, t, speaking) above; the
+   cold-open materialize path draws that canonical Pip via renderPip.
+   pip.eyes / pip.mouth state objects remain (blink-back, future use). */
 
 /* ================================================================
    ROOM TRANSITION
@@ -8117,61 +7982,75 @@ function drawMirrorCinematic(now) {
   const GS = FS;
   const GOX = msX + Math.round((msW - 16 * GS) / 2);
   const GOY = FOY_C + 6 * FS - 7 * GS;
-  const gb = '#f0f8ff', gbd = '#c8d8ff', gg = '#a8c0ff';
-
-  function mRCin(lx, ly, lw, lh, c) {
-    ctx.fillStyle = c;
-    ctx.fillRect(GOX + (16 - lx - lw) * GS, GOY + ly * GS, lw * GS, lh * GS);
-  }
-
-  // ── Step 1: Ghost silhouette (pixel-art rows, matches gallery drawPip mirrored) ──
+  // ── Step 1: Ghost silhouette — canonical smooth arc ghost (Sprint G-S3) ──
+  // The melt now resolves onto the same soft arc/bezier ghost the gallery and
+  // gameplay use, scaled to the old pixel-ghost footprint and eye-aligned to
+  // the human face row. (Faithful reproduction of the canonical drawPip body;
+  // floor glow is omitted — there is no floor inside the mirror.)
   const ghostAlpha = meltT > 0.15 ? Math.min(1, (meltT - 0.15) / 0.45) : 0;
   if (ghostAlpha > 0) {
+    const gFootY  = GOY + 23 * GS;     // ghost foot baseline within the glass
+    const gCX     = GOX + 8 * GS;      // ghost centre x
+    const gS      = (23 * GS) / 40;    // 40px-tall ghost → old footprint height
+    const gHeadCY = -28, gBodyBot = -10;
+    const haloCY  = gFootY + gHeadCY * gS;
+
+    // Soft halo around the dome
+    ctx.save();
     ctx.globalAlpha = ghostAlpha;
-    const hcx = GOX + 8 * GS;
-    const halo = ctx.createRadialGradient(hcx, GOY + 4 * GS, 0, hcx, GOY + 4 * GS, 8 * GS);
+    const halo = ctx.createRadialGradient(gCX, haloCY, 0, gCX, haloCY, 14 * gS);
     halo.addColorStop(0, 'rgba(240,248,255,0.25)');
     halo.addColorStop(1, 'rgba(240,248,255,0)');
     ctx.fillStyle = halo;
-    ctx.fillRect(GOX, GOY, 16 * GS, 12 * GS);
-    // Head rows 0–8
-    mRCin(4,0,8,1,gb); mRCin(3,1,10,1,gb); mRCin(2,2,12,1,gb);
-    mRCin(1,3,14,1,gb); mRCin(1,4,14,1,gb); mRCin(1,5,14,1,gb);
-    mRCin(1,6,14,1,gb); mRCin(1,7,14,1,gb); mRCin(1,8,14,1,gb);
-    // Body rows 9–20
-    for (let r = 9; r <= 20; r++) mRCin(1, r, 14, 1, gb);
-    // Scalloped waves rows 21–22
-    mRCin(1,21,4,1,gb); mRCin(6,21,4,1,gb); mRCin(11,21,4,1,gb);
-    mRCin(1,22,3,1,gb); mRCin(7,22,2,1,gb); mRCin(12,22,3,1,gb);
-    // Deep shadow band (mirrored to right side)
-    mRCin(1, 9, 2, 11, gbd);
-    // Rim light on upper dome
-    ctx.globalAlpha = ghostAlpha * 0.45;
-    mRCin(4,0,8,1,gg); mRCin(3,1,1,1,gg); mRCin(2,2,1,1,gg);
-    ctx.globalAlpha = 1;
+    ctx.fillRect(gCX - 16 * gS, haloCY - 16 * gS, 32 * gS, 36 * gS);
 
-    // G1b: ghost eyes + blink once after melt completes
+    // Smooth body: round dome + three downward waves, soft glow
+    ctx.translate(gCX, gFootY);
+    ctx.scale(gS, gS);
+    ctx.shadowColor = 'rgba(240,248,255,0.85)';
+    ctx.shadowBlur  = 4;
+    ctx.globalAlpha = ghostAlpha * 0.85;
+    ctx.fillStyle   = '#dce8ff';
+    ctx.beginPath();
+    ctx.arc(0, gHeadCY, 12, Math.PI, 0);
+    ctx.lineTo(12, gBodyBot);
+    ctx.quadraticCurveTo( 8, 0,  4, gBodyBot);
+    ctx.quadraticCurveTo( 0, 0, -4, gBodyBot);
+    ctx.quadraticCurveTo(-8, 0, -12, gBodyBot);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Ghost eyes / blush / neutral mouth appear once the melt completes (the
+    // human const cells have faded by then). Drawn in screen space, smooth.
     if (meltT >= 1) {
-      const postMelt  = elapsed - (HOLD_T + MELT_T);
-      const blinking  = postMelt > 0.5 && postMelt < 0.75;
-      const eyeY      = Math.round(GOY + 5 * GS + Math.floor(GS * 0.3));
-      const eyeLX     = Math.round(GOX + (16 - 11) * GS);
-      const eyeRX     = Math.round(GOX + (16 - 6) * GS);
-      if (!blinking) {
-        ctx.save();
-        ctx.globalAlpha = ghostAlpha * 0.85;
-        ctx.fillStyle = '#c8e0ff';
-        ctx.fillRect(eyeLX, eyeY, GS, Math.ceil(GS * 0.65));
-        ctx.fillRect(eyeRX, eyeY, GS, Math.ceil(GS * 0.65));
-        ctx.restore();
+      const postMelt = elapsed - (HOLD_T + MELT_T);
+      const blinking = postMelt > 0.5 && postMelt < 0.75;
+      const exL = Math.round(gCX - 5 * gS), exR = Math.round(gCX + 3 * gS);
+      const ew  = Math.round(3 * gS);
+      ctx.save();
+      ctx.globalAlpha = ghostAlpha * 0.92;
+      ctx.fillStyle = '#1a1428';
+      if (blinking) {
+        const ey = Math.round(gFootY + (gHeadCY + 2) * gS);
+        ctx.fillRect(exL, ey, ew, Math.max(1, Math.round(gS)));
+        ctx.fillRect(exR, ey, ew, Math.max(1, Math.round(gS)));
       } else {
-        ctx.save();
-        ctx.globalAlpha = ghostAlpha * 0.6;
-        ctx.fillStyle = '#203060';
-        ctx.fillRect(eyeLX, eyeY + Math.floor(GS * 0.3), GS, 2);
-        ctx.fillRect(eyeRX, eyeY + Math.floor(GS * 0.3), GS, 2);
-        ctx.restore();
+        const ey = Math.round(gFootY + (gHeadCY - 2) * gS);
+        ctx.fillRect(exL, ey, ew, Math.round(5 * gS));
+        ctx.fillRect(exR, ey, ew, Math.round(5 * gS));
       }
+      // Faint blush
+      ctx.globalAlpha = ghostAlpha * 0.18;
+      ctx.fillStyle = '#e8a0a0';
+      const blY = Math.round(gFootY + (gHeadCY + 3) * gS), blW = Math.round(5 * gS), blH = Math.round(3 * gS);
+      ctx.fillRect(Math.round(gCX - 8 * gS), blY, blW, blH);
+      ctx.fillRect(Math.round(gCX + 4 * gS), blY, blW, blH);
+      // Neutral mouth
+      ctx.globalAlpha = ghostAlpha * 0.65;
+      ctx.fillStyle = '#1a1428';
+      ctx.fillRect(Math.round(gCX), Math.round(gFootY + (gHeadCY + 8) * gS), Math.round(2 * gS), Math.round(2 * gS));
+      ctx.restore();
     }
   }
 

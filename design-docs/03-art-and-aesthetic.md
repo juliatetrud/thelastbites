@@ -32,6 +32,7 @@ This is what the player sees 95% of the time. Pip walking through cabin 646. Pä
 - **Animation:** Eyes blink. Body bobs. Mouth occasionally changes shape. Driven by the three-layer-rig pattern (see "Sprite-rig layering" section below for the canonical implementation).
 - **Where the atmosphere comes from:** The *room* around the sprite. Ornate Victorian detail belongs in the room background, lamp halos, dust motes, vignette. The sprite itself is small and clean.
 - **What this looks like in practice for Pip:** a bald white ghost shape with three classic waves at the bottom, two black eye-dots, two pink blush pixels, a tiny dark mouth, and a soft cool drop-shadow glow on the floor beneath him. Nothing else. No hair. No apron. The simplicity is intentional and thematic — see the story bible's section on Pip's visual form.
+  - **Pip's silhouette is a smooth arc/bezier ghost, NOT hard pixel art (Sprint G-S3, 2026-06-22 — canon reversal).** Pip alone is rendered with a rounded `ctx.arc` dome and smooth `quadraticCurveTo` wavy hem, slightly translucent (`globalAlpha ≈ 0.85`) with a soft glow — the "hard pixel edges / `fillRect` rows" wording above applies to the rest of the Register-A roster (Pätu, NPCs, props), not to Pip. The pixel-art Pip of Sprints 51 / G1-art / G-S2 is retired. There is now exactly ONE Pip silhouette across gallery, gameplay, cold-open, and the mirror-melt cinematic. See `06-roadmap-and-open-questions.md` Decisions Log 2026-06-22.
 
 ### Register B — Cinematic (the painterly register)
 

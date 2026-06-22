@@ -115,90 +115,89 @@ function floorGlow(ctx, cx, floor, r, hexColor, a) {
 }
 
 /* =============================================================
-   ① PIP (ghost form) — canonical pixel-art ghost sprite
-   Scale 1.45× maps the 24-row design to ~35px (slightly smaller, softer).
+   ① PIP (ghost form) — canonical smooth arc/bezier ghost sprite
+   (Sprint G-S3 canon reversal: the pixel-art ghost of Sprint 51 /
+   G1-art / G-S2 is retired.  Pip is now the soft, rounded arc ghost
+   — round bald dome, smooth wavy hem, soft glow — that previously
+   lived only in the cold-open materialize path (drawPipBody).)
 
    LOCAL-SPACE CONVENTION: (0,0) = foot centre.
    Caller must ctx.translate(cx, floor) before calling this.
    All transforms (facing, squat) are applied by the caller
-   before the call; bob is applied internally.
+   before the call; bob is applied internally.  The body honours the
+   caller's incoming globalAlpha (so fades — materialize ramp,
+   blink-back — multiply through), then restores it on exit.
 
    t: time in seconds.  speaking: boolean.
    ============================================================= */
 function drawPip(ctx, t, speaking) {
   const bob   = Math.round(Math.sin(t * 1.8) * (speaking ? 1.5 : 1.0));
-  const scale = 1.45;
+  const inA   = ctx.globalAlpha;        // respect caller fades; multiply through
+  const PIP_H = 40;                     // sprite height; (0,0)=foot, top at -40
 
   // Floor glow at (0, 0) in local space — caller has already translated here
   floorGlow(ctx, 0, 0, 18, C.pipGlow, 0.5);
 
   ctx.save();
-  // Shift to sprite top-left in local space.
-  // Unscaled origin is top-left of a 16px-wide sprite; centre = x+8.
-  // Vertical: sprite is 24 rows tall; translate so bottom row lands at y=0.
-  ctx.translate(-8 * scale, -24 * scale - bob);
-  ctx.scale(scale, scale);
+  ctx.translate(0, -bob);               // gentle bob lifts the whole sprite
 
-  // Soft halo
-  const halo = ctx.createRadialGradient(8, 12, 0, 8, 12, 16);
-  halo.addColorStop(0, 'rgba(240,248,255,0.25)');
-  halo.addColorStop(1, 'rgba(240,248,255,0)');
-  ctx.fillStyle = halo;
-  ctx.fillRect(-8, -4, 32, 32);
+  const headCY  = -PIP_H + 12;          // -28: centre of the head dome
+  const bodyBot = -10;                  // straight body ends 10px above foot
 
-  const b = C.pipBody, bd = C.pipBodyDeep;
+  // ---- Body: round dome + three smooth downward waves, soft glow ----
+  ctx.shadowColor = 'rgba(240,248,255,0.85)';
+  ctx.shadowBlur  = 12;
+  ctx.globalAlpha = inA * 0.85;         // slightly translucent
+  ctx.fillStyle   = '#dce8ff';
+  ctx.beginPath();
+  ctx.arc(0, headCY, 12, Math.PI, 0);   // bald semicircle dome
+  ctx.lineTo(12, bodyBot);              // right wall down to the hem
+  ctx.quadraticCurveTo( 8, 0,  4, bodyBot);   // wave 1
+  ctx.quadraticCurveTo( 0, 0, -4, bodyBot);   // wave 2
+  ctx.quadraticCurveTo(-8, 0, -12, bodyBot);  // wave 3
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
 
-  // Slightly translucent body (the halo carries most of the "ghost" read).
-  ctx.globalAlpha = 0.9;
+  // Cool underglow pooled beneath Pip
+  ctx.globalAlpha = inA * 0.12;
+  const glowGrad = ctx.createRadialGradient(0, 2, 0, 0, 2, 17);
+  glowGrad.addColorStop(0, '#c0d8ff');
+  glowGrad.addColorStop(1, 'rgba(180, 210, 255, 0)');
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.ellipse(0, 2, 17, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Smooth body — a few TALL solid fills (each ≥2 logical px tall) so no
-  // 1px-row seams survive the scale.  Rounded crown → shoulder → tall block.
-  rect(ctx, 4, 0,  8, 2, b);   // crown   (rows 0–1)
-  rect(ctx, 2, 2, 12, 2, b);   // shoulder(rows 2–3)
-  rect(ctx, 1, 4, 14, 17, b);  // body    (rows 4–20) — one solid block
-
-  // Scalloped hem (rows 21–22) — reads fine; banding was only in the body.
-  rect(ctx, 1, 21, 4, 1, b); rect(ctx, 6, 21, 4, 1, b); rect(ctx, 11, 21, 4, 1, b);
-  rect(ctx, 1, 22, 3, 1, b); rect(ctx, 7, 22, 2, 1, b); rect(ctx, 12, 22, 3, 1, b);
-
-  // One subtle vertical form cue — a soft shadow column on the left edge.
-  // (Vertical fill: no horizontal shading bands.)
-  rect(ctx, 1, 4, 2, 17, bd);
-
-  // Face stays crisp.
-  ctx.globalAlpha = 1.0;
-
-  // Eyes — open by default; one brief blink (~0.12s) every ~4s.
+  // ---- Eyes — open by default; one brief blink (~0.12s) every ~4s ----
   const blinking = (t % 4.0) < 0.12;
+  ctx.globalAlpha = inA * 0.92;
+  ctx.fillStyle   = C.pipEye;
   if (blinking) {
-    // Closed: a thin 2×1 line at the lower edge of the eye position.
-    rect(ctx, 4, 8, 2, 1, C.pipEye);
-    rect(ctx, 10, 8, 2, 1, C.pipEye);
+    // Closed: a thin line at the lower edge of the eye position.
+    ctx.fillRect(-5, headCY + 2, 3, 1);
+    ctx.fillRect( 3, headCY + 2, 3, 1);
   } else {
-    rect(ctx, 4, 7, 2, 2, C.pipEye);
-    rect(ctx, 10, 7, 2, 2, C.pipEye);
-  }
-  // Blush
-  rect(ctx, 3, 10, 2, 1, C.pipBlush);
-  rect(ctx, 11, 10, 2, 1, C.pipBlush);
-  // Mouth
-  if (!speaking) {
-    rect(ctx, 7, 10, 2, 1, C.pipEye);
-  } else {
-    const phase = Math.floor((t % 0.6) * 6.67) % 4;
-    if (phase === 0) {
-      rect(ctx, 7, 10, 2, 1, C.pipEye);
-    } else if (phase === 1 || phase === 3) {
-      px(ctx, 7, 10, C.pipEye);
-      px(ctx, 9, 10, C.pipEye);
-      rect(ctx, 7, 11, 3, 1, C.pipEye);
-    } else {
-      rect(ctx, 7, 10, 3, 1, C.pipEye);
-      rect(ctx, 7, 12, 3, 1, C.pipEye);
-      px(ctx, 6, 11, C.pipEye);
-      px(ctx, 10, 11, C.pipEye);
-    }
+    ctx.fillRect(-5, headCY - 2, 3, 5);
+    ctx.fillRect( 3, headCY - 2, 3, 5);
   }
 
-  ctx.restore();
+  // Blush
+  ctx.globalAlpha = inA * 0.18;
+  ctx.fillStyle   = '#e8a0a0';
+  ctx.fillRect(-8, headCY + 3, 5, 3);
+  ctx.fillRect( 4, headCY + 3, 5, 3);
+
+  // ---- Mouth — neutral dot, or a simple open/close while speaking ----
+  ctx.globalAlpha = inA * 0.65;
+  ctx.fillStyle   = C.pipEye;
+  if (!speaking) {
+    ctx.fillRect(0, headCY + 8, 2, 2);
+  } else {
+    const open = Math.floor((t % 0.6) * 6.67) % 2;
+    if (open) ctx.fillRect(-1, headCY + 7, 4, 3);
+    else      ctx.fillRect( 0, headCY + 8, 2, 2);
+  }
+
+  ctx.restore();                        // restores globalAlpha to inA, shadow state
 }

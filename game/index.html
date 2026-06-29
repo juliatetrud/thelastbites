@@ -3219,8 +3219,18 @@ function update(dt) {
 
     // Room edge triggers — walk into the edge to change rooms
     // Sprint 10.7: cabin exits via left wall (door at x=120) back to hallway at cabin door position (1180)
-    if (currentRoom === 'cabin' && pip.x <= rooms.cabin.pipMinX + 1) {
-      // Exit cabin through the door — return to hallway at the cabin door position
+    if (currentRoom === 'cabin' && pip.x <= rooms.cabin.pipMinX + 1 && cabinState.bedRevealed) {
+      // Exit cabin through the door — return to hallway at the cabin door position.
+      // G-S4: gated on cabinState.bedRevealed so the player cannot leave Cabin 646
+      // before the bed-reveal beat completes. Without this gate, Pip phases in at x=20
+      // (cabin.pipEntryX.fromLeft) and ~7px of leftward drift fires this exit with
+      // beatStage still 'pre-mirror'/'pre-bed'; post-bed then never sets, so the
+      // hallway->corridor staircase (:3235, :8570) never unlocks and the player is
+      // stranded (re-entry via the grandparents wall-phase is gated 'pre-mirror', :3229,
+      // and the hallway cabin door is inert, :1960). The canonical first-visit exit is
+      // the post-bed panic auto-exit (startPanicSequence -> startTransition ~:3949),
+      // which runs independently of this edge trigger (movement block is !panicActive,
+      // :3187), so this gate does not affect it. Return visits exit normally (bedRevealed).
       startTransition('hallway', 'fromRight', 1164);  // just left of cabin door at hallway x=1180
     } else if (currentRoom === 'grandparents' && pip.x <= PIP_HALF_W + 1) {
       // Return to hallway at the grandparents' door position (now x=920)

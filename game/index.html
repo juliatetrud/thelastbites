@@ -2862,6 +2862,33 @@ const URL_PARAMS = new URLSearchParams(window.location.search);
 const DEV_MODE   = URL_PARAMS.get('dev') === '1';
 
 /* ================================================================
+   DEBUG WARP (developer-only test tool — NOT a gameplay feature)
+   ----------------------------------------------------------------
+   Lets Julia jump directly to any Chapter 1 room/beat without
+   replaying from the start. Each warp also sets the prerequisite
+   flags that beat depends on, so later rooms don't show false
+   blockers.
+
+   TO DISABLE (ship / hand to players): set DEBUG_WARP = false.
+   With it false, none of the warp keys do anything and normal play
+   is byte-for-byte unchanged.
+
+   Keys (only while DEBUG_WARP === true):
+     Ctrl+Alt+1 .. Ctrl+Alt+8  → jump to a beat (see legend below)
+     Backquote (`)             → print the legend to the console
+   The 3-key Ctrl+Alt+digit combo is not reachable by a normal
+   player by accident (bare 1-4 are dialogue-choice keys; the combo
+   is not).
+   ================================================================ */
+const DEBUG_WARP = true;
+const DEBUG_WARP_LEGEND =
+  '[debug-warp] Ctrl+Alt+N (DEBUG_WARP=true):\n' +
+  '  1 cold-open        2 hallway          3 grandparents cabin\n' +
+  '  4 Cabin646 pre-bed 5 Cabin646 post-bed 6 dark corridor\n' +
+  '  7 kitchen (Henrik) 8 observation deck\n' +
+  '  Backquote prints this legend. Set const DEBUG_WARP=false to disable.';
+
+/* ================================================================
    FULLSCREEN STATE
    ================================================================ */
 
@@ -2887,6 +2914,176 @@ if (DEBUG_DC) {
   pip.abilities.talkThroughSpeakers = true;
   pip.x                             = 1270;         // near staircase; walk right to trigger
   console.log('[debug=darkcorridor] Beat-8 state injected. Pip at x=1270 (grandparents door=920, cabin door=1180). Walk right to staircase at x≥1312.');
+}
+
+/* ----------------------------------------------------------------
+   DEBUG WARP implementation (see DEBUG_WARP block above).
+   These functions only run when invoked from the gated key handler,
+   so with DEBUG_WARP=false they are dead code that never executes.
+   ---------------------------------------------------------------- */
+
+/* Reset every Chapter-1 progress flag to a fresh start, so a warp's
+   target state is self-consistent regardless of where Pip was before.
+   Does NOT touch gameMode/currentRoom/openingSeq — the caller sets those. */
+function _debugResetCh1Flags() {
+  cabinState.beatStage      = 'pre-grandparents';
+  cabinState.bedRevealed    = false;
+  cabinState.mirrorRevealed = false;
+  cabinState.doctorSeen     = false;
+  cinematic.played.clear();
+
+  pip.float.unlocked = false;
+  pip.float.altitude = 0;
+  pip.float.vy       = 0;
+  pip.abilities.electricity         = false;
+  pip.abilities.talkThroughSpeakers = false;
+
+  const cs = chapterState;
+  cs.openingPlayed = false; cs.radioDiscovered = false; cs.darkCorridorEntered = false;
+  cs.sconceFixed = false; cs.floatUnlocked = false; cs.floatBoosted = false;
+  cs.cartFound = false; cs.janitorPaged = false; cs.janitorWalked = false;
+  cs.henrikMet = false; cs.firstTasteSeen = false; cs.bamsemumsCollected = false;
+  cs.nokkenStoryHeard = false; cs.nokkenGlimpsed = false; cs.grandparentsLeft = false;
+  cs.notebookReceived = false; cs.chapter1Complete = false;
+
+  darkCorridor.lit = false; darkCorridor.cartRemoved = false; darkCorridor.cartX = 840;
+
+  passenger.hallwayEntered = false; passenger.active = false; passenger.aftermathPending = false;
+}
+
+/* The flag set the player would hold on completing the bed reveal (Beat 8). */
+function _debugSetPostBed() {
+  cabinState.beatStage      = 'post-bed';
+  cabinState.mirrorRevealed = true;
+  cabinState.bedRevealed    = true;
+  cabinState.doctorSeen     = true;
+  cinematic.played.add('grandparents');
+  pip.float.unlocked         = true;
+  chapterState.floatUnlocked = true;
+}
+
+/* The flag set the player would hold on finishing the dark-corridor puzzle
+   chain (sconce → wire-shock → radio page → janitor clears cart). Required for
+   targets PAST the corridor (kitchen, deck) so they don't show false blockers. */
+function _debugSetCorridorComplete() {
+  chapterState.radioDiscovered    = true;
+  chapterState.sconceFixed        = true;
+  chapterState.floatBoosted       = true;
+  chapterState.cartFound          = true;
+  chapterState.janitorPaged       = true;
+  chapterState.janitorWalked      = true;
+  chapterState.darkCorridorEntered = true;
+  pip.abilities.electricity         = true;
+  pip.abilities.talkThroughSpeakers = true;
+  darkCorridor.lit         = true;
+  darkCorridor.cartRemoved = true;
+}
+
+/* Jump to a Chapter-1 beat. target is one of the legend keys. */
+function debugWarp(target) {
+  if (!DEBUG_WARP) return;
+
+  // 1) Baseline: fresh Ch1 flags, then clear any blocking transient state so the
+  //    warp works even mid-dialogue / mid-cinematic / from the gate or title.
+  _debugResetCh1Flags();
+  dialogue.active   = false; dialogue.closing  = false;
+  cinematic.active  = false; cinematic.fadingOut = false;
+  transition.active = false;
+  mirrorBeat.panicPhase = 'none';
+  floatDiscovery.active = false;
+  nokkenGlimpse.active  = false;
+  gamePaused = false;
+  notebook.open = false;
+
+  // 2) Force playable gameplay mode + dismiss any entry screen.
+  gameMode = 'gameplay';
+  const titleEl = document.getElementById('title-screen');
+  if (titleEl) titleEl.style.display = 'none';
+  const gateEl = document.getElementById('gate-overlay');
+  if (gateEl) gateEl.classList.add('hidden');
+  const ovEl = document.getElementById('room-transition');
+  if (ovEl) ovEl.style.transition = '';   // restore CSS fade for startTransition()
+  showHUD();
+
+  // 3) Cold-open is special: replay the departure cinematic from a fresh start.
+  if (target === 'cold-open') {
+    chapterState.departurePlayed = false;
+    currentRoom        = 'hallway';
+    pip.x              = rooms.hallway.pipMinX + 4;
+    pip.body.facing    = 'right';
+    openingSeq.state   = 'materializing';
+    openingSeq.elapsed = 0;
+    openingSeq._maskBuilt = false;
+    if (ovEl) ovEl.style.opacity = '0';
+    startDepartureCinematic(() => { chapterState.departurePlayed = true; playMusic('main'); });
+    console.log('[debug-warp] 1 cold-open — fresh Ch1: departure cinematic → hallway materialize.');
+    return;
+  }
+
+  // 4) All other targets: player already has control.
+  chapterState.departurePlayed = true;
+  openingSeq.state             = 'complete';
+
+  switch (target) {
+    case 'hallway':
+      // Beats 1–3: fresh hallway, pre-grandparents. Passenger walk re-arms on entry.
+      startTransition('hallway', 'fromLeft');
+      console.log('[debug-warp] 2 hallway (pre-grandparents) — walk to grandparents door at x≈920.');
+      break;
+
+    case 'grandparents':
+      // Beat 4: inside grandparents cabin; mirror-unlock armed so phase-in works.
+      cabinState.beatStage = 'pre-mirror';
+      cinematic.played.add('grandparents');
+      startTransition('grandparents', 'fromLeft');
+      console.log('[debug-warp] 3 grandparents cabin (pre-mirror) — walk right to phase into Cabin 646.');
+      break;
+
+    case 'cabin-pre-bed':
+      // Beats 5–7: inside Cabin 646 before the bed reveal; mirror active.
+      cabinState.beatStage = 'pre-mirror';
+      cabinState.doctorSeen = true;            // skip first-entry doctor cinematic
+      cinematic.played.add('grandparents');    // mirror unlock gate
+      startTransition('cabin', 'fromLeft');
+      console.log('[debug-warp] 4 Cabin 646 (pre-bed-reveal) — mirror→bed playable; left door gated until bed reveal (G-S4).');
+      break;
+
+    case 'cabin-post-bed':
+      // Beat 8 done: Cabin 646 after the bed reveal (collection-room / return-visit state).
+      _debugSetPostBed();
+      startTransition('cabin', 'fromLeft');
+      console.log('[debug-warp] 5 Cabin 646 (post-bed-reveal) — float unlocked; left door exits to hallway.');
+      break;
+
+    case 'dark-corridor':
+      // Beat 8 arrival: post-bed, float unlocked. Corridor puzzle left UNSOLVED so it is playable.
+      _debugSetPostBed();
+      startTransition('darkCorridor', 'fromLeft');
+      console.log('[debug-warp] 6 dark corridor (post-bed) — sconce/wire/radio/janitor puzzle UNSOLVED & playable.');
+      break;
+
+    case 'kitchen':
+      // Beat 9: kitchen. Needs full corridor completion to mirror natural arrival.
+      _debugSetPostBed();
+      _debugSetCorridorComplete();
+      startTransition('kitchen', 'fromLeft');
+      console.log('[debug-warp] 7 kitchen — corridor complete; Henrik meeting auto-fires near x≈290 (henrikMet=false).');
+      break;
+
+    case 'observation-deck':
+      // Beat 11: observation deck. Needs kitchen beats done (nokkenStoryHeard gates deck entry).
+      _debugSetPostBed();
+      _debugSetCorridorComplete();
+      chapterState.henrikMet       = true;
+      chapterState.firstTasteSeen  = true;
+      chapterState.nokkenStoryHeard = true;
+      startTransition('observationDeck', 'fromLeft');
+      console.log('[debug-warp] 8 observation deck — through kitchen; dock-farewell (Cinematic 7) fires at right edge (grandparentsLeft=false).');
+      break;
+
+    default:
+      console.warn('[debug-warp] unknown target:', target);
+  }
 }
 
 /* ================================================================
@@ -2924,6 +3121,23 @@ function handleKeyAction(code) {
   if (code === 'KeyM') {
     toggleMusic();
     return;
+  }
+
+  // DEBUG WARP (dev-only, gated by const DEBUG_WARP). Ctrl+Alt+1..8 jumps to a
+  // Ch1 beat; Backquote prints the legend. Player-safe: needs the flag AND the
+  // 3-key combo (bare 1-4 are dialogue-choice keys; Ctrl+Alt+digit is not).
+  if (DEBUG_WARP) {
+    if (code === 'Backquote') { console.log(DEBUG_WARP_LEGEND); return; }
+    const ctrl = keysHeld['ControlLeft'] || keysHeld['ControlRight'];
+    const alt  = keysHeld['AltLeft']     || keysHeld['AltRight'];
+    if (ctrl && alt) {
+      const targets = {
+        Digit1: 'cold-open',     Digit2: 'hallway',        Digit3: 'grandparents',
+        Digit4: 'cabin-pre-bed', Digit5: 'cabin-post-bed', Digit6: 'dark-corridor',
+        Digit7: 'kitchen',       Digit8: 'observation-deck',
+      };
+      if (targets[code]) { debugWarp(targets[code]); return; }
+    }
   }
 
   // Gate mode: any key dismisses the gate

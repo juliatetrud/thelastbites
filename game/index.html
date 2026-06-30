@@ -2297,7 +2297,8 @@ const darkCorridorObjects = [
         return {
           id: 'dc-cart-push-fail',
           lines: [
-            { speaker: null, text: 'The cart is too heavy. Pip’s hands pass through it.', italic: false },
+            { speaker: null, text: 'The cart is too heavy, and Pip’s hands pass through it.', italic: false },
+            { speaker: null, text: 'Dziadek’s radio could page whoever left it — back in the cabin.', italic: true },
           ],
           choices: null, onEnd: null,
         };
@@ -2307,7 +2308,7 @@ const darkCorridorObjects = [
         lines: [
           { speaker: null, text: 'A janitor’s cart, abandoned mid-shift.', italic: false },
           { speaker: null, text: 'A name tag on the clipboard reads: "J. Henriksen, Maintenance."', italic: false },
-          { speaker: null, text: 'Pip wonders how to get past it.', italic: true },
+          { speaker: null, text: 'J. Henriksen… Dziadek’s radio could page him. It’s back in the cabin.', italic: true },
         ],
         choices: null,
         onEnd() {
@@ -2325,7 +2326,17 @@ const darkCorridorObjects = [
     get breadcrumb() { return chapterState.janitorWalked; },   // Sprint G1: pulse after janitor clears cart
     get node() {
       if (!chapterState.janitorWalked) {
-        return null;   // not interactive until janitor walk completes
+        // Sprint G-S5: pre-puzzle hint instead of a silent no-op. The descent is
+        // gated on the janitor clearing the cart (paged via Dziadek's radio in the
+        // grandparents' cabin — by design, see dark-corridor.md); nudge, don't dead-end.
+        return {
+          id: 'dc-stairwell-blocked',
+          lines: [
+            { speaker: null, text: 'The cart blocks the stairs down.', italic: false },
+            { speaker: null, text: 'I need to move whoever left it.', italic: true },
+          ],
+          choices: null, onEnd: null,
+        };
       }
       return {
         id: 'dc-stairwell-descend',

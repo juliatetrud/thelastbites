@@ -3114,6 +3114,39 @@ function debugWarp(target) {
   }
 }
 
+/* ----------------------------------------------------------------
+   warp(n) — the dead-simple console entry point.
+   Julia opens DevTools (Cmd-Option-J) and types e.g.  warp(6)
+   No arming, no Backquote, no focus — it just jumps. warp() with no
+   argument prints the target list. Exposed as a real global below.
+   ---------------------------------------------------------------- */
+const WARP_ORDER  = ['cold-open', 'hallway', 'grandparents', 'cabin-pre-bed',
+                     'cabin-post-bed', 'dark-corridor', 'kitchen', 'observation-deck'];
+const WARP_LABELS = ['cold-open', 'hallway', 'grandparents cabin',
+                     'Cabin 646 (pre-bed-reveal)', 'Cabin 646 (post-bed-reveal)',
+                     'dark corridor', 'kitchen (Henrik)', 'observation deck'];
+function warp(n) {
+  if (!DEBUG_WARP) {
+    console.log('[warp] disabled — set const DEBUG_WARP = true to use the warp.');
+    return;
+  }
+  if (n === undefined) {
+    console.log('warp(n) — jump to a Chapter 1 beat:\n' +
+      WARP_ORDER.map((_, i) => '  warp(' + (i + 1) + ')  ' + WARP_LABELS[i]).join('\n'));
+    return;
+  }
+  const target = WARP_ORDER[n - 1];
+  if (!target) {
+    console.log('[warp] no target ' + n + ' — valid: 1–' + WARP_ORDER.length + '. Type warp() for the list.');
+    return;
+  }
+  console.log('[warp] → ' + n + ' ' + WARP_LABELS[n - 1]);
+  debugWarp(target);
+}
+// Expose as a real global so `warp(6)` works straight from the DevTools console.
+if (typeof window !== 'undefined') window.warp = warp;
+if (DEBUG_WARP) console.log('%c[warp] ready — type  warp()  for the list, or e.g.  warp(6)  to jump to the dark corridor.', 'color:#7CFFB0;font-weight:bold');
+
 /* ================================================================
    INPUT
    Held keys tracked via keydown/keyup. Arrow keys and WASD for
@@ -3124,8 +3157,6 @@ const keysHeld = Object.create(null);
 
 document.addEventListener('keydown', (e) => {
   keysHeld[e.code] = true;
-  // DEBUG_WARP diagnostic — confirms keys reach the game. Auto-off when DEBUG_WARP=false.
-  if (DEBUG_WARP) console.log('[debug-warp keydown] key=' + e.key + '  code=' + e.code);
   // Prevent arrow keys / space / TAB from scrolling or focus-navigating the page
   if (
     e.code === 'ArrowLeft'  ||

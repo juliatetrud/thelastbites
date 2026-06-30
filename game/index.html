@@ -2890,10 +2890,10 @@ const DEBUG_WARP_LEGEND =
   '  7 kitchen (Henrik) 8 observation deck\n' +
   '  Backquote toggles this overlay. Set const DEBUG_WARP=false to disable.';
 const DEBUG_WARP_OVERLAY_TEXT =
-  'DEBUG WARP — press 1..8 to jump (Esc cancels, ` closes)\n' +
-  '1 cold-open   2 hallway        3 grandparents\n' +
-  '4 cabin pre-bed  5 cabin post-bed  6 dark corridor\n' +
-  '7 kitchen     8 observation deck';
+  '⚡ DEBUG WARP ARMED — press 1–8 to jump  (Esc cancels · ` closes)\n' +
+  '1 cold-open      2 hallway          3 grandparents\n' +
+  '4 cabin pre-bed  5 cabin post-bed   6 dark corridor\n' +
+  '7 kitchen        8 observation deck';
 
 /* ================================================================
    FULLSCREEN STATE
@@ -2993,10 +2993,12 @@ function _debugWarpOverlay(show) {
   if (!el && show) {
     el = document.createElement('div');
     el.id = 'debug-warp-overlay';
-    el.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:99999;' +
-      'font:12px/1.45 monospace;color:#d6f0ff;background:rgba(8,14,32,.93);' +
-      'border:1px solid #58c8a0;border-radius:4px;padding:8px 11px;white-space:pre;' +
-      'pointer-events:none;letter-spacing:.2px;';
+    // Prominent top-center banner so it's unmistakable when armed.
+    el.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);' +
+      'z-index:2147483647;font:bold 15px/1.5 monospace;color:#0a0e1a;' +
+      'background:#7CFFB0;border:3px solid #0a0e1a;border-top:none;' +
+      'border-radius:0 0 8px 8px;padding:10px 18px;white-space:pre;text-align:center;' +
+      'pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.55);letter-spacing:.3px;';
     el.textContent = DEBUG_WARP_OVERLAY_TEXT;
     document.body.appendChild(el);
   }
@@ -3122,6 +3124,8 @@ const keysHeld = Object.create(null);
 
 document.addEventListener('keydown', (e) => {
   keysHeld[e.code] = true;
+  // DEBUG_WARP diagnostic — confirms keys reach the game. Auto-off when DEBUG_WARP=false.
+  if (DEBUG_WARP) console.log('[debug-warp keydown] key=' + e.key + '  code=' + e.code);
   // Prevent arrow keys / space / TAB from scrolling or focus-navigating the page
   if (
     e.code === 'ArrowLeft'  ||

@@ -2873,20 +2873,27 @@ const DEV_MODE   = URL_PARAMS.get('dev') === '1';
    With it false, none of the warp keys do anything and normal play
    is byte-for-byte unchanged.
 
-   Keys (only while DEBUG_WARP === true):
-     Ctrl+Alt+1 .. Ctrl+Alt+8  → jump to a beat (see legend below)
-     Backquote (`)             → print the legend to the console
-   The 3-key Ctrl+Alt+digit combo is not reachable by a normal
-   player by accident (bare 1-4 are dialogue-choice keys; the combo
-   is not).
+   Keys (only while DEBUG_WARP === true) — macOS-safe, no modifier combos
+   (Ctrl+Alt and Cmd combos are swallowed by macOS before they reach the page):
+     Backquote (`)  → toggle the debug-warp overlay (arm/disarm select mode)
+     while armed, 1..8 → jump to that beat (then auto-disarm); Esc cancels
+   Player-safe: nothing fires unless the overlay is armed via Backquote first,
+   and Backquote does nothing at all when DEBUG_WARP is false. While disarmed,
+   bare 1-4 still work normally as dialogue-choice keys.
    ================================================================ */
 const DEBUG_WARP = true;
+let   debugWarpArmed = false;   // true after Backquote arms the warp overlay
 const DEBUG_WARP_LEGEND =
-  '[debug-warp] Ctrl+Alt+N (DEBUG_WARP=true):\n' +
+  '[debug-warp] armed — press 1..8 (Esc cancels, ` closes):\n' +
   '  1 cold-open        2 hallway          3 grandparents cabin\n' +
   '  4 Cabin646 pre-bed 5 Cabin646 post-bed 6 dark corridor\n' +
   '  7 kitchen (Henrik) 8 observation deck\n' +
-  '  Backquote prints this legend. Set const DEBUG_WARP=false to disable.';
+  '  Backquote toggles this overlay. Set const DEBUG_WARP=false to disable.';
+const DEBUG_WARP_OVERLAY_TEXT =
+  'DEBUG WARP — press 1..8 to jump (Esc cancels, ` closes)\n' +
+  '1 cold-open   2 hallway        3 grandparents\n' +
+  '4 cabin pre-bed  5 cabin post-bed  6 dark corridor\n' +
+  '7 kitchen     8 observation deck';
 
 /* ================================================================
    FULLSCREEN STATE
@@ -2979,9 +2986,28 @@ function _debugSetCorridorComplete() {
   darkCorridor.cartRemoved = true;
 }
 
+/* Show/hide the on-screen debug-warp overlay (a lazily-created DOM chip).
+   Self-contained: created on first use, easy to strip with the rest of the tool. */
+function _debugWarpOverlay(show) {
+  let el = document.getElementById('debug-warp-overlay');
+  if (!el && show) {
+    el = document.createElement('div');
+    el.id = 'debug-warp-overlay';
+    el.style.cssText = 'position:fixed;left:10px;bottom:10px;z-index:99999;' +
+      'font:12px/1.45 monospace;color:#d6f0ff;background:rgba(8,14,32,.93);' +
+      'border:1px solid #58c8a0;border-radius:4px;padding:8px 11px;white-space:pre;' +
+      'pointer-events:none;letter-spacing:.2px;';
+    el.textContent = DEBUG_WARP_OVERLAY_TEXT;
+    document.body.appendChild(el);
+  }
+  if (el) el.style.display = show ? 'block' : 'none';
+}
+
 /* Jump to a Chapter-1 beat. target is one of the legend keys. */
 function debugWarp(target) {
   if (!DEBUG_WARP) return;
+  debugWarpArmed = false;
+  _debugWarpOverlay(false);
 
   // 1) Baseline: fresh Ch1 flags, then clear any blocking transient state so the
   //    warp works even mid-dialogue / mid-cinematic / from the gate or title.
@@ -3123,14 +3149,20 @@ function handleKeyAction(code) {
     return;
   }
 
-  // DEBUG WARP (dev-only, gated by const DEBUG_WARP). Ctrl+Alt+1..8 jumps to a
-  // Ch1 beat; Backquote prints the legend. Player-safe: needs the flag AND the
-  // 3-key combo (bare 1-4 are dialogue-choice keys; Ctrl+Alt+digit is not).
+  // DEBUG WARP (dev-only, gated by const DEBUG_WARP). macOS-safe scheme: Backquote
+  // toggles the warp overlay; while armed, 1..8 jumps to a Ch1 beat (Esc cancels).
+  // No modifier combos (Ctrl+Alt / Cmd are swallowed by macOS). Player-safe: nothing
+  // fires unless armed via Backquote first, and Backquote is inert when DEBUG_WARP
+  // is false. While disarmed, bare 1-4 still work as dialogue-choice keys.
   if (DEBUG_WARP) {
-    if (code === 'Backquote') { console.log(DEBUG_WARP_LEGEND); return; }
-    const ctrl = keysHeld['ControlLeft'] || keysHeld['ControlRight'];
-    const alt  = keysHeld['AltLeft']     || keysHeld['AltRight'];
-    if (ctrl && alt) {
+    if (code === 'Backquote') {
+      debugWarpArmed = !debugWarpArmed;
+      _debugWarpOverlay(debugWarpArmed);
+      if (debugWarpArmed) console.log(DEBUG_WARP_LEGEND);
+      return;
+    }
+    if (debugWarpArmed) {
+      if (code === 'Escape') { debugWarpArmed = false; _debugWarpOverlay(false); return; }
       const targets = {
         Digit1: 'cold-open',     Digit2: 'hallway',        Digit3: 'grandparents',
         Digit4: 'cabin-pre-bed', Digit5: 'cabin-post-bed', Digit6: 'dark-corridor',

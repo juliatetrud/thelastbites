@@ -3158,6 +3158,41 @@ function warp(n) {
 if (typeof window !== 'undefined') window.warp = warp;
 if (DEBUG_WARP) console.log('%c[warp] ready — type  warp()  for the list, or e.g.  warp(6)  to jump to the dark corridor.', 'color:#7CFFB0;font-weight:bold');
 
+/* ----------------------------------------------------------------
+   TEMPORARY corridor→kitchen flag readout (gated by DEBUG_WARP).
+   Always-on top-right chip showing the live chain flags so Julia can
+   SEE which one isn't flipping as she plays. Strip with the rest of
+   the debug tool (delete this function + the requestAnimationFrame
+   start line below). No game logic touched — read-only display.
+   ---------------------------------------------------------------- */
+function _debugFlagReadout() {
+  if (!DEBUG_WARP) return;
+  let el = document.getElementById('debug-flag-readout');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'debug-flag-readout';
+    el.style.cssText = 'position:fixed;top:8px;right:8px;z-index:2147483646;' +
+      'font:12px/1.5 monospace;color:#dfeaff;background:rgba(8,14,32,.9);' +
+      'border:1px solid #3a5a78;border-radius:5px;padding:7px 10px;white-space:pre;' +
+      'pointer-events:none;text-align:left;';
+    document.body.appendChild(el);
+  }
+  const yn = (v) => v ? '<span style="color:#7CFFB0">YES</span>'
+                      : '<span style="color:#ff8080"> no</span>';
+  el.innerHTML =
+    '<b>corridor → kitchen chain</b>\n' +
+    'room: ' + currentRoom + '   pip.x: ' + Math.round(pip.x) + '\n' +
+    'lights lit:      ' + yn(darkCorridor.lit) + '\n' +
+    'sconceFixed:     ' + yn(chapterState.sconceFixed) + '\n' +
+    'cartFound:       ' + yn(chapterState.cartFound) + '\n' +
+    'radioDiscovered: ' + yn(chapterState.radioDiscovered) + '\n' +
+    'janitorPaged:    ' + yn(chapterState.janitorPaged) + '\n' +
+    'janitorWalked:   ' + yn(chapterState.janitorWalked) + '\n' +
+    'cart gone:       ' + yn(darkCorridor.cartRemoved);
+  requestAnimationFrame(_debugFlagReadout);
+}
+if (DEBUG_WARP && typeof window !== 'undefined') requestAnimationFrame(_debugFlagReadout);
+
 /* ================================================================
    INPUT
    Held keys tracked via keydown/keyup. Arrow keys and WASD for

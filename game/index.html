@@ -2262,24 +2262,27 @@ const darkCorridorObjects = [
           choices: null, onEnd: null,
         };
       }
-      // Pre-puzzle: start the held-button interaction
+      // Pre-puzzle: the live wire. Pip's interior thought, then he reaches in;
+      // holding ↑ is the reach. Completing it fires the wire-shock cinematic (B1).
       return {
         id: 'dc-sconce-pre',
         lines: [
-          { speaker: null, text: 'The wires are sparking.', italic: false },
-          { speaker: null, text: 'Pip wonders if he could do something with them.', italic: true },
+          { speaker: null, text: 'Sparks crawl along the fallen sconce’s loose wires.', italic: false },
+          { speaker: null, text: 'Hmm. Is that a live wire?', italic: true },
           { speaker: null, text: 'He reaches out.', italic: false },
         ],
         choices: null,
         onEnd() {
           startHeldButtonPuzzle('ArrowUp', 1 / 1.5, 1 / 3.0, () => {
-            // Puzzle complete
-            chapterState.sconceFixed = true;
-            pip.abilities.electricity = true;
-            chapterState.floatBoosted = true;   // G1b: wire-shock raises float altitude cap
+            // G-S6 (B1): the wire-shock beat. Electrocution cinematic FIRST, then it
+            // grants electricity, boosts float (stage 2), and wakes the lights.
             playSound('sconce-buzz');
-            triggerLightningFlash();
-            startLightsOnSequence();
+            showCinematic('wire-shock', () => {
+              chapterState.sconceFixed  = true;
+              pip.abilities.electricity = true;
+              chapterState.floatBoosted = true;   // stage-2 float boost (bed reveal = stage 1)
+              startLightsOnSequence();
+            });
           });
         },
       };
@@ -2645,6 +2648,7 @@ const rooms = {
 /* Sprint 10.7: game starts in the hallway (neutral plane), not the cabin.
    Pip spawns at the leftmost playable x. */
 let currentRoom = 'hallway';
+let _kitchenGateHinted = false;   // G-S6: one-shot nudge at the kitchen's far edge (see edge-trigger chain)
 
 /* Sprint 15: top-level game mode. 'gate' on cold load; 'title' after first keypress; 'gameplay' after Play. */
 let gameMode = 'gate';
@@ -3582,6 +3586,19 @@ function update(dt) {
                && chapterState.nokkenStoryHeard) {
       // Sprint 27: transition to the real observation deck (replaces Sprint 26.5 stub)
       startTransition('observationDeck', 'fromLeft');
+    } else if (currentRoom === 'kitchen' && pip.x >= rooms.kitchen.pipMaxX - 1
+               && !chapterState.nokkenStoryHeard && !_kitchenGateHinted) {
+      // G-S6 (B2a): don't dead-end at the kitchen's far edge. The deck exit opens
+      // after Henrik's Nøkken story, which needs the Bamsemums collected first.
+      _kitchenGateHinted = true;
+      showDialogue({
+        id: 'kitchen-gate-hint',
+        lines: [
+          { speaker: null, text: 'The way out is here — but I can’t just leave. Henrik was about to tell me something.', italic: true },
+          { speaker: null, text: 'The treat on the counter first, then back to him on the stool.', italic: false },
+        ],
+        choices: null, onEnd: null,
+      });
     } else if (currentRoom === 'observationDeck' && pip.x >= rooms.observationDeck.pipMaxX - 1
                && !chapterState.grandparentsLeft && !cinematic.active) {
       // Sprint 29: right-edge fires Cinematic 7 (dock farewell); replaces Sprint 27 placeholder
@@ -3685,6 +3702,21 @@ function update(dt) {
   // Sprint 20: on first dark-corridor entry, set darkCorridorEntered flag
   if (currentRoom === 'darkCorridor' && !chapterState.darkCorridorEntered) {
     chapterState.darkCorridorEntered = true;
+    // G-S6 (B2a): first-entry nudge toward the sparking sconce, so the corridor's
+    // gating chain actually starts (the whole chain was dead when this was missed).
+    setTimeout(() => {
+      if (currentRoom === 'darkCorridor' && !dialogue.active && !cinematic.active
+          && !transition.active && !chapterState.sconceFixed) {
+        showDialogue({
+          id: 'dc-entry-nudge',
+          lines: [
+            { speaker: null, text: 'So dark down here. But something’s sparking further in — a fallen sconce, wires loose.', italic: false },
+            { speaker: null, text: 'Maybe I can wake the lights.', italic: true },
+          ],
+          choices: null, onEnd: null,
+        });
+      }
+    }, 700);
   }
 
   // Sprint 26: kitchen-meeting trigger — approach plate at world-x 290
@@ -7502,6 +7534,13 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null,  text: 'Oh.', italic: true },
   ],
 
+  /* G-S6 (B1): wire-shock — Ch1 dark corridor, stage-2 float boost. A startled,
+     gentle-comic jolt (tone: not cruel), then the lift. Visual: drawWireShockCinematic(). */
+  'wire-shock': [
+    { speaker: null,  text: 'The wire bites. White light punches through Pip — a bright, humming jolt.', italic: false },
+    { speaker: null,  text: 'Oh — oh, I can go higher now.', italic: true },
+  ],
+
 
   /* Sprint 26 Stage 2: henrik-sits-down (Cinematic 5 — Beat 10).
      Henrik crosses himself, walks to stool, sits. Beat 10 dialogue.
@@ -7686,6 +7725,9 @@ function showCinematic(name, onEnd) {
   } else if (name === 'bed-reveal') {
     bedRevealCinState.elapsed = 0;
     bedRevealCinState.lastNow = null;
+  } else if (name === 'wire-shock') {
+    wireShockCin.elapsed = 0;
+    wireShockCin.lastNow = null;
   } else if (name === 'kitchen-meeting') {
     kitchenCin.elapsed = 0;
     kitchenCin.lastNow = null;
@@ -7831,10 +7873,61 @@ function updateDoctorExit(dt) {
   }
 }
 
+/* G-S6 (B1): wire-shock electrocution cinematic. A big jagged bolt strikes down
+   onto Pip, a white flash punches, Pip jolts, then settles lifted (the stage-2
+   float boost). Self-times off `now`; ~1.6s of animation under the two script lines. */
+const wireShockCin = { elapsed: 0, lastNow: null };
+function drawWireShockCinematic(now) {
+  if (wireShockCin.lastNow === null) wireShockCin.lastNow = now;
+  const dt = Math.min(0.05, (now - wireShockCin.lastNow) / 1000);
+  wireShockCin.lastNow = now;
+  wireShockCin.elapsed += dt;
+  const t = wireShockCin.elapsed;
+
+  // Dark service-corridor backdrop
+  ctx.fillStyle = '#05070f';
+  ctx.fillRect(0, 0, W, H);
+
+  const boltX   = Math.round(W * 0.5);
+  const groundY = FLOOR_Y;
+  // Strike flares hard early (t~0.1–0.5), then fades to an afterglow
+  const strike = t < 0.6 ? Math.max(0, 1 - Math.abs(t - 0.22) / 0.32)
+                         : Math.max(0, 0.35 - (t - 0.6) * 0.6);
+
+  // Jagged lightning bolt from the ceiling down to Pip
+  ctx.strokeStyle = `rgba(210,235,255,${(0.55 + strike * 0.45).toFixed(2)})`;
+  ctx.lineWidth   = 2 + strike * 3;
+  ctx.beginPath();
+  ctx.moveTo(boltX, 0);
+  const segs = 9;
+  for (let i = 1; i <= segs; i++) {
+    const p = i / segs;
+    const jitter = Math.sin(p * 11 + t * 46) * 20 * (1 - p * 0.4);
+    ctx.lineTo(boltX + Math.round(jitter), Math.round(p * (groundY - 26)));
+  }
+  ctx.stroke();
+
+  // Pip silhouette jolting at the bolt's base, then lifting on the boost
+  const jolt = t < 0.55 ? Math.round(Math.sin(t * 70) * (2 + strike * 4)) : 0;
+  const lift = t > 0.55 ? Math.min(20, (t - 0.55) * 34) : 0;   // rises as the boost lands
+  ctx.save();
+  ctx.translate(boltX + jolt, Math.round(groundY - lift));
+  if (strike > 0.15) { ctx.shadowColor = 'rgba(200,230,255,0.9)'; ctx.shadowBlur = 14 * strike; }
+  drawPip(ctx, now / 1000, false);
+  ctx.restore();
+
+  // White flash overlay on the strike
+  if (strike > 0.02) {
+    ctx.fillStyle = `rgba(255,255,255,${(strike * 0.8).toFixed(2)})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
 function drawCinematicScene(name, now) {
   if (name === 'grandparents')          drawGrandparentsCinematic(now);
   else if (name === 'mirror-realization') drawMirrorCinematic(now);
   else if (name === 'bed-reveal')       drawBedRevealCinematic(now);
+  else if (name === 'wire-shock')       drawWireShockCinematic(now);
   else if (name === 'cabin-doctor-exit') drawDoctorExitCinematic(now);
   else if (name === 'kitchen-meeting')    drawKitchenMeetingCinematic(now);
   else if (name === 'henrik-sits-down')  drawHenrikSitsDownCinematic(now);
@@ -9603,9 +9696,12 @@ function updateLightsOnSequence(dt) {
       choices: null,
       onEnd() {
         // HUD hint via controls strip (replace once room strip takes over on close)
+        // G-S6 (B2a): the wire-shock already granted electricity + float here, so the
+        // old "hold ↑ near broken electricity" hint was stale/misleading. Point the
+        // player at the next real step instead — the cart the lights just revealed.
         const strip = document.getElementById('controls-strip');
         if (strip) {
-          strip.innerHTML = 'Third ability earned. Hold ↑ near broken electricity.';
+          strip.innerHTML = 'The lights are up. Something’s down here now — that cart.';
           setTimeout(() => setRoomStrip(), 4000);
         }
       },

@@ -2137,7 +2137,10 @@ const grandparentsObjects = [
     sparkleY: 100,
     get breadcrumb() { return chapterState.cartFound; },   // elevated aura post-cart-found
     get node() {
-      if (!chapterState.radioDiscovered) {
+      // CP-2b: once the cart is found, offer the page on the FIRST inspect. The old
+      // order let the discovery node take priority even post-cart, forcing a second
+      // inspect to reach the page \u2014 the same two-inspect friction as the wire.
+      if (!chapterState.radioDiscovered && !chapterState.cartFound) {
         // State 1: first inspection \u2014 discovery
         return {
           id: 'gp-radio-discovery',
@@ -2201,6 +2204,10 @@ const grandparentsObjects = [
                 choices: null,
                 onEnd() {
                   chapterState.janitorPaged = true;
+                  // CP-2b: grant the radio ability here too, so paging works even if
+                  // the player reached the cart before ever discovering the radio.
+                  chapterState.radioDiscovered = true;
+                  pip.abilities.talkThroughSpeakers = true;
                 },
               });
             },
@@ -2273,16 +2280,16 @@ const darkCorridorObjects = [
         ],
         choices: null,
         onEnd() {
-          startHeldButtonPuzzle('ArrowUp', 1 / 1.5, 1 / 3.0, () => {
-            // G-S6 (B1): the wire-shock beat. Electrocution cinematic FIRST, then it
-            // grants electricity, boosts float (stage 2), and wakes the lights.
-            playSound('sconce-buzz');
-            showCinematic('wire-shock', () => {
-              chapterState.sconceFixed  = true;
-              pip.abilities.electricity = true;
-              chapterState.floatBoosted = true;   // stage-2 float boost (bed reveal = stage 1)
-              startLightsOnSequence();
-            });
+          // CP-2b: fire the wire-shock on the FIRST touch. This used to be gated
+          // behind a separate hold-↑ charge (startHeldButtonPuzzle) that players
+          // routinely left incomplete → sconce never fixed → the corridor's whole
+          // gating chain never started (all flags no). The cinematic is unchanged.
+          playSound('sconce-buzz');
+          showCinematic('wire-shock', () => {
+            chapterState.sconceFixed  = true;
+            pip.abilities.electricity = true;
+            chapterState.floatBoosted = true;   // stage-2 float boost (bed reveal = stage 1)
+            startLightsOnSequence();
           });
         },
       };

@@ -19,6 +19,14 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **R14 `built` — audio pass done (2 reserved sounds + per-chapter ambient; UI SFX global).
+> NEXT = R15 (save + persistence hardening).** Composer/real-music kept post-release. **R15:**
+> read `sprint-R15-save-and-persistence-hardening.md` — harden the tlb-save-v2 schema now that
+> R12/R13 added fields (alleyBarrierPassed etc. are additive; mechanic state is transient/
+> module-level, not saved — verify no mid-mechanic-save corruption); confirm the #24 v1→v2
+> drop-notice still works. Audit first (child issue).
+>
+> --- prior (R13) ---
 > **R13 `built` — Ch8 finale mechanics done (Phase 1 Pong + Phase 3 trace built, Phase 2
 > riddle verified). NEXT = R14 (audio + music pass).** All 3 override phases kinetic/verified;
 > 'It's not fair.' + post-override + final line byte-identical; ch8State additive. Feel is
@@ -321,7 +329,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R11 | Ch8 art reconciliation | built | #122 | `dd26737` | `r-checkpoint-R11` |
 | R12 | Kinetic mechanics — port chapters | built | #123 | `557fb85` | `r-checkpoint-R12` |
 | R13 | Kinetic mechanics — Ch8 finale | built | #124 | `455b834` | `r-checkpoint-R13` |
-| R14 | Audio + music pass | pending | — | — | — |
+| R14 | Audio + music pass | built | #125 | `cf3505e` | `r-checkpoint-R14` |
 | R15 | Save + persistence hardening | pending | — | — | — |
 | R16 | Recipe-site integration + credits | pending | — | — | — |
 | R17 | Mobile playtest + polish | pending | — | — | — |

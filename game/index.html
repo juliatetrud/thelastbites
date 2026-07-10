@@ -3715,6 +3715,7 @@ function update(dt) {
   updateJanitorWalk(dt);
   updateEchoMouse(dt);
   updateEchoSpiders(dt);   // Sprint 46: dark corridor spiders
+  updateCh5EchoRats(dt);   // R12: Ch5 lower-deck echo-rat strength drain
   updateSconceSparks(dt);
 
   // G1b: tick lightning flash timer
@@ -10044,6 +10045,31 @@ function updateEchoMouse(dt) {
     echoMouse.touched    = true;
     echoMouse.touchTimer = 1.5;   // 1.5s cooldown between touches
     loseStrength(1);
+  }
+}
+
+/* R12 — Ch5 lower-deck echo-rat drain. Mirrors the echo-mouse/echo-spider precedent:
+   a grounded Pip who walks into a darting rat loses 1 strength, then a 1.5s cooldown
+   (gentle pressure, never fail-state spam). Floating over the rats avoids them entirely
+   (float is unlocked by Ch5). Rat positions/dart formula match drawCh5LowerDeck exactly
+   (uses lastTimestamp, which render will reuse this same frame). Runtime-only state — no
+   ch5State field, so the save schema is unchanged (R15). */
+let ch5RatTouchTimer = 0;
+function updateCh5EchoRats(dt) {
+  if (currentRoom !== 'ch5LowerDeck') return;
+  if (ch5RatTouchTimer > 0) { ch5RatTouchTimer -= dt; return; }
+  // Float over the rats to pass untouched — gentle, opt-out traversal.
+  if (pip.float && typeof pip.float.altitude === 'number' && pip.float.altitude > 8) return;
+  const t = (lastTimestamp || 0) / 1000;
+  const ratPositions = [80, 200, 340, 460, 580, 680, 740];
+  for (let idx = 0; idx < ratPositions.length; idx++) {
+    const dart = (t * 80 + idx * 40) % 120 - 60;   // matches drawCh5LowerDeck
+    const ratX = ratPositions[idx] + dart;
+    if (Math.abs(pip.x - ratX) < 9) {
+      loseStrength(1);
+      ch5RatTouchTimer = 1.5;
+      break;
+    }
   }
 }
 

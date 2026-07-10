@@ -19,6 +19,9 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **R10 `built` (Ch7 — VERIFY-ONLY; #121). NEXT = R11 (Ch8).** Ch7 on-doctrine, Boitatá full-threat, shared-Pätu confirmed, Erik age 11; Ch7 cells pinned #109.
+>
+> --- prior resume (R09→R10) ---
 > **R09 `built` (Ch6 — VERIFY-ONLY; #120). NEXT = R10 (Ch7).** Ch6 on-doctrine, Pocong confirmed, Erik-photo dialogue-only (non-blocking); Ch6 cells pinned #109.
 >
 > --- prior resume (R08→R09) ---
@@ -206,7 +209,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R07 | Ch4 art reconciliation | built | #118 | `0b70cc9` | `r-checkpoint-R07` |
 | R08 | Ch5 art reconciliation | built | #119 | `728ada9` | `r-checkpoint-R08` |
 | R09 | Ch6 art reconciliation | built | #120 | `fec2611` | `r-checkpoint-R09` |
-| R10 | Ch7 art reconciliation | pending | — | — | — |
+| R10 | Ch7 art reconciliation | built | #121 | `9d160b8` | `r-checkpoint-R10` |
 | R11 | Ch8 art reconciliation | pending | — | — | — |
 | R12 | Kinetic mechanics — port chapters | pending | — | — | — |
 | R13 | Kinetic mechanics — Ch8 finale | pending | — | — | — |

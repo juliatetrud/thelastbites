@@ -19,6 +19,9 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **R09 `built` (Ch6 — VERIFY-ONLY; #120). NEXT = R10 (Ch7).** Ch6 on-doctrine, Pocong confirmed, Erik-photo dialogue-only (non-blocking); Ch6 cells pinned #109.
+>
+> --- prior resume (R08→R09) ---
 > **R08 `built` (Ch5 art reconciliation — VERIFY-ONLY; #119). NEXT = R09 (Ch6).** Ch5 on-doctrine, game≡gallery, memoryGifting/switchblade intact; Ch5 cells pinned DERIVED PENDING #109.
 >
 > --- prior resume (R07→R08) ---
@@ -202,7 +205,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R06 | Ch3 art reconciliation | built | #117 | `3ac44e0` | `r-checkpoint-R06` |
 | R07 | Ch4 art reconciliation | built | #118 | `0b70cc9` | `r-checkpoint-R07` |
 | R08 | Ch5 art reconciliation | built | #119 | `728ada9` | `r-checkpoint-R08` |
-| R09 | Ch6 art reconciliation | pending | — | — | — |
+| R09 | Ch6 art reconciliation | built | #120 | `fec2611` | `r-checkpoint-R09` |
 | R10 | Ch7 art reconciliation | pending | — | — | — |
 | R11 | Ch8 art reconciliation | pending | — | — | — |
 | R12 | Kinetic mechanics — port chapters | pending | — | — | — |

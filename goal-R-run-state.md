@@ -19,6 +19,15 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **R06 `built` (Ch3 art reconciliation — VERIFY-ONLY, no edits; #117). NEXT = R07 (Ch4
+> art reconciliation).** Ch3 in-game art already on-doctrine (0 black outlines) and ≡ gallery
+> (ported from game in R03); Edie→kitchen gate low walk-past risk, no change. **R07 (Ch4):**
+> same audit — Ch4 chars (Muhittin/Omer/Brian/Karakoncolos/echo-cat) on-doctrine check; the
+> **frozen-Pätu** rework must be DERIVED into the game (drawFrozenPatuCh4 = drawPatu+ice) — and
+> per Phase-2, pin frozen-Pätu under a 'DERIVED PENDING GALLERY RE-APPROVAL' section at the top
+> of the visual backlog #109. Audit first (child issue), checkpoint r-checkpoint-R07.
+>
+> --- prior resume (R05→R06) ---
 > **R05 `built` (Ch2 art reconciliation; Pätu migration `5685fa6` + close-out). NEXT = R06
 > (Ch3 art reconciliation).** Phase-2 mode: reviews are a BACKLOG, not a gate — checkpoint
 > each sprint `built`, add Julia's in-browser items to the visual backlog (#109), chain to the
@@ -179,7 +188,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R03 | Gallery population, Ch2–Ch4 | built | #114 | `32d3f13` | `r-checkpoint-R03` |
 | R04 | Gallery population, Ch5–Ch8 | built | #115 | `0a0cb74` | `r-checkpoint-R04` |
 | R05 | Ch2 art reconciliation | built | #116 | `c69d0d2` | `r-checkpoint-R05` |
-| R06 | Ch3 art reconciliation | pending | — | — | — |
+| R06 | Ch3 art reconciliation | built | #117 | `3ac44e0` | `r-checkpoint-R06` |
 | R07 | Ch4 art reconciliation | pending | — | — | — |
 | R08 | Ch5 art reconciliation | pending | — | — | — |
 | R09 | Ch6 art reconciliation | pending | — | — | — |

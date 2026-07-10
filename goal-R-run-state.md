@@ -37,6 +37,19 @@ isn't in this file or in the tracking issues, it didn't happen.
 > preview) is NOT the game room render, so env reconciliation is a doctrine check on the game's
 > room code, not a verbatim swap. Open the R05 child issue with the Ch2 audit first.
 >
+> **R05 STARTED — Ch2 audit done + issue #116.** Findings: **Pätu OFF** — game `drawPatu`
+> (`:14547`) is a LOCAL copy (translate-based, hardcoded hex) differing from the gallery
+> canonical (`C.cat*` tokens); `art-source.js` holds only `drawPip`. **Echo-mouse OFF** — 1
+> black outline. **Leida/Haldjas ON** (match gallery). **Ch2 rooms ON** (0 black outlines).
+> Cinematics (`drawObjectMemoryPanCinematic :14778`, `drawLunchboxTasteCinematic :14832`) +
+> sincerity overlay = doctrine spot-check pending. **Next:** (1) reconcile Pätu to shared
+> canonical — verify/add `C.cat*` tokens in the game, then move `drawPatu` into the
+> `@@ART-SOURCE` region (`:6779–6984`) so `build.js` inlines it, OR replace the local body
+> with the gallery canonical; (2) fix echo-mouse black outline; (3) doctrine spot-check
+> cinematics/puzzle. Art swaps must NOT change collision/trigger/beat. `node build.js` (if
+> art-source touched) → `node --check` → Ch2 plays end-to-end → Julia's in-browser #78 Ch2
+> block. Review-gated; do NOT tag `r-checkpoint-R05` until built.
+>
 > **Method (same as R03):** character wrapper `function drawX(ctx,_CX,_FLOOR,_T,_SP){ const
 > sx=_CX, sy=_FLOOR, groundY=_FLOOR, now=_T*1000, speaking=_SP, looking=_SP, idx=0; <body
 > verbatim> }` + upgrade the placeholder entry (designed:true + drawFn); env cells are
@@ -148,7 +161,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R02 | Open-questions closeout + doc reconciliation | built | #112 | `e8a123c` | `r-checkpoint-R02` |
 | R03 | Gallery population, Ch2–Ch4 | built | #114 | `32d3f13` | `r-checkpoint-R03` |
 | R04 | Gallery population, Ch5–Ch8 | built | #115 | `0a0cb74` | `r-checkpoint-R04` |
-| R05 | Ch2 art reconciliation | pending | — | — | — |
+| R05 | Ch2 art reconciliation | in-progress | #116 | — | — |
 | R06 | Ch3 art reconciliation | pending | — | — | — |
 | R07 | Ch4 art reconciliation | pending | — | — | — |
 | R08 | Ch5 art reconciliation | pending | — | — | — |

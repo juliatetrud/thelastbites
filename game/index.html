@@ -2903,7 +2903,7 @@ const DEV_MODE   = URL_PARAMS.get('dev') === '1';
    and Backquote does nothing at all when DEBUG_WARP is false. While disarmed,
    bare 1-4 still work normally as dialogue-choice keys.
    ================================================================ */
-const DEBUG_WARP = true;
+const DEBUG_WARP = false;
 let   debugWarpArmed = false;   // true after Backquote arms the warp overlay
 const DEBUG_WARP_LEGEND =
   '[debug-warp] armed — press 1..8 (Esc cancels, ` closes):\n' +

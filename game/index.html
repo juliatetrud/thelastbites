@@ -3691,7 +3691,7 @@ function update(dt) {
     // ---- Ch4 room transitions ----
     } else if (currentRoom === 'ch4CatAlley' && pip.x >= rooms.ch4CatAlley.pipMaxX - 1) {
       startTransition('ch4FrozenSquare', 'fromLeft');
-    } else if (currentRoom === 'ch4FrozenSquare' && pip.x <= rooms.ch4FrozenSquare.pipMinX + 1) {
+    } else if (currentRoom === 'ch4FrozenSquare' && pip.x <= rooms.ch4FrozenSquare.pipMinX + 1 && !candlePuzzleActive) {
       startTransition('ch4CatAlley', 'fromRight', rooms.ch4CatAlley.pipMaxX - 40);
     } else if (currentRoom === 'ch4FrozenSquare' && pip.x >= rooms.ch4FrozenSquare.pipMaxX - 1
                && ch4State.patuThawed) {
@@ -3716,6 +3716,7 @@ function update(dt) {
   updateEchoMouse(dt);
   updateEchoSpiders(dt);   // Sprint 46: dark corridor spiders
   updateCh5EchoRats(dt);   // R12: Ch5 lower-deck echo-rat strength drain
+  updateCandlePuzzle(dt);  // R12: Ch4 real-time candle puzzle
   updateSconceSparks(dt);
 
   // G1b: tick lightning flash timer
@@ -4979,6 +4980,7 @@ function render(now) {
     drawSceneryBackground(now);
 
     rooms[currentRoom].draw(camX, now);
+    drawCandlePuzzleHud();   // R12: Ch4 candle-puzzle telegraph HUD
 
     // Sprint 13: collect auras (warm hum) for collectibles in current room
     drawCollectAuras(camX, now);
@@ -17046,83 +17048,103 @@ function triggerKarakoncolosAppeared() {
     onEnd() {
       ch4State.candlePuzzleStarted = true;
       autoSave();
-      runCandlePuzzleRound();
+      startCandlePuzzleRealtime();
     },
   });
 }
 
-function runCandlePuzzleRound() {
-  const round = ch4State.candlePuzzleRound;
-  const scenarios = [
-    {
-      setup: 'The Karakoncolos drifts to the LEFT side of the square. His breath will come from the left. Where do you take cover?',
-      choices: [
-        { text: 'Step behind the fountain — it is on the LEFT side.', correct: false,
-          wrong: "The fountain is on his side — the blast hits it directly. The candle gutters. Pip steps back and tries again." },
-        { text: "Position yourself at the BRAZIER corner — it blocks his left-side breath.", correct: true,
-          right: 'The brazier corner shields the flame. The Karakoncolos blows long and cold. The candle holds.' },
-        { text: 'Hold the candle behind your back and run straight at Pätu.', correct: false,
-          wrong: "The blast catches the candle full-on. It goes out. Pip steps back, strikes a match, lights it again." },
-      ],
-    },
-    {
-      setup: 'The Karakoncolos drifts to the RIGHT — between Pip and Pätu. His next breath will come from ahead.',
-      choices: [
-        { text: 'Wait. Let him drift past. He is not patient.', correct: true,
-          right: 'The Karakoncolos drifts. Pip holds still. The candle cupped in both hands. The monster exhales at empty air.' },
-        { text: 'Rush for Pätu while he is close.', correct: false,
-          wrong: 'He is too close. The candle goes out instantly in the blast. Try again.' },
-        { text: 'Shield at the fountain — the fountain is between you and him.', correct: false,
-          wrong: "He drifts right past the fountain. The blast comes from the wrong angle. The candle sputters. Relight and try again." },
-      ],
-    },
-    {
-      setup: 'The Karakoncolos rises ABOVE the square and blows DOWN. Cold from everywhere at once. Only one thing helps.',
-      choices: [
-        { text: 'Cup the candle with your whole body. Stand still.', correct: true,
-          right: 'Pip curls around the flame. The cold presses in from all sides. The candle shrinks to a thread — and holds.' },
-        { text: 'Run for the wall corner — the wall is overhead protection.', correct: false,
-          wrong: "The wall has no roof. The blast comes straight down. Candle out. Try again." },
-        { text: 'Float up to meet him.', correct: false,
-          wrong: 'Floating raises the candle into the full blast. Out immediately. Try again.' },
-      ],
-    },
-  ];
+/* ================================================================
+   R12 — Ch4 real-time candle puzzle (replaces the 3-round dialogue stub).
+   Pip moves freely in the frozen square carrying the lit candle. The Karakoncolos
+   telegraphs a breath each beat; Pip must respond before it lands:
+     beat 1 (LEFT breath) -> shelter at the brazier (world-x 120)
+     beat 2 (RIGHT/ahead) -> hold still, let him drift past (don't move)
+     beat 3 (ABOVE)       -> cup and stand: hold still and stay grounded (don't float)
+   Wrong -> the candle gutters out; a match relights it and the SAME beat retries
+   (gentle, never cruel -- a retry, not punishment). dt-capped + pause-safe (runs in
+   update(), skipped while gamePaused). Arrows / D-pad only, no new verbs. Transient
+   module state (not saved) -> no ch4State schema change (R15). */
+let candlePuzzleActive = false;
+let candlePuzzlePhase  = 'telegraph';   // 'telegraph' | 'strike' | 'relight'
+let candlePuzzleTimer  = 0;
+let candlePuzzleLastX  = 0;
+let candlePuzzleStillT = 0;             // >0 => moved recently (not still)
+const CANDLE_BEATS = [
+  { prompt: 'Breath from the LEFT — shelter the candle at the BRAZIER.',
+    hint: 'get to the brazier',
+    safe: function () { return Math.abs(pip.x - 120) < 34; } },
+  { prompt: 'He drifts between you and Pätu — HOLD STILL, let him pass.',
+    hint: 'stop moving',
+    safe: function (still) { return still; } },
+  { prompt: 'Cold from ABOVE — CUP THE FLAME: hold still, stay down.',
+    hint: "don't move, don't float",
+    safe: function (still) { return still && (!pip.float || (pip.float.altitude || 0) < 8); } },
+];
 
-  const sc = scenarios[round];
-  const rightChoices  = sc.choices.filter(c =>  c.correct).map(c => ({
-    text: c.text,
-    onSelect() {
-      showDialogue({
-        id: `candle-round${round}-right`,
-        lines: [{ speaker: null, text: c.right, italic: true }],
-        choices: null,
-        onEnd() {
-          ch4State.candlePuzzleRound++;
-          if (ch4State.candlePuzzleRound >= 3) resolveKarakoncolos();
-          else runCandlePuzzleRound();
-        },
-      });
-    },
-  }));
-  const wrongChoices  = sc.choices.filter(c => !c.correct).map(c => ({
-    text: c.text,
-    onSelect() {
-      showDialogue({
-        id: `candle-round${round}-wrong`,
-        lines: [{ speaker: null, text: c.wrong, italic: true }],
-        choices: null,
-        onEnd: () => runCandlePuzzleRound(),
-      });
-    },
-  }));
+function startCandlePuzzleRealtime() {
+  candlePuzzleActive = true;
+  candlePuzzlePhase  = 'telegraph';
+  candlePuzzleTimer  = 3.2;
+  ch4State.candlePuzzleRound = 0;
+  candlePuzzleLastX  = pip.x;
+  candlePuzzleStillT = 0;
+  if (typeof setControlsStrip === 'function') setControlsStrip('room');
+}
 
-  showDialogue({
-    id: `candle-round${round}`,
-    lines: [{ speaker: null, text: sc.setup, italic: true }],
-    choices: [...rightChoices, ...wrongChoices],
-    onEnd: null,
-  });
+function updateCandlePuzzle(dt) {
+  if (!candlePuzzleActive || currentRoom !== 'ch4FrozenSquare') return;
+  if (Math.abs(pip.x - candlePuzzleLastX) > 0.3) candlePuzzleStillT = 0.35;
+  else candlePuzzleStillT = Math.max(0, candlePuzzleStillT - dt);
+  candlePuzzleLastX = pip.x;
+  const still = candlePuzzleStillT <= 0;
+
+  candlePuzzleTimer -= dt;
+  const beat = CANDLE_BEATS[Math.min(ch4State.candlePuzzleRound, 2)];
+  if (candlePuzzlePhase === 'telegraph') {
+    if (candlePuzzleTimer <= 0) { candlePuzzlePhase = 'strike'; candlePuzzleTimer = 0.55; }
+  } else if (candlePuzzlePhase === 'strike') {
+    if (candlePuzzleTimer <= 0) {
+      if (beat.safe(still)) {
+        ch4State.candlePuzzleRound++;
+        if (ch4State.candlePuzzleRound >= 3) { candlePuzzleWin(); return; }
+        candlePuzzlePhase = 'telegraph'; candlePuzzleTimer = 3.2;
+      } else {
+        candlePuzzlePhase = 'relight'; candlePuzzleTimer = 1.3;
+      }
+    }
+  } else { // relight
+    if (candlePuzzleTimer <= 0) { candlePuzzlePhase = 'telegraph'; candlePuzzleTimer = 3.2; }
+  }
+}
+
+function candlePuzzleWin() {
+  candlePuzzleActive = false;
+  resolveKarakoncolos();
+}
+
+function drawCandlePuzzleHud() {
+  if (!candlePuzzleActive || currentRoom !== 'ch4FrozenSquare') return;
+  const beat = CANDLE_BEATS[Math.min(ch4State.candlePuzzleRound, 2)];
+  ctx.fillStyle = 'rgba(6,10,20,0.72)';
+  ctx.fillRect(0, 0, 480, 34);
+  ctx.textAlign = 'center';
+  if (candlePuzzlePhase === 'relight') {
+    ctx.fillStyle = '#ffb060'; ctx.font = 'bold 11px monospace';
+    ctx.fillText('The candle gutters out. Pip strikes a match — again.', 240, 15);
+    ctx.fillStyle = '#c8b090'; ctx.font = '9px monospace';
+    ctx.fillText('Try that one again.', 240, 27);
+  } else {
+    ctx.fillStyle = candlePuzzlePhase === 'strike' ? '#ff8040' : '#e8d8b0';
+    ctx.font = 'bold 10px monospace';
+    ctx.fillText(beat.prompt, 240, 13);
+    ctx.fillStyle = '#a8c0e0'; ctx.font = '9px monospace';
+    ctx.fillText((candlePuzzlePhase === 'strike' ? 'NOW — ' : '') + beat.hint, 240, 25);
+    for (let i = 0; i < 3; i++) {
+      ctx.fillStyle = i < ch4State.candlePuzzleRound ? '#ffd060' : 'rgba(255,255,255,0.25)';
+      ctx.fillRect(240 - 13 + i * 10, 29, 6, 2);
+    }
+  }
+  ctx.textAlign = 'left';
 }
 
 function resolveKarakoncolos() {

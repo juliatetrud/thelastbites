@@ -172,11 +172,11 @@
 
 - **CH2-CHAR-02 — Haldjas.** Estonian house-spirit; manifests as warm gold-amber sparkle cluster; Ch2 monster/puzzle encounter; sincerity test.
   source: ch02-tallinn-outline.md; 08-character-reference-sheets.md §Haldjas.
-  gallery: existing (designed: false). colorSig: warm gold-amber sparkles.
+  gallery: existing (designed: true — ported R03, `drawHaldjas`, 2026-07-10). colorSig: warm gold-amber sparkles.
 
 - **CH2-CHAR-03 — Leida.** Estonian grandmother chef; small and quick, practical apron, silver hair, kind creased face; Käsmu cottage kitchen.
   source: ch02-tallinn-outline.md; 08-character-reference-sheets.md §Leida.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, `drawLeida`, 2026-07-10).
 
 - **CH2-CHAR-04 — Echo-mice.** Ch2 echo-creature; warm-amber translucent; lower-deck traversal.
   source: ch02-tallinn-outline.md (Traversal beat); 08-character-reference-sheets.md §Echo-creatures (Ch2).

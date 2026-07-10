@@ -1850,7 +1850,7 @@ const cabinObjects = [
         return {
           id: 'mirror-locked',
           lines: [
-            { speaker: null, text: 'A small mirror on the wall. The surface looks dim, somehow.', italic: false },
+            { speaker: null, text: 'A small mirror teeters invitingly with the rock of the ship.', italic: false },
           ],
           choices: null,
           onEnd: null,
@@ -1908,7 +1908,7 @@ const hallwayObjects = [
         id: 'hallway-bulletin-inspect',
         lines: [
           { speaker: null, text: 'A bulletin board sits near the stairwell to let the passengers know the ship\u2019s itinerary.', italic: false },
-          { speaker: null, text: 'It says, \u201cThe Mnemosyne (Nem-OSS-uh-nee) welcomes you aboard. Today\u2019s port: Bergen.\u201d', italic: false },
+          { speaker: null, text: 'A bulletin board says, \u201cThe Mnemosyne (Nem-OSS-uh-nee) welcomes you aboard. Today\u2019s port: Bergen.\u201d', italic: false },
         ],
         choices: null, onEnd: null,
       };
@@ -1996,7 +1996,7 @@ const hallwayObjects = [
       return {
         id: 'gp-door-first',
         lines: [
-          { speaker: null, text: 'From inside, someone is crying softly. The sound is familiar.', italic: false },
+          { speaker: null, text: 'From inside, Pip can hear someone crying softly.', italic: false },
           { speaker: null, text: 'Pip reaches for the handle.', italic: false },
         ],
         choices: [
@@ -2007,8 +2007,8 @@ const hallwayObjects = [
               showDialogue({
                 id: 'gp-door-phase',
                 lines: [
-                  { speaker: null, text: 'Pip\u2019s hand goes through. He steps closer. He steps through the door.', italic: false },
-                  { speaker: null, text: '\u2026oh.', italic: true },
+                  { speaker: null, text: 'Pip\u2019s hand goes through the door, then he goes through the door.', italic: false },
+                  { speaker: null, text: '\u2026that was weird.', italic: true },
                 ],
                 choices: null,
                 onEnd() {
@@ -2087,7 +2087,7 @@ const grandparentsObjects = [
     node: {
       id: 'gp-photo-inspect',
       lines: [
-        { speaker: null, text: 'Pip\u2019s sixth birthday photograph shows him holding a pierogi nearly as big as his face. He remembers it tasted like butter and onions and being allowed to use the big knife.', italic: false },
+        { speaker: null, text: 'A photograph from Pip\u2019s sixth birthday shows him grinning, holding a pierogi as big as his face.', italic: false },
         { speaker: null, text: 'Pip remembers Babcia laughing. He does not remember if he said thank you.', italic: false },
       ],
       choices: null, onEnd: null,
@@ -2102,7 +2102,7 @@ const grandparentsObjects = [
     node: {
       id: 'gp-suitcase-inspect',
       lines: [
-        { speaker: null, text: 'The suitcase is open. Nothing is folded. A shirt of his is on top \u2014 the one with the boat on it.', italic: false },
+        { speaker: null, text: 'The suitcase is open. His favorite shirt is on top \u2014 the one with the boat on it.', italic: false },
         { speaker: null, text: 'They didn\u2019t have time to unpack. They didn\u2019t think they would need to.', italic: false },
       ],
       choices: null, onEnd: null,
@@ -2275,7 +2275,7 @@ const darkCorridorObjects = [
         id: 'dc-sconce-pre',
         lines: [
           { speaker: null, text: 'Sparks crawl along the fallen sconce’s loose wires.', italic: false },
-          { speaker: null, text: 'Hmm. Is that a live wire?', italic: true },
+          { speaker: null, text: 'Uh oh. Is that a live wire?', italic: true },
           { speaker: null, text: 'He reaches out.', italic: false },
         ],
         choices: null,
@@ -2317,7 +2317,7 @@ const darkCorridorObjects = [
         id: 'dc-cart-inspect',
         lines: [
           { speaker: null, text: 'A janitor’s cart, abandoned mid-shift.', italic: false },
-          { speaker: null, text: 'A name tag on the clipboard reads: "J. Henriksen, Maintenance."', italic: false },
+          { speaker: null, text: 'The clipboard reads: "J. Henriksen, Maintenance."', italic: false },
           { speaker: null, text: 'J. Henriksen… Dziadek’s radio could page him. It’s back in the cabin.', italic: true },
         ],
         choices: null,
@@ -3718,7 +3718,7 @@ function update(dt) {
           id: 'dc-entry-nudge',
           lines: [
             { speaker: null, text: 'So dark down here. But something’s sparking further in — a fallen sconce, wires loose.', italic: false },
-            { speaker: null, text: 'Maybe I can wake the lights.', italic: true },
+            { speaker: null, text: 'It’s so dark down here. Maybe I can fix the lights.', italic: true },
           ],
           choices: null, onEnd: null,
         });
@@ -7522,30 +7522,33 @@ const doctorExit = {
 // { speaker: null,  text: 'Pip tries. But Dziadek does not hear him.', italic: false },
 const CINEMATIC_SCRIPTS = {
   grandparents: [
-    { speaker: null,  text: 'Babcia is on the bed with her head in her hands. She is making a sound Pip has never heard her make. She is sobbing.', italic: false },
-    { speaker: null,  text: 'Pip tries. But Dziadek does not hear him.', italic: false },
+    { speaker: null,  text: 'Dziadek wipes a tear from his cheek as he gazes at the moon from the big windows.', italic: false },
+    { speaker: null,  text: 'Babcia is on the bed crying with her head in her hands.', italic: false },
+    { speaker: 'PIP',  text: '“What’s wrong? Dziadek? Babcia? Can you hear me?”', italic: false },
+    { speaker: 'PIP',  text: '“Hello?”', italic: false },
+    { speaker: null,  text: 'Dziadek and Babcia only hear the hum of the ship.', italic: false },
   ],
 
   /* Sprint 11: mirror-realization cinematic.
      Present-tense (isMemory = false). Pip sees his ghost-face in the mirror.
      Melt animation happens in drawMirrorCinematic(); dialogue follows. */
   'mirror-realization': [
-    { speaker: null,  text: 'Pip looks. Pip looks again. The boy in the mirror is not the boy who walked in.', italic: false },
-    { speaker: null,  text: 'I\u2019m not me.', italic: true },
+    { speaker: null,  text: 'Pip sees himself in the mirror, then his ghost.', italic: false },
+    { speaker: null,  text: 'Why did my reflection change? What is going on?', italic: true },
   ],
 
   /* Sprint 11: bed-reveal cinematic.
      Present-tense (isMemory = false). Sheets pull back; small still form. */
   'bed-reveal': [
     { speaker: null,  text: 'The boy in the bed does not move.', italic: false },
-    { speaker: null,  text: 'Oh.', italic: true },
+    { speaker: null,  text: 'I’m … I’m… I’m DEAD.', italic: true },
   ],
 
   /* G-S6 (B1): wire-shock — Ch1 dark corridor, stage-2 float boost. A startled,
      gentle-comic jolt (tone: not cruel), then the lift. Visual: drawWireShockCinematic(). */
   'wire-shock': [
     { speaker: null,  text: 'The wire bites. White light punches through Pip — a bright, humming jolt.', italic: false },
-    { speaker: null,  text: 'Oh — oh, I can go higher now.', italic: true },
+    { speaker: null,  text: 'Oh woah, I can float even higher now.', italic: true },
   ],
 
 
@@ -7558,7 +7561,7 @@ const CINEMATIC_SCRIPTS = {
     { speaker: 'HENRIK', text: '“Yes. Don’t ask why. Not today.”',                                           italic: false },
     { speaker: null,     text: 'Henrik looks at the food, still hovering.',                                                  italic: false },
     { speaker: 'HENRIK', text: '“Your grandmother. She told me, last night, in the dining room. She said you would have loved this. That you collected meals like other boys collect stamps.”', italic: false },
-    { speaker: 'HENRIK', text: '“Lefse. Gravlaks. The pickles too — don’t skip the pickles.”',          italic: false },
+    { speaker: 'HENRIK', text: '“Lefse. Gravlaks. The pickles too.”',          italic: false },
     { speaker: 'HENRIK', text: '“Eat. Tell me if it’s as good as she promised.”',                            italic: false },
     { speaker: null,     text: 'He slides the plate toward Pip.',                                                            italic: false },
     { speaker: 'PIP',    text: '“…how can you see me, when no one else can?”',                               italic: false },
@@ -7572,7 +7575,7 @@ const CINEMATIC_SCRIPTS = {
      Post-memory exchange (lines 10-19): returns to present kitchen.
      Visual: drawFirstTasteCinematic() — phase-based scene crossfades. */
   'first-taste': [
-    { speaker: null,     text: 'Pip takes a bite of the gravlaks.',                                                                                                                                              italic: false },
+    { speaker: null,     text: 'Pip finishes the dish in record time.',                                                                                                                                              italic: false },
     { speaker: null,     text: 'The kitchen shimmers.',                                                                                                                                                           italic: false },
     { speaker: null,     text: 'A young Norwegian boy in a cottage kitchen, watching an old man’s hands cure salmon. Sun through a window. The smell of dill. The man is his grandfather.',                 italic: false },
     { speaker: null,     text: 'And Pip understands, for the first time, that food carries the story of the person who made it.',                                                                                 italic: true  },
@@ -7620,7 +7623,7 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null,     text: 'Pip cannot remember the last time he ate. Maybe he never has, now. Maybe this is the first time.', italic: false },
     { speaker: null,     text: 'He takes a bite.',                                          italic: false },
     { speaker: null,     text: 'The food hovers in the air.',                               italic: false },
-    { speaker: null,     text: "Behind him, a sound. A pan dropped. A man’s voice.",  italic: false },
+    { speaker: null,     text: "Behind him, a sound. A pan drops. A man yelps.",  italic: false },
     { speaker: 'HENRIK', text: '”AAAAAAAAA—“',                            italic: false },
   ],
 

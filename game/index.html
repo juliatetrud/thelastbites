@@ -6981,6 +6981,97 @@ function drawPip(ctx, t, speaking) {
   ctx.restore();                        // restores globalAlpha to inA, shadow state
 }
 
+
+/* =============================================================
+   PÄTU — gray tabby, yellow eyes. LOCAL space: (0,0) = foot/floor centre anchor.
+   Canonical source shared by the whole game (Ch2–Ch8) and the gallery. Migrated
+   into the shared source in R05 (was a divergent hardcoded-hex copy in game +
+   a positioned inline copy in character-gallery.html — both removed).
+   ============================================================= */
+function drawPatu(ctx, t) {
+  const x = -15;          // sprite ~30px wide, centred on 0
+  const y = 0;            // foot/floor anchor
+  const baseY = y - 22;
+
+  const tailFlick = (t % 3.5) < 0.25;
+  const earTwitch = (t % 4.0) < 0.15 ? -1 : 0;
+
+  // Shadow
+  const sg = ctx.createRadialGradient(x + 14, y - 1, 0, x + 14, y - 1, 12);
+  sg.addColorStop(0, 'rgba(0,0,0,0.35)');
+  sg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sg;
+  ctx.fillRect(x + 2, y - 3, 24, 6);
+
+  // Tail (drawn first, behind body)
+  const tc = tailFlick ? C.catLight : C.catMid;
+  rect(ctx, x+2, baseY+16, 1, 1, tc);
+  rect(ctx, x+2, baseY+17, 2, 1, tc);
+  rect(ctx, x+3, baseY+18, 3, 1, tc);
+  rect(ctx, x+5, baseY+19, 4, 1, tc);
+  rect(ctx, x+8, baseY+20, 5, 1, tc);
+  px(ctx, x+2, baseY+16, C.catDark); // tip
+
+  // Body
+  rect(ctx, x+12, baseY+8,  8, 1, C.catMid);
+  rect(ctx, x+11, baseY+9,  10, 1, C.catMid);
+  rect(ctx, x+10, baseY+10, 12, 1, C.catMid);
+  rect(ctx, x+9,  baseY+11, 13, 1, C.catMid);
+  rect(ctx, x+8,  baseY+12, 14, 1, C.catMid);
+  rect(ctx, x+8,  baseY+13, 14, 1, C.catMid);
+  rect(ctx, x+7,  baseY+14, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+15, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+16, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+17, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+18, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+19, 15, 1, C.catMid);
+  // Paws
+  rect(ctx, x+9,  baseY+20, 3, 1, C.catMid);
+  rect(ctx, x+14, baseY+20, 3, 1, C.catMid);
+  rect(ctx, x+9,  baseY+21, 3, 1, C.catDark);
+  rect(ctx, x+14, baseY+21, 3, 1, C.catDark);
+  // Belly
+  rect(ctx, x+11, baseY+17, 6, 1, C.catBelly);
+  rect(ctx, x+11, baseY+18, 6, 1, C.catBelly);
+  // Tabby stripes
+  rect(ctx, x+11, baseY+11, 4, 1, C.catDark);
+  rect(ctx, x+17, baseY+11, 3, 1, C.catDark);
+  rect(ctx, x+10, baseY+14, 3, 1, C.catDark);
+  rect(ctx, x+16, baseY+14, 4, 1, C.catDark);
+
+  // Head
+  const et = earTwitch;
+  rect(ctx, x+8,  baseY+0+et, 1, 1, C.catMid);
+  rect(ctx, x+14, baseY+0+et, 1, 1, C.catMid);
+  rect(ctx, x+7,  baseY+1+et, 2, 1, C.catMid);
+  rect(ctx, x+14, baseY+1+et, 2, 1, C.catMid);
+  rect(ctx, x+7,  baseY+2, 3, 1, C.catMid);
+  rect(ctx, x+13, baseY+2, 3, 1, C.catMid);
+  px(ctx, x+8, baseY+2, C.catEarInner);
+  px(ctx, x+14, baseY+2, C.catEarInner);
+  rect(ctx, x+7,  baseY+3, 9, 1, C.catMid);
+  rect(ctx, x+6,  baseY+4, 11, 1, C.catMid);
+  rect(ctx, x+6,  baseY+5, 11, 1, C.catMid);
+  rect(ctx, x+6,  baseY+6, 11, 1, C.catMid);
+  rect(ctx, x+7,  baseY+7, 9, 1, C.catMid);
+  rect(ctx, x+8,  baseY+8, 5, 1, C.catMid);
+  // M stripe
+  px(ctx, x+8,  baseY+3, C.catDark);
+  px(ctx, x+11, baseY+3, C.catDark);
+  px(ctx, x+14, baseY+3, C.catDark);
+  // Eyes
+  rect(ctx, x+8,  baseY+5, 2, 2, C.catEye);
+  rect(ctx, x+13, baseY+5, 2, 2, C.catEye);
+  px(ctx, x+8,  baseY+5, C.catMouth);
+  px(ctx, x+14, baseY+5, C.catMouth);
+  px(ctx, x+9,  baseY+5, C.catEyeBright);
+  px(ctx, x+13, baseY+5, C.catEyeBright);
+  // Nose
+  px(ctx, x+11, baseY+7, C.catNose);
+  // Mouth
+  px(ctx, x+11, baseY+8, C.catMouth);
+}
+
 /* @@ART-SOURCE-END@@ */
 
 /* Thin game-side wrapper — positions Pip, applies facing and squat,
@@ -7003,6 +7094,14 @@ function renderPip(screenX, groundY, now) {
   }
 
   drawPip(ctx, now / 1000, false);
+  ctx.restore();
+}
+
+/* renderPatu — game wrapper for the shared LOCAL drawPatu(ctx, t). R05 migration. */
+function renderPatu(screenX, groundY, now) {
+  ctx.save();
+  ctx.translate(Math.round(screenX), Math.round(groundY));
+  drawPatu(ctx, now / 1000);
   ctx.restore();
 }
 
@@ -14544,109 +14643,7 @@ function addKotletidRecipe() {
    ---------------------------------------------------------------- */
 
 /* Pätu — gray tabby, 22px tall. Ported verbatim from gallery drawPatu. */
-function drawPatu(screenX, groundY, now) {
-  const t = now / 1000;
-  const tailFlick = (t % 3.5) < 0.25;
-  const earTwitch = (t % 4.0) < 0.15 ? -1 : 0;
-  const cx = Math.round(screenX) - 15;
-  const cy = Math.round(groundY);
-  const bY = -22;
 
-  ctx.save();
-  ctx.translate(cx, cy);
-
-  // Shadow
-  const sg = ctx.createRadialGradient(14, -1, 0, 14, -1, 12);
-  sg.addColorStop(0, 'rgba(0,0,0,0.30)');
-  sg.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = sg;
-  ctx.fillRect(2, -3, 24, 6);
-
-  // Tail
-  ctx.fillStyle = tailFlick ? '#7a8298' : '#5a6278';
-  ctx.fillRect(2, bY+16, 1, 1);
-  ctx.fillRect(2, bY+17, 2, 1);
-  ctx.fillRect(3, bY+18, 3, 1);
-  ctx.fillRect(5, bY+19, 4, 1);
-  ctx.fillRect(8, bY+20, 5, 1);
-  ctx.fillStyle = '#2a2f3a';
-  ctx.fillRect(2, bY+16, 1, 1);  // dark tip
-
-  // Body
-  ctx.fillStyle = '#5a6278';
-  ctx.fillRect(12, bY+8,  8, 1);
-  ctx.fillRect(11, bY+9,  10, 1);
-  ctx.fillRect(10, bY+10, 12, 1);
-  ctx.fillRect(9,  bY+11, 13, 1);
-  ctx.fillRect(8,  bY+12, 14, 1);
-  ctx.fillRect(8,  bY+13, 14, 1);
-  ctx.fillRect(7,  bY+14, 15, 1);
-  ctx.fillRect(7,  bY+15, 15, 1);
-  ctx.fillRect(7,  bY+16, 15, 1);
-  ctx.fillRect(7,  bY+17, 15, 1);
-  ctx.fillRect(7,  bY+18, 15, 1);
-  ctx.fillRect(7,  bY+19, 15, 1);
-  // Paws
-  ctx.fillRect(9,  bY+20, 3, 1);
-  ctx.fillRect(14, bY+20, 3, 1);
-  ctx.fillStyle = '#2a2f3a';
-  ctx.fillRect(9,  bY+21, 3, 1);
-  ctx.fillRect(14, bY+21, 3, 1);
-  // Belly
-  ctx.fillStyle = '#8a92a8';
-  ctx.fillRect(11, bY+17, 6, 1);
-  ctx.fillRect(11, bY+18, 6, 1);
-  // Tabby stripes
-  ctx.fillStyle = '#2a2f3a';
-  ctx.fillRect(11, bY+11, 4, 1);
-  ctx.fillRect(17, bY+11, 3, 1);
-  ctx.fillRect(10, bY+14, 3, 1);
-  ctx.fillRect(16, bY+14, 4, 1);
-
-  // Head
-  const et = earTwitch;
-  ctx.fillStyle = '#5a6278';
-  ctx.fillRect(8,  bY+0+et, 1, 1);
-  ctx.fillRect(14, bY+0+et, 1, 1);
-  ctx.fillRect(7,  bY+1+et, 2, 1);
-  ctx.fillRect(14, bY+1+et, 2, 1);
-  ctx.fillRect(7,  bY+2, 3, 1);
-  ctx.fillRect(13, bY+2, 3, 1);
-  // Ear inner
-  ctx.fillStyle = '#8a4a4a';
-  ctx.fillRect(8,  bY+2, 1, 1);
-  ctx.fillRect(14, bY+2, 1, 1);
-  // Head continue
-  ctx.fillStyle = '#5a6278';
-  ctx.fillRect(7,  bY+3, 9, 1);
-  ctx.fillRect(6,  bY+4, 11, 1);
-  ctx.fillRect(6,  bY+5, 11, 1);
-  ctx.fillRect(6,  bY+6, 11, 1);
-  ctx.fillRect(7,  bY+7, 9, 1);
-  ctx.fillRect(8,  bY+8, 5, 1);
-  // M stripe
-  ctx.fillStyle = '#2a2f3a';
-  ctx.fillRect(8,  bY+3, 1, 1);
-  ctx.fillRect(11, bY+3, 1, 1);
-  ctx.fillRect(14, bY+3, 1, 1);
-  // Eyes
-  ctx.fillStyle = '#ffd84a';
-  ctx.fillRect(8,  bY+5, 2, 2);
-  ctx.fillRect(13, bY+5, 2, 2);
-  ctx.fillStyle = '#1a0808';
-  ctx.fillRect(8,  bY+5, 1, 1);
-  ctx.fillRect(14, bY+5, 1, 1);
-  ctx.fillStyle = '#ffe88a';
-  ctx.fillRect(9,  bY+5, 1, 1);
-  ctx.fillRect(13, bY+5, 1, 1);
-  // Nose + mouth
-  ctx.fillStyle = '#6a3a3a';
-  ctx.fillRect(11, bY+7, 1, 1);
-  ctx.fillStyle = '#1a0808';
-  ctx.fillRect(11, bY+8, 1, 1);
-
-  ctx.restore();
-}
 
 /* Haldjas — warm amber sparkle cluster, no humanoid body. */
 function drawHaldjas(screenX, groundY, now) {
@@ -14984,7 +14981,7 @@ function drawCh2LowerDeck(camX, now) {
     if (patuSX > -30 && patuSX < W + 30) {
       const alpha = 0.6 + Math.sin(now / 800) * 0.2;
       ctx.globalAlpha = alpha;
-      drawPatu(640 - camX, FLOOR_Y, now);
+      renderPatu(640 - camX, FLOOR_Y, now);
       ctx.globalAlpha = 1.0;
       drawHaldjas(660 - camX, FLOOR_Y, now);
     }
@@ -14992,19 +14989,19 @@ function drawCh2LowerDeck(camX, now) {
     // After intro: Pätu + Haldjas near the pan
     const patuSX = Math.round(650 - camX);
     if (patuSX > -30 && patuSX < W + 30) {
-      drawPatu(patuSX, FLOOR_Y, now);
+      renderPatu(patuSX, FLOOR_Y, now);
       drawHaldjas(Math.round(670 - camX), FLOOR_Y, now);
     }
   }
 
   // Pan picked up — Pätu walks with Pip
   if (ch2State.panPickedUp && !ch2State.arrivedKasmu) {
-    drawPatu(Math.round(pip.x - 40 - camX), FLOOR_Y, now);
+    renderPatu(Math.round(pip.x - 40 - camX), FLOOR_Y, now);
   }
 
   // Return beat — Pätu beside Pip in now-empty corner
   if (ch2State.chapter2Complete && patuState.aboard) {
-    drawPatu(Math.round(patuState.x - camX), FLOOR_Y, now);
+    renderPatu(Math.round(patuState.x - camX), FLOOR_Y, now);
   }
 }
 
@@ -15100,13 +15097,13 @@ function drawCh2Kasmu(camX, now) {
   // Pätu walking ahead (before reaching cottage)
   if (ch2State.panPickedUp && !ch2State.arrivedCottage) {
     const leadX = Math.min(pip.x + 65, rooms.ch2Kasmu.pipMaxX - 20);
-    drawPatu(Math.round(leadX - camX), FLOOR_Y, now);
+    renderPatu(Math.round(leadX - camX), FLOOR_Y, now);
     drawHaldjas(Math.round(leadX + 20 - camX), FLOOR_Y, now);
   }
 
   // Pätu with Pip on return walk
   if (ch2State.patuJoined) {
-    drawPatu(Math.round(pip.x - 38 - camX), FLOOR_Y, now);
+    renderPatu(Math.round(pip.x - 38 - camX), FLOOR_Y, now);
   }
 }
 
@@ -15199,7 +15196,7 @@ function drawCh2Cottage(camX, now) {
 
   // Pätu at Leida's feet after cooking starts
   if (ch2State.cookingDone || ch2State.mealEaten) {
-    drawPatu(Math.round(225 - camX), FLOOR_Y, now);
+    renderPatu(Math.round(225 - camX), FLOOR_Y, now);
   }
 
   // Sincerity puzzle three-door overlay
@@ -16564,7 +16561,7 @@ function drawCh3LowerDeck(camX, now) {
 
   // Pätu walking
   if (ch3State.chapter3Active) {
-    drawPatu(Math.round(pip.x + 35 - camX), FLOOR_Y, now);
+    renderPatu(Math.round(pip.x + 35 - camX), FLOOR_Y, now);
   }
 }
 
@@ -16674,7 +16671,7 @@ function drawCh3Dockyard(camX, now) {
   // Pätu leading (before shuck), or trailing after
   if (ch3State.chapter3Active) {
     const patuTarget = ch3State.shuckDefeated ? pip.x - 40 : pip.x + 55;
-    drawPatu(Math.round(patuTarget - camX), FLOOR_Y, now);
+    renderPatu(Math.round(patuTarget - camX), FLOOR_Y, now);
   }
 
   // Shuck mini-game overlay
@@ -16770,7 +16767,7 @@ function drawCh3BevoisStreet(camX, now) {
     const patuLead = ch3State.sandyFarewellSeen
       ? pip.x - 38
       : Math.min(pip.x + 55, rooms.ch3BevoisStreet.pipMaxX - 30);
-    drawPatu(Math.round(patuLead - camX), FLOOR_Y, now);
+    renderPatu(Math.round(patuLead - camX), FLOOR_Y, now);
   }
 }
 
@@ -16884,7 +16881,7 @@ function drawCh3Kitchen(camX, now) {
 
   // Pätu inside kitchen
   if (ch3State.arrivedKitchen) {
-    drawPatu(Math.round(pip.x - 38 - camX), FLOOR_Y, now);
+    renderPatu(Math.round(pip.x - 38 - camX), FLOOR_Y, now);
   }
 }
 
@@ -17822,7 +17819,7 @@ function drawCh4CatAlley(camX, now) {
     if (patuSX > -20 && patuSX < W + 20) {
       const pAlpha = 0.6 + Math.sin(now / 500) * 0.2;
       ctx.globalAlpha = pAlpha;
-      drawPatu(patuSX, FLOOR_Y, now);
+      renderPatu(patuSX, FLOOR_Y, now);
       ctx.globalAlpha = 1.0;
     }
   }
@@ -17901,7 +17898,7 @@ function drawCh4FrozenSquare(camX, now) {
 
   // Pätu unfrozen after puzzle (walks with Pip)
   if (ch4State.patuThawed) {
-    drawPatu(Math.round(pip.x - 38 - camX), FLOOR_Y, now);
+    renderPatu(Math.round(pip.x - 38 - camX), FLOOR_Y, now);
   }
 
   // Karakoncolos (world-x ~220, before resolved)
@@ -18041,7 +18038,7 @@ function drawCh4MuhittiKitchen(camX, now) {
 
   // Pätu in front of oven
   if (ch4State.arrivedMuhittinKitchen) {
-    drawPatu(Math.round(80 - camX), FLOOR_Y, now);
+    renderPatu(Math.round(80 - camX), FLOOR_Y, now);
   }
 }
 
@@ -19434,7 +19431,7 @@ function drawCh5JohannesPlace(camX, now) {
 
   // Pätu (by the fire when inside)
   if (ch5State.patuModeMessenger) {
-    drawPatu(Math.round(fireSX - 40), FLOOR_Y, now);
+    renderPatu(Math.round(fireSX - 40), FLOOR_Y, now);
   }
 }
 
@@ -20564,7 +20561,7 @@ function drawCh6Warung(camX, now) {
       drawTirta(tSX, FLOOR_Y, now, tirtaSpeaking);
     }
     // Pätu on stool
-    drawPatu(Math.round(310 - camX), FLOOR_Y - 14, now);
+    renderPatu(Math.round(310 - camX), FLOOR_Y - 14, now);
   }
 
   // Racks of pre-prepared ingredients (world-x 440-500)
@@ -21664,7 +21661,7 @@ function drawCh7ForestPath(camX, now) {
   }
 
   // Pätu (right next to Pip, extra close after infection)
-  drawPatu(Math.round(pip.x - 24 - camX), FLOOR_Y, now);
+  renderPatu(Math.round(pip.x - 24 - camX), FLOOR_Y, now);
 
   // Light at end of path (house ahead)
   if (!ch7State.arrivedJoanaHouse) {
@@ -21764,7 +21761,7 @@ function drawCh7JoanaHouse(camX, now) {
     ctx.fillRect(winSX - 16, 42, 32, 32);
     // Pätu on sill
     if (ch7State.joanaMet) {
-      drawPatu(winSX, 42, now);
+      renderPatu(winSX, 42, now);
     }
   }
 
@@ -23404,7 +23401,7 @@ function drawCh8PipKitchen(camX, now) {
 
   // Pätu in doorway when shadow rises
   if (ch8State.shadowRisen) {
-    drawPatu(Math.round(pip.x - 50 - camX), FLOOR_Y, now);
+    renderPatu(Math.round(pip.x - 50 - camX), FLOOR_Y, now);
   }
 }
 

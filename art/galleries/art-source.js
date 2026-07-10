@@ -201,3 +201,94 @@ function drawPip(ctx, t, speaking) {
 
   ctx.restore();                        // restores globalAlpha to inA, shadow state
 }
+
+
+/* =============================================================
+   PÄTU — gray tabby, yellow eyes. LOCAL space: (0,0) = foot/floor centre anchor.
+   Canonical source shared by the whole game (Ch2–Ch8) and the gallery. Migrated
+   into the shared source in R05 (was a divergent hardcoded-hex copy in game +
+   a positioned inline copy in character-gallery.html — both removed).
+   ============================================================= */
+function drawPatu(ctx, t) {
+  const x = -15;          // sprite ~30px wide, centred on 0
+  const y = 0;            // foot/floor anchor
+  const baseY = y - 22;
+
+  const tailFlick = (t % 3.5) < 0.25;
+  const earTwitch = (t % 4.0) < 0.15 ? -1 : 0;
+
+  // Shadow
+  const sg = ctx.createRadialGradient(x + 14, y - 1, 0, x + 14, y - 1, 12);
+  sg.addColorStop(0, 'rgba(0,0,0,0.35)');
+  sg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = sg;
+  ctx.fillRect(x + 2, y - 3, 24, 6);
+
+  // Tail (drawn first, behind body)
+  const tc = tailFlick ? C.catLight : C.catMid;
+  rect(ctx, x+2, baseY+16, 1, 1, tc);
+  rect(ctx, x+2, baseY+17, 2, 1, tc);
+  rect(ctx, x+3, baseY+18, 3, 1, tc);
+  rect(ctx, x+5, baseY+19, 4, 1, tc);
+  rect(ctx, x+8, baseY+20, 5, 1, tc);
+  px(ctx, x+2, baseY+16, C.catDark); // tip
+
+  // Body
+  rect(ctx, x+12, baseY+8,  8, 1, C.catMid);
+  rect(ctx, x+11, baseY+9,  10, 1, C.catMid);
+  rect(ctx, x+10, baseY+10, 12, 1, C.catMid);
+  rect(ctx, x+9,  baseY+11, 13, 1, C.catMid);
+  rect(ctx, x+8,  baseY+12, 14, 1, C.catMid);
+  rect(ctx, x+8,  baseY+13, 14, 1, C.catMid);
+  rect(ctx, x+7,  baseY+14, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+15, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+16, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+17, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+18, 15, 1, C.catMid);
+  rect(ctx, x+7,  baseY+19, 15, 1, C.catMid);
+  // Paws
+  rect(ctx, x+9,  baseY+20, 3, 1, C.catMid);
+  rect(ctx, x+14, baseY+20, 3, 1, C.catMid);
+  rect(ctx, x+9,  baseY+21, 3, 1, C.catDark);
+  rect(ctx, x+14, baseY+21, 3, 1, C.catDark);
+  // Belly
+  rect(ctx, x+11, baseY+17, 6, 1, C.catBelly);
+  rect(ctx, x+11, baseY+18, 6, 1, C.catBelly);
+  // Tabby stripes
+  rect(ctx, x+11, baseY+11, 4, 1, C.catDark);
+  rect(ctx, x+17, baseY+11, 3, 1, C.catDark);
+  rect(ctx, x+10, baseY+14, 3, 1, C.catDark);
+  rect(ctx, x+16, baseY+14, 4, 1, C.catDark);
+
+  // Head
+  const et = earTwitch;
+  rect(ctx, x+8,  baseY+0+et, 1, 1, C.catMid);
+  rect(ctx, x+14, baseY+0+et, 1, 1, C.catMid);
+  rect(ctx, x+7,  baseY+1+et, 2, 1, C.catMid);
+  rect(ctx, x+14, baseY+1+et, 2, 1, C.catMid);
+  rect(ctx, x+7,  baseY+2, 3, 1, C.catMid);
+  rect(ctx, x+13, baseY+2, 3, 1, C.catMid);
+  px(ctx, x+8, baseY+2, C.catEarInner);
+  px(ctx, x+14, baseY+2, C.catEarInner);
+  rect(ctx, x+7,  baseY+3, 9, 1, C.catMid);
+  rect(ctx, x+6,  baseY+4, 11, 1, C.catMid);
+  rect(ctx, x+6,  baseY+5, 11, 1, C.catMid);
+  rect(ctx, x+6,  baseY+6, 11, 1, C.catMid);
+  rect(ctx, x+7,  baseY+7, 9, 1, C.catMid);
+  rect(ctx, x+8,  baseY+8, 5, 1, C.catMid);
+  // M stripe
+  px(ctx, x+8,  baseY+3, C.catDark);
+  px(ctx, x+11, baseY+3, C.catDark);
+  px(ctx, x+14, baseY+3, C.catDark);
+  // Eyes
+  rect(ctx, x+8,  baseY+5, 2, 2, C.catEye);
+  rect(ctx, x+13, baseY+5, 2, 2, C.catEye);
+  px(ctx, x+8,  baseY+5, C.catMouth);
+  px(ctx, x+14, baseY+5, C.catMouth);
+  px(ctx, x+9,  baseY+5, C.catEyeBright);
+  px(ctx, x+13, baseY+5, C.catEyeBright);
+  // Nose
+  px(ctx, x+11, baseY+7, C.catNose);
+  // Mouth
+  px(ctx, x+11, baseY+8, C.catMouth);
+}

@@ -19,6 +19,9 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **R08 `built` (Ch5 art reconciliation — VERIFY-ONLY; #119). NEXT = R09 (Ch6).** Ch5 on-doctrine, game≡gallery, memoryGifting/switchblade intact; Ch5 cells pinned DERIVED PENDING #109.
+>
+> --- prior resume (R07→R08) ---
 > **R07 `built` (Ch4 art reconciliation; frozen-Pätu derived `a00492c`). NEXT = R08 (Ch5
 > art reconciliation).** Ch4 on-doctrine; frozen-Pätu derived into game (drawPatu+ice, replaced
 > blue-blob) — DERIVED PENDING GALLERY RE-APPROVAL, pinned atop backlog #109. **R08 (Ch5):**
@@ -198,7 +201,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R05 | Ch2 art reconciliation | built | #116 | `c69d0d2` | `r-checkpoint-R05` |
 | R06 | Ch3 art reconciliation | built | #117 | `3ac44e0` | `r-checkpoint-R06` |
 | R07 | Ch4 art reconciliation | built | #118 | `0b70cc9` | `r-checkpoint-R07` |
-| R08 | Ch5 art reconciliation | pending | — | — | — |
+| R08 | Ch5 art reconciliation | built | #119 | `728ada9` | `r-checkpoint-R08` |
 | R09 | Ch6 art reconciliation | pending | — | — | — |
 | R10 | Ch7 art reconciliation | pending | — | — | — |
 | R11 | Ch8 art reconciliation | pending | — | — | — |

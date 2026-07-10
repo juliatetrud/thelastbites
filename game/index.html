@@ -3717,6 +3717,7 @@ function update(dt) {
   updateEchoSpiders(dt);   // Sprint 46: dark corridor spiders
   updateCh5EchoRats(dt);   // R12: Ch5 lower-deck echo-rat strength drain
   updateCandlePuzzle(dt);  // R12: Ch4 real-time candle puzzle
+  updateBoitataDouse(dt);  // R12: Ch7 three-fires douse
   updateSconceSparks(dt);
 
   // G1b: tick lightning flash timer
@@ -4981,6 +4982,7 @@ function render(now) {
 
     rooms[currentRoom].draw(camX, now);
     drawCandlePuzzleHud();   // R12: Ch4 candle-puzzle telegraph HUD
+    drawBoitataDouseHud();   // R12: Ch7 douse HUD
 
     // Sprint 13: collect auras (warm hum) for collectibles in current room
     drawCollectAuras(camX, now);
@@ -20770,70 +20772,103 @@ function triggerBoitataAppear() {
       { speaker: null,    text: "The fires creep toward Pip. The match in his hand is half its size. A wooden bucket sits at the edge of the dock. The river is just below.", italic: true },
     ],
     choices: null,
-    onEnd: () => runBoitataPuzzle(),
+    onEnd: () => startBoitataDouse(),
   });
 }
 
-function runBoitataPuzzle() {
-  ch7State.boitataPuzzleAttempts++;
-  const attempt = ch7State.boitataPuzzleAttempts;
-  const boitataLine = attempt === 1
-    ? '"Do not waste my time, little ghost."'
-    : attempt === 2
-    ? '"You carry something I have not seen before. It troubles me."'
-    : '"Be careful of what rides with you. Or it will eat you."';
+/* ================================================================
+   R12 — Ch7 real bucket-and-douse (replaces the dialogue-choice stub).
+   Boitatá's breath lit three fires (rope w-x 180, plank 240, sailcloth 300). Pip
+   walks to the bucket (w-x 150) to pick it up, then walks to each burning fire to
+   douse it (the river refills the bucket between). A match timer is gentle pressure:
+   if it burns out before all three are out, the fires relight and the match resets
+   (a retry, never cruel). Proximity-driven — no new verbs (D-pad only). Transient
+   module state (not saved) -> no ch7State schema change (R15). dt-capped, pause-safe. */
+let boitataDouseActive = false;
+let boitataBucketHeld  = false;
+let boitataFires       = [true, true, true];   // rope, plank, sailcloth
+let boitataMatchTimer  = 0;
+let boitataRelightMsg  = 0;                      // >0 shows the relight flash
+const BOITATA_FIRE_X   = [180, 240, 300];
+const BOITATA_BUCKET_X = 150;
+const BOITATA_MATCH_S  = 20;
+
+function startBoitataDouse() {
+  boitataDouseActive = true;
+  boitataBucketHeld  = false;
+  boitataFires       = [true, true, true];
+  boitataMatchTimer  = BOITATA_MATCH_S;
+  boitataRelightMsg  = 0;
+  if (typeof setControlsStrip === 'function') setControlsStrip('room');
+}
+
+function updateBoitataDouse(dt) {
+  if (!boitataDouseActive || currentRoom !== 'ch7Dock') return;
+  if (boitataRelightMsg > 0) boitataRelightMsg = Math.max(0, boitataRelightMsg - dt);
+  boitataMatchTimer -= dt;
+  if (boitataMatchTimer <= 0) {                    // match burned out — gentle reset + retry
+    ch7State.boitataPuzzleAttempts++;
+    boitataBucketHeld = false;
+    boitataFires      = [true, true, true];
+    boitataMatchTimer = BOITATA_MATCH_S;
+    boitataRelightMsg = 1.6;
+    return;
+  }
+  if (!boitataBucketHeld && Math.abs(pip.x - BOITATA_BUCKET_X) < 14) boitataBucketHeld = true;
+  if (boitataBucketHeld) {
+    for (let i = 0; i < 3; i++) {
+      if (boitataFires[i] && Math.abs(pip.x - BOITATA_FIRE_X[i]) < 14) boitataFires[i] = false;
+    }
+    if (!boitataFires[0] && !boitataFires[1] && !boitataFires[2]) {
+      boitataDouseActive = false;
+      boitataDouseWin();
+    }
+  }
+}
+
+function boitataDouseWin() {
   showDialogue({
-    id: `ch7-boitata-puzzle-${attempt}`,
-    lines: [{ speaker: 'BOITATÁ', text: boitataLine, italic: false }],
-    choices: [
-      {
-        text: "Pick up the bucket. Fill it from the river at the dock edge. Douse all three fires before the match burns out.",
-        onSelect() {
-          showDialogue({
-            id: 'ch7-boitata-solved',
-            lines: [
-              { speaker: null, text: "Pip grabs the bucket. He scoops river water at the dock's edge, swings it over the rope fire. Out. He refills. Sails. Out. He refills one more time. Wood. Out.", italic: true },
-              { speaker: null, text: "The match is a stub in his fingers. He blows it out. His hand is shaking.", italic: true },
-              { speaker: null, text: "The dome dissipates. The night is dark again.", italic: true },
-              { speaker: 'BOITATÁ', text: '"Pass, little ghost. But you carry something I have not seen before. Be careful of it. Or it will eat you."', italic: false },
-              { speaker: null, text: "He slides back into the river without ripple. Pätu jumps down from the piling and walks ahead. She does not look at Pip. She is letting him collect himself.", italic: true },
-            ],
-            choices: null,
-            onEnd() {
-              ch7State.boitataDefeated = true;
-              autoSave();
-              startTransition('ch7ForestPath', 'fromLeft');
-            },
-          });
-        },
-      },
-      {
-        text: "Try to beat the fires out with your hands.",
-        onSelect() {
-          showDialogue({
-            id: 'ch7-boitata-wrong1',
-            lines: [
-              { speaker: null, text: "Your hands pass through them. You are a ghost. The match burns shorter. Pätu sneezes once — a small, shocked sneeze — as the dome resets.", italic: true },
-            ],
-            choices: null, onEnd: () => runBoitataPuzzle(),
-          });
-        },
-      },
-      {
-        text: "Try to float above the fires.",
-        onSelect() {
-          showDialogue({
-            id: 'ch7-boitata-wrong2',
-            lines: [
-              { speaker: null, text: "The fires aren't blocking you. They're growing. Rising. The match burns shorter. Pätu sneezes. The dome resets. Try again.", italic: true },
-            ],
-            choices: null, onEnd: () => runBoitataPuzzle(),
-          });
-        },
-      },
+    id: 'ch7-boitata-solved',
+    lines: [
+      { speaker: null,    text: "The last fire hisses into steam. The dock goes dark and wet under Pip's feet.", italic: true },
+      { speaker: null,    text: "The match is a stub in his fingers. He blows it out. His hand is shaking.", italic: true },
+      { speaker: null,    text: "The dome dissipates. The night is dark again.", italic: true },
+      { speaker: 'BOITATÁ', text: '"Pass, little ghost. But you carry something I have not seen before. Be careful of it. Or it will eat you."', italic: false },
+      { speaker: null,    text: "He slides back into the river without ripple. Pätu jumps down from the piling and walks ahead. She does not look at Pip. She is letting him collect himself.", italic: true },
     ],
-    onEnd: null,
+    choices: null,
+    onEnd() {
+      ch7State.boitataDefeated = true;
+      autoSave();
+      startTransition('ch7ForestPath', 'fromLeft');
+    },
   });
+}
+
+function drawBoitataDouseHud() {
+  if (!boitataDouseActive || currentRoom !== 'ch7Dock') return;
+  ctx.fillStyle = 'rgba(6,10,20,0.72)';
+  ctx.fillRect(0, 0, 480, 34);
+  ctx.textAlign = 'center';
+  if (boitataRelightMsg > 0) {
+    ctx.fillStyle = '#ffb060'; ctx.font = 'bold 11px monospace';
+    ctx.fillText('The match burned out. Pip strikes another — the fires flare back.', 240, 15);
+    ctx.fillStyle = '#c8b090'; ctx.font = '9px monospace';
+    ctx.fillText('Try again — faster this time.', 240, 27);
+  } else {
+    const left = 3 - boitataFires.filter(function (f) { return !f; }).length;
+    ctx.fillStyle = '#e8d8b0'; ctx.font = 'bold 10px monospace';
+    ctx.fillText(boitataBucketHeld
+      ? 'Douse the fires — walk into each one. ' + left + ' left.'
+      : 'Grab the bucket (world-left) — then douse the three fires.', 240, 13);
+    // match timer bar
+    const frac = Math.max(0, boitataMatchTimer / BOITATA_MATCH_S);
+    ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(180, 24, 120, 4);
+    ctx.fillStyle = frac < 0.3 ? '#ff5030' : '#ffb040'; ctx.fillRect(180, 24, Math.round(120 * frac), 4);
+    ctx.fillStyle = '#a8c0e0'; ctx.font = '8px monospace';
+    ctx.fillText('match', 150, 28);
+  }
+  ctx.textAlign = 'left';
 }
 
 function triggerCapuchinMeet() {
@@ -21594,7 +21629,7 @@ function drawCh7Dock(camX, now) {
   if (ropeSX > -20 && ropeSX < W + 20) {
     ctx.fillStyle = '#4a3018';
     ctx.fillRect(ropeSX - 8, FLOOR_Y - 12, 16, 12);
-    if (ch7State.boitataAppeared && !ch7State.boitataDefeated) {
+    if (ch7State.boitataAppeared && !ch7State.boitataDefeated && boitataFires[0]) {
       // Fire on rope
       const rA = 0.15 + Math.sin(t * 2.5) * 0.07;
       ctx.fillStyle = `rgba(255,100,20,${(0.40 + rA).toFixed(2)})`;
@@ -21607,7 +21642,7 @@ function drawCh7Dock(camX, now) {
   if (plankSX > -20 && plankSX < W + 20) {
     ctx.fillStyle = '#1a1008';
     ctx.fillRect(plankSX - 16, FLOOR_Y - 6, 32, 6);
-    if (ch7State.boitataAppeared && !ch7State.boitataDefeated) {
+    if (ch7State.boitataAppeared && !ch7State.boitataDefeated && boitataFires[1]) {
       const pA = 0.15 + Math.sin(t * 2.3) * 0.07;
       ctx.fillStyle = `rgba(255,80,10,${(0.35 + pA).toFixed(2)})`;
       ctx.fillRect(plankSX - 14, FLOOR_Y - 14, 28, 10);
@@ -21619,7 +21654,7 @@ function drawCh7Dock(camX, now) {
   if (sailSX > -20 && sailSX < W + 20) {
     ctx.fillStyle = '#c0b890';
     ctx.fillRect(sailSX - 12, FLOOR_Y - 18, 24, 18);
-    if (ch7State.boitataAppeared && !ch7State.boitataDefeated) {
+    if (ch7State.boitataAppeared && !ch7State.boitataDefeated && boitataFires[2]) {
       const sA = 0.15 + Math.sin(t * 2.1) * 0.07;
       ctx.fillStyle = `rgba(255,120,30,${(0.38 + sA).toFixed(2)})`;
       ctx.fillRect(sailSX - 12, FLOOR_Y - 28, 24, 14);

@@ -19,16 +19,23 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
-> **Begin R04 (`sprints/sprint-R04-gallery-population-ch5-ch8.md`).** Same method as R03:
-> port GOAL-1 in-game character draw code via the verbatim-body wrapper (`(ctx,_CX,_FLOOR,
-> _T,_SP)`; alias header maps to in-game names), author 200×113 environment cells, on-doctrine,
-> review-gated (#114-successor issue). Chapter by chapter, characters first. **R04-specific:**
-> Erik (Ch7) age = 11 (#41 closed, safe); Babcia/Dziadek **Ch8 variants MUST stay namespaced**
-> (`drawBabciaCh8*`/`drawDziadekCh8*` — the collision that caused G1c-1); verify Pocong already
-> in gallery (Sprint 09) — confirm on-doctrine, skip if present; Mamlambo designed *in its
-> porthole framing*; **Pip-shadow (Ch8) is the emotional climax — most care, flag if register
-> feels wrong rather than iterate blind.** Open the R04 child issue with the art audit first
-> (which Ch5–Ch8 draw fns exist in-game vs gallery).
+> **R04 STARTED — audit done + issue #115 opened; NEXT = port batches (characters first).**
+> Audit (in #115): all Ch5–Ch8 character draw fns exist in-game (GOAL-1); only **Pocong** +
+> **Erik** already in the gallery. Fns to port: Ch5 `drawIris`, `drawMamlamboPorthole`,
+> `drawJohannes`, `drawEchoRat`; Ch6 `drawTirta`, `drawEchoTarsier` (Pocong verify/skip);
+> Ch7 `drawBoitata`, `drawJoana`, `drawBeatriz`, `drawCapuchin` (Erik done); Ch8
+> `drawBabciaStanding`+`drawCh8BabciaApartment`, `drawDziadekStanding`, `drawPipsParents`,
+> `drawPipShadow`. 19 char + 16 env placeholders exist.
+>
+> **Method (same as R03):** character wrapper `function drawX(ctx,_CX,_FLOOR,_T,_SP){ const
+> sx=_CX, sy=_FLOOR, groundY=_FLOOR, now=_T*1000, speaking=_SP, looking=_SP, idx=0; <body
+> verbatim> }` + upgrade the placeholder entry (designed:true + drawFn); env cells are
+> purpose-built 200×113 illustrations + `DRAW_FNS` registry entry. Extract each fn first and
+> confirm self-contained (no external helper/`C.*` deps) before porting. `node --check` per
+> group. **R04-specific care:** Erik age 11 (#41); **Ch8 grandparents stay namespaced**
+> (`drawBabciaStanding`/`drawDziadekStanding` — never a bare `drawBabcia`); Mamlambo in its
+> porthole framing; **Pip-shadow (Ch8) = emotional climax, most care — flag if register feels
+> wrong rather than iterate blind.** Ch5 characters are the natural first batch.
 >
 > --- prior resume (R03) ---
 > **R03 — characters DONE + approved (frozen-Pätu reworked), Ch2 environments
@@ -130,7 +137,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R01 | Ch1 playscript impl + repo hygiene | built | #111 | `3c01358` | `r-checkpoint-R01` |
 | R02 | Open-questions closeout + doc reconciliation | built | #112 | `e8a123c` | `r-checkpoint-R02` |
 | R03 | Gallery population, Ch2–Ch4 | built | #114 | `32d3f13` | `r-checkpoint-R03` |
-| R04 | Gallery population, Ch5–Ch8 | pending | — | — | — |
+| R04 | Gallery population, Ch5–Ch8 | in-progress | #115 | — | — |
 | R05 | Ch2 art reconciliation | pending | — | — | — |
 | R06 | Ch3 art reconciliation | pending | — | — | — |
 | R07 | Ch4 art reconciliation | pending | — | — | — |

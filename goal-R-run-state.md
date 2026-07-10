@@ -19,6 +19,9 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **R11 `built` (Ch8 — VERIFY-ONLY; #122). ALL ART DONE (R05–R11). NEXT = R12 (kinetic mechanics — port chapters).** Ch8 on-doctrine, grandparents namespaced, Pip-shadow intact (feel-verdict pinned #109). R12 is a MECHANICS sprint (not art): port/upgrade the kinetic puzzle mechanics for Ch2–Ch7 per spec — read `sprints/sprint-R12-kinetic-mechanics-ports.md`, audit first.
+>
+> --- prior resume (R10→R11) ---
 > **R10 `built` (Ch7 — VERIFY-ONLY; #121). NEXT = R11 (Ch8).** Ch7 on-doctrine, Boitatá full-threat, shared-Pätu confirmed, Erik age 11; Ch7 cells pinned #109.
 >
 > --- prior resume (R09→R10) ---
@@ -210,7 +213,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R08 | Ch5 art reconciliation | built | #119 | `728ada9` | `r-checkpoint-R08` |
 | R09 | Ch6 art reconciliation | built | #120 | `fec2611` | `r-checkpoint-R09` |
 | R10 | Ch7 art reconciliation | built | #121 | `9d160b8` | `r-checkpoint-R10` |
-| R11 | Ch8 art reconciliation | pending | — | — | — |
+| R11 | Ch8 art reconciliation | built | #122 | `dd26737` | `r-checkpoint-R11` |
 | R12 | Kinetic mechanics — port chapters | pending | — | — | — |
 | R13 | Kinetic mechanics — Ch8 finale | pending | — | — | — |
 | R14 | Audio + music pass | pending | — | — | — |

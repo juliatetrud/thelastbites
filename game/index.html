@@ -3427,6 +3427,46 @@ let lastTimestamp = null;
 let gamePaused    = false;
 let pauseSelected = 0;
 
+/* R14 — per-chapter ambient palette. ONE persistent looping-noise graph, retuned per
+   chapter (no pileup): band-passed soft noise -> gain -> sfx.master (so the SFX toggle
+   silences it via the master). Sparse + low; ducked to 0 on pause. First-pass registers
+   (Julia tunes by ear); "silence is valid" where a scene wants it. */
+const AMBIENT_PALETTE = {
+  ch2: { freq: 380, q: 0.6, level: 0.020 },  // Käsmu coastal wind
+  ch3: { freq: 240, q: 0.5, level: 0.022 },  // Southampton dock water
+  ch4: { freq: 560, q: 0.9, level: 0.013 },  // Istanbul winter hush
+  ch5: { freq: 300, q: 0.6, level: 0.020 },  // Saldanha night / fire
+  ch6: { freq: 950, q: 1.3, level: 0.011 },  // Kolonodale insects
+  ch7: { freq: 230, q: 0.5, level: 0.024 },  // Alter do Chão river night
+  ch8: { freq: 190, q: 0.4, level: 0.015 },  // Greenpoint distant traffic
+};
+const chapterAmbient = { started: false, filter: null, gain: null, level: 0 };
+function setChapterAmbient(key) {
+  if (!sfx.unlocked || !sfx.ctx) return;
+  const ac = sfx.ctx;
+  if (!chapterAmbient.started) {
+    const buf = ac.createBuffer(1, Math.max(1, Math.floor(ac.sampleRate * 2.0)), ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let n = 0; n < d.length; n++) d[n] = (Math.random() * 2 - 1) * 0.5;
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass';
+    const g = ac.createGain(); g.gain.value = 0;
+    src.connect(f); f.connect(g); g.connect(sfx.master); src.start();
+    chapterAmbient.filter = f; chapterAmbient.gain = g; chapterAmbient.started = true;
+  }
+  const pal = AMBIENT_PALETTE[key] || null;
+  chapterAmbient.level = pal ? pal.level : 0;
+  if (pal) {
+    chapterAmbient.filter.frequency.setTargetAtTime(pal.freq, ac.currentTime, 0.4);
+    chapterAmbient.filter.Q.setTargetAtTime(pal.q, ac.currentTime, 0.4);
+  }
+  chapterAmbient.gain.gain.setTargetAtTime((pal && !gamePaused) ? pal.level : 0, ac.currentTime, 0.6);
+}
+function _duckChapterAmbient(paused) {
+  if (!chapterAmbient.started || !sfx.ctx) return;
+  chapterAmbient.gain.gain.setTargetAtTime(paused ? 0 : chapterAmbient.level, sfx.ctx.currentTime, 0.15);
+}
+
 function openPause() {
   gamePaused    = true;
   pauseSelected = 0;
@@ -3435,11 +3475,13 @@ function openPause() {
   document.getElementById('pause-overlay').classList.add('open');
   setControlsStrip('pause');
   if (music.unlocked) { music.audioA.pause(); music.audioB.pause(); }
+  _duckChapterAmbient(true);   // R14: silence ambient while paused
 }
 
 function closePause() {
   gamePaused = false;
   document.getElementById('pause-overlay').classList.remove('open');
+  _duckChapterAmbient(false);   // R14: restore ambient on resume
   setRoomStrip();
   if (music.on && music.unlocked) {
     const active = music.current === 'a' ? music.audioA : music.audioB;
@@ -14436,6 +14478,7 @@ ch2LowerDeckObjects.push(ch2PanObject);
 
 function startChapter2() {
   ch2State.chapter2Active = true;
+  setChapterAmbient('ch2');   // R14 per-chapter ambient
   currentChapter = 2;
   hideHUD();
   setControlsStrip('');
@@ -15443,6 +15486,7 @@ ch3BevoisObjects.push(ch3MatchesObject);
 
 function startChapter3() {
   ch3State.chapter3Active = true;
+  setChapterAmbient('ch3');   // R14 per-chapter ambient
   currentChapter = 3;
   hideHUD();
   const fade = document.getElementById('room-transition');
@@ -17072,6 +17116,7 @@ let ch4WalnutsHeld = false;
 
 function startChapter4() {
   ch4State.chapter4Active = true;
+  setChapterAmbient('ch4');   // R14 per-chapter ambient
   currentChapter = 4;
   hideHUD();
   const fade = document.getElementById('room-transition');
@@ -18248,6 +18293,7 @@ const ch5JohannesObjects   = [];
 
 function startChapter5() {
   ch5State.chapter5Active = true;
+  setChapterAmbient('ch5');   // R14 per-chapter ambient
   currentChapter = 5;
   hideHUD();
   const fade = document.getElementById('room-transition');
@@ -19669,6 +19715,7 @@ const ch6WarungObjects    = [];
 
 function startChapter6() {
   ch6State.chapter6Active = true;
+  setChapterAmbient('ch6');   // R14 per-chapter ambient
   currentChapter = 6;
   hideHUD();
   const fade = document.getElementById('room-transition');
@@ -20809,6 +20856,7 @@ const ch7HouseObjects     = [];
 
 function startChapter7() {
   ch7State.chapter7Active = true;
+  setChapterAmbient('ch7');   // R14 per-chapter ambient
   currentChapter = 7;
   hideHUD();
   const fade = document.getElementById('room-transition');
@@ -22071,6 +22119,7 @@ const ch8BabciaObjects      = [];
 
 function startChapter8() {
   ch8State.chapter8Active = true;
+  setChapterAmbient('ch8');   // R14 per-chapter ambient
   currentChapter = 8;
   hideHUD();
   const fade = document.getElementById('room-transition');

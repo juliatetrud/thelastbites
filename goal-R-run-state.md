@@ -19,8 +19,33 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
-> **R05–R11 ALL `built` (art reconciliation complete). R12 STARTED — audit done (#123);
-> mechanics implementation next.** Every Ch2–Ch8 asset derived/verified into the game,
+> **R12 IN PROGRESS — echo-rat drain built (`6665c8c`), Brussels-bag decided (`7901eb4`);
+> 4 large mechanics remain.** (R05–R11 all built: art reconciliation complete; derived-pending
+> pinned #109.) **R12 done so far:** Ch5 echo-rat strength drain (existing systems; float-to-
+> avoid; runtime-only, no schema change); Brussels-bag → permanently-narrative (locked, #110).
+> Ch2 sincerity + Ch3 Shuck verified real (no upgrade).
+>
+> **R12 REMAINING — 4 new-interaction-system builds (defaults from #123; build carefully,
+> playtest-gated, one commit + #110 log each):**
+> 1. **Ch5 memory-gifting → journal-traversal UI** (HIGH value — reusable for Ch8 finale):
+> `triggerMemoryGifting` (`:18218`) is a flat choice → open journal, arrow-cursor over
+> collected memories, space sends the valid one. Study `renderNotebookPage`/notebook input.
+> 2. **Ch4 candle puzzle → real-time 2D movement**: `runCandlePuzzleRound` (`:17028`) is a
+> 3-round dialogue-choice stub → small real-time arena (arrows carry candle; shield vs the
+> Karakoncolos breath telegraph; lose=relight+retry; dt-capped, pause-safe, gentle).
+> 3. **Ch7 three-fires → real douse sequence**: currently dialogue-only (`:20748`) → pick up
+> bucket, fill at river, douse 3 fires before the match timer.
+> 4. **Ch4 cat-alley float obstacle**: `drawCh4CatAlley` (`:17784`) has elevated echo-cats but
+> no obstacle → add a float-gated barrier (float over to follow the cats; float unlocked by
+> Ch4). **Ch4 matches inventory:** add matches as a visible item (find the Ch4 acquisition
+> point; candle already an item).
+> **Guardrails:** preserve narrative verb; gentle never cruel; D-pad+space only; `ch4State`/
+> `ch5State` may GAIN fields, never lose/rename (R15 schema stability); dt-cap real-time.
+> After all built: doc-06 rows, checkpoint `r-checkpoint-R12`, backlog each. Then R13
+> (Ch8 finale mechanics), R14 audio, R15 save, R16 recipe+credits, R17 mobile, R18 release.
+>
+> --- prior (R05–R11 art complete) ---
+> **R05–R11 ALL `built` (art reconciliation complete). R12 audit #123.** Every Ch2–Ch8 asset derived/verified into the game,
 > on-doctrine; derived-pending assets (frozen-Pätu, Ch5–Ch8 cells, Pip-shadow feel-verdict)
 > pinned atop backlog #109. R05 also migrated Pätu to shared `art-source.js` `drawPatu`.
 >

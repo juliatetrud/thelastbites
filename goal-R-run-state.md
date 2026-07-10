@@ -13,7 +13,25 @@ isn't in this file or in the tracking issues, it didn't happen.
 
 ## Resume here
 
-> **R01 `built` (checkpoint `3c01358` / `r-checkpoint-R01`, pushed); NEXT = R02.** Ch1
+> **R02 `built` (checkpoint `e8a123c` / `r-checkpoint-R02`, pushed); NEXT = R03.** R02
+> closed #24/#39/#40/#41 + the audio `IndexSizeError`: audio fade clamped to [0,1];
+> save-drop one-line title notice (#24); recipe annotation locked, REVIEW (#40); Henrik
+> exit = playscript staging, no code change (#39); Erik age locked 11 across docs (#41);
+> `goal-run-state.md` stale half removed; doc 06 queue/roadmap annotated. Surfaced a new
+> open question: **Pip's age (11 vs 12)** — filed, out of scope. Verification pending Julia
+> (backlog #109): no `IndexSizeError` across a full Ch1 play; save-drop notice shows on a
+> seeded old save.
+>
+> **Begin R03 (gallery population, Ch2–Ch4).** Read `sprints/sprint-R03-gallery-population-ch2-ch4.md`.
+> This is gallery-first art work: design/populate `art/galleries/character-gallery.html` +
+> `environment-gallery.html` for Ch2–Ch4 assets, Julia reviews galleries in-browser, then
+> R05–R07 derive them into the game via `art-source.js` → `node build.js`. Open the R03
+> child issue with the art audit (which Ch2–Ch4 assets exist in-gallery vs not) first.
+> NOTE: R03 is the first art sprint — respect the gallery-first pipeline strictly; never
+> improvise art in-game.
+>
+> --- prior resume (R01) ---
+> **R01 `built` (checkpoint `3c01358` / `r-checkpoint-R01`, pushed).** Ch1
 > dialogue reconciled to the playscript per Julia's verbatim ruling (18 swaps; grandparents
 > cinematic restored 2→5 lines; death/mirror/wire lines updated). 3 gameplay-critical lines
 > held back and logged in #110. `node --check` PARSE OK; `DEBUG_WARP=false`. R01 items added
@@ -40,7 +58,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | Sprint | Name | Status | Issue # | Checkpoint SHA | Tag |
 |---|---|---|---|---|---|
 | R01 | Ch1 playscript impl + repo hygiene | built | #111 | `3c01358` | `r-checkpoint-R01` |
-| R02 | Open-questions closeout + doc reconciliation | pending | — | — | — |
+| R02 | Open-questions closeout + doc reconciliation | built | #112 | `e8a123c` | `r-checkpoint-R02` |
 | R03 | Gallery population, Ch2–Ch4 | pending | — | — | — |
 | R04 | Gallery population, Ch5–Ch8 | pending | — | — | — |
 | R05 | Ch2 art reconciliation | pending | — | — | — |

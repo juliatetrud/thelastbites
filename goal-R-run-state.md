@@ -19,7 +19,23 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
-> **R12 `built` — ALL kinetic mechanics done (Ch2–Ch7). NEXT = R13 (Ch8 finale mechanics).**
+> **R13 STARTED — Ch8 finale audit done (#124); the game's CLIMAX.** All 3 override phases
+> are dialogue-choice stubs (`runPhase1/2/3`, `:22129/22324/22429`). **R13 spec is uniquely
+> feel-first: the ending's feel outranks the mechanics checklist; STOP+flag if kinetic fights
+> pacing; Julia decides kinetic-vs-stub per phase.** Plus a real design question surfaced in
+> #124: **Phase 1's paired-memory picker** wants a collected-paired-memory inventory that isn't
+> built (warm answers are inline in `shadowThrows`; memories are narrative flags). Defaults
+> (if 'build with your defaults'): Phase 1 = reuse R12 `giftMemoryFromJournal` per round with
+> the warm answer + 1–2 cross-chapter distractors (pick the right warmth; gentle miss/retry;
+> NOT reflex); Phase 2 = verified (keep conversational, light polish); Phase 3 = arrow-key
+> trace over a predefined path (generous tolerance). **'It's not fair.' stays a single choice**
+> (design call #4). Post-override content byte-identical. `ch8State` additive-only. Build on
+> Julia's word or 'defaults', then playtest for FEEL.
+> **After R13:** R14 audio, R15 save, R16 recipe+credits, R17 mobile, R18 release → go-live
+> gate (STOP for Julia's fresh-save playthrough + v1.0.0 tag).
+>
+> --- prior (R12 built) ---
+> **R12 `built` — ALL kinetic mechanics done (Ch2–Ch7).**
 > Built: echo-rat drain, journal-gift UI (reusable), Ch4 real-time candle puzzle, Ch7 bucket-
 > douse, Ch4 cat-alley float beat, Ch4 matches item; Brussels-bag locked narrative; Ch2/Ch3
 > verified real. All dt-capped/pause-safe/D-pad, schema-safe. Feel/difficulty = Julia's
@@ -294,7 +310,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R10 | Ch7 art reconciliation | built | #121 | `9d160b8` | `r-checkpoint-R10` |
 | R11 | Ch8 art reconciliation | built | #122 | `dd26737` | `r-checkpoint-R11` |
 | R12 | Kinetic mechanics — port chapters | built | #123 | `557fb85` | `r-checkpoint-R12` |
-| R13 | Kinetic mechanics — Ch8 finale | pending | — | — | — |
+| R13 | Kinetic mechanics — Ch8 finale | in-progress | #124 | — | — |
 | R14 | Audio + music pass | pending | — | — | — |
 | R15 | Save + persistence hardening | pending | — | — | — |
 | R16 | Recipe-site integration + credits | pending | — | — | — |

@@ -3539,7 +3539,7 @@ function update(dt) {
     _sfxWasMoving = false;
     stopMoveSfx();
   }
-  if (!dialogue.active && !transition.active && !cinematic.active && openingSeq.state === 'complete' && !panicActive && !floatDiscovery.active && !nokkenGlimpse.active) {
+  if (!dialogue.active && !transition.active && !cinematic.active && openingSeq.state === 'complete' && !panicActive && !floatDiscovery.active && !nokkenGlimpse.active && !traceActive) {
     const left  = movingLeft();
     const right = movingRight();
 
@@ -3729,6 +3729,7 @@ function update(dt) {
   updateCh5EchoRats(dt);   // R12: Ch5 lower-deck echo-rat strength drain
   updateCandlePuzzle(dt);  // R12: Ch4 real-time candle puzzle
   updateBoitataDouse(dt);  // R12: Ch7 three-fires douse
+  updatePhase3Trace(dt);   // R13: Ch8 Phase-3 trace
   updateSconceSparks(dt);
 
   // G1b: tick lightning flash timer
@@ -4994,6 +4995,7 @@ function render(now) {
     rooms[currentRoom].draw(camX, now);
     drawCandlePuzzleHud();   // R12: Ch4 candle-puzzle telegraph HUD
     drawBoitataDouseHud();   // R12: Ch7 douse HUD
+    drawPhase3TraceHud();    // R13: Ch8 Phase-3 trace HUD
 
     // Sprint 13: collect auras (warm hum) for collectibles in current room
     drawCollectAuras(camX, now);
@@ -22127,60 +22129,52 @@ function triggerShadowRises() {
 
 /* Phase 1 — Pong (shadow throws, Pip returns with warmth) */
 function runPhase1(round) {
+  // R13 — memory Pong via the R12 journal-traversal picker (giftMemoryFromJournal).
+  // The shadow throws a dark memory; Pip answers by choosing the RIGHT warm memory from
+  // the journal (the correct one + cross-chapter distractors). The difficulty is choosing
+  // the right warmth, not reaction time; a wrong pick lands gently (static + retry, never
+  // a game-over). Shadow lines + the resolve/pong narration are unchanged.
   const shadowThrows = [
     {
       shadow: '"The fire-serpent was right. Something dark rides with you. I am that dark. You have always known."',
-      hint:   'Answer it with what Joana and Beatriz taught you:',
-      choices: [
-        {
-          text: '"Give. Don\'t escape. Don\'t fight. Give." — Beatriz\'s voice. The warmth of the moqueca kitchen. The orange of the dendê.',
-          onSelect: () => resolvePhase1Round(round, true),
-        },
-        {
-          text: 'Say nothing. Let the wire try to wrap around him.',
-          onSelect: () => resolvePhase1Round(round, false),
-        },
+      memories: [
+        { label: '"Food carries the story of the person who made it." — Henrik, the first taste.', correct: false },
+        { label: '"Give. Don\'t escape. Don\'t fight. Give." — Beatriz, the moqueca kitchen, the orange of the dendê.', correct: true },
+        { label: '"Kodused kotletid — homemade. A kitchen that remembers you." — Leida, Käsmu.', correct: false },
       ],
     },
     {
       shadow: '"You infected someone else with my grief. You spread the dark into the Pocong. You carry sickness."',
-      hint:   'Answer it with what you know about the Pocong:',
-      choices: [
-        {
-          text: '"We answered those memories with warmth. Knot by knot. And the Pocong walked free. Dark answered with warmth is not dark anymore."',
-          onSelect: () => resolvePhase1Round(round, true),
-        },
-        {
-          text: 'Say nothing. Flinch.',
-          onSelect: () => resolvePhase1Round(round, false),
-        },
+      memories: [
+        { label: '"We answered those memories with warmth. Knot by knot. And the Pocong walked free. Dark answered with warmth is not dark anymore."', correct: true },
+        { label: '"The Dundee table. Nine chairs. A family that stayed loud and warm." — Sandy.', correct: false },
+        { label: '"A grandmother\'s hands teaching two boys in the orchard." — Muhittin, the walnuts.', correct: false },
       ],
     },
     {
       shadow: '"The Mamlambo saw what I am. She tried to take it from you. You had to give something away to stop her."',
-      hint:   'Answer it with Iris:',
-      choices: [
-        {
-          text: '"What she took, I gave back to someone who needed it. I didn\'t lose it. I sent it where it could do something."',
-          onSelect: () => resolvePhase1Round(round, true),
-        },
-        {
-          text: 'Pull back. Let the wire tighten.',
-          onSelect: () => resolvePhase1Round(round, false),
-        },
+      memories: [
+        { label: '"The Dundee table. Nine chairs, a family that stayed." — Sandy.', correct: false },
+        { label: '"Food carries the story of the person who made it." — Henrik.', correct: false },
+        { label: '"What she took, I gave back to someone who needed it. I didn\'t lose it. I sent it where it could do something." — Iris.', correct: true },
       ],
     },
   ];
-
   const item = shadowThrows[round - 1];
   showDialogue({
-    id: `ch8-phase1-${round}`,
+    id: `ch8-phase1-throw-${round}`,
     lines: [
       { speaker: 'SHADOW', text: item.shadow, italic: false },
-      { speaker: null,     text: item.hint, italic: true },
+      { speaker: null,     text: 'A dark memory drifts toward Pip, slow. He reaches into the journal for the warmth that answers it.', italic: true },
     ],
-    choices: item.choices,
-    onEnd: null,
+    choices: null,
+    onEnd: function () {
+      giftMemoryFromJournal(
+        [{ speaker: null, text: "Which warmth answers this one?", italic: true }],
+        item.memories,
+        function (mem) { resolvePhase1Round(round, mem.correct); }
+      );
+    },
   });
 }
 
@@ -22436,12 +22430,86 @@ function runPhase3(round) {
       { speaker: null, text: "It stops on a still image. The ending is missing.", italic: true },
       { speaker: null, text: item.action, italic: true },
     ],
-    choices: item.choices.map(c => ({
-      text: c.text,
-      onSelect: () => resolvePhase3Round(round, c.correct),
-    })),
-    onEnd: null,
+    choices: null,
+    onEnd: () => startPhase3Trace(round),
   });
+}
+
+/* ================================================================
+   R13 — Phase 3 "trace the missing piece": a keyboard-first arrow-key trace over a
+   predefined path (no mouse — keyboard/D-pad parity). Hold the arrow toward the next
+   point to advance a warm-light fill along the line; reach the end to complete the
+   fragment. Generous (any forward-ish input advances at a steady pace) — the register
+   is completion, not challenge; there is no fail state. Pip's own movement is locked
+   while tracing (arrows drive the cursor). dt-capped, pause-safe. Transient state. */
+const PHASE3_PATHS = [
+  [ {x:170,y:175},{x:205,y:145},{x:240,y:132},{x:275,y:145},{x:310,y:175} ],
+  [ {x:185,y:182},{x:240,y:120},{x:295,y:182} ],
+  [ {x:175,y:150},{x:210,y:178},{x:245,y:128},{x:280,y:172},{x:305,y:148} ],
+];
+let traceActive = false;
+let traceRound  = 1;
+let traceSeg    = 0;
+let traceCursor = { x: 0, y: 0 };
+
+function startPhase3Trace(round) {
+  traceActive = true;
+  traceRound  = round;
+  traceSeg    = 0;
+  const p = PHASE3_PATHS[Math.min(round - 1, PHASE3_PATHS.length - 1)];
+  traceCursor = { x: p[0].x, y: p[0].y };
+  if (typeof setControlsStrip === 'function') setControlsStrip('room');
+}
+
+function updatePhase3Trace(dt) {
+  if (!traceActive) return;
+  const path = PHASE3_PATHS[Math.min(traceRound - 1, PHASE3_PATHS.length - 1)];
+  if (traceSeg >= path.length - 1) {
+    traceActive = false;
+    resolvePhase3Round(traceRound, true);
+    return;
+  }
+  const b = path[traceSeg + 1];
+  const dx = b.x - traceCursor.x, dy = b.y - traceCursor.y;
+  const segLen = Math.hypot(dx, dy) || 1;
+  const dirx = dx / segLen, diry = dy / segLen;
+  let ix = 0, iy = 0;
+  if (keys && keys['ArrowLeft'])  ix -= 1;
+  if (keys && keys['ArrowRight']) ix += 1;
+  if (keys && keys['ArrowUp'])    iy -= 1;
+  if (keys && keys['ArrowDown'])  iy += 1;
+  if (ix * dirx + iy * diry > 0) {               // holding roughly toward the next point
+    const step = 130 * dt;
+    traceCursor.x += dirx * step;
+    traceCursor.y += diry * step;
+    if ((b.x - traceCursor.x) * dirx + (b.y - traceCursor.y) * diry <= 0) {
+      traceCursor.x = b.x; traceCursor.y = b.y; traceSeg++;
+    }
+  }
+}
+
+function drawPhase3TraceHud() {
+  if (!traceActive) return;
+  const path = PHASE3_PATHS[Math.min(traceRound - 1, PHASE3_PATHS.length - 1)];
+  // dim full path (the fragment outline)
+  ctx.strokeStyle = 'rgba(150,175,220,0.35)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(path[0].x, path[0].y);
+  for (let i = 1; i < path.length; i++) ctx.lineTo(path[i].x, path[i].y);
+  ctx.stroke();
+  // warm traced portion up to the cursor
+  ctx.strokeStyle = '#ffcf70'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(path[0].x, path[0].y);
+  for (let i = 1; i <= traceSeg; i++) ctx.lineTo(path[i].x, path[i].y);
+  ctx.lineTo(traceCursor.x, traceCursor.y); ctx.stroke();
+  ctx.lineWidth = 1;
+  // cursor
+  ctx.fillStyle = '#fff0c0';
+  ctx.fillRect(Math.round(traceCursor.x) - 2, Math.round(traceCursor.y) - 2, 4, 4);
+  // prompt
+  ctx.fillStyle = 'rgba(6,10,20,0.7)'; ctx.fillRect(0, 0, 480, 20);
+  ctx.fillStyle = '#e8d8b0'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center';
+  ctx.fillText('Trace the missing piece — hold the arrows to follow the line.', 240, 13);
+  ctx.textAlign = 'left';
 }
 
 function resolvePhase3Round(round, correct) {

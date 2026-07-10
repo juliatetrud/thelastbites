@@ -344,6 +344,14 @@ In Ch8's veil-crossing they are described as *themselves, whole, alive in the wa
 
 # Per-chapter chefs and named NPCs
 
+> **Gallery-canonical (R03, 2026-07-10).** Every Ch2–Ch4 chef, NPC, monster, and
+> echo-creature below now has an approved draw function in `character-gallery.html` (the
+> Ch2–Ch4 cast was ported/authored in Sprint R03 and approved in #114). Per the
+> source-of-truth hierarchy, **the gallery draw function is the visual canon** for these
+> characters — the prose here is descriptive support, superseded by the gallery where they
+> differ. (Frozen-Pätu is the Ch4 ice variant of Pätu: `drawPatu` verbatim + an ice overlay,
+> never a re-drawn silhouette.)
+
 ## Leida (Ch2 — Estonia)
 
 **Canonical description.** Estonian grandmother. Real, human, living alone in a wooden cottage on the village's edge. Long widowed — her husband was the starving boy on the cold step in her taste-memory, and they had a life together that ended. She is at peace with it. Older than Henrik but old. She has known the Haldjas her whole life; her mother knew the Haldjas; her grandmother before that.

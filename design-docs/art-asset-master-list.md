@@ -220,55 +220,55 @@
 
 - **CH3-CHAR-01 — Sandy Dundee (ghost).** Scottish ghost-chef; YoYo Games hoodie (identity marker), tall, kind, freckled; structural inversion — the ghost is the chef rather than the monster.
   source: ch03-southampton-outline.md; 08-character-reference-sheets.md §Sandy.
-  gallery: existing (designed: false — id: 'sandy-ghost').
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH3-CHAR-02 — Caitlin.** Sandy's wife; center-of-gravity presence; warm and sharp; Dundee kitchen.
   source: ch03-southampton-outline.md; 08-character-reference-sheets.md §Caitlin.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH3-CHAR-03 — Robert.** Sandy's eldest son; tall, muscular, brown hair; Dundee kitchen.
   source: ch03-southampton-outline.md; 08-character-reference-sheets.md §Robert.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH3-CHAR-04 — Archie.** Sandy's second son; tall, skinny, brown hair; "almost-sees Sandy" beat.
   source: ch03-southampton-outline.md; 08-character-reference-sheets.md §Archie.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH3-CHAR-05 — Max.** Sandy's son; shorter, brown hair; Dundee kitchen background figure.
   source: ch03-southampton-outline.md; 08-character-reference-sheets.md §Max.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH3-CHAR-06 — Gus.** Sandy's son; shorter, brown hair; Dundee kitchen background figure.
   source: ch03-southampton-outline.md; 08-character-reference-sheets.md §Gus.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH3-CHAR-07 — Bibi.** Sandy's youngest daughter; long light-brown hair; Pip's approximate age; most receptive to Sandy's presence.
   source: ch03-southampton-outline.md; 08-character-reference-sheets.md §Bibi.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH3-CHAR-08 — Edie.** Old Cockney ghost; pier wine shop; apron, headscarf, brass-buttoned cardigan; gives Pip a bottle and a cryptic line.
   source: ch03-southampton-outline.md; 08-character-reference-sheets.md §Edie.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH3-CHAR-09 — Michel.** French dinner guest at the Dundee table; warm dark eyes; brief warm presence; Ch3 only.
   source: ch03-southampton-outline.md.
-  gallery: not-yet-present. (No physical description beyond "French man" — see Open Questions #3.)
+  gallery: existing (designed: true — authored R03, 2026-07-10). (No physical description beyond "French man" — see Open Questions #3.)
 
 - **CH3-CHAR-10 — Michel's wife.** Dinner guest; brunette; brief warm presence; Ch3 only.
   source: ch03-southampton-outline.md.
-  gallery: not-yet-present. (Minimal description — see Open Questions #3.)
+  gallery: existing (designed: true — authored R03, 2026-07-10). (Minimal description — see Open Questions #3.)
 
 - **CH3-CHAR-11 — Black Shuck.** Suffolk ghost-dog; massive, omen-of-death silhouette; dark, low-slung, red-eyed; Ch3 monster.
   source: ch03-southampton-outline.md; 08-character-reference-sheets.md §Black Shuck.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH3-CHAR-12 — Echo-fish (three species).** Ch3 echo-creature (lower deck); warm-amber translucent; cod, haddock, and plaice variants.
   source: ch03-southampton-outline.md (Traversal beat); 08-character-reference-sheets.md §Echo-creatures (Ch3).
-  gallery: existing (designed: false — echo-fish-cod, echo-fish-haddock, echo-fish-plaice).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH3-CHAR-13 — Echo-deer.** Ch3 echo-creature (street traversal, not lower deck); warm-amber translucent; Bevois Street, Southampton.
   source: ch03-southampton-outline.md (street traversal); 08-character-reference-sheets.md §Echo-creatures (Ch3).
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 ---
 
@@ -318,19 +318,19 @@
 
 - **CH4-CHAR-01 — Karakoncolos.** Turkish winter-spirit; dark-furred, cold breath, cold-blue eye-glow; haunts a frozen square; Ch4 monster.
   source: ch04-turkiye-outline.md; 08-character-reference-sheets.md §Karakoncolos.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH4-CHAR-02 — Muhittin.** Turkish chef; late 20s, warm, curious, short dark hair; house kitchen in Istanbul.
   source: ch04-turkiye-outline.md; 08-character-reference-sheets.md §Muhittin.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH4-CHAR-03 — Omer.** Muhittin's brother; tennis-casual dress; appears in taste-memory walnut-orchard scene.
   source: ch04-turkiye-outline.md; 08-character-reference-sheets.md §Omer.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH4-CHAR-04 — Brian.** Omer's American friend; taste-memory walnut scene.
   source: ch04-turkiye-outline.md; 08-character-reference-sheets.md §Brian.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 - **CH4-CHAR-05 — Muhittin's grandmother (taste-memory).** Elderly woman; walnut orchard, late autumn; watches two boys test walnuts; no physical description beyond "grandmother."
   source: ch04-turkiye-outline.md (taste-memory beat).
@@ -338,7 +338,7 @@
 
 - **CH4-CHAR-06 — Echo-cats.** Ch4 echo-creature; stray cats; warm-amber translucent; Ch4 stray-cat alley traversal.
   source: ch04-turkiye-outline.md (Traversal beat); 08-character-reference-sheets.md §Echo-creatures (Ch4).
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R03, 2026-07-10).
 
 ---
 

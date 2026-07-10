@@ -13,11 +13,33 @@ isn't in this file or in the tracking issues, it didn't happen.
 
 ## Resume here
 
-> **R03 in-progress — ALL Ch2–Ch4 characters ported (`567599b`); environments + cinematic
-> frames remain.** Julia to review the whole set in one pass (she chose bulk-port over
-> per-batch review). Audit + port mechanic in #114 (in-game `(screenX,groundY,now-ms)`
-> global-ctx → gallery `(ctx,_CX,_FLOOR,_T,_SP)` verbatim-body wrapper; placeholder entries
-> upgraded designed:false→true).
+> **R03 in-progress — characters DONE + approved (frozen-Pätu reworked), Ch2 environments
+> DONE; Ch3/Ch4 environments + cinematic frames REMAIN.** Julia reviewed the character
+> cells: **approved all except frozen-Pätu**, which was a diagnosed defect (GOAL-1
+> hand-built a blue-blob cat, not `drawPatu`+ice) — reworked as `drawFrozenPatuCh4`
+> (`681a1f9`, canonical `drawPatu` verbatim + ice on top), re-flagged REWORKED in #114.
+> **Ch2 environments authored** (`6c1ac18`): CH2-ROOM-01 lower decks, CH2-ROOM-02 cottage,
+> CH2-BG-01 Käsmu village — env cells are purpose-built 200×113 illustrations (NOT scaled
+> game renders), composed on-doctrine; wired via `DRAW_FNS` registry + `designed:true`.
+>
+> **REMAINING for R03:**
+> 1. **Ch3 environments** → `environment-gallery.html`: lower deck (crimson carpet, sea-blue
+>    portholes); dockyard (streetlamp amber, cranes, moored boat, Edie's wine shop); Bevois
+>    Street (row houses, Dundee glow, newsstand); Sandy's kitchen (yellow walls, range, pine
+>    table, fridge drawing, hoodie). IDs: CH3-ROOM-01/02, CH3-BG-01/02/03 (placeholders
+>    exist; wire like Ch2: new `drawCh3*Cell` fn + `DRAW_FNS` entry + flip `designed:true`).
+> 2. **Ch4 environments**: cat alley; frozen square (`drawCh4FrozenSquare` ref); Muhittin's
+>    kitchen (İznik tile, wood oven). IDs CH4-ROOM-01/02, CH4-BG-01/02/03.
+> 3. **Cinematic frames** (Ch2 object-memory-pan, lunchbox-taste; Ch3 curry-taste-memory;
+>    Ch4 muhammara-orchard) — likely PROP/CIN cells or a new section.
+> 4. **Master-list per-ID marking** (Ch3/Ch4 chars + all envs) + `08-char-ref` "gallery
+>    canonical" notes + doc 06 **Sprint History row** — all land at R03 close.
+>
+> **Env-cell method (established):** author a `drawCh#XxxCell(ctx, t)` (200×113, `FY=100`,
+> helpers `_cellBg`/`_r`/`_wallPanels`/`_lbl`, palette `P`), add to the `DRAW_FNS` registry
+> by asset ID, flip the entry `designed:true`. On-doctrine: no black outlines (use dark
+> palette colours, never `#000`/`stroke()`), single warm interior light via glows.
+> Do NOT tag `r-checkpoint-R03` until R03 is `built`. Prior port mechanic + audit in #114.
 >
 > **Characters DONE in `character-gallery.html` (all node --check PARSE OK, no black outlines,
 > no dup names, all drawFn refs resolve, 34 designed:true):**

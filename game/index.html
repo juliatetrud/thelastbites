@@ -704,6 +704,17 @@
     font-style: italic;
     letter-spacing: 0.04em;
   }
+  /* R02 (#24): one-line save-dropped notice, subtle and warm */
+  #save-notice {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(11px, 1.4vw, 14px);
+    color: var(--text-amber, #d8b46a);
+    text-align: center;
+    margin-top: 1.5%;
+    opacity: 0.82;
+    font-style: italic;
+    letter-spacing: 0.03em;
+  }
 
   #title-menu-panel {
     margin-top: 5%;
@@ -1032,6 +1043,8 @@
     <div id="title-screen">
       <div id="title-text">THE LAST BITES</div>
       <div id="title-subtitle"><em>A ghost-boy. A haunted ship. One last meal.</em></div>
+      <!-- R02 (#24): shown only when an older-schema save was found and dropped -->
+      <div id="save-notice" style="display:none;">Your voyage was from an earlier version — starting anew.</div>
       <div id="title-menu-panel">
         <div class="title-item selected" id="title-item-play">Play</div>
         <div class="title-item" id="title-item-about">About</div>
@@ -1489,6 +1502,9 @@ const cabinCollection = {
 
 const SAVE_KEY     = 'tlb-save-v2';
 const SAVE_VERSION = 2;
+// R02 (#24): set true when loadSave() finds an older-schema save and starts fresh, so the
+// title screen can show a one-line gentle notice instead of dropping the save silently.
+let saveWasDropped = false;
 
 function buildSaveObject() {
   return {
@@ -1539,6 +1555,7 @@ function loadSave() {
     const data = JSON.parse(raw);
     if (data.version !== SAVE_VERSION) {
       console.log('[TLB] Save version mismatch (found', data.version, ', expected', SAVE_VERSION, '). Starting fresh.');
+      saveWasDropped = true;   // R02 (#24): title screen shows a one-line notice
       return null;
     }
     return data;
@@ -11423,8 +11440,8 @@ function addKitchenRecipe() {
   if (notebook.items.some(function(i) { return i.id === 'recipe-lefse-gravlaks'; })) return;
   notebook.items.push({
     id:         'recipe-lefse-gravlaks',
-    name:       'Norwegian lefse and gravlaks',
-    annotation: 'Norwegian lefse and gravlaks — with Norwegian pickles.',
+    name:       'Norwegian lefse and gravlaks',   // load-bearing display name (R16 recipe map) — do not rename
+    annotation: 'Lefse and gravlaks, with pickles — the way Henrik makes them.',  // R02 #40 locked copy (REVIEW)
     kind:       'recipe',
     sprite:     null,
   });
@@ -12334,8 +12351,11 @@ function playMusic(trackId) {
 
   function fade(now) {
     const t = Math.min((now - startTime) / FADE_MS, 1);
-    activeEl.volume  = fromVol * (1 - t);
-    incomingEl.volume = music.on ? music.baseVolume * t : 0;
+    // R02 (#112): clamp to [0,1]. An overlapping crossfade re-trigger (a new switchTrack
+    // while music.crossfading is already true) can drive these computed volumes slightly
+    // out of range (≈ -0.016), throwing IndexSizeError on assignment.
+    activeEl.volume  = Math.max(0, Math.min(1, fromVol * (1 - t)));
+    incomingEl.volume = Math.max(0, Math.min(1, music.on ? music.baseVolume * t : 0));
 
     if (t < 1) {
       requestAnimationFrame(fade);
@@ -13209,6 +13229,12 @@ function initTitleScreen() {
   if (titleState.savedGame) {
     document.getElementById('title-item-play').textContent = 'Continue';
     document.getElementById('title-item-startover').style.display = '';
+  }
+
+  // R02 (#24): if an older-schema save was found and dropped, show the one-line notice
+  if (saveWasDropped) {
+    const notice = document.getElementById('save-notice');
+    if (notice) notice.style.display = '';
   }
 
   // Mouse hover changes selection

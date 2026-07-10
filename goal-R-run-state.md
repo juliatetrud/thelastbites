@@ -19,25 +19,23 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
-> **R04 CONTENT-COMPLETE — ALL Ch5–Ch8 gallery cells done (chars `135cd3f` + envs
-> `908c121`); AWAITING Julia's review.** Characters: 49 designed:true (Ch5 Iris/Mamlambo/
-> Johannes/echo-rat; Ch6 Tirta/echo-tarsier; Ch7 Boitatá/Joana/Beatriz/capuchin; Ch8 Pip's
-> parents/Pip-shadow + namespaced babcia-ch8/dziadek-ch8; Pocong+Erik pre-existing).
-> Environments: 59 designed:true (16 new Ch5–Ch8 ROOM/BG cells, on-doctrine, wired via
-> `DRAW_FNS`). node --check PARSE OK throughout; no black outlines; no dup base names.
-> **Flagged for Julia (#115):** Pip-shadow register (emotional climax); Boitatá cell framing
-> (world coil extends above the cell).
+> **R04 `built` + closed (`0a0cb74` / `r-checkpoint-R04`, #115 closed on Julia's instruction).
+> Galleries COMPLETE for the whole game (Ch1–Ch8). NEXT = R05 (Ch2 art reconciliation).**
+> Master-list marked (13 Ch5–Ch8 char IDs), 08-char-ref note extended to Ch2–Ch8, Sprint
+> History + Decisions Log landed (Pip-shadow approved; Ch8 grandparents namespaced permanent
+> canon; Boitatá cell framing flagged non-blocking).
 >
-> **REMAINING for R04 (at CLOSE, after Julia's review — same as R03 close-out):**
-> 1. Master-list per-ID marking for the Ch5–Ch8 character IDs (CHAR entries only carry a
->    gallery-status line; ROOM/BG don't, by the list's convention).
-> 2. `08-char-ref` gallery-canonical note extension for Ch5–Ch8.
-> 3. doc 06 Sprint History R04 row + Decisions Log.
-> 4. Flip R04 → `built`, tag `r-checkpoint-R04`.
->
-> On Julia's "close out R04" (or review notes → fix-commits), do the above. Then R05 begins
-> (Ch2 art reconciliation — derive R03's Ch2 gallery cells into `game/index.html` via the
-> `art-source.js` → `node build.js` pipeline).
+> **Begin R05 — Ch2 art reconciliation (`sprints/sprint-R05-ch2-art-reconciliation.md`).**
+> DIFFERENT sprint type: *derive* the approved Ch2 gallery draw functions verbatim INTO
+> `game/index.html` (replacing GOAL-1's off-model in-game art), via the `art-source.js` →
+> `node build.js` pipeline; then Ch2 gets its FIRST real in-browser verification (review-gated,
+> Ch2 block of #78). **Audit before any edit** — list every Ch2 asset on/off-model vs its
+> gallery function; if an asset has no gallery source, STOP + flag. Art swaps must NOT change
+> collision boxes / trigger zones / beat order. Verify Pätu uses the shared `drawPatu`, not a
+> local copy. NOTE: Ch2 characters (Leida/Haldjas) — the gallery was *ported from* the in-game
+> code in R03, so game≈gallery already (reconciliation may be minimal); the env-cell (200×113
+> preview) is NOT the game room render, so env reconciliation is a doctrine check on the game's
+> room code, not a verbatim swap. Open the R05 child issue with the Ch2 audit first.
 >
 > **Method (same as R03):** character wrapper `function drawX(ctx,_CX,_FLOOR,_T,_SP){ const
 > sx=_CX, sy=_FLOOR, groundY=_FLOOR, now=_T*1000, speaking=_SP, looking=_SP, idx=0; <body
@@ -149,7 +147,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R01 | Ch1 playscript impl + repo hygiene | built | #111 | `3c01358` | `r-checkpoint-R01` |
 | R02 | Open-questions closeout + doc reconciliation | built | #112 | `e8a123c` | `r-checkpoint-R02` |
 | R03 | Gallery population, Ch2–Ch4 | built | #114 | `32d3f13` | `r-checkpoint-R03` |
-| R04 | Gallery population, Ch5–Ch8 | in-progress | #115 | — | — |
+| R04 | Gallery population, Ch5–Ch8 | built | #115 | `0a0cb74` | `r-checkpoint-R04` |
 | R05 | Ch2 art reconciliation | pending | — | — | — |
 | R06 | Ch3 art reconciliation | pending | — | — | — |
 | R07 | Ch4 art reconciliation | pending | — | — | — |

@@ -22,24 +22,26 @@ isn't in this file or in the tracking issues, it didn't happen.
 > CH2-BG-01 Käsmu village — env cells are purpose-built 200×113 illustrations (NOT scaled
 > game renders), composed on-doctrine; wired via `DRAW_FNS` registry + `designed:true`.
 >
-> **REMAINING for R03:**
-> 1. **Ch3 environments** → `environment-gallery.html`: lower deck (crimson carpet, sea-blue
->    portholes); dockyard (streetlamp amber, cranes, moored boat, Edie's wine shop); Bevois
->    Street (row houses, Dundee glow, newsstand); Sandy's kitchen (yellow walls, range, pine
->    table, fridge drawing, hoodie). IDs: CH3-ROOM-01/02, CH3-BG-01/02/03 (placeholders
->    exist; wire like Ch2: new `drawCh3*Cell` fn + `DRAW_FNS` entry + flip `designed:true`).
-> 2. **Ch4 environments**: cat alley; frozen square (`drawCh4FrozenSquare` ref); Muhittin's
->    kitchen (İznik tile, wood oven). IDs CH4-ROOM-01/02, CH4-BG-01/02/03.
-> 3. **Cinematic frames** (Ch2 object-memory-pan, lunchbox-taste; Ch3 curry-taste-memory;
->    Ch4 muhammara-orchard) — likely PROP/CIN cells or a new section.
-> 4. **Master-list per-ID marking** (Ch3/Ch4 chars + all envs) + `08-char-ref` "gallery
->    canonical" notes + doc 06 **Sprint History row** — all land at R03 close.
+> **ALL Ch2–Ch4 environments DONE** (`e8805a1`, 13 ROOM/BG cells; env designed:true = 43):
+> Ch2 lower decks/cottage/village; Ch3 lower decks, Sandy's kitchen, dockyard, Bevois St,
+> Edie's shop; Ch4 cat alley, Muhittin's kitchen, harbor, frozen square, walnut orchard.
+> All wired via `DRAW_FNS` + `designed:true`, on-doctrine, node --check PARSE OK. Awaiting
+> Julia's env review (#114), together with frozen-Pätu re-review.
 >
-> **Env-cell method (established):** author a `drawCh#XxxCell(ctx, t)` (200×113, `FY=100`,
-> helpers `_cellBg`/`_r`/`_wallPanels`/`_lbl`, palette `P`), add to the `DRAW_FNS` registry
-> by asset ID, flip the entry `designed:true`. On-doctrine: no black outlines (use dark
-> palette colours, never `#000`/`stroke()`), single warm interior light via glows.
-> Do NOT tag `r-checkpoint-R03` until R03 is `built`. Prior port mechanic + audit in #114.
+> **REMAINING for R03 (all at R03 CLOSE — after Julia approves env + frozen-Pätu):**
+> 1. **Master-list per-ID marking**: mark designed the Ch3/Ch4 character IDs + all Ch2–Ch4
+>    ROOM/BG IDs in `art-asset-master-list.md` (only CH2-CHAR-02/03 marked so far).
+> 2. **`08-character-reference-sheets.md`**: add "gallery canonical" notes per ported character.
+> 3. **doc 06 Sprint History row** for R03 (the DoD wants it with the FINAL gallery state).
+> 4. Then flip R03 → `built`, tag `r-checkpoint-R03`.
+>
+> **Cinematic-frame decision (logged #110):** only `muhammara-orchard` = CH4-BG-03 (done);
+> the ID-less taste-memory frames stay inline cinematic renders, not gallery cells.
+>
+> **Env-cell method (established):** `drawCh#XxxCell(ctx, t)` (200×113, `FY=100`, helpers
+> `_cellBg`/`_r`/`_wallPanels`/`_lbl`, palette `P`) + `DRAW_FNS` registry entry by asset ID
+> + flip `designed:true`. No black outlines (dark palette colours, never `#000`/`stroke()`);
+> warm interior light via glows. Do NOT tag `r-checkpoint-R03` until R03 is `built` (#114).
 >
 > **Characters DONE in `character-gallery.html` (all node --check PARSE OK, no black outlines,
 > no dup names, all drawFn refs resolve, 34 designed:true):**

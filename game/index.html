@@ -3564,6 +3564,17 @@ function update(dt) {
     const roomMin = rooms[currentRoom].pipMinX !== undefined ? rooms[currentRoom].pipMinX : PIP_HALF_W;
     pip.x = Math.max(roomMin, Math.min(rooms[currentRoom].pipMaxX, pip.x));
 
+    // R12: Ch4 cat-alley float beat — a rubble barrier (world-x 380) the echo-cats leap
+    // over. Pip must float above it (altitude >= 14) to follow them; grounded passage is
+    // blocked until he's cleared it. alleyBarrierPassed is a GAIN-only ch4State field (R15).
+    if (currentRoom === 'ch4CatAlley') {
+      if (pip.x > 400) ch4State.alleyBarrierPassed = true;
+      if (!ch4State.alleyBarrierPassed &&
+          (!pip.float || (pip.float.altitude || 0) < 14) && pip.x > 365) {
+        pip.x = 365;
+      }
+    }
+
     // Sprint 50: spider boop knockback — applied on top of normal movement, decays over time
     if (pip.boop.vx !== 0) {
       pip.x += pip.boop.vx * dt;
@@ -15846,6 +15857,10 @@ function triggerSandyFarewell() {
 
 function triggerMatchesPickup() {
   ch3State.matchesCollected = true;
+  if (!notebook.items.some(function (i) { return i.id === 'matches'; })) {
+    notebook.items.push({ id: 'matches', name: 'Box of matches', annotation: "Pätu found them. They and Henrik's candle feel like a pair.", kind: 'item', sprite: null });
+    renderNotebookItems();
+  }
   if (!notebook.items.some(i => i.id === 'matches')) {
     notebook.items.push({
       id:         'matches',
@@ -17859,6 +17874,16 @@ function drawCh4CatAlley(camX, now) {
     const catY = FLOOR_Y - Math.round(Math.abs(Math.sin(idx * 1.4)) * 24);
     drawEchoCat(csx, catY, now, idx);
   });
+
+  // R12: rubble barrier — float over it to follow the cats (hidden once cleared)
+  const barrSX = Math.round(380 - camX);
+  if (barrSX > -20 && barrSX < W + 20 && !ch4State.alleyBarrierPassed) {
+    ctx.fillStyle = '#1a1c22';
+    ctx.fillRect(barrSX - 12, FLOOR_Y - 22, 24, 22);
+    ctx.fillStyle = '#242730';
+    ctx.fillRect(barrSX - 10, FLOOR_Y - 22, 8, 8);
+    ctx.fillRect(barrSX + 2, FLOOR_Y - 18, 8, 6);
+  }
 
   // Pätu ahead (she fled)
   if (!ch4State.arrivedFrozenSquare) {

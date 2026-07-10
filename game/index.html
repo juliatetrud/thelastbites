@@ -18241,18 +18241,26 @@ function triggerIrisDialogue() {
   });
 }
 
-function triggerMemoryGifting() {
+/* R12 — reusable journal memory-gifting selection. Frames it as opening the journal and
+   picking which collected memory to send back, using the proven arrow+space choice UI
+   (D-pad + single button safe). `memories` = [{ id, label }]; onSend(memory) runs the
+   outcome. Reusable for the Ch8 paired-memory finale (pass multiple; onSend validates).
+   Autonomous default (logged #110): delivers the select-a-memory FUNCTION via the choice
+   UI rather than a bespoke notebook-cursor overlay — lower risk, mobile-safe; a richer
+   notebook-browse overlay can be a later polish. */
+function giftMemoryFromJournal(setupLines, memories, onSend) {
   showDialogue({
-    id: 'ch5-gifting-setup',
-    lines: [
-      { speaker: null, text: "Pip has the memory now. He looks at Iris. He understands what she needs.", italic: true },
-      { speaker: null, text: "The journal entry formed when he touched the switchblade: Iris's family at dinner. The dining room. Her father's hands. Her mother saying eat your sprouts.", italic: true },
-      { speaker: null, text: "He could send it back.", italic: true },
-    ],
-    choices: [
-      {
-        text: "Give the memory back to Iris.",
-        onSelect() {
+    id: 'journal-memory-select',
+    lines: setupLines,
+    choices: memories.map(function (mem) {
+      return { text: mem.label, onSelect() { onSend(mem); } };
+    }),
+    onEnd: null,
+  });
+}
+
+/* Ch5 outcome of sending Iris's memory back — preserved verbatim from the prior flat choice. */
+function sendIrisMemory() {
           ch5State.memoryGiftingEarned = true;
           if (!pip.abilities) pip.abilities = {};
           pip.abilities.memoryGifting = true;
@@ -18279,11 +18287,23 @@ function triggerMemoryGifting() {
               onEnd: () => triggerIrisFinishMeal(),
             });
           });
-        },
-      },
+        
+}
+
+function triggerMemoryGifting() {
+  // Ch5: the only giftable memory is Iris's dining room (formed when Pip touched the switchblade).
+  const memories = [
+    { id: 'iris-dining', label: "Send it: Iris's family at dinner — the dining room, the sprouts." },
+  ];
+  giftMemoryFromJournal(
+    [
+      { speaker: null, text: "Pip opens the journal. He turns to the memory that formed when he touched the switchblade.", italic: true },
+      { speaker: null, text: "Iris's family at dinner. The dining room. Her father's hands. Her mother saying eat your sprouts.", italic: true },
+      { speaker: null, text: "He turns to it and chooses.", italic: true },
     ],
-    onEnd: null,
-  });
+    memories,
+    function (mem) { sendIrisMemory(); }
+  );
 }
 
 function addSwitchbladeToInventory() {

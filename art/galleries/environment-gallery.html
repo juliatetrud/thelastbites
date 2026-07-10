@@ -1328,6 +1328,163 @@ function drawCh2CottageCell(ctx, t) {
   _lbl(ctx, "Leida's Cottage");
 }
 
+
+/* =============================================================
+   CH3 — SOUTHAMPTON, ENGLAND  (R03 gallery population)
+   Purpose-built 200×113 cell illustrations from the ch03 outline. No black outlines;
+   warm interior light via glows; slate-blue exteriors, warm Dundee-kitchen interior.
+   ============================================================= */
+
+/* CH3-ROOM-01 — Mnemosyne lower decks (Ch3): cramped submerged-feeling corridor, crimson
+   carpet, sea-blue portholes, warm-amber echo-fish drifting. */
+function drawCh3LowerDeckCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0a1424', sky2:'#101e32', sky3:'#0c1828', floor:P.carpet});
+  _wallPanels(ctx, false);
+  _r(ctx, 0, 0, 200, 14, '#0a1018'); _r(ctx, 0, 14, 200, 1, P.brassEdge);
+  _r(ctx, 0, FY, 200, 13, P.carpet); _r(ctx, 0, FY, 200, 1, P.carpetEdge); _r(ctx, 84, FY, 32, 13, '#8a1c34');
+  for (const cxp of [56, 144]) { _r(ctx, cxp-8, 36, 16, 16, P.brass); _r(ctx, cxp-6, 38, 12, 12, '#123048'); _r(ctx, cxp-8, 36, 16, 2, P.brassHi); }
+  for (const f of [[70,60,0],[130,72,1.5]]) {
+    const a=(0.30+Math.sin(t*1.4+f[2])*0.15).toFixed(2); const dx=Math.round(Math.sin(t*0.6+f[2])*6);
+    _r(ctx, f[0]+dx, f[1], 6, 3, 'rgba(255,180,90,'+a+')'); _r(ctx, f[0]+dx-2, f[1]+1, 2, 1, 'rgba(255,180,90,'+a+')');
+  }
+  ctx.fillStyle='rgba(30,60,110,0.10)'; ctx.fillRect(0, 0, 200, FY);
+  _lbl(ctx, 'Lower Decks (Ch3)');
+}
+
+/* CH3-ROOM-02 — The Dundee / Sandy's kitchen: warm yellow walls, Aga range with glow, long
+   pine table, fridge with a child's drawing, Sandy's chair at the head with a hoodie draped. */
+function drawCh3DundeeKitchenCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#3a2e10', sky2:'#443614', sky3:'#3a2c10', floor:'#4a3818'});
+  ctx.fillStyle='rgba(220,180,70,0.10)'; ctx.fillRect(0, 0, 200, FY);
+  _r(ctx, 14, 54, 40, 46, '#2a2018'); _r(ctx, 14, 54, 40, 2, '#3a2e18');
+  const ra=(0.40+Math.sin(t*3.0)*0.12).toFixed(2);
+  const rg=ctx.createRadialGradient(34,74,0,34,74,20); rg.addColorStop(0,'rgba(255,140,50,'+ra+')'); rg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=rg; ctx.fillRect(14,58,40,42);
+  _r(ctx, 22, 70, 24, 10, 'rgba(255,150,60,'+ra+')');
+  _r(ctx, 168, 44, 26, 56, '#c8c0b0'); _r(ctx, 172, 50, 10, 10, '#e8e0c0'); _r(ctx, 174, 52, 6, 1, '#c04030'); _r(ctx, 174, 55, 4, 1, '#3060a0');
+  _r(ctx, 60, 82, 90, 4, '#7a5626'); _r(ctx, 64, 86, 3, 14, '#6a4a1e'); _r(ctx, 143, 86, 3, 14, '#6a4a1e');
+  _r(ctx, 150, 70, 8, 30, '#5a3e1e'); _r(ctx, 149, 72, 10, 10, '#3a5a7a');
+  const pl=ctx.createRadialGradient(100,20,0,100,55,60); pl.addColorStop(0,'rgba(240,190,80,0.30)'); pl.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=pl; ctx.fillRect(40,0,120,80);
+  _lbl(ctx, "Sandy's Kitchen");
+}
+
+/* CH3-BG-01 — Southampton dockyard at night: slate-blue, industrial cranes, a single
+   streetlamp pool, harbor water with a slow glint. */
+function drawCh3DockyardCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0e1620', sky2:'#14202c', sky3:'#101a24', floor:'#0e1a22'});
+  _r(ctx, 0, FY, 200, 13, '#0c1820'); const wa=(0.30+Math.sin(t*0.8)*0.10).toFixed(2); _r(ctx, 60, FY+4, 80, 1, 'rgba(200,170,90,'+wa+')');
+  for (const g of [[30,60],[150,70]]) { _r(ctx, g[0], FY-g[1], 3, g[1], '#1a222c'); _r(ctx, g[0], FY-g[1], 26, 3, '#1a222c'); _r(ctx, g[0]+23, FY-g[1], 3, 14, '#1a222c'); }
+  _r(ctx, 98, FY-46, 2, 46, '#2a2a2a'); _r(ctx, 95, FY-48, 8, 4, '#3a3a2a');
+  const la=(0.40+Math.sin(t*2.5)*0.08).toFixed(2);
+  const lg=ctx.createRadialGradient(99,FY-46,0,99,FY,50); lg.addColorStop(0,'rgba(255,190,90,'+la+')'); lg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=lg; ctx.fillRect(60,FY-50,80,64);
+  _r(ctx, 97, FY-46, 4, 3, 'rgba(255,210,120,'+la+')');
+  _lbl(ctx, 'Southampton Dockyard');
+}
+
+/* CH3-BG-02 — Bevois Street approach: residential row houses receding, warm amber glow from
+   the Dundee kitchen window at the far end, a newsstand, an echo-deer on the pavement. */
+function drawCh3BevoisCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#101622', sky2:'#161e2c', sky3:'#121a26', floor:'#161a1e'});
+  for (let i=0;i<5;i++){ const hh=50-i*4; _r(ctx,4+i*8,FY-hh,14,hh,'#1a1e26'); _r(ctx,182-i*8,FY-hh,14,hh,'#1a1e26'); const wa=(0.20+Math.sin(t*0.7+i)*0.06).toFixed(2); _r(ctx,8+i*8,FY-hh+8,4,4,'rgba(255,170,60,'+wa+')'); }
+  const ga=(0.40+Math.sin(t*1.2)*0.10).toFixed(2);
+  const gg=ctx.createRadialGradient(100,FY-24,0,100,FY-24,26); gg.addColorStop(0,'rgba(255,180,70,'+ga+')'); gg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=gg; ctx.fillRect(74,FY-40,52,40);
+  _r(ctx, 96, FY-26, 8, 8, 'rgba(255,190,90,'+ga+')');
+  _r(ctx, 24, FY-16, 16, 16, '#2a2418'); _r(ctx, 24, FY-16, 16, 3, '#c03028'); _r(ctx, 26, FY-12, 12, 8, '#3a3020');
+  const da=(0.30+Math.sin(t*1.1)*0.12).toFixed(2); const dc='rgba(255,180,90,'+da+')';
+  _r(ctx,140,FY-12,10,7,dc); _r(ctx,140,FY-16,2,4,dc); _r(ctx,148,FY-16,2,4,dc); _r(ctx,141,FY-5,1,5,dc); _r(ctx,148,FY-5,1,5,dc);
+  _lbl(ctx, 'Bevois Street');
+}
+
+/* CH3-BG-03 — Edie's pier wine shop: small harbor-pier shopfront, warm interior glow, wine
+   bottles on a shelf, Edie's ghost-translucent silhouette behind the counter. */
+function drawCh3EdieShopCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0e1622', sky2:'#14202c', sky3:'#101a24', floor:'#20180e'});
+  for (let x=0;x<200;x+=16) _r(ctx, x, FY, 1, 13, 'rgba(80,50,20,0.4)');
+  _r(ctx, 50, 40, 100, 60, '#241c10'); _r(ctx, 54, 44, 92, 52, '#2e2414');
+  const ia=(0.35+Math.sin(t*1.5)*0.10).toFixed(2);
+  const ig=ctx.createRadialGradient(100,66,0,100,66,44); ig.addColorStop(0,'rgba(240,180,80,'+ia+')'); ig.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=ig; ctx.fillRect(54,44,92,52);
+  for (let i=0;i<6;i++) _r(ctx, 60+i*13, 58, 4, 12, '#2a3a24');
+  _r(ctx, 54, 74, 92, 3, '#3a2c18');
+  const ea=(0.32+Math.sin(t*1.8)*0.10).toFixed(2); const ec='rgba(220,200,170,'+ea+')';
+  _r(ctx, 96, 52, 10, 22, ec); _r(ctx, 97, 46, 8, 7, ec);
+  _r(ctx, 50, 36, 100, 4, '#7a1830');
+  _lbl(ctx, "Edie's Wine Shop");
+}
+
+/* =============================================================
+   CH4 — ISTANBUL, TÜRKIYE  (R03 gallery population)
+   Cold slate-blue winter exteriors + threat-cold frozen square; warm amber Muhittin
+   interior + warm autumn orchard taste-memory. No black outlines.
+   ============================================================= */
+
+/* CH4-ROOM-01 — Stray-cat alley: narrow converging stone walls, cobblestones, an amber
+   window beacon at the far end, warm-amber echo-cats on ledges. */
+function drawCh4CatAlleyCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0e1420', sky2:'#141c28', sky3:'#101822', floor:'#1a1a1e'});
+  _r(ctx, 0, 10, 40, FY-10, '#1c1c22'); _r(ctx, 160, 10, 40, FY-10, '#1c1c22');
+  for (let y=20;y<FY;y+=10){ _r(ctx,0,y,40,1,'rgba(60,60,70,0.3)'); _r(ctx,160,y,40,1,'rgba(60,60,70,0.3)'); }
+  for (let x=40;x<160;x+=8) _r(ctx, x, FY+4, 6, 4, 'rgba(50,50,58,0.5)');
+  const ba=(0.40+Math.sin(t*1.3)*0.12).toFixed(2);
+  const bg=ctx.createRadialGradient(100,50,0,100,50,30); bg.addColorStop(0,'rgba(255,175,70,'+ba+')'); bg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=bg; ctx.fillRect(70,30,60,50);
+  _r(ctx, 94, 44, 12, 12, 'rgba(255,185,85,'+ba+')');
+  for (const c of [[30,52,0],[168,66,1],[50,80,2]]){ const a=(0.30+Math.sin(t*1.5+c[2])*0.14).toFixed(2); const cc='rgba(255,180,90,'+a+')'; _r(ctx,c[0],c[1],7,4,cc); _r(ctx,c[0]+6,c[1]-2,1,3,cc); _r(ctx,c[0],c[1]-2,1,2,cc); }
+  _lbl(ctx, 'Stray-Cat Alley');
+}
+
+/* CH4-ROOM-02 — Muhittin's kitchen: low-ceilinged, İznik-tile band, wood-fired oven with a
+   fire glow, rising bread, long table, hanging copper pots, roasted peppers, mortar, spices. */
+function drawCh4MuhittinKitchenCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#2a1c10', sky2:'#33220f', sky3:'#2a1a0c', floor:'#3a2612'});
+  _r(ctx, 0, 0, 200, 12, '#1a1206');
+  for (let x=6;x<194;x+=12){ _r(ctx,x,16,10,10,'#e8ecf0'); _r(ctx,x+2,18,6,6,'#2a5a9a'); _r(ctx,x+4,20,2,2,'#c04030'); }
+  _r(ctx, 14, 58, 44, 42, '#241812'); ctx.fillStyle='#241812'; ctx.beginPath(); ctx.ellipse(36,58,22,10,0,Math.PI,0); ctx.fill();
+  const fa=(0.45+Math.sin(t*4.0)*0.15).toFixed(2);
+  const fg=ctx.createRadialGradient(36,80,0,36,80,20); fg.addColorStop(0,'rgba(255,120,40,'+fa+')'); fg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=fg; ctx.fillRect(16,64,40,36); _r(ctx,26,78,20,10,'rgba(255,140,50,'+fa+')');
+  _r(ctx, 30, 74, 12, 4, '#d8a860');
+  _r(ctx, 70, 82, 90, 4, '#5a3e1e'); _r(ctx, 74, 86, 3, 14, '#4a3218'); _r(ctx, 150, 86, 3, 14, '#4a3218');
+  ctx.fillStyle='#a87840'; for(let i=0;i<3;i++){ ctx.beginPath(); ctx.ellipse(150+i*12,26,4,5,0,0,Math.PI*2); ctx.fill(); }
+  _r(ctx, 88, 77, 5, 4, '#b83828'); _r(ctx, 96, 78, 5, 3, '#c85030');
+  _r(ctx, 120, 76, 8, 5, '#4a4038');
+  const jars=['#a86020','#7a4818','#c09030','#8a5820']; for(let i=0;i<4;i++) _r(ctx, 176, 40+i*10, 10, 7, jars[i]);
+  _lbl(ctx, "Muhittin's Kitchen");
+}
+
+/* CH4-BG-01 — Istanbul harbor approach at night: dome + minaret skyline silhouette, cold
+   slate-blue with ember-red shadows, scattered warm city lights, harbor reflections. */
+function drawCh4HarborCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0c1420', sky2:'#121c2c', sky3:'#0e1826', floor:'#0c1622'});
+  ctx.fillStyle='#161e2a';
+  for (const d of [[20,30],[70,40],[130,34],[172,24]]){ ctx.beginPath(); ctx.ellipse(d[0]+d[1]/2,FY-34,d[1]/2,16,0,Math.PI,0); ctx.fill(); _r(ctx,d[0],FY-34,d[1],34,'#161e2a'); }
+  for (const mx of [64,116,158]){ _r(ctx,mx,FY-58,2,58,'#161e2a'); _r(ctx,mx-1,FY-62,4,5,'#161e2a'); }
+  for (let i=0;i<14;i++){ const lx=12+i*13, ly=FY-30+((i*7)%20); const a=(0.30+Math.sin(t*0.9+i)*0.10).toFixed(2); _r(ctx,lx,ly,1,1, i%4===0?'rgba(200,80,50,'+a+')':'rgba(255,180,80,'+a+')'); }
+  _r(ctx, 0, FY, 200, 13, '#0a1420'); const wa=(0.28+Math.sin(t*0.7)*0.10).toFixed(2); for (const rx of [40,90,150]) _r(ctx, rx, FY+3, 10, 1, 'rgba(255,180,80,'+wa+')');
+  _lbl(ctx, 'Istanbul Harbor');
+}
+
+/* CH4-BG-02 — Frozen square (Karakoncolos arena): snow-covered cobblestones, an ice-blue
+   frozen fountain, a dying brazier, cold dim buildings, drifting snowfall. Threat-cold. */
+function drawCh4FrozenSquareCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#141c28', sky2:'#1a2432', sky3:'#16202c', floor:'#c8d4e0'});
+  _r(ctx, 0, FY, 200, 13, '#c0ccd8'); for (let x=0;x<200;x+=10) _r(ctx, x, FY+5, 7, 3, 'rgba(120,140,165,0.4)');
+  _r(ctx, 86, FY-22, 28, 22, '#a8c4dc'); _r(ctx, 90, FY-30, 20, 8, '#bcd6ec'); _r(ctx, 98, FY-40, 4, 10, '#a8c4dc');
+  _r(ctx, 88, FY-20, 24, 2, 'rgba(230,244,255,0.6)');
+  _r(ctx, 150, FY-14, 16, 14, '#2a2018'); const ba=(0.25+Math.sin(t*2.0)*0.12).toFixed(2); _r(ctx, 154, FY-18, 8, 4, 'rgba(220,90,40,'+ba+')');
+  _r(ctx, 10, FY-44, 40, 44, '#1a222e'); _r(ctx, 158, FY-40, 34, 40, '#1a222e');
+  for (let i=0;i<20;i++){ const fx=(i*29 + Math.sin(t*0.5+i)*8)%200; const fy=((i*17 + t*14) % FY); _r(ctx, Math.round(fx), Math.round(fy), 1, 1, 'rgba(230,240,250,0.7)'); }
+  _lbl(ctx, 'Frozen Square');
+}
+
+/* CH4-BG-03 — Walnut orchard (muhammara taste-memory): warm autumn Turkish rural scene,
+   walnut trees with amber canopies, fallen leaves/walnuts, two boys, warm memory light. */
+function drawCh4OrchardCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#3a2814', sky2:'#4a3418', sky3:'#3a2810', floor:'#4a3818'});
+  const mg=ctx.createRadialGradient(100,30,0,100,60,90); mg.addColorStop(0,'rgba(255,200,110,0.20)'); mg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=mg; ctx.fillRect(0,0,200,FY);
+  for (const tr of [[36],[100],[164]]){ const tx=tr[0]; _r(ctx,tx,FY-40,5,40,'#4a3018'); ctx.fillStyle='#8a6a2a'; ctx.beginPath(); ctx.ellipse(tx+2,FY-46,20,16,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle='rgba(200,140,50,0.5)'; ctx.beginPath(); ctx.ellipse(tx+2,FY-48,14,10,0,0,Math.PI*2); ctx.fill(); }
+  const lc=['#a8702a','#7a4818','#c08830']; for (let i=0;i<10;i++) _r(ctx, 14+i*18, FY+4, 2, 2, lc[i%3]);
+  _r(ctx, 90, FY-24, 7, 24, '#5a4020'); _r(ctx, 91, FY-30, 5, 7, '#c8a878');
+  _r(ctx, 104, FY-20, 6, 20, '#6a4a24'); _r(ctx, 105, FY-25, 5, 6, '#c8a878');
+  _lbl(ctx, 'Walnut Orchard');
+}
+
 /* =============================================================
    DRAW FUNCTION REGISTRY — maps asset.id to drawFn(ctx, t)
    Only Ch1 cells are drawn; all others remain placeholders.
@@ -1342,6 +1499,16 @@ const DRAW_FNS = {
   'CH2-ROOM-01': drawCh2LowerDeckCell,
   'CH2-ROOM-02': drawCh2CottageCell,
   'CH2-BG-01':   drawCh2KasmuCell,
+  'CH3-ROOM-01': drawCh3LowerDeckCell,
+  'CH3-ROOM-02': drawCh3DundeeKitchenCell,
+  'CH3-BG-01':   drawCh3DockyardCell,
+  'CH3-BG-02':   drawCh3BevoisCell,
+  'CH3-BG-03':   drawCh3EdieShopCell,
+  'CH4-ROOM-01': drawCh4CatAlleyCell,
+  'CH4-ROOM-02': drawCh4MuhittinKitchenCell,
+  'CH4-BG-01':   drawCh4HarborCell,
+  'CH4-BG-02':   drawCh4FrozenSquareCell,
+  'CH4-BG-03':   drawCh4OrchardCell,
   'CH1-BG-01':   drawBergenBgCell,
   'CH1-PROP-01': drawBedBodyLumpCell,
   'CH1-PROP-02': drawCrayonDrawingCell,
@@ -1651,14 +1818,14 @@ const ASSETS = [
   // ── CHAPTER 3: ROOMS ─────────────────────────────────────
   {
     id: 'CH3-ROOM-01', name: 'The Mnemosyne lower decks (Ch3 traversal)', type: 'ROOM',
-    chapter: 3, section: 'ch3-room', designed: false,
+    chapter: 3, section: 'ch3-room', designed: true,
     desc: 'Cramped corridor; crimson carpet, echo-fish drifting along walls and floor; feels submerged.',
     alsoAppears: null,
     source: 'ch03-southampton-outline.md',
   },
   {
     id: 'CH3-ROOM-02', name: 'The Dundee kitchen', type: 'ROOM',
-    chapter: 3, section: 'ch3-room', designed: false,
+    chapter: 3, section: 'ch3-room', designed: true,
     desc: 'Warm, large; pine table seating 9; Sandy\'s chair at the head; wood-burning Aga range; family gathered.',
     alsoAppears: null,
     source: 'ch03-southampton-outline.md',
@@ -1667,21 +1834,21 @@ const ASSETS = [
   // ── CHAPTER 3: BACKGROUNDS ────────────────────────────────
   {
     id: 'CH3-BG-01', name: 'Southampton dockyard at night', type: 'BG',
-    chapter: 3, section: 'ch3-bg', designed: false,
+    chapter: 3, section: 'ch3-bg', designed: true,
     desc: 'Slate-blue; industrial cranes, single streetlamp pool, harbor water; port approach.',
     alsoAppears: null,
     source: 'ch03-southampton-outline.md',
   },
   {
     id: 'CH3-BG-02', name: 'Bevois Street approach', type: 'BG',
-    chapter: 3, section: 'ch3-bg', designed: false,
+    chapter: 3, section: 'ch3-bg', designed: true,
     desc: 'Residential Southampton street; amber glow from the Dundee kitchen window at far end; echo-deer on pavement.',
     alsoAppears: null,
     source: 'ch03-southampton-outline.md',
   },
   {
     id: 'CH3-BG-03', name: "Edie's pier wine shop", type: 'BG',
-    chapter: 3, section: 'ch3-bg', designed: false,
+    chapter: 3, section: 'ch3-bg', designed: true,
     desc: "Small shopfront on the harbor pier; Edie's ghost-translucent silhouette behind the counter.",
     alsoAppears: null,
     source: 'ch03-southampton-outline.md',
@@ -1720,14 +1887,14 @@ const ASSETS = [
   // ── CHAPTER 4: ROOMS ─────────────────────────────────────
   {
     id: 'CH4-ROOM-01', name: 'Stray-cat alley (Ch4 traversal)', type: 'ROOM',
-    chapter: 4, section: 'ch4-room', designed: false,
+    chapter: 4, section: 'ch4-room', designed: true,
     desc: 'Narrow Istanbul cobble passage; echo-cats on walls, ledges, doorways; dim lamplight at far end; humid cold night.',
     alsoAppears: null,
     source: 'ch04-turkiye-outline.md',
   },
   {
     id: 'CH4-ROOM-02', name: "Muhittin's kitchen", type: 'ROOM',
-    chapter: 4, section: 'ch4-room', designed: false,
+    chapter: 4, section: 'ch4-room', designed: true,
     desc: 'Low-ceilinged Istanbul house interior; wood-fired oven, long table, copper pots, heavy mortar; warm amber light.',
     alsoAppears: null,
     source: 'ch04-turkiye-outline.md',
@@ -1736,21 +1903,21 @@ const ASSETS = [
   // ── CHAPTER 4: BACKGROUNDS ────────────────────────────────
   {
     id: 'CH4-BG-01', name: 'Istanbul harbor approach at night', type: 'BG',
-    chapter: 4, section: 'ch4-bg', designed: false,
+    chapter: 4, section: 'ch4-bg', designed: true,
     desc: 'Narrow stone streets, cold winter night; city lights reflected on water; slate-blue with ember-red shadows.',
     alsoAppears: null,
     source: 'ch04-turkiye-outline.md',
   },
   {
     id: 'CH4-BG-02', name: 'Frozen square (monster arena)', type: 'BG',
-    chapter: 4, section: 'ch4-bg', designed: false,
+    chapter: 4, section: 'ch4-bg', designed: true,
     desc: 'Cobblestones, dying brazier, frozen fountain; the Karakoncolos encounter space; cold and still.',
     alsoAppears: null,
     source: 'ch04-turkiye-outline.md',
   },
   {
     id: 'CH4-BG-03', name: 'Walnut orchard (taste-memory)', type: 'BG',
-    chapter: 4, section: 'ch4-bg', designed: false,
+    chapter: 4, section: 'ch4-bg', designed: true,
     desc: 'Autumn Turkish rural scene; two boys among walnut trees; warm amber memory light.',
     alsoAppears: null,
     source: 'ch04-turkiye-outline.md',

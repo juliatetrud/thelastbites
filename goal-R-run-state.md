@@ -19,7 +19,17 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
-> **R12 IN PROGRESS — 3 items done (echo-rat `6665c8c`, journal-UI `9165630`, Brussels-bag
+> **R12 `built` — ALL kinetic mechanics done (Ch2–Ch7). NEXT = R13 (Ch8 finale mechanics).**
+> Built: echo-rat drain, journal-gift UI (reusable), Ch4 real-time candle puzzle, Ch7 bucket-
+> douse, Ch4 cat-alley float beat, Ch4 matches item; Brussels-bag locked narrative; Ch2/Ch3
+> verified real. All dt-capped/pause-safe/D-pad, schema-safe. Feel/difficulty = Julia's
+> playtest (backlog); design calls logged #110. **R13** = Ch8 finale override phases
+> (Pong / riddle / draw per `sprint-R13-kinetic-mechanics-finale.md`) + the paired-memory
+> reunion (reuse `giftMemoryFromJournal` from R12). Audit first (child issue). Then R14 audio,
+> R15 save, R16 recipe+credits, R17 mobile, R18 release → go-live gate (STOP for Julia).
+>
+> --- prior (R12 partial) ---
+> **R12 — 3 items done (echo-rat `6665c8c`, journal-UI `9165630`, Brussels-bag
 > `7901eb4`); 3 real-time/traversal builds remain.** (R05–R11 all built.) **Done:** Ch5
 > echo-rat drain; **Ch5 memory-gifting → reusable `giftMemoryFromJournal` selection** (journal-
 > framed, choice-UI based, reusable for Ch8 finale; outcome verbatim in `sendIrisMemory`);
@@ -283,7 +293,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R09 | Ch6 art reconciliation | built | #120 | `fec2611` | `r-checkpoint-R09` |
 | R10 | Ch7 art reconciliation | built | #121 | `9d160b8` | `r-checkpoint-R10` |
 | R11 | Ch8 art reconciliation | built | #122 | `dd26737` | `r-checkpoint-R11` |
-| R12 | Kinetic mechanics — port chapters | in-progress | #123 | — | — |
+| R12 | Kinetic mechanics — port chapters | built | #123 | `557fb85` | `r-checkpoint-R12` |
 | R13 | Kinetic mechanics — Ch8 finale | pending | — | — | — |
 | R14 | Audio + music pass | pending | — | — | — |
 | R15 | Save + persistence hardening | pending | — | — | — |

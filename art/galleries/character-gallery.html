@@ -2303,6 +2303,236 @@ function drawEchoCat(ctx, _CX, _FLOOR, _T, _SP) {
   ctx.restore();
 }
 
+
+/* =============================================================
+   CH5 — SALDANHA BAY, SOUTH AFRICA  (R04 gallery population)
+   Ported from GOAL-1 in-game draw code; bodies verbatim, thin wrapper maps the gallery
+   signature to the in-game names (sx, groundY, now-ms, speaking/looking/translucent/idx).
+   Self-contained; on-doctrine. Mamlambo is designed IN ITS PORTHOLE FRAMING (canonical).
+   ============================================================= */
+
+function drawIris(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0;
+  const t     = now / 1000;
+  const alpha = 1.0 - translucent * 0.70;
+  const cx    = Math.round(sx);
+  const cy    = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = Math.max(0.15, alpha);
+
+  // Teal color signature (#88b8b0 range)
+  ctx.fillStyle = '#1a3a3a';
+  ctx.fillRect(-5, -24, 5, 24);
+  ctx.fillRect(0,  -24, 5, 24);
+
+  // Pinafore (white over dark dress)
+  ctx.fillStyle = '#2a3c3c';   // dark dress underneath
+  ctx.fillRect(-8, -48, 16, 26);
+  ctx.fillStyle = '#d8e8e4';   // white pinafore
+  ctx.fillRect(-6, -48, 12, 22);
+  ctx.fillRect(-5, -50, 10, 4);   // pinafore bib
+
+  // Dark stockings
+  ctx.fillStyle = '#1a1820';
+  ctx.fillRect(-5, -24, 5, 24);
+  ctx.fillRect(0,  -24, 5, 24);
+
+  // Shoes
+  ctx.fillStyle = '#0c0c14';
+  ctx.fillRect(-6, -4, 6, 4);
+  ctx.fillRect(0,  -4, 6, 4);
+
+  // Arms
+  ctx.fillStyle = '#c8a880';
+  ctx.fillRect(-10, -46, 3, 10);
+  ctx.fillRect(7,   -46, 3, 10);
+
+  // Neck
+  ctx.fillStyle = '#c8a880';
+  ctx.fillRect(-2, -52, 4, 4);
+
+  // Head
+  const ht  = -63;
+  const bob = Math.round(Math.sin(t * 1.4) * 0.5);
+  ctx.fillStyle = '#c8a880';
+  ctx.fillRect(-6, ht + bob, 12, 12);
+  // Eyes
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-3, ht + bob + 3, 2, 2);
+  ctx.fillRect(2,  ht + bob + 3, 2, 2);
+  // Hair (dark, with ribbon)
+  ctx.fillStyle = '#1a1008';
+  ctx.fillRect(-7, ht + bob - 3, 14, 6);
+  ctx.fillRect(4,  ht + bob - 2, 3, 8);
+  // Hair ribbon (teal)
+  ctx.fillStyle = '#88b8b0';
+  ctx.fillRect(2, ht + bob - 4, 6, 3);
+
+  // Switchblade in hand (if shown)
+  ctx.fillStyle = '#d0c8c0';
+  ctx.fillRect(-12, -38, 4, 2);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+function drawMamlamboPorthole(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0;
+  const t = now / 1000;
+
+  // Draw the porthole frame
+  ctx.fillStyle = '#181c24';
+  const cx2 = W - 90;
+  const cy2 = 70;
+  const pr  = 40;
+  ctx.beginPath();
+  ctx.arc(cx2, cy2, pr + 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#080a0e';
+  ctx.beginPath();
+  ctx.arc(cx2, cy2, pr, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Sea through porthole
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx2, cy2, pr, 0, Math.PI * 2);
+  ctx.clip();
+
+  ctx.fillStyle = '#040612';
+  ctx.fillRect(cx2 - pr, cy2 - pr, pr * 2, pr * 2);
+
+  // Mamlambo body — coiling sinusoidal snake
+  const segments = 20;
+  const bodyAlpha = ch5State.mamlamboAppeared && !ch5State.mamlamboDefeated ? 0.85 : 0.0;
+  if (bodyAlpha > 0) {
+    ctx.fillStyle = `rgba(122,20,24,${bodyAlpha.toFixed(2)})`;
+    for (let s = 0; s < segments; s++) {
+      const sx2   = cx2 - pr + (s / segments) * (pr * 2);
+      const sy2   = cy2 + Math.sin(t * 1.8 + s * 0.6) * 18;
+      const thick = s < 5 ? 10 : (s > 15 ? 6 : 8);
+      ctx.fillRect(Math.round(sx2 - 3), Math.round(sy2 - thick / 2), 8, thick);
+    }
+
+    // Eye at glass (if mamlambo appeared)
+    if (ch5State.portalOpenAttempted) {
+      const eyePulse = 0.40 + Math.sin(t * 3.0) * 0.20;
+      ctx.fillStyle = `rgba(200,40,30,${eyePulse.toFixed(2)})`;
+      ctx.beginPath();
+      ctx.arc(cx2, cy2, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0a0204';
+      ctx.beginPath();
+      ctx.arc(cx2, cy2, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  ctx.restore();
+
+  // Iron clasp
+  ctx.fillStyle = '#2a2830';
+  ctx.fillRect(cx2 - pr - 8, cy2 - 4, 8, 8);
+}
+
+function drawJohannes(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0;
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.4) * 0.7) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Legs
+  ctx.fillStyle = '#2a2010';
+  ctx.fillRect(-6, -26, 5, 26);
+  ctx.fillRect(1,  -26, 5, 26);
+  ctx.fillStyle = '#1a1408';
+  ctx.fillRect(-7, -4, 6, 4);
+  ctx.fillRect(2,  -4, 6, 4);
+
+  // Body — worn flannel-like (warm ochre-brown)
+  ctx.fillStyle = '#6a4820';
+  ctx.fillRect(-9, -54, 18, 30);
+
+  // Apron (cooking apron, off-white stained)
+  ctx.fillStyle = '#c8b888';
+  ctx.fillRect(-6, -52, 12, 26);
+  ctx.fillStyle = '#a89870';
+  ctx.fillRect(-4, -52, 8, 2);  // stain
+
+  // Arms (wide, bear-like)
+  ctx.fillStyle = '#6a4820';
+  ctx.fillRect(-12, -52, 4, 16);
+  ctx.fillRect(8,   -52, 4, 16);
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(-13, -38, 4, 10);
+  ctx.fillRect(9,   -38, 4, 10);
+
+  // Wooden spoon in hand
+  ctx.fillStyle = '#8a5828';
+  ctx.fillRect(9, -46, 2, 22);
+  ctx.fillRect(8, -46, 4, 6);
+
+  // Neck
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(-3, -58, 6, 4);
+
+  // Head (broad)
+  const ht = bob - 70;
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(-8, ht, 16, 14);
+
+  // Eyes, kind
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-5, ht + 4, 2, 2);
+  ctx.fillRect(3,  ht + 4, 2, 2);
+
+  // Big beard (salt-and-pepper)
+  ctx.fillStyle = '#888078';
+  ctx.fillRect(-7, ht + 6, 14, 10);
+  ctx.fillRect(-8, ht + 9, 16, 6);
+  ctx.fillStyle = '#c0b8b0';
+  ctx.fillRect(-5, ht + 8, 4, 6);
+  ctx.fillRect(3,  ht + 8, 4, 4);
+
+  // Hair (grey-white, thin on top)
+  ctx.fillStyle = '#888080';
+  ctx.fillRect(-8, ht - 3, 16, 5);
+  ctx.fillStyle = '#a09890';
+  ctx.fillRect(-9, ht, 3, 4);
+  ctx.fillRect(6,  ht, 3, 4);
+
+  ctx.restore();
+}
+
+function drawEchoRat(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0;
+  const t   = now / 1000;
+  const vis = 0.25 + Math.sin(t * 3.0 + idx * 2.3) * 0.15;
+  const cx  = Math.round(sx + Math.sin(t * 4 + idx) * 3);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = Math.max(0.05, vis);
+  ctx.fillStyle = '#c07830';
+
+  // Tiny rat silhouette (8px long)
+  ctx.fillRect(-4, -5, 8, 4);
+  ctx.fillRect(-5, -4, 4, 3);   // head
+  // Tail
+  ctx.fillRect(4, -6, 2, 3);
+  ctx.fillRect(5, -7, 2, 2);
+  ctx.fillRect(6, -8, 2, 2);
+  // Ears
+  ctx.fillRect(-4, -7, 2, 2);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
 /* =============================================================
    PLACEHOLDER CELL RENDERER
    Shows character name, silhouette tells, color sig, door-fraction.
@@ -2671,11 +2901,18 @@ const CHARACTERS = [
     tells: 'Elderly woman in walnut orchard, late autumn; watching two boys test walnuts; taste-memory only — see OQ-A-04',
   },
   {
-    id: 'johannes', name: 'Johannes', chapterTag: 'Ch 5', section: 'chefs', designed: false,
+    id: 'johannes', name: 'Johannes', chapterTag: 'Ch 5', section: 'chefs', designed: true,
     assetId: 'CH5-CHAR-04',
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'brown / apron / beard',
     tells: 'heavy-set adult, beard, apron, jolly stance',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawJohannes(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
   },
   // ── NEW Ch5: not-yet-present (Sprint B) ──────────────────
   {
@@ -2764,11 +3001,18 @@ const CHARACTERS = [
     canSpeak: true,
   },
   {
-    id: 'iris', name: 'Iris', chapterTag: 'Ch 5', section: 'ghosts', designed: false,
+    id: 'iris', name: 'Iris', chapterTag: 'Ch 5', section: 'ghosts', designed: true,
     assetId: 'CH5-CHAR-01',
     frac: 0.38, fracLabel: '0.35–0.40',
     colorSig: 'sea-green-blue translucent',
     tells: 'Edwardian collar, pale hair, girl-height',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawIris(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
   },
   // ── NEW Ch5: not-yet-present ghost (Sprint B) ─────────────
   {
@@ -2820,11 +3064,18 @@ const CHARACTERS = [
     canSpeak: false,
   },
   {
-    id: 'mamlambo', name: 'Mamlambo', chapterTag: 'Ch 5', section: 'monsters', designed: false,
+    id: 'mamlambo', name: 'Mamlambo', chapterTag: 'Ch 5', section: 'monsters', designed: true,
     assetId: 'CH5-CHAR-03',
     frac: 0.65, fracLabel: 'serpent',
     colorSig: 'blood-iron eye/coil',
     tells: 'massive serpent, eye above porthole, blood-iron glow',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawMamlamboPorthole(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: false,
   },
   {
     id: 'pocong', name: 'Pocong', chapterTag: 'Ch 6', section: 'monsters', designed: true,
@@ -2873,11 +3124,18 @@ const CHARACTERS = [
     tells: 'small mice, scurry along baseboards, ground-level; Ch2 lower decks',
   },
   {
-    id: 'echo-rats', name: 'Echo-rats', chapterTag: 'Ch 5', section: 'echoes', designed: false,
+    id: 'echo-rats', name: 'Echo-rats', chapterTag: 'Ch 5', section: 'echoes', designed: true,
     assetId: 'CH5-CHAR-06',
     frac: 0.10, fracLabel: '0.06–0.14',
     colorSig: 'warm-amber translucent',
     tells: 'rats, scuttle and dart fast and low along baseboards, unpredictable; Ch5 lower deck',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawEchoRat(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: false,
   },
   {
     id: 'urban-vermin', name: 'Urban vermin', chapterTag: 'Ch 8', section: 'echoes', designed: false,

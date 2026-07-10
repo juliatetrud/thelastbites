@@ -389,7 +389,7 @@
 
 - **CH5-CHAR-01 — Iris.** Edwardian child ghost; ~10 years old; near-white pale hair (faint cool shadow), sea-green-blue eyes (#88b8b0); squeeze-and-pop entrance through floorboards; wet then shakes dry; from The Lethe (wreck c. 1905–1912).
   source: ch05-south-africa-outline.md; 01-story-bible.md (Iris lore); 08-character-reference-sheets.md §Iris; 12-character-pixel-anatomy.md §Iris forward note.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R04, 2026-07-10).
 
 - **CH5-CHAR-02 — Iris's family (dining room cinematic).** Edwardian father, mother, siblings at formal dining table; taste-memory; multiple unnamed figures.
   source: ch05-south-africa-outline.md (Iris's unfinished meal memory).
@@ -397,11 +397,11 @@
 
 - **CH5-CHAR-03 — Mamlambo.** South African water-serpent; massive; blood-iron coils; cold blue eye visible through porthole; Ch5 monster.
   source: ch05-south-africa-outline.md; 08-character-reference-sheets.md §Mamlambo.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R04, 2026-07-10).
 
 - **CH5-CHAR-04 — Johannes Delport.** Afrikaner chef; older, broad, bearded, jolly; Saldanha Bay courtyard kitchen; potjie master.
   source: ch05-south-africa-outline.md; 08-character-reference-sheets.md §Johannes.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R04, 2026-07-10).
 
 - **CH5-CHAR-05 — Johannes's parents (taste-memory).** Young Afrikaner couple tending a courtyard fire; taste-memory of potjie origins; no physical descriptions in outline.
   source: ch05-south-africa-outline.md (Johannes taste-memory).
@@ -409,7 +409,7 @@
 
 - **CH5-CHAR-06 — Echo-rats.** Ch5 echo-creature; stalled ship lower decks; warm-amber translucent.
   source: ch05-south-africa-outline.md (Traversal beat); 08-character-reference-sheets.md §Echo-creatures (Ch5).
-  gallery: existing (designed: false) — listed as `ambient-vermin`, chapterTag: 'Ch 2, 5, 8'.
+  gallery: existing (designed: true — ported R04, 2026-07-10) — listed as `ambient-vermin`, chapterTag: 'Ch 2, 5, 8'.
 
 ---
 
@@ -457,7 +457,7 @@
 
 - **CH6-CHAR-02 — Tirta.** Young Indonesian chef; Kolonodale; fast-talking, funny; warung (open-front food stall); original character, NOT a real-person reference.
   source: ch06-indonesia-outline.md; 08-character-reference-sheets.md §Tirta.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R04, 2026-07-10).
 
 - **CH6-CHAR-03 — Tirta's grandmother (taste-memory).** Elderly Indonesian woman; wrapping lemper in banana leaves by lamplight; warm and precise; no physical description beyond "grandmother."
   source: ch06-indonesia-outline.md (taste-memory beat).
@@ -465,7 +465,7 @@
 
 - **CH6-CHAR-04 — Echo-tarsiers.** Ch6 echo-creature; huge round eyes, clinging posture; ceiling, pipes, and beams; warm-amber translucent.
   source: ch06-indonesia-outline.md (Traversal beat); 08-character-reference-sheets.md §Echo-creatures (Ch6).
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R04, 2026-07-10).
 
 ---
 
@@ -505,19 +505,19 @@
 
 - **CH7-CHAR-01 — Boitatá.** Brazilian fire-serpent; fire-amber flickering body; rises from the river on dock approach; Ch7 monster.
   source: ch07-brazil-outline.md; 08-character-reference-sheets.md §Boitatá.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R04, 2026-07-10).
 
 - **CH7-CHAR-02 — Capuchin.** Small brown monkey; bright-eyed, alive (NOT an echo-creature); forest-path guide between dock and Joana/Beatriz's house.
   source: ch07-brazil-outline.md; 08-character-reference-sheets.md §Capuchin.
-  gallery: existing (designed: false — note: listed under Echoes section in gallery; see Open Questions #8).
+  gallery: existing (designed: true — ported R04, 2026-07-10).
 
 - **CH7-CHAR-03 — Joana.** Brazilian chef; 60s, gray-streaked hair, apron, deep forest-knowledge; stilt house on the Tapajós.
   source: ch07-brazil-outline.md; 08-character-reference-sheets.md §Joana.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R04, 2026-07-10).
 
 - **CH7-CHAR-04 — Beatriz.** Brazilian chef; Joana's partner; faded cotton dress, apron; stilt house kitchen.
   source: ch07-brazil-outline.md; 08-character-reference-sheets.md §Beatriz.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R04, 2026-07-10).
 
 - **CH7-CHAR-05 — Echo-mosquitoes.** Ch7 echo-creature; small, warm-amber translucent; lower-deck + dock traversal.
   source: ch07-brazil-outline.md (Traversal beat); 08-character-reference-sheets.md §Echo-creatures (Ch7).
@@ -568,15 +568,15 @@
 
 - **CH8-CHAR-01 — The Shadow.** Pip's grief made physical; blood-iron coloring, knotted black wire silhouette, TV-channel memory-flickers embedded in its body; three-phase encounter (Pong → Riddle of Chefs → Completing the Infection).
   source: ch08-greenpoint-outline.md; 01-story-bible.md §Ch8; 08-character-reference-sheets.md §Shadow.
-  gallery: existing (designed: false).
+  gallery: existing (designed: true — ported R04, 2026-07-10).
 
 - **CH8-CHAR-02 — Pip's mother.** Ch8 veil-crossing; young Polish-American woman; warm knit sweater; appears briefly as Pip confronts the Shadow.
   source: ch08-greenpoint-outline.md; 01-story-bible.md (Pip's parents lore).
-  gallery: existing (designed: false — id: 'pips-mother').
+  gallery: existing (designed: true — ported R04, 2026-07-10).
 
 - **CH8-CHAR-03 — Pip's father.** Ch8 veil-crossing; brown hair, wool sweater; brief appearance alongside Pip's mother.
   source: ch08-greenpoint-outline.md; 01-story-bible.md.
-  gallery: existing (designed: false — id: 'pips-father').
+  gallery: existing (designed: true — ported R04, 2026-07-10).
 
 - **CH8-CHAR-04 — Urban vermin.** Ch8 Greenpoint street echo-creature; cockroaches, bedbugs, rats, and comedy turkey; warm-amber translucent.
   source: ch08-greenpoint-outline.md; 08-character-reference-sheets.md §Echo-creatures (Ch8).

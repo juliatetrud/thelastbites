@@ -19,8 +19,25 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **R05 `built` (Ch2 art reconciliation; Pätu migration `5685fa6` + close-out). NEXT = R06
+> (Ch3 art reconciliation).** Phase-2 mode: reviews are a BACKLOG, not a gate — checkpoint
+> each sprint `built`, add Julia's in-browser items to the visual backlog (#109), chain to the
+> next. R05: Pätu → shared canonical `drawPatu(ctx,t)` in `art-source.js` (game via
+> `renderPatu`, gallery via translate; 19 call sites rewritten; `build.js` re-inlined).
+> Everything else Ch2 on-doctrine. Non-blocking flags (#110): echo-mice gallery CH2-CHAR-04
+> still designed:false; `ch2-build-audit.md` absent.
+>
+> **Begin R06 — Ch3 art reconciliation (`sprints/sprint-R06-ch3-art-reconciliation.md`).**
+> Same derive-into-game pattern: audit Ch3 in-game art vs the R03 gallery; migrate off-model.
+> Ch3 has many characters (Sandy, Caitlin, Robert, Archie, Bibi, Max&Gus, Edie, Michel pair,
+> Black Shuck, fish-echo, echo-deer) — the gallery was ported-from-game in R03, so game≈gallery
+> already (verify, minimal). Shared recurring characters → migrate to `art-source.js` like Pätu;
+> chapter-only → derive in place. Audit first (child issue), one commit per group, `node
+> build.js`+`node --check`, DEBUG_WARP false, checkpoint `r-checkpoint-R06`, backlog Ch3 items.
+>
+> --- prior resume (R04→R05 start) ---
 > **R04 `built` + closed (`0a0cb74` / `r-checkpoint-R04`, #115 closed on Julia's instruction).
-> Galleries COMPLETE for the whole game (Ch1–Ch8). NEXT = R05 (Ch2 art reconciliation).**
+> Galleries COMPLETE for the whole game (Ch1–Ch8). R05 (Ch2 art reconciliation) began.**
 > Master-list marked (13 Ch5–Ch8 char IDs), 08-char-ref note extended to Ch2–Ch8, Sprint
 > History + Decisions Log landed (Pip-shadow approved; Ch8 grandparents namespaced permanent
 > canon; Boitatá cell framing flagged non-blocking).
@@ -161,7 +178,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R02 | Open-questions closeout + doc reconciliation | built | #112 | `e8a123c` | `r-checkpoint-R02` |
 | R03 | Gallery population, Ch2–Ch4 | built | #114 | `32d3f13` | `r-checkpoint-R03` |
 | R04 | Gallery population, Ch5–Ch8 | built | #115 | `0a0cb74` | `r-checkpoint-R04` |
-| R05 | Ch2 art reconciliation | in-progress | #116 | — | — |
+| R05 | Ch2 art reconciliation | built | #116 | `c69d0d2` | `r-checkpoint-R05` |
 | R06 | Ch3 art reconciliation | pending | — | — | — |
 | R07 | Ch4 art reconciliation | pending | — | — | — |
 | R08 | Ch5 art reconciliation | pending | — | — | — |

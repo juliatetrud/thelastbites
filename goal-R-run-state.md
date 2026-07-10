@@ -13,7 +13,26 @@ isn't in this file or in the tracking issues, it didn't happen.
 
 ## Resume here
 
-> **R02 `built` (checkpoint `e8a123c` / `r-checkpoint-R02`, pushed); NEXT = R03.** R02
+> **R03 in-progress — batch 1 (Ch2 characters) pushed (`17ebe29`); AWAITING Julia's gallery
+> review.** Audit done (all ~20 Ch2–Ch4 draw fns exist in-game, none in gallery; R03 = port
+> them in on-doctrine). Issue #114 has the per-chapter checklists + the port mechanic
+> (in-game `(screenX,groundY,now-ms)` global-ctx → gallery `(ctx, CHAR_CX, FLOOR_Y, t-sec,
+> speaking)`; many gallery placeholder entries already exist as `designed:false` — upgrade
+> them). **Batch 1 done:** CH2-CHAR-03 Leida + CH2-CHAR-02 Haldjas ported to
+> `character-gallery.html` (placeholders upgraded, inline fns added, master-list marked),
+> `node --check` PARSE OK, no black outlines/dup names.
+>
+> **R03 is review-gated (DoD): Julia reviews each asset in-browser; off-model notes become
+> fix-commits inside R03.** So progress is batch → review → next batch, not a blind bulk
+> port. **Next batches (queued):** Ch2 environments (`drawCh2Kasmu` → env gallery) + Ch2
+> cinematic frames; then Ch3 characters (Sandy, Caitlin, Robert, Archie, Bibi, Max&Gus, Edie,
+> Michel pair, Black Shuck+overlay, fish-echo, echo-deer — placeholders exist for the chefs);
+> then Ch3 env; then Ch4 (Muhittin, Omer, Brian, Karakoncolos, frozen-Pätu, echo-cat + env).
+> R03's Sprint History + Decisions Log rows land with the FINAL gallery state (per DoD).
+> Do NOT tag `r-checkpoint-R03` until R03 is `built`.
+>
+> --- prior resume (R02) ---
+> **R02 `built` (checkpoint `e8a123c` / `r-checkpoint-R02`, pushed).** R02
 > closed #24/#39/#40/#41 + the audio `IndexSizeError`: audio fade clamped to [0,1];
 > save-drop one-line title notice (#24); recipe annotation locked, REVIEW (#40); Henrik
 > exit = playscript staging, no code change (#39); Erik age locked 11 across docs (#41);
@@ -59,7 +78,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 |---|---|---|---|---|---|
 | R01 | Ch1 playscript impl + repo hygiene | built | #111 | `3c01358` | `r-checkpoint-R01` |
 | R02 | Open-questions closeout + doc reconciliation | built | #112 | `e8a123c` | `r-checkpoint-R02` |
-| R03 | Gallery population, Ch2–Ch4 | pending | — | — | — |
+| R03 | Gallery population, Ch2–Ch4 | in-progress | #114 | — | — |
 | R04 | Gallery population, Ch5–Ch8 | pending | — | — | — |
 | R05 | Ch2 art reconciliation | pending | — | — | — |
 | R06 | Ch3 art reconciliation | pending | — | — | — |

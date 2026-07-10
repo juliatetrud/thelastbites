@@ -2533,6 +2533,464 @@ function drawEchoRat(ctx, _CX, _FLOOR, _T, _SP) {
   ctx.restore();
 }
 
+
+/* =============================================================
+   CH6–CH8 — INDONESIA / BRAZIL / GREENPOINT  (R04 gallery population)
+   Ported from GOAL-1 in-game draw code; bodies verbatim under the wrapper. Boitatá's
+   camX is aliased to centre it in the cell (its world coil extends above the cell top —
+   flagged). Pip-shadow uses phase=1 (full 9-wire threat form) for review — THE GAME'S
+   EMOTIONAL-CLIMAX ASSET, flag if the register feels wrong. Ch8 grandparents stay
+   NAMESPACED (drawBabciaStanding / drawDziadekStanding — never a bare drawBabcia).
+   ============================================================= */
+
+function drawTirta(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0, camX = 350 - _CX, W = CANVAS_W, phase = 1;
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.6) * 0.8) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Legs
+  ctx.fillStyle = '#1a1208';
+  ctx.fillRect(-5, -26, 5, 26);
+  ctx.fillRect(0,  -26, 5, 26);
+
+  // Apron (chili-oil streaked)
+  ctx.fillStyle = '#e8e0c8';
+  ctx.fillRect(-7, -54, 14, 30);
+  ctx.fillStyle = '#c87030';
+  ctx.fillRect(-4, -48, 4, 3);   // chili streak
+  ctx.fillRect(2,  -40, 3, 4);
+
+  // Shirt (under apron)
+  ctx.fillStyle = '#3a3028';
+  ctx.fillRect(-9, -56, 18, 32);
+
+  // Arms
+  ctx.fillStyle = '#c89868';
+  ctx.fillRect(-12, -54, 4, 14);
+  ctx.fillRect(8,   -54, 4, 14);
+  // Dish towel on shoulder
+  ctx.fillStyle = '#c8c0a0';
+  ctx.fillRect(-14, -56, 4, 16);
+
+  // Neck
+  ctx.fillStyle = '#c89868';
+  ctx.fillRect(-2, -58, 4, 4);
+
+  const ht = -68 + bob;
+  ctx.fillStyle = '#c89868';
+  ctx.fillRect(-6, ht, 12, 12);
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-3, ht + 3, 2, 2);
+  ctx.fillRect(2,  ht + 3, 2, 2);
+  ctx.fillStyle = speaking ? '#7a2810' : '#6a4030';
+  ctx.fillRect(-2, ht + 7, 4, 1);
+
+  // Ponytail (dark hair, tied back)
+  ctx.fillStyle = '#1a0e06';
+  ctx.fillRect(-6, ht - 3, 14, 6);
+  ctx.fillRect(6,  ht - 1, 2, 14);   // ponytail
+  ctx.fillRect(6,  ht + 12, 4, 3);   // tie
+
+  ctx.restore();
+}
+
+function drawEchoTarsier(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0, camX = 350 - _CX, W = CANVAS_W, phase = 1;
+  const t   = now / 1000;
+  const vis = 0.20 + Math.sin(t * 0.8 + idx * 2.5) * 0.12;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(sy);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = Math.max(0.08, vis);
+  ctx.fillStyle = '#b8a868';
+
+  // Tiny body (8px)
+  ctx.fillRect(-3, -3, 6, 6);
+  ctx.fillRect(-2, -6, 4, 4);   // head
+
+  // HUGE eyes (the tarsier's signature)
+  const eyeG1 = ctx.createRadialGradient(-2, -5, 0, -2, -5, 3);
+  eyeG1.addColorStop(0, 'rgba(200,230,255,0.60)');
+  eyeG1.addColorStop(1, 'rgba(60,100,140,0.20)');
+  ctx.fillStyle = eyeG1;
+  ctx.beginPath();
+  ctx.arc(-2, -5, 3, 0, Math.PI * 2);
+  ctx.fill();
+  const eyeG2 = ctx.createRadialGradient(2, -5, 0, 2, -5, 3);
+  eyeG2.addColorStop(0, 'rgba(200,230,255,0.60)');
+  eyeG2.addColorStop(1, 'rgba(60,100,140,0.20)');
+  ctx.fillStyle = eyeG2;
+  ctx.beginPath();
+  ctx.arc(2, -5, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Pupils (dark, blinking)
+  const blink = Math.sin(t * 0.4 + idx * 3) > 0.85;
+  if (!blink) {
+    ctx.fillStyle = '#0a0808';
+    ctx.beginPath();
+    ctx.arc(-2, -5, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(2, -5, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Long fingers (clinging)
+  ctx.fillStyle = '#b8a860';
+  ctx.fillRect(-5, -2, 2, 4);
+  ctx.fillRect(4,  -2, 2, 4);
+
+  ctx.globalAlpha = 1.0;
+  ctx.restore();
+}
+
+function drawBoitata(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0, camX = 350 - _CX, W = CANVAS_W, phase = 1;
+  const t   = now / 1000;
+  const cx2 = Math.round(350 - camX);   // rises from water right side of dock
+  if (cx2 < -80 || cx2 > W + 80) return;
+
+  // Coil of fire (serpentine body)
+  const segments = 14;
+  for (let s = 0; s < segments; s++) {
+    const sx2   = cx2 + Math.sin(s * 0.4 + t * 1.2) * 50;
+    const sy2   = FLOOR_Y - 20 - s * 18 + Math.sin(s * 0.6 + t) * 10;
+    const thick = s < 3 ? 12 : (s > 10 ? 6 : 10);
+    const fA    = 0.60 + Math.sin(t * 2.0 + s * 0.5) * 0.20;
+    ctx.fillStyle = `rgba(255,${Math.round(80 + s * 12)},10,${fA.toFixed(2)})`;
+    ctx.fillRect(Math.round(sx2 - thick / 2), Math.round(sy2 - thick / 2), thick, thick);
+  }
+
+  // Head (top of coil) — lantern eyes
+  const headX = cx2 + Math.sin(t * 0.9) * 30;
+  const headY = FLOOR_Y - 20 - segments * 18;
+  ctx.fillStyle = '#f05010';
+  ctx.fillRect(Math.round(headX - 14), Math.round(headY - 8), 28, 18);
+  // Lantern eyes
+  const eyeA = 0.80 + Math.sin(t * 3) * 0.15;
+  ctx.fillStyle = `rgba(255,240,60,${eyeA.toFixed(2)})`;
+  ctx.beginPath();
+  ctx.arc(Math.round(headX - 6), Math.round(headY), 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(Math.round(headX + 6), Math.round(headY), 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0a0404';
+  ctx.beginPath();
+  ctx.arc(Math.round(headX - 6), Math.round(headY), 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(Math.round(headX + 6), Math.round(headY), 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawJoana(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0, camX = 350 - _CX, W = CANVAS_W, phase = 1;
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.6) * 0.7) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#201008';
+  ctx.fillRect(-5, -26, 5, 26);
+  ctx.fillRect(0,  -26, 5, 26);
+
+  // Cotton dress (faded green)
+  ctx.fillStyle = '#2a3820';
+  ctx.fillRect(-8, -56, 16, 32);
+  ctx.fillStyle = '#203018';
+  ctx.fillRect(-10, -56, 20, 4);  // shoulders
+
+  // Arms (longer reach, browner)
+  ctx.fillStyle = '#a07840';
+  ctx.fillRect(-12, -54, 4, 16);
+  ctx.fillRect(8,   -54, 4, 16);
+
+  // Neck
+  ctx.fillStyle = '#a07840';
+  ctx.fillRect(-2, -60, 4, 4);
+
+  const ht = -70 + bob;
+  ctx.fillStyle = '#a07840';
+  ctx.fillRect(-6, ht, 12, 12);
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-3, ht + 3, 2, 2);
+  ctx.fillRect(2,  ht + 3, 2, 2);
+  ctx.fillStyle = speaking ? '#6a2010' : '#5a3020';
+  ctx.fillRect(-2, ht + 7, 4, 1);
+
+  // Dark hair pulled back
+  ctx.fillStyle = '#0a0806';
+  ctx.fillRect(-7, ht - 3, 14, 6);
+  ctx.fillRect(5,  ht - 1, 2, 14);
+  ctx.fillRect(4,  ht + 12, 4, 3);
+
+  ctx.restore();
+}
+
+function drawBeatriz(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0, camX = 350 - _CX, W = CANVAS_W, phase = 1;
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.4) * 0.6) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#1a1008';
+  ctx.fillRect(-5, -24, 5, 24);
+  ctx.fillRect(0,  -24, 5, 24);
+
+  // Faded cotton dress + apron (off-white)
+  ctx.fillStyle = '#483428';
+  ctx.fillRect(-8, -52, 16, 30);
+  ctx.fillStyle = '#d0c8a0';
+  ctx.fillRect(-6, -50, 12, 26);
+
+  ctx.fillStyle = '#c8a070';
+  ctx.fillRect(-10, -50, 4, 14);
+  ctx.fillRect(6,   -50, 4, 14);
+  ctx.fillStyle = '#c8a070';
+  ctx.fillRect(-2, -56, 4, 4);
+
+  const ht = -66 + bob;
+  ctx.fillStyle = '#c8a070';
+  ctx.fillRect(-6, ht, 12, 12);
+  ctx.fillStyle = '#2a1808';
+  ctx.fillRect(-3, ht + 3, 2, 2);
+  ctx.fillRect(2,  ht + 3, 2, 2);
+  ctx.fillStyle = speaking ? '#6a2010' : '#5a3020';
+  ctx.fillRect(-2, ht + 7, 4, 1);
+
+  // Gray-streaked hair
+  ctx.fillStyle = '#807870';
+  ctx.fillRect(-7, ht - 3, 14, 6);
+  ctx.fillStyle = '#c0b8b0';
+  ctx.fillRect(-6, ht - 1, 5, 4);
+  ctx.fillRect(2,  ht - 1, 5, 4);
+  ctx.fillRect(-5, ht + 3, 3, 8);
+  ctx.fillRect(3,  ht + 3, 3, 8);
+
+  ctx.restore();
+}
+
+function drawCapuchin(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0, camX = 350 - _CX, W = CANVAS_W, phase = 1;
+  const t  = now / 1000;
+  const cx = Math.round(sx + Math.sin(t * 2) * 2);
+  const cy = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#3a2a10';
+  ctx.fillRect(-4, -18, 8, 18);
+  ctx.fillRect(-6, -12, 12, 10);
+  // White chest
+  ctx.fillStyle = '#e0d8b0';
+  ctx.fillRect(-3, -16, 6, 12);
+  // Head
+  ctx.fillStyle = '#3a2a10';
+  ctx.fillRect(-5, -26, 10, 10);
+  // White-tipped ears
+  ctx.fillStyle = '#e0d8b0';
+  ctx.fillRect(-7, -26, 3, 4);
+  ctx.fillRect(5,  -26, 3, 4);
+  // Eyes (sharp)
+  ctx.fillStyle = '#0a0806';
+  ctx.fillRect(-3, -22, 2, 2);
+  ctx.fillRect(1,  -22, 2, 2);
+  // Tail (long, curled)
+  ctx.fillStyle = '#3a2a10';
+  ctx.fillRect(4, -18, 2, 10);
+  ctx.fillRect(5, -10, 2, 6);
+  ctx.fillRect(6, -6,  2, 4);
+
+  ctx.restore();
+}
+
+function drawBabciaStanding(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0, camX = 350 - _CX, W = CANVAS_W, phase = 1;
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.2) * 0.6) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Thick-soled shoes
+  ctx.fillStyle = '#2a2018';
+  ctx.fillRect(-7, -10, 7, 10);
+  ctx.fillRect(0,  -10, 7, 10);
+
+  // House dress (dark floral; just dark blue-grey)
+  ctx.fillStyle = '#283040';
+  ctx.fillRect(-9, -48, 18, 40);
+  ctx.fillStyle = '#202838';
+  ctx.fillRect(-9, -48, 18, 5);
+
+  // Cardigan over dress
+  ctx.fillStyle = '#483828';
+  ctx.fillRect(-11, -46, 22, 36);
+  ctx.fillStyle = '#403020';
+  ctx.fillRect(-1, -46, 2, 36);
+
+  // Arms
+  ctx.fillStyle = '#c09868';
+  ctx.fillRect(-13, -44, 4, 14);
+  ctx.fillRect(9,   -44, 4, 14);
+  ctx.fillRect(-2, -50, 4, 4);
+
+  const ht = -62 + bob;
+  ctx.fillStyle = '#c09868';
+  ctx.fillRect(-7, ht, 14, 12);
+  ctx.fillStyle = '#3a2010';
+  ctx.fillRect(-3, ht + 3, 2, 2);
+  ctx.fillRect(2,  ht + 3, 2, 2);
+  ctx.fillStyle = speaking ? '#6a3020' : '#4a3020';
+  ctx.fillRect(-2, ht + 7, 4, 1);
+
+  // White hair
+  ctx.fillStyle = '#e8e0d8';
+  ctx.fillRect(-7, ht - 2, 14, 5);
+  ctx.fillRect(-8, ht + 2, 3, 8);
+  ctx.fillRect(5,  ht + 2, 3, 8);
+  ctx.fillRect(-6, ht + 8, 12, 4);
+
+  ctx.restore();
+}
+
+function drawDziadekStanding(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0, camX = 350 - _CX, W = CANVAS_W, phase = 1;
+  const t   = now / 1000;
+  const bob = speaking ? Math.round(Math.sin(t * 2.0) * 0.5) : 0;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  ctx.fillStyle = '#201808';
+  ctx.fillRect(-6, -28, 6, 28);
+  ctx.fillRect(0,  -28, 6, 28);
+
+  // Trousers + shirt
+  ctx.fillStyle = '#203040';
+  ctx.fillRect(-9, -54, 18, 28);
+  ctx.fillStyle = '#2a3848';
+  ctx.fillRect(-9, -54, 18, 6);
+
+  // Big hands (distinctive — "whittle a stick" hands)
+  ctx.fillStyle = '#b08860';
+  ctx.fillRect(-12, -50, 5, 16);
+  ctx.fillRect(7,   -50, 5, 16);
+
+  // Suspenders
+  ctx.fillStyle = '#482010';
+  ctx.fillRect(-4, -54, 2, 28);
+  ctx.fillRect(2,  -54, 2, 28);
+
+  ctx.fillRect(-2, -56, 4, 4);
+
+  const ht = -70 + bob;
+  ctx.fillStyle = '#b08860';
+  ctx.fillRect(-7, ht, 14, 13);
+  ctx.fillStyle = '#3a2010';
+  ctx.fillRect(-3, ht + 3, 2, 2);
+  ctx.fillRect(2,  ht + 3, 2, 2);
+  ctx.fillStyle = speaking ? '#5a3020' : '#3a2816';
+  ctx.fillRect(-2, ht + 7, 4, 1);
+
+  // Salt-and-pepper hair
+  ctx.fillStyle = '#808878';
+  ctx.fillRect(-7, ht - 2, 14, 5);
+  ctx.fillStyle = '#c0c0b8';
+  ctx.fillRect(-6, ht - 1, 4, 3);
+  ctx.fillRect(2,  ht - 1, 4, 3);
+
+  ctx.restore();
+}
+
+function drawPipsParents(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0, camX = 350 - _CX, W = CANVAS_W, phase = 1;
+  const t   = now / 1000;
+  const parA = 0.45 + Math.sin(t * 0.8) * 0.08;
+
+  // Mother (left of sx, dress, dark hair)
+  const momX = Math.round(sx - 20);
+  ctx.fillStyle = `rgba(200,160,120,${parA.toFixed(2)})`;
+  ctx.fillRect(momX - 7, Math.round(groundY - 62), 14, 62);
+  ctx.beginPath();
+  ctx.arc(momX, Math.round(groundY - 70), 9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = `rgba(80,40,10,${(parA * 0.7).toFixed(2)})`;
+  ctx.fillRect(momX - 8, Math.round(groundY - 72), 16, 5);
+
+  // Father (right of sx, broader)
+  const dadX = Math.round(sx + 22);
+  ctx.fillStyle = `rgba(180,140,100,${parA.toFixed(2)})`;
+  ctx.fillRect(dadX - 9, Math.round(groundY - 70), 18, 70);
+  ctx.beginPath();
+  ctx.arc(dadX, Math.round(groundY - 80), 11, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = `rgba(60,30,8,${(parA * 0.7).toFixed(2)})`;
+  ctx.fillRect(dadX - 9, Math.round(groundY - 82), 18, 5);
+
+  // Arms around each other / around Pip
+  ctx.fillStyle = `rgba(200,160,120,${(parA * 0.8).toFixed(2)})`;
+  ctx.fillRect(momX + 6,  Math.round(groundY - 50), 20, 4);
+  ctx.fillRect(dadX - 22, Math.round(groundY - 52), 20, 4);
+}
+
+function drawPipShadow(ctx, _CX, _FLOOR, _T, _SP) {
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0, camX = 350 - _CX, W = CANVAS_W, phase = 1;
+  const t   = now / 1000;
+  const cx  = Math.round(sx);
+  const cy  = Math.round(groundY);
+  const wires = phase === 1 ? 9 : phase === 2 ? 6 : phase === 3 ? 3 : 2;
+  ctx.save();
+  ctx.translate(cx, cy);
+
+  // Shadow body — tall, silhouette of Pip but wider with wires
+  ctx.fillStyle = 'rgba(10,8,14,0.90)';
+  ctx.fillRect(-12, -72, 24, 72);
+
+  // Static texture
+  for (let s2 = 0; s2 < 12; s2++) {
+    const sA = 0.08 + Math.sin(t * 4.0 + s2 * 0.7) * 0.04;
+    const sx2 = -10 + (s2 % 4) * 6;
+    const sy2 = -70 + Math.floor(s2 / 4) * 20 + Math.sin(t * 6 + s2) * 4;
+    ctx.fillStyle = `rgba(180,60,180,${sA.toFixed(2)})`;
+    ctx.fillRect(Math.round(sx2), Math.round(sy2), 2, 2);
+  }
+
+  // Pip's face inside the shadow (visible but dim)
+  ctx.fillStyle = 'rgba(180,140,100,0.25)';
+  ctx.fillRect(-5, -66, 10, 10);
+  ctx.fillStyle = 'rgba(80,60,40,0.40)';
+  ctx.fillRect(-3, -62, 2, 2);
+  ctx.fillRect(2,  -62, 2, 2);
+
+  // Wires
+  for (let w = 0; w < wires; w++) {
+    const wX  = -16 + w * 4 + Math.sin(t * 1.5 + w * 0.9) * 6;
+    const wY  = -60 + (w % 3) * 22 + Math.sin(t * 2.0 + w * 1.4) * 8;
+    const wA  = 0.40 + Math.sin(t * 3.0 + w) * 0.15;
+    ctx.fillStyle = `rgba(20,10,30,${wA.toFixed(2)})`;
+    const wLen = 18 + w * 3;
+    ctx.fillRect(Math.round(wX - 1), Math.round(wY), 2, wLen);
+    ctx.fillRect(Math.round(wX + wLen / 2 - 1), Math.round(wY + wLen / 3), 2, wLen * 0.6);
+  }
+
+  ctx.restore();
+}
+
 /* =============================================================
    PLACEHOLDER CELL RENDERER
    Shows character name, silhouette tells, color sig, door-fraction.
@@ -2668,18 +3126,52 @@ const CHARACTERS = [
     canSpeak: true,  // has a speaking animation per movement register (slow nod)
   },
   {
-    id: 'pips-father', name: "Pip's Father", chapterTag: 'Ch 8', section: 'greenpoint', designed: false,
+    id: 'babcia-ch8', name: 'Babcia (Ch8)', chapterTag: 'Ch 8', section: 'greenpoint', designed: true,
+    assetId: 'CH1-CHAR-04·Ch8',  // Ch8 standing/reunion variant of Babcia (cross-chapter)
+    colorSig: 'white hair / house dress + cardigan', fracLabel: '0.55–0.65',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawBabciaStanding(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
+  },
+  {
+    id: 'dziadek-ch8', name: 'Dziadek (Ch8)', chapterTag: 'Ch 8', section: 'greenpoint', designed: true,
+    assetId: 'CH1-CHAR-05·Ch8',  // Ch8 standing/reunion variant of Dziadek (cross-chapter)
+    colorSig: 'salt-pepper hair / suspenders', fracLabel: '0.55–0.65',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDziadekStanding(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
+  },
+  {
+    id: 'pips-father', name: "Pip's Father", chapterTag: 'Ch 8', section: 'greenpoint', designed: true,
     assetId: 'CH8-CHAR-03',
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'wool sweater / olive skin',
     tells: 'broad-shouldered, wool sweater, olive skin',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawPipsParents(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: false,
   },
   {
-    id: 'pips-mother', name: "Pip's Mother", chapterTag: 'Ch 8', section: 'greenpoint', designed: false,
+    id: 'pips-mother', name: "Pip's Mother", chapterTag: 'Ch 8', section: 'greenpoint', designed: true,
     assetId: 'CH8-CHAR-02',
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'warm knit / blonde',
     tells: 'blonde hair, warm casual knit',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawPipsParents(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: false,
   },
 
   // ── THE SHIP ───────────────────────────────────────────────
@@ -2923,11 +3415,18 @@ const CHARACTERS = [
     tells: 'Young couple tending a courtyard fire; taste-memory of potjie origins; no physical descriptions in outline — see OQ-A-04',
   },
   {
-    id: 'tirta', name: 'Tirta', chapterTag: 'Ch 6', section: 'chefs', designed: false,
+    id: 'tirta', name: 'Tirta', chapterTag: 'Ch 6', section: 'chefs', designed: true,
     assetId: 'CH6-CHAR-02',
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'warung apron / warm-clay',
     tells: 'compact adult, apron, clay-warm',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawTirta(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
   },
   // ── NEW Ch6: not-yet-present (Sprint B) ──────────────────
   {
@@ -2938,18 +3437,32 @@ const CHARACTERS = [
     tells: 'Elderly woman wrapping lemper in banana leaves by lamplight; warm and precise; taste-memory only — see OQ-A-04',
   },
   {
-    id: 'beatriz', name: 'Beatriz', chapterTag: 'Ch 7', section: 'chefs', designed: false,
+    id: 'beatriz', name: 'Beatriz', chapterTag: 'Ch 7', section: 'chefs', designed: true,
     assetId: 'CH7-CHAR-04',
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'faded cotton / apron',
     tells: 'shorter adult, faded cotton dress',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawBeatriz(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
   },
   {
-    id: 'joana', name: 'Joana', chapterTag: 'Ch 7', section: 'chefs', designed: false,
+    id: 'joana', name: 'Joana', chapterTag: 'Ch 7', section: 'chefs', designed: true,
     assetId: 'CH7-CHAR-03',
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'forest-green accent',
     tells: 'lean adult, sun-dark skin, forest green',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawJoana(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: true,
   },
   // ── NEW Ch7: not-yet-present (Sprint B) ──────────────────
   {
@@ -3089,18 +3602,32 @@ const CHARACTERS = [
     canSpeak: true,
   },
   {
-    id: 'boitata', name: 'Boitatá', chapterTag: 'Ch 7', section: 'monsters', designed: false,
+    id: 'boitata', name: 'Boitatá', chapterTag: 'Ch 7', section: 'monsters', designed: true,
     assetId: 'CH7-CHAR-01',
     frac: 0.65, fracLabel: 'serpent',
     colorSig: 'fire-amber / lantern-eyes',
     tells: 'fire-serpent, coiled, fire-flicker body',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawBoitata(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: false,
   },
   {
-    id: 'shadow', name: 'The Shadow', chapterTag: 'Ch 8', section: 'monsters', designed: false,
+    id: 'shadow', name: 'The Shadow', chapterTag: 'Ch 8', section: 'monsters', designed: true,
     assetId: 'CH8-CHAR-01',
     frac: 0.40, fracLabel: 'shape-shifting',
     colorSig: 'blood-iron / shifting black wires',
     tells: 'tangled black wires, never settles, TV-channel memories inside the silhouette',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawPipShadow(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: false,
   },
 
   // ── ECHO-CREATURES ─────────────────────────────────────────
@@ -3208,18 +3735,32 @@ const CHARACTERS = [
     canSpeak: false,
   },
   {
-    id: 'echo-tarsiers', name: 'Echo-tarsiers', chapterTag: 'Ch 6', section: 'echoes', designed: false,
+    id: 'echo-tarsiers', name: 'Echo-tarsiers', chapterTag: 'Ch 6', section: 'echoes', designed: true,
     assetId: 'CH6-CHAR-04',
     frac: 0.08, fracLabel: '0.07–0.09',
     colorSig: 'warm-amber translucent / huge eyes',
     tells: 'tiny body, enormous reflective eyes, sequential blinking, clings high',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawEchoTarsier(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: false,
   },
   {
-    id: 'capuchin', name: 'Capuchin', chapterTag: 'Ch 7', section: 'echoes', designed: false,
+    id: 'capuchin', name: 'Capuchin', chapterTag: 'Ch 7', section: 'echoes', designed: true,
     assetId: 'CH7-CHAR-02',
     frac: 0.25, fracLabel: '0.20–0.30',
     colorSig: 'brown / white face patch',
     tells: 'small monkey, white face/chest, perches high',
+
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawCapuchin(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
+    canSpeak: false,
   },
 ];
 

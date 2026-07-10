@@ -526,7 +526,7 @@ The taste-memory through the muhammara: walnut orchard, two boys, grandmother ga
 
 **Beatriz.** In her sixties, gray-streaked hair pulled back, apron over faded cotton dress (`#a89878`). The warmth-front of the pair. "I was very good at splinters." *(`08-character-reference-sheets.md`; `ch07-brazil-outline.md`)*
 
-**Erik (ghost form).** First appearance. Pip's age (~12). Warm-amber translucent halo (`#ffd8a8`). Dark hair `#3a2818`, Norwegian working-family sweater `#5a4438`. Fast small bounce idle. Delighted bigger bounce when speaking. Warm-cream white eyes with dark pupils (3×3 px, slightly larger than adult for child-emphasis). Alpha ~0.70. Excited, happy to be seen — at peace. *(`08-character-reference-sheets.md`)*
+**Erik (ghost form).** First appearance. Age 11 (locked R02 #41). Warm-amber translucent halo (`#ffd8a8`). Dark hair `#3a2818`, Norwegian working-family sweater `#5a4438`. Fast small bounce idle. Delighted bigger bounce when speaking. Warm-cream white eyes with dark pupils (3×3 px, slightly larger than adult for child-emphasis). Alpha ~0.70. Excited, happy to be seen — at peace. *(`08-character-reference-sheets.md`)*
 
 **The capuchin.** Small primate (~22–33 px). Brown body (`#5a3a28`) + white face/chest/ear tips (`#e8e0d0`). Sharp-eyed. Drops from branch, perches high. Chitters. Acts as path guide between dock and Joana/Beatriz's house. *(`ch07-brazil-outline.md`; `08-character-reference-sheets.md`)*
 

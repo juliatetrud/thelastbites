@@ -302,17 +302,18 @@ The existing prototype's structure makes each of these straightforward.
 
 **Shipped Sprint 17. This section reflects the implementation as of 2026-05-17.**
 
-Single auto-save slot in `localStorage` under the key `tlb-save-v1`. The doc's earlier `lastbites-save` key is superseded.
+Single auto-save slot in `localStorage` under the key `tlb-save-v2`. The doc's earlier `lastbites-save` and `tlb-save-v1` keys are superseded (the beat-order correction of 2026-05-18 bumped the schema v1 → v2).
 
 ### Key and schema
 
 ```javascript
-const SAVE_KEY     = 'tlb-save-v1';
-const SAVE_VERSION = 1;
+const SAVE_KEY     = 'tlb-save-v2';
+const SAVE_VERSION = 2;
 
-// Save shape (v1)
+// Save shape (v2 — the illustrative subset below predates the full GOAL-1 chapter fields;
+// see buildSaveObject() in game/index.html for the current complete shape)
 {
-  version:         1,
+  version:         2,
   savedAt:         "<ISO timestamp>",
   currentRoom:     "hallway" | "cabin" | "grandparents",
   pip: {
@@ -330,6 +331,18 @@ const SAVE_VERSION = 1;
 ```
 
 Paired-memory inventory and port history (Ch5+) are not yet persisted — fields will be added in a future sprint.
+
+### Version-mismatch behavior (R02, #24)
+
+`loadSave()` compares the stored `version` to `SAVE_VERSION`. On a mismatch (an older-schema
+save, e.g. a `v1` save, or any future bump) it **starts fresh** — the older save is not
+migrated, because the 2026-05-18 cabin/grandparents spatial reordering would leave a saved
+`pip.x` in an inconsistent position. As of R02 this is no longer silent: `loadSave()` sets
+`saveWasDropped = true`, and the title screen shows a one-line notice ("*Your voyage was from
+an earlier version — starting anew.*") so a returning player understands why their progress
+reset. The `tlb-save-v2` key itself is stable; R15 (save + persistence hardening) will make
+future schema changes additive-safe so this hard-drop path is only hit across genuinely
+incompatible bumps.
 
 ### Save-at-exit principle
 

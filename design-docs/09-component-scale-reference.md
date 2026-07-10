@@ -117,7 +117,7 @@ Rows marked **[PROPOSED]** are sized by the author of this doc using the Scale A
 | Passenger (scripted walk) | 0.55–0.65 H | 60–66 px | Ch1 hallway | Top-hatted figure; hat crown adds ~10 px above head. Impl updated Sprint 08.5. |
 | Child NPC representative | 0.35–0.45 H | 38–50 px | Ch1 memory-Pip; Ch2 Bibi etc. | Canonical from `03-art-and-aesthetic.md`. Memory-Pip in cinematic is a human child. |
 | Iris (Edwardian ghost child) | 0.35–0.40 H | 38–44 px | Ch5 | From `08-character-reference-sheets.md`. Small Edwardian girl. Smaller than memory-Pip band; confirmed by user review. Not yet implemented. |
-| Erik (Norwegian ghost boy, ~12) | 0.40–0.45 H | 44–50 px | Ch7 (first appearance), Ch8 | From `08-character-reference-sheets.md`. Dark hair, slight gap between front teeth, warm-amber at-peace glow. Not yet implemented. |
+| Erik (Norwegian ghost boy, 11) | 0.40–0.45 H | 44–50 px | Ch7 (first appearance), Ch8 | From `08-character-reference-sheets.md`. Dark hair, slight gap between front teeth, warm-amber at-peace glow. Not yet implemented. |
 | Pätu (gray tabby cat) | 0.18–0.22 H | 20–24 px | Ch2+ (recurring) | Canonical from `03-art-and-aesthetic.md`. Not yet implemented in canvas (CSS-div placeholder exists). |
 | Capuchin monkey (Ch7) | 0.15–0.20 H | 16–22 px | Ch7 Brazil forest | From `08-character-reference-sheets.md`. Small, sharp-eyed, white-tipped ears. Not yet implemented. |
 | Black Shuck (Ch3) | 0.40–0.50 H | 44–55 px at shoulder | Ch3 Southampton | From `08-character-reference-sheets.md`. Large ghostly dog. Confirmed by user review Sprint 08.5. Not yet implemented. |

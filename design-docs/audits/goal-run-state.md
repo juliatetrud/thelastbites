@@ -32,15 +32,5 @@ Last updated: 2026-06-16 (GOAL-1 COMPLETE — all 8 chapters built)
 - Inventory items: switchblade-iris (Ch5, load-bearing Ch6+)
 - Erik photograph first seen in Ch6 (dialogue only; boy of 11, blond, wooden spoon)
 
-## Ch7–Ch8: NOT STARTED
-Build order:
-1. ~~Ch2 through Ch6~~ DONE (5 chapters this session)
-2. Ch7 (Brazil): Boitatá, Joana/Beatriz, moqueca, Erik kitchen scene / birthday
-3. Ch8 (Greenpoint): shadow, override phases, reunions, final line
-
-## Next step
-Push Ch6 checkpoint, open #86, read ch07 spec, build Ch7.
-
-## Context budget
-- HIGH: 5 chapters built this session (Ch2–Ch6) + context growing long
-- Priority: Ch7 + Ch8 to finish GOAL-1; maintain JS size discipline
+## Reconciliation note (R02, 2026-07-10)
+The former "Ch7–Ch8: NOT STARTED / Next step / Context budget" section below was a leftover mid-run scratchpad. It is removed: the header and the commit log confirm Ch7 (`712a96f`) and Ch8 (`c4ab7b7`) both landed — GOAL-1 is COMPLETE. Post-GOAL-1 work is tracked by the R-series run (`goal-R-run-state.md`, parent issue #108).

@@ -95,7 +95,7 @@ The shadow is Pip, manifested at the climax. **Not a separate creature.** Treat 
 
 **The hub character.** Appears in every chapter. The most complex case in this doc — three age stages, all distinct, all must read as the same person aging.
 
-**Canonical description (present-day, Ch1 onward).** Norwegian, in his sixties. Gray beard. Has worked on cruise ships for thirty years. Lost his son Erik (~12) and his wife Henrietta in a boating accident decades ago; they drowned, he was there and could not reach them. He believes a violin played as he tried — the Nøkken. He went to sea to be closer to their spirits, which he believes live in the water. Personality: quiet, dry, kind in a gruff way. Doesn't waste words. Treats Pip like a colleague, not a child.
+**Canonical description (present-day, Ch1 onward).** Norwegian, in his sixties. Gray beard. Has worked on cruise ships for thirty years. Lost his son Erik (11) and his wife Henrietta in a boating accident decades ago; they drowned, he was there and could not reach them. He believes a violin played as he tried — the Nøkken. He went to sea to be closer to their spirits, which he believes live in the water. Personality: quiet, dry, kind in a gruff way. Doesn't waste words. Treats Pip like a colleague, not a child.
 
 **Register A (gameplay sprite, per `art-asset-list.md`):** ~24×40 px figure; door-fraction 0.55–0.65 (target ~60–72 px tall after Scale Anchor reconciliation). White chef's coat. Apron with flour. Gray beard. Quiet stooped carriage. Pipe sometimes.
 
@@ -207,7 +207,7 @@ The Ch8 Dziadek is older than Ch1 Dziadek by a year of grief. Same flat cap, sam
 
 ## Erik
 
-**Canonical description.** Henrik's son. Died at age 12 in the same boating accident that killed his mother Henrietta. Drowned. Dark hair. A slight gap between his front teeth. The face of someone caught laughing.
+**Canonical description.** Henrik's son. Died at age 11 in the same boating accident that killed his mother Henrietta. Drowned. Dark hair. A slight gap between his front teeth. The face of someone caught laughing.
 
 In Ch7 he appears as an eleven-year-old ghost — the age he died at — to visit Henrik on his annual birthday return.
 

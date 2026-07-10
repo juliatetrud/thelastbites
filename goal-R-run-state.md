@@ -13,23 +13,32 @@ isn't in this file or in the tracking issues, it didn't happen.
 
 ## Resume here
 
-> **R03 in-progress — batch 1 (Ch2 characters) pushed (`17ebe29`); AWAITING Julia's gallery
-> review.** Audit done (all ~20 Ch2–Ch4 draw fns exist in-game, none in gallery; R03 = port
-> them in on-doctrine). Issue #114 has the per-chapter checklists + the port mechanic
-> (in-game `(screenX,groundY,now-ms)` global-ctx → gallery `(ctx, CHAR_CX, FLOOR_Y, t-sec,
-> speaking)`; many gallery placeholder entries already exist as `designed:false` — upgrade
-> them). **Batch 1 done:** CH2-CHAR-03 Leida + CH2-CHAR-02 Haldjas ported to
-> `character-gallery.html` (placeholders upgraded, inline fns added, master-list marked),
-> `node --check` PARSE OK, no black outlines/dup names.
+> **R03 in-progress — ALL Ch2–Ch4 characters ported (`567599b`); environments + cinematic
+> frames remain.** Julia to review the whole set in one pass (she chose bulk-port over
+> per-batch review). Audit + port mechanic in #114 (in-game `(screenX,groundY,now-ms)`
+> global-ctx → gallery `(ctx,_CX,_FLOOR,_T,_SP)` verbatim-body wrapper; placeholder entries
+> upgraded designed:false→true).
 >
-> **R03 is review-gated (DoD): Julia reviews each asset in-browser; off-model notes become
-> fix-commits inside R03.** So progress is batch → review → next batch, not a blind bulk
-> port. **Next batches (queued):** Ch2 environments (`drawCh2Kasmu` → env gallery) + Ch2
-> cinematic frames; then Ch3 characters (Sandy, Caitlin, Robert, Archie, Bibi, Max&Gus, Edie,
-> Michel pair, Black Shuck+overlay, fish-echo, echo-deer — placeholders exist for the chefs);
-> then Ch3 env; then Ch4 (Muhittin, Omer, Brian, Karakoncolos, frozen-Pätu, echo-cat + env).
-> R03's Sprint History + Decisions Log rows land with the FINAL gallery state (per DoD).
-> Do NOT tag `r-checkpoint-R03` until R03 is `built`.
+> **Characters DONE in `character-gallery.html` (all node --check PARSE OK, no black outlines,
+> no dup names, all drawFn refs resolve, 34 designed:true):**
+> - Ch2 (`17ebe29`): Leida, Haldjas.
+> - Ch3 (`567599b`): Sandy, Caitlin, Robert, Archie, Bibi, Max&Gus (pair in both cells), Edie,
+>   Michel pair (both cells), Black Shuck, fish-echo (cod; haddock/plaice = idx-variants, left
+>   placeholder), echo-deer. `drawShuckPuzzleOverlay` intentionally NOT a cell (mechanic render).
+> - Ch4 (`567599b`): Muhittin, Omer, Brian, Karakoncolos, frozen-Pätu (new `patu-frozen`
+>   entry), echo-cat.
+>
+> **REMAINING for R03 (next batches):**
+> 1. **Environments → `environment-gallery.html`** (different gallery, cell fns like
+>    `drawXxxCell`; in-game sources are room-scale: `drawCh2Kasmu`, `drawCh4FrozenSquare`,
+>    `drawHenrikFrozen` + Ch3 dockyard/Bevois/Sandy-kitchen + Ch2 village/cottage + Ch4 cat
+>    alley/Muhittin kitchen). Room renders need adaptation to the cell format — more involved
+>    than the character wrapper.
+> 2. **Cinematic frames** (object-memory-pan, lunchbox-taste, curry-taste-memory,
+>    muhammara-orchard).
+> 3. **Master-list per-ID marking** (Ch3/Ch4 designed) + `08-char-ref` "gallery canonical"
+>    notes + doc 06 **Sprint History row + Decisions Log** — all land with the FINAL R03 state.
+> Do NOT tag `r-checkpoint-R03` until R03 is `built`. R03 remains review-gated (#114).
 >
 > --- prior resume (R02) ---
 > **R02 `built` (checkpoint `e8a123c` / `r-checkpoint-R02`, pushed).** R02

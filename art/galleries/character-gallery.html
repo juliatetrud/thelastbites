@@ -2232,44 +2232,50 @@ function drawKarakoncolos(ctx, _CX, _FLOOR, _T, _SP) {
   ctx.restore();
 }
 
-function drawFrozenPatu(ctx, _CX, _FLOOR, _T, _SP) {
-  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, idx = 0;
-  const t     = now / 1000;
-  const cx    = Math.round(sx);
-  const cy    = Math.round(groundY);
-  const glint = 0.25 + Math.sin(t * 2.5) * 0.10;
+/* CH4-CHAR-05 — Pätu (frozen): canonical Pätu encased in ice. The cat is drawPatu
+   VERBATIM (gray tabby, yellow eyes, correct scale), frozen to a still neutral pose;
+   the ice is layered ON TOP — a translucent encasement volume + frost glints, cold
+   palette on the ICE ONLY, never on Pätu's own colors. "Pätu seen through ice", not a
+   new cat. R03 rework: the GOAL-1 drawFrozenPatu hand-built a crude blue-blob cat
+   instead of deriving from drawPatu (see #114 diagnosis) — rebuilt the doctrine way. */
+function drawFrozenPatuCh4(ctx, cx, floor, t) {
+  const cxr = Math.round(cx);
+  const fy  = Math.round(floor);
 
+  // 1) Pätu — verbatim anatomy / pose / palette, frozen to a still neutral pose.
+  //    t = 1.7 → no tail-flick and no ear-twitch ((1.7 % 3.5) >= 0.25, (1.7 % 4) >= 0.15).
+  drawPatu(ctx, cxr, fy, 1.7);
+
+  // 2) Ice encasement layered ON TOP (cold palette on the ice only — Pätu shows through).
   ctx.save();
-  ctx.translate(cx, cy);
-  ctx.globalAlpha = 0.90;
+  const bx = cxr - 17, by = fy - 30, bw = 34, bh = 30;   // covers Pätu's bounds with a margin
 
-  // Ice shell glow
-  const iceG = ctx.createRadialGradient(0, -10, 0, 0, -10, 22);
-  iceG.addColorStop(0, 'rgba(180,220,255,0.30)');
-  iceG.addColorStop(1, 'rgba(80,140,200,0)');
-  ctx.fillStyle = iceG;
-  ctx.fillRect(-22, -28, 44, 28);
+  // translucent ice body — cools Pätu without recolouring the cat itself
+  ctx.globalAlpha = 0.28;
+  ctx.fillStyle = '#9cc4e4';
+  ctx.fillRect(bx + 2, by,     bw - 4, bh);
+  ctx.fillRect(bx,     by + 4, bw,     bh - 8);
 
-  // Ice block
-  ctx.fillStyle = '#8ab8d8';
-  ctx.fillRect(-12, -24, 26, 24);
-  ctx.fillStyle = `rgba(200,230,255,${glint.toFixed(2)})`;
-  ctx.fillRect(-10, -22, 6, 4);
-  ctx.fillRect(4,   -16, 5, 3);
+  // frosted sheen (lighter, along the top and left edge)
+  ctx.globalAlpha = 0.20;
+  ctx.fillStyle = '#d8ecff';
+  ctx.fillRect(bx + 3, by + 1, bw - 8, 3);
+  ctx.fillRect(bx + 2, by + 5, 3, bh - 12);
 
-  // Pätu silhouette inside ice (pale blue)
-  ctx.fillStyle = '#4a7098';
-  ctx.fillRect(-8, -22, 18, 22);
-  ctx.fillRect(-10, -16, 22, 12);
-  ctx.fillRect(-8,  -28, 8, 8);   // ears
-  ctx.fillRect(4,   -28, 6, 8);
-  ctx.fillStyle = '#90b8d0';
-  ctx.fillRect(-3, -20, 6, 6);    // head
-  // Frozen hiss expression
-  ctx.fillStyle = '#2a4860';
-  ctx.fillRect(-2, -17, 4, 1);
+  // 3) frost glints — slow cold twinkle on top of the ice, opaque
+  const glints = [
+    { x: -11, y: -25, p: 0.0 }, { x:  7, y: -19, p: 1.4 }, { x: -3, y: -11, p: 2.6 },
+    { x:  12, y: -27, p: 0.7 }, { x: -14, y: -15, p: 2.0 }, { x:  3, y: -4,  p: 1.1 },
+  ];
+  for (const g of glints) {
+    const a = 0.30 + Math.sin(t * 1.3 + g.p) * 0.35;
+    if (a <= 0.05) continue;
+    ctx.globalAlpha = Math.max(0, a);
+    ctx.fillStyle = '#eaf6ff';
+    ctx.fillRect(cxr + g.x, fy + g.y, 1, 1);
+  }
 
-  ctx.globalAlpha = 1.0;
+  ctx.globalAlpha = 1;
   ctx.restore();
 }
 
@@ -2401,10 +2407,10 @@ const CHARACTERS = [
     id: 'patu-frozen', name: 'Pätu (frozen)', chapterTag: 'Ch 4', section: 'cats', designed: true,
     assetId: 'CH4-CHAR-05',
     colorSig: 'ice-encased tabby / frost glint', fracLabel: '0.18–0.22',
-    drawFn: (ctx, t, speaking) => {
+    drawFn: (ctx, t, _speaking) => {
       drawCellBackground(ctx);
       drawDoorOutline(ctx);
-      drawFrozenPatu(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+      drawFrozenPatuCh4(ctx, CHAR_CX, FLOOR_Y, t);
     },
     canSpeak: false,
   },

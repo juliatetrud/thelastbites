@@ -13,36 +13,33 @@ isn't in this file or in the tracking issues, it didn't happen.
 
 ## Resume here
 
-> **R01 Stage 0 + Stage 1 complete; Julia RULED "apply playscript verbatim"; Stage 2 (the
-> edit) is the next action.** Hygiene done (16 stacked commits pushed, `DEBUG_WARP=false`).
-> Stage-1 diff in #111: 74 dialogue lines match, 49 structural beats conform, 25 real DIFFs.
-> The **exact apply-spec is recorded as a comment on #111** (every old→new pair, the
-> grandparents 2→5-line cinematic restore, the bed/mirror/wire swaps) — execute it exactly.
+> **R01 `built` (checkpoint `3c01358` / `r-checkpoint-R01`, pushed); NEXT = R02.** Ch1
+> dialogue reconciled to the playscript per Julia's verbatim ruling (18 swaps; grandparents
+> cinematic restored 2→5 lines; death/mirror/wire lines updated). 3 gameplay-critical lines
+> held back and logged in #110. `node --check` PARSE OK; `DEBUG_WARP=false`. R01 items added
+> to backlog #109; #111 + #89 closed. **Verification pending Julia in-browser (Cmd-Shift-R):
+> full Ch1 playthrough, every line matches the playscript, dead-ends still closed.**
 >
-> **Stage-2 procedure (next session):**
-> 1. Apply the ~17 tone/wording swaps + grandparents cinematic expansion from the #111
->    apply-spec. **Encoding caveat:** file mixes literal `\uXXXX` escape text with literal
->    UTF-8 curly quotes — match each line's actual bytes (Edit tool or assertion-guarded
->    script). Do NOT touch the 3 gameplay-critical lines (1976, 2311/2321, 2122/2123) — keep
->    code, log those 3 as autonomous calls in #110.
-> 2. `node --check` the extracted JS (was PARSE OK at 851,363 chars). No `build.js` needed —
->    R01 touches no art / `art-source.js`.
-> 3. Commit (scene-group), tag `r-checkpoint-R01`, confirm `DEBUG_WARP=false`, push, verify
->    `git log origin/main..HEAD` empty.
-> 4. Add R01 items to backlog #109; close #111 + dangling #89 with the SHA; report in #108;
->    flip run-state R01 → `built`; begin R02.
+> **Begin R02 (open-questions closeout + doc reconciliation).** Read
+> `sprints/sprint-R02-open-questions-closeout.md`. Pre-answered handoff defaults apply:
+> #39 Henrik exit = simplest playscript-consistent staging; #40 recipe-HUD copy = draft in
+> voice, mark REVIEW; #41 Erik age = **11** (bible supersession note); #24 save v1→v2 =
+> fresh start + one-line notice. Also: fix the audio `IndexSizeError` (clamp fade volume to
+> [0,1] — see doc 06 Audio section / Decisions Log 2026-06-29); reconcile `goal-run-state.md`
+> (remove the stale "Ch7–Ch8 NOT STARTED" half); update doc 06 Sprint Queue + mark resolved
+> OQs. Open the R02 child issue with the diagnosis first.
 >
-> **Carried hygiene debt (flag for R02 / Julia):** large untracked/uncommitted working tree
-> predating this run — `ch01-playscript.docx` modified, all `sprint-R*.md` + roadmap +
-> `goal-run-protocol.md` untracked, `game/scale-reference.html` deleted. Not mass-committed
-> (needs Julia's judgment on the `.mp4`/temp files); recommend a deliberate `git add` pass in
-> R02's doc-reconciliation.
+> **Carried hygiene debt (address in R02 doc-reconciliation):** large untracked/uncommitted
+> working tree predating this run — `ch01-playscript.docx` modified, all `sprint-R*.md` +
+> roadmap + `goal-run-protocol.md` untracked, `game/scale-reference.html` deleted, plus many
+> older sprint specs untracked and missing Sprint History rows. Recommend a deliberate
+> `git add` pass of the specs/docs (NOT the `.mp4`/`~$` temp files — leave those for Julia).
 
 ## Sprint table
 
 | Sprint | Name | Status | Issue # | Checkpoint SHA | Tag |
 |---|---|---|---|---|---|
-| R01 | Ch1 playscript impl + repo hygiene | in-progress | #111 | — | — |
+| R01 | Ch1 playscript impl + repo hygiene | built | #111 | `3c01358` | `r-checkpoint-R01` |
 | R02 | Open-questions closeout + doc reconciliation | pending | — | — | — |
 | R03 | Gallery population, Ch2–Ch4 | pending | — | — | — |
 | R04 | Gallery population, Ch5–Ch8 | pending | — | — | — |

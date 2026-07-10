@@ -19,7 +19,17 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
-> **R13 STARTED — Ch8 finale audit done (#124); the game's CLIMAX.** All 3 override phases
+> **R13 `built` — Ch8 finale mechanics done (Phase 1 Pong + Phase 3 trace built, Phase 2
+> riddle verified). NEXT = R14 (audio + music pass).** All 3 override phases kinetic/verified;
+> 'It's not fair.' + post-override + final line byte-identical; ch8State additive. Feel is
+> Julia's playtest (#109). **ALL MECHANICS DONE (R12+R13).** R14–R18 are the polish/release
+> run: **R14** audio+music (read `sprint-R14-audio-and-music-pass.md`; also the `IndexSizeError`
+> was already fixed in R02); **R15** save hardening; **R16** recipe-site integration + credits
+> (recipe URLs = homepage placeholders, one-table swap, log prominently); **R17** mobile;
+> **R18** release pre-flight → GO-LIVE GATE (STOP for Julia's fresh-save playthrough + v1.0.0).
+>
+> --- prior (R13 audit) ---
+> **R13 STARTED — Ch8 finale audit (#124).** All 3 override phases
 > are dialogue-choice stubs (`runPhase1/2/3`, `:22129/22324/22429`). **R13 spec is uniquely
 > feel-first: the ending's feel outranks the mechanics checklist; STOP+flag if kinetic fights
 > pacing; Julia decides kinetic-vs-stub per phase.** Plus a real design question surfaced in
@@ -310,7 +320,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R10 | Ch7 art reconciliation | built | #121 | `9d160b8` | `r-checkpoint-R10` |
 | R11 | Ch8 art reconciliation | built | #122 | `dd26737` | `r-checkpoint-R11` |
 | R12 | Kinetic mechanics — port chapters | built | #123 | `557fb85` | `r-checkpoint-R12` |
-| R13 | Kinetic mechanics — Ch8 finale | in-progress | #124 | — | — |
+| R13 | Kinetic mechanics — Ch8 finale | built | #124 | `455b834` | `r-checkpoint-R13` |
 | R14 | Audio + music pass | pending | — | — | — |
 | R15 | Save + persistence hardening | pending | — | — | — |
 | R16 | Recipe-site integration + credits | pending | — | — | — |

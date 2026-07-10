@@ -1226,6 +1226,108 @@ function drawKvikkLunsjCell(ctx, t) {
   _lbl(ctx,'Kvikk Lunsj Treat');
 }
 
+
+/* =============================================================
+   CH2 — KÄSMU, ESTONIA  (R03 gallery population)
+   Purpose-built 200×113 cell illustrations (like the Ch1 cells), composed on-doctrine
+   from the ch02 outline + the in-game drawCh2Kasmu reference. No black outlines; warm
+   interior light via candle/ember glows; cool coastal palette for the exterior.
+   ============================================================= */
+
+/* CH2-ROOM-01 — Mnemosyne lower decks: narrow, cramped brass service corridor, cooler
+   and tighter than the passenger hallway; two sea-blue portholes, a bracket candle. */
+function drawCh2LowerDeckCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0c1424', sky2:'#12203a', sky3:'#0e1830', floor:'#141c30'});
+  _wallPanels(ctx, false);
+  // low ceiling band — the corridor is cramped
+  _r(ctx, 0, 0, 200, 15, '#0a1220'); _r(ctx, 0, 15, 200, 1, P.brassEdge);
+  // two brass portholes with sea-blue glass + a moonlit glint
+  for (const cxp of [56, 142]) {
+    _r(ctx, cxp-9, 34, 18, 18, P.brass);
+    _r(ctx, cxp-7, 36, 14, 14, '#12304a');
+    _r(ctx, cxp-9, 34, 18, 2, P.brassHi);
+    _r(ctx, cxp-4, 38, 3, 3, 'rgba(160,200,240,0.5)');
+  }
+  // bracket candle mid-corridor, single warm light
+  const ca = 0.4 + Math.sin(t*3.0) * 0.12;
+  const cg = ctx.createRadialGradient(100, 66, 0, 100, 66, 28);
+  cg.addColorStop(0, 'rgba(255,180,70,'+(0.30+ca*0.20).toFixed(2)+')');
+  cg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = cg; ctx.fillRect(72, 42, 56, 54);
+  _r(ctx, 99, 62, 2, 8, '#d8c090');
+  _r(ctx, 99, 57, 2, 5, 'rgba(255,190,90,'+ca.toFixed(2)+')');
+  _lbl(ctx, 'Lower Decks');
+}
+
+/* CH2-BG-01 — Käsmu harbor approach: foggy Estonian coastal village at dusk, peaked
+   wooden buildings with warm windows, birch trees, Leida's offering altar, a cottage
+   door with red geraniums, moonlit water. */
+function drawCh2KasmuCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#181f28', sky2:'#1e2c38', sky3:'#1a2830', floor:'#1c2018'});
+  // fog band near the horizon
+  const fg = ctx.createLinearGradient(0, FY-30, 0, FY);
+  fg.addColorStop(0, 'rgba(40,60,80,0)'); fg.addColorStop(1, 'rgba(40,60,80,0.30)');
+  ctx.fillStyle = fg; ctx.fillRect(0, FY-30, 200, 30);
+  // wooden buildings with peaked roofs + flickering warm windows
+  for (const b of [[16,40,44],[70,32,34],[120,42,48],[170,30,38]]) {
+    const bx=b[0], bw=b[1], bh=b[2];
+    _r(ctx, bx, FY-bh, bw, bh, '#1a1808');
+    ctx.fillStyle = '#141408';
+    ctx.beginPath();
+    ctx.moveTo(bx-3, FY-bh); ctx.lineTo(bx+bw/2, FY-bh-8); ctx.lineTo(bx+bw+3, FY-bh);
+    ctx.fill();
+    const wa = 0.28 + Math.sin(t*0.9 + bx) * 0.08;
+    _r(ctx, bx+6, FY-bh+10, 7, 6, 'rgba(255,175,55,'+wa.toFixed(2)+')');
+  }
+  // pale birch trunks framing the foreground
+  for (const tx of [8, 189]) {
+    _r(ctx, tx, FY-40, 3, 40, '#c8c4b0');
+    _r(ctx, tx, FY-30, 3, 2, '#3a3a2a'); _r(ctx, tx, FY-20, 3, 2, '#3a3a2a');
+  }
+  // offering altar (flat stone + bowl + faded ribbon)
+  _r(ctx, 48, FY-6, 20, 5, '#2a2818');
+  _r(ctx, 54, FY-9, 8, 4, '#3a2c18');
+  _r(ctx, 55, FY-9, 6, 1, '#8a3020');
+  // cottage door + red geraniums
+  _r(ctx, 150, FY-30, 16, 30, '#241c0e');
+  _r(ctx, 152, FY-28, 12, 26, '#2e2410');
+  _r(ctx, 158, FY-16, 2, 3, P.brassHi);
+  _r(ctx, 146, FY-6, 4, 6, '#2a3a1a'); _r(ctx, 146, FY-9, 4, 3, '#b83048');
+  _r(ctx, 166, FY-6, 4, 6, '#2a3a1a'); _r(ctx, 166, FY-9, 4, 3, '#b83048');
+  // moonlit water glint on the dock band
+  _r(ctx, 82, FY+5, 40, 1, 'rgba(120,150,190,0.4)');
+  _lbl(ctx, 'Käsmu Village');
+}
+
+/* CH2-ROOM-02 — Leida's cottage kitchen: warm pine interior, wood-burning stove with an
+   ember glow, pine table + the cast-iron pan, a night window with geraniums, dried herbs. */
+function drawCh2CottageCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#2a1c0e', sky2:'#33230f', sky3:'#2a1c0c', floor:'#3a2814'});
+  // pine plank wall seams (warm)
+  for (let x=0; x<200; x+=22) _r(ctx, x, 0, 1, FY, 'rgba(120,80,40,0.18)');
+  // night window with geraniums (left)
+  _r(ctx, 18, 20, 34, 30, '#3a2c14');
+  _r(ctx, 20, 22, 30, 26, '#12203a');
+  _r(ctx, 34, 22, 1, 26, '#3a2c14'); _r(ctx, 20, 34, 30, 1, '#3a2c14');
+  _r(ctx, 18, 50, 4, 5, '#2a3a1a'); _r(ctx, 18, 47, 4, 3, '#b83048');
+  _r(ctx, 48, 50, 4, 5, '#2a3a1a'); _r(ctx, 48, 47, 4, 3, '#b83048');
+  // wood-burning stove with ember glow (right), single warm light
+  _r(ctx, 150, 54, 34, 46, '#1c1810'); _r(ctx, 150, 54, 34, 2, '#2a2418');
+  _r(ctx, 164, 48, 4, 6, '#2a2418'); // flue
+  const ea = 0.42 + Math.sin(t*4.0) * 0.15;
+  const eg = ctx.createRadialGradient(167, 80, 0, 167, 80, 22);
+  eg.addColorStop(0, 'rgba(255,120,40,'+ea.toFixed(2)+')'); eg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = eg; ctx.fillRect(146, 60, 42, 40);
+  _r(ctx, 158, 74, 18, 10, 'rgba(255,130,50,'+ea.toFixed(2)+')');
+  // pine table + legs + the cast-iron pan
+  _r(ctx, 74, 80, 52, 4, '#6a4a24');
+  _r(ctx, 78, 84, 3, 16, '#5a3e1e'); _r(ctx, 120, 84, 3, 16, '#5a3e1e');
+  _r(ctx, 92, 76, 16, 4, '#14140e'); _r(ctx, 108, 77, 6, 2, '#14140e');
+  // dried herbs hanging overhead
+  for (const hx of [60, 100, 138]) { _r(ctx, hx, 0, 1, 12, '#5a4a24'); _r(ctx, hx-2, 10, 5, 6, '#4a5a2a'); }
+  _lbl(ctx, "Leida's Cottage");
+}
+
 /* =============================================================
    DRAW FUNCTION REGISTRY — maps asset.id to drawFn(ctx, t)
    Only Ch1 cells are drawn; all others remain placeholders.
@@ -1237,6 +1339,9 @@ const DRAW_FNS = {
   'CH1-ROOM-04': drawDarkCorridorCell,
   'CH1-ROOM-05': drawKitchenCell,
   'CH1-ROOM-06': drawObsDeckCell,
+  'CH2-ROOM-01': drawCh2LowerDeckCell,
+  'CH2-ROOM-02': drawCh2CottageCell,
+  'CH2-BG-01':   drawCh2KasmuCell,
   'CH1-BG-01':   drawBergenBgCell,
   'CH1-PROP-01': drawBedBodyLumpCell,
   'CH1-PROP-02': drawCrayonDrawingCell,
@@ -1498,14 +1603,14 @@ const ASSETS = [
   // ── CHAPTER 2: ROOMS ─────────────────────────────────────
   {
     id: 'CH2-ROOM-01', name: 'The Mnemosyne lower decks (Ch2 traversal)', type: 'ROOM',
-    chapter: 2, section: 'ch2-room', designed: false,
+    chapter: 2, section: 'ch2-room', designed: true,
     desc: 'Narrow brass corridor; echo-mice; wordless, darker and more cramped than the passenger hallway; leads from ship to Ch2 port.',
     alsoAppears: null,
     source: 'ch02-tallinn-outline.md',
   },
   {
     id: 'CH2-ROOM-02', name: "Leida's cottage kitchen", type: 'ROOM',
-    chapter: 2, section: 'ch2-room', designed: false,
+    chapter: 2, section: 'ch2-room', designed: true,
     desc: 'Käsmu, Estonia; wood-burning stove, pine table and chairs, herbs hanging overhead, cast-iron pan (lost and found); warm and sparse.',
     alsoAppears: null,
     source: 'ch02-tallinn-outline.md',
@@ -1514,7 +1619,7 @@ const ASSETS = [
   // ── CHAPTER 2: BACKGROUNDS ────────────────────────────────
   {
     id: 'CH2-BG-01', name: 'Käsmu harbor approach', type: 'BG',
-    chapter: 2, section: 'ch2-bg', designed: false,
+    chapter: 2, section: 'ch2-bg', designed: true,
     desc: 'Small Estonian coastal village; slate dock, wooden buildings, birch trees; evening light on calm water.',
     alsoAppears: null,
     source: 'ch02-tallinn-outline.md',

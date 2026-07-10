@@ -19,6 +19,14 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **R07 `built` (Ch4 art reconciliation; frozen-Pätu derived `a00492c`). NEXT = R08 (Ch5
+> art reconciliation).** Ch4 on-doctrine; frozen-Pätu derived into game (drawPatu+ice, replaced
+> blue-blob) — DERIVED PENDING GALLERY RE-APPROVAL, pinned atop backlog #109. **R08 (Ch5):**
+> audit Iris/Mamlambo/Johannes/echo-rat + rooms; Iris/Mamlambo may need care (translucency,
+> porthole framing). Per Phase-2, Ch5–Ch8 derived cells (incl. Pip-shadow in R11) go under the
+> DERIVED-PENDING section of #109. Audit first (child issue), checkpoint r-checkpoint-R08.
+>
+> --- prior resume (R06→R07) ---
 > **R06 `built` (Ch3 art reconciliation — VERIFY-ONLY, no edits; #117). NEXT = R07 (Ch4
 > art reconciliation).** Ch3 in-game art already on-doctrine (0 black outlines) and ≡ gallery
 > (ported from game in R03); Edie→kitchen gate low walk-past risk, no change. **R07 (Ch4):**
@@ -189,7 +197,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R04 | Gallery population, Ch5–Ch8 | built | #115 | `0a0cb74` | `r-checkpoint-R04` |
 | R05 | Ch2 art reconciliation | built | #116 | `c69d0d2` | `r-checkpoint-R05` |
 | R06 | Ch3 art reconciliation | built | #117 | `3ac44e0` | `r-checkpoint-R06` |
-| R07 | Ch4 art reconciliation | pending | — | — | — |
+| R07 | Ch4 art reconciliation | built | #118 | `0b70cc9` | `r-checkpoint-R07` |
 | R08 | Ch5 art reconciliation | pending | — | — | — |
 | R09 | Ch6 art reconciliation | pending | — | — | — |
 | R10 | Ch7 art reconciliation | pending | — | — | — |

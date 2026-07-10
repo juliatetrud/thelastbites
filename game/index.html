@@ -12319,6 +12319,59 @@ function _playCelebratoryHorn() {
   });
 }
 
+/* R14 — RESERVED SOUND: squeeze-and-pop. Iris's emergence (Ch5 storage) ONLY (single call
+   site: triggerIrisEmerge). A short rising filtered swell (the squeeze) then a soft
+   descending pop. Synth-only; respects the SFX toggle + audio unlock; one-shot. */
+function _playSqueezePop() {
+  if (!sfx.on || !sfx.unlocked || !sfx.ctx) return;
+  const ac = sfx.ctx, t0 = ac.currentTime;
+  const osc = ac.createOscillator(), g = ac.createGain(), lp = ac.createBiquadFilter();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(90, t0); osc.frequency.exponentialRampToValueAtTime(250, t0 + 0.28);
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(600, t0); lp.frequency.exponentialRampToValueAtTime(1300, t0 + 0.28);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.16, t0 + 0.2);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.34);
+  osc.connect(lp); lp.connect(g); g.connect(sfx.master); osc.start(t0); osc.stop(t0 + 0.36);
+  const p = ac.createOscillator(), pg = ac.createGain();
+  p.type = 'triangle';
+  p.frequency.setValueAtTime(420, t0 + 0.30); p.frequency.exponentialRampToValueAtTime(150, t0 + 0.42);
+  pg.gain.setValueAtTime(0.0001, t0 + 0.30);
+  pg.gain.exponentialRampToValueAtTime(0.20, t0 + 0.33);
+  pg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.46);
+  p.connect(pg); pg.connect(sfx.master); p.start(t0 + 0.30); p.stop(t0 + 0.48);
+}
+
+/* R14 — RESERVED SOUND: TV-static-with-whispers. The Ch8 shadow ONLY (single call site:
+   triggerShadowRises), tied to drawPipShadow's static/purple channel noise. Band-passed
+   white-noise static + a low tremolo "whisper" tone under it. Synth-only; toggle-aware;
+   one-shot (soft attack, low mix — never a jump-scare). */
+function _playShadowStatic() {
+  if (!sfx.on || !sfx.unlocked || !sfx.ctx) return;
+  const ac = sfx.ctx, t0 = ac.currentTime, dur = 1.7;
+  const buf = ac.createBuffer(1, Math.max(1, Math.floor(ac.sampleRate * dur)), ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let n = 0; n < d.length; n++) d[n] = (Math.random() * 2 - 1) * 0.5;
+  const src = ac.createBufferSource(); src.buffer = buf;
+  const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1700; bp.Q.value = 0.7;
+  const ng = ac.createGain();
+  ng.gain.setValueAtTime(0.0001, t0);
+  ng.gain.exponentialRampToValueAtTime(0.09, t0 + 0.25);
+  ng.gain.setValueAtTime(0.09, t0 + dur - 0.5);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  src.connect(bp); bp.connect(ng); ng.connect(sfx.master); src.start(t0); src.stop(t0 + dur);
+  const w = ac.createOscillator(), wg = ac.createGain(), lfo = ac.createOscillator(), lfoG = ac.createGain();
+  w.type = 'sine'; w.frequency.value = 68;
+  lfo.type = 'sine'; lfo.frequency.value = 5.5; lfoG.gain.value = 0.045;
+  lfo.connect(lfoG); lfoG.connect(wg.gain);
+  wg.gain.setValueAtTime(0.055, t0);
+  wg.gain.setValueAtTime(0.055, t0 + dur - 0.5);
+  wg.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  w.connect(wg); wg.connect(sfx.master);
+  w.start(t0); w.stop(t0 + dur); lfo.start(t0); lfo.stop(t0 + dur);
+}
+
 /* ---- Cue: eat — warm rounded swell (~250ms) ---- */
 function playEatSfx() {
   if (!sfx.unlocked || !sfx.ctx) return;
@@ -18226,6 +18279,7 @@ function startChapter5() {
 
 function triggerIrisEmerge() {
   ch5State.irisEmerged = true;
+  _playSqueezePop();   // R14 reserved sound — Iris emergence only
   showDialogue({
     id: 'ch5-iris-emerge',
     lines: [
@@ -22111,6 +22165,7 @@ function triggerKitchenArrival() {
 
 function triggerShadowRises() {
   ch8State.shadowRisen = true;
+  _playShadowStatic();   // R14 reserved sound — the shadow only
   showDialogue({
     id: 'ch8-shadow-rises',
     lines: [

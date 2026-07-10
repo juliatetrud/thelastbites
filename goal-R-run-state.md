@@ -13,16 +13,36 @@ isn't in this file or in the tracking issues, it didn't happen.
 
 ## Resume here
 
-> **R01 in progress — Stage 0 (hygiene) complete.** 16 stacked pre-run commits pushed
-> clean; `DEBUG_WARP` flipped to `false` before the push (live-deploy safety). Next:
-> R01 Stage 1 — scene-by-scene diff of `ch01-playscript.docx` vs. current Ch1 code,
-> written into the R01 child issue before any edit.
+> **R01 Stage 0 + Stage 1 complete; Julia RULED "apply playscript verbatim"; Stage 2 (the
+> edit) is the next action.** Hygiene done (16 stacked commits pushed, `DEBUG_WARP=false`).
+> Stage-1 diff in #111: 74 dialogue lines match, 49 structural beats conform, 25 real DIFFs.
+> The **exact apply-spec is recorded as a comment on #111** (every old→new pair, the
+> grandparents 2→5-line cinematic restore, the bed/mirror/wire swaps) — execute it exactly.
+>
+> **Stage-2 procedure (next session):**
+> 1. Apply the ~17 tone/wording swaps + grandparents cinematic expansion from the #111
+>    apply-spec. **Encoding caveat:** file mixes literal `\uXXXX` escape text with literal
+>    UTF-8 curly quotes — match each line's actual bytes (Edit tool or assertion-guarded
+>    script). Do NOT touch the 3 gameplay-critical lines (1976, 2311/2321, 2122/2123) — keep
+>    code, log those 3 as autonomous calls in #110.
+> 2. `node --check` the extracted JS (was PARSE OK at 851,363 chars). No `build.js` needed —
+>    R01 touches no art / `art-source.js`.
+> 3. Commit (scene-group), tag `r-checkpoint-R01`, confirm `DEBUG_WARP=false`, push, verify
+>    `git log origin/main..HEAD` empty.
+> 4. Add R01 items to backlog #109; close #111 + dangling #89 with the SHA; report in #108;
+>    flip run-state R01 → `built`; begin R02.
+>
+> **Carried hygiene debt (flag for R02 / Julia):** large untracked/uncommitted working tree
+> predating this run — `ch01-playscript.docx` modified, all `sprint-R*.md` + roadmap +
+> `goal-run-protocol.md` untracked, `game/scale-reference.html` deleted. Not mass-committed
+> (needs Julia's judgment on the `.mp4`/temp files); recommend a deliberate `git add` pass in
+> R02's doc-reconciliation.
 
 ## Sprint table
 
 | Sprint | Name | Status | Issue # | Checkpoint SHA | Tag |
 |---|---|---|---|---|---|
-| R01 | Ch1 playscript impl + repo hygiene | in-progress | — | — | — |
+| R01 | Ch1 playscript impl + repo hygiene | in-progress | #111 | — | — |
 | R02 | Open-questions closeout + doc reconciliation | pending | — | — | — |
 | R03 | Gallery population, Ch2–Ch4 | pending | — | — | — |
 | R04 | Gallery population, Ch5–Ch8 | pending | — | — | — |

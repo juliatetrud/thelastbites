@@ -19,6 +19,28 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **R05–R11 ALL `built` (art reconciliation complete). R12 STARTED — audit done (#123);
+> mechanics implementation next.** Every Ch2–Ch8 asset derived/verified into the game,
+> on-doctrine; derived-pending assets (frozen-Pätu, Ch5–Ch8 cells, Pip-shadow feel-verdict)
+> pinned atop backlog #109. R05 also migrated Pätu to shared `art-source.js` `drawPatu`.
+>
+> **R12 (kinetic mechanics, Ch2–Ch7) — AUDIT in #123.** Stubbed → upgrade: (1) **Ch4 candle
+> puzzle** = 3-round dialogue-choice → real-time 2D movement [NEW engine cap — spec wants
+> Julia's nod; design note in #123]; (2) **Ch5 memory-gifting** = flat choice → journal-
+> traversal UI [NEW UI, reusable in Ch8 — nod requested]; (3) **echo-rat drain** absent →
+> build (existing strength meter); (4) **Ch4 cat-alley float beat** (existing float sys);
+> (5) Ch4 inventory (candle exists, matches hookup); (6) Ch7 three-fires audit. VERIFIED
+> (no upgrade): Ch2 sincerity, Ch3 Shuck conveyor. DECISION: Brussels-bag float-grab → build
+> or lock permanently-narrative (default: narrative).
+> **Next-session plan:** build the non-engine beats (echo-rat drain, alley float, inventory,
+> Ch7) directly; build the 2 engine mechanics per the #123 design notes (conservative, log to
+> #110) unless Julia weighs in; Brussels-bag → permanently-narrative unless she confirms. One
+> commit + design note per mechanic; `node build.js`+`node --check`; DEBUG_WARP false;
+> checkpoint `r-checkpoint-R12`; backlog each mechanic. Then R13 (Ch8 finale mechanics:
+> Pong/riddle/draw override phases), R14 audio, R15 save, R16 recipe+credits, R17 mobile,
+> R18 release pre-flight → go-live gate (STOP for Julia).
+>
+> --- prior resume (R11) ---
 > **R11 `built` (Ch8 — VERIFY-ONLY; #122). ALL ART DONE (R05–R11). NEXT = R12 (kinetic mechanics — port chapters).** Ch8 on-doctrine, grandparents namespaced, Pip-shadow intact (feel-verdict pinned #109). R12 is a MECHANICS sprint (not art): port/upgrade the kinetic puzzle mechanics for Ch2–Ch7 per spec — read `sprints/sprint-R12-kinetic-mechanics-ports.md`, audit first.
 >
 > --- prior resume (R10→R11) ---
@@ -214,7 +236,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R09 | Ch6 art reconciliation | built | #120 | `fec2611` | `r-checkpoint-R09` |
 | R10 | Ch7 art reconciliation | built | #121 | `9d160b8` | `r-checkpoint-R10` |
 | R11 | Ch8 art reconciliation | built | #122 | `dd26737` | `r-checkpoint-R11` |
-| R12 | Kinetic mechanics — port chapters | pending | — | — | — |
+| R12 | Kinetic mechanics — port chapters | in-progress | #123 | — | — |
 | R13 | Kinetic mechanics — Ch8 finale | pending | — | — | — |
 | R14 | Audio + music pass | pending | — | — | — |
 | R15 | Save + persistence hardening | pending | — | — | — |

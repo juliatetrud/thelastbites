@@ -1485,6 +1485,190 @@ function drawCh4OrchardCell(ctx, t) {
   _lbl(ctx, 'Walnut Orchard');
 }
 
+
+/* =============================================================
+   CH5 — SALDANHA BAY, SOUTH AFRICA  (R04)  — red-ochre earth / warm hearth
+   ============================================================= */
+/* CH5-ROOM-01 — Lower-deck storage room: dark narrow, low ceiling, crates, one moonlit
+   porthole (Mamlambo's serpent shape at the glass), Iris's moonbeam emergence point. */
+function drawCh5StorageCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0a1120', sky2:'#0e1626', sky3:'#0a1220', floor:'#141820'});
+  _r(ctx, 0, 0, 200, 16, '#080d18');
+  for (const c of [[16,70],[44,64],[150,66],[176,72]]) { _r(ctx, c[0], c[1], 26, FY-c[1], '#241c10'); _r(ctx, c[0], c[1], 26, 2, '#3a2c18'); for (let y=c[1]+6;y<FY;y+=8) _r(ctx, c[0], y, 26, 1, 'rgba(90,60,30,0.4)'); }
+  _r(ctx, 92, 30, 20, 20, P.brass); _r(ctx, 94, 32, 16, 16, '#0e2436');
+  const ma=(0.35+Math.sin(t*1.1)*0.12).toFixed(2); _r(ctx, 98, 34, 10, 12, 'rgba(30,60,50,'+ma+')'); _r(ctx, 101, 37, 3, 3, 'rgba(120,200,160,'+ma+')');
+  const mb=(0.14+Math.sin(t*0.7)*0.06).toFixed(2); ctx.fillStyle='rgba(160,190,230,'+mb+')'; ctx.beginPath(); ctx.moveTo(96,50); ctx.lineTo(110,50); ctx.lineTo(122,FY); ctx.lineTo(84,FY); ctx.fill();
+  _lbl(ctx, 'Storage Room');
+}
+/* CH5-ROOM-02 — Johannes's courtyard: three-legged potjie over a fire, hanging herbs,
+   spice shelf, warm earth walls, a strip of night sky. */
+function drawCh5CourtyardCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#241410', sky2:'#3a2016', sky3:'#2a1810', floor:'#2e1c10'});
+  _r(ctx, 0, 0, 200, 20, '#0e1424');
+  for (const hx of [40,72,104]) { _r(ctx, hx, 20, 1, 12, '#5a4a24'); _r(ctx, hx-2, 30, 5, 7, '#4a5a2a'); }
+  _r(ctx, 168, 30, 26, 48, '#241810'); const jars=['#a86020','#7a4818','#c09030','#8a5820']; for(let i=0;i<4;i++) _r(ctx, 172, 34+i*10, 8, 7, jars[i]);
+  const fa=(0.5+Math.sin(t*4)*0.16).toFixed(2); const fg=ctx.createRadialGradient(72,FY,0,72,FY,30); fg.addColorStop(0,'rgba(255,130,45,'+fa+')'); fg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=fg; ctx.fillRect(42,FY-30,60,30);
+  _r(ctx, 60, FY-4, 24, 4, 'rgba(255,150,60,'+fa+')');
+  _r(ctx, 60, FY-16, 24, 12, '#1a1410'); _r(ctx, 60, FY-18, 24, 3, '#2a2018'); _r(ctx, 63, FY-1, 2, 5, '#14100a'); _r(ctx, 79, FY-1, 2, 5, '#14100a'); _r(ctx, 71, FY-1, 2, 5, '#14100a');
+  _lbl(ctx, "Johannes's Courtyard");
+}
+/* CH5-BG-01 — Saldanha Bay harbor at dusk: red-ochre sky, hill silhouettes, a fire beacon,
+   harbor water on the left with reflections. */
+function drawCh5HarborCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#3a1810', sky2:'#6a2c18', sky3:'#8a3a20', floor:'#221010'});
+  ctx.fillStyle='#1a0e0c'; ctx.beginPath(); ctx.moveTo(0,FY-18); ctx.lineTo(60,FY-30); ctx.lineTo(120,FY-20); ctx.lineTo(200,FY-32); ctx.lineTo(200,FY); ctx.lineTo(0,FY); ctx.fill();
+  _r(ctx, 0, FY, 90, 13, '#241214'); const wa=(0.3+Math.sin(t*0.8)*0.1).toFixed(2); _r(ctx, 14, FY+4, 60, 1, 'rgba(220,120,70,'+wa+')');
+  const ba=(0.5+Math.sin(t*3.5)*0.18).toFixed(2); _r(ctx, 150, FY-40, 3, 40, '#2a1810'); const bg=ctx.createRadialGradient(151,FY-42,0,151,FY-42,22); bg.addColorStop(0,'rgba(255,160,60,'+ba+')'); bg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=bg; ctx.fillRect(130,FY-56,42,40); _r(ctx, 148, FY-44, 6, 5, 'rgba(255,190,90,'+ba+')');
+  _lbl(ctx, 'Saldanha Bay');
+}
+/* CH5-BG-02 — Iris's Lethe dining room (taste-memory): warm Edwardian dining room,
+   long table, chandelier glow, patterned wallpaper, teal accent (Iris's signature). */
+function drawCh5DiningCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#2a2012', sky2:'#332614', sky3:'#2a1e10', floor:'#3a2c16'});
+  for (let x=0;x<200;x+=16) _r(ctx, x, 0, 8, FY, 'rgba(150,110,50,0.10)');
+  const ca=(0.4+Math.sin(t*2)*0.1).toFixed(2); const cg=ctx.createRadialGradient(100,18,0,100,55,60); cg.addColorStop(0,'rgba(255,210,120,'+ca+')'); cg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=cg; ctx.fillRect(40,0,120,80);
+  _r(ctx, 92, 8, 16, 4, '#c8a040'); _r(ctx, 99, 0, 2, 8, '#8a6420');
+  _r(ctx, 40, 78, 120, 6, '#5a3e1e'); _r(ctx, 40, 76, 120, 2, '#6a4a24');
+  for (const cx5 of [50,150]) { _r(ctx, cx5, 80, 6, 20, '#4a3218'); _r(ctx, cx5, 62, 6, 18, '#2a6a68'); }
+  _r(ctx, 88, 72, 24, 4, '#e8dcc0');
+  _lbl(ctx, "Iris's Dining Room");
+}
+
+/* =============================================================
+   CH6 — KOLONODALE, INDONESIA  (R04)  — humid tropical / warm warung
+   ============================================================= */
+/* CH6-ROOM-01 — lower decks: humid, brass pipes with condensation, tarsier eyes on the
+   ceiling, a single flickering warm light. */
+function drawCh6LowerDeckCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0c1614', sky2:'#12201c', sky3:'#0e1a16', floor:'#141c18'});
+  _r(ctx, 0, 0, 200, 18, '#0a120f');
+  for (const py of [8,13]) { _r(ctx, 0, py, 200, 2, P.brass); for (let x=10;x<200;x+=24) _r(ctx, x, py+2, 1, 3, 'rgba(160,200,220,0.4)'); }
+  for (const e of [[40,20],[96,22],[150,19]]) { const a=(0.4+Math.sin(t*2+e[0])*0.2).toFixed(2); _r(ctx, e[0], e[1], 2, 2, 'rgba(230,200,90,'+a+')'); _r(ctx, e[0]+4, e[1], 2, 2, 'rgba(230,200,90,'+a+')'); }
+  const la=(0.35+Math.sin(t*5)*0.14).toFixed(2); const lg=ctx.createRadialGradient(110,50,0,110,60,44); lg.addColorStop(0,'rgba(255,180,80,'+la+')'); lg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=lg; ctx.fillRect(70,28,80,60); _r(ctx, 108, 40, 4, 4, 'rgba(255,200,100,'+la+')');
+  _lbl(ctx, 'Lower Decks (Ch6)');
+}
+/* CH6-ROOM-02 — Tirta's warung: thatched roof, charcoal grill with ember glow + smoke,
+   prep counter with rice/chicken bowls, hanging banana leaves. */
+function drawCh6WarungCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#2a1e10', sky2:'#33260f', sky3:'#2a1c0c', floor:'#3a2814'});
+  ctx.fillStyle='#3a2c16'; ctx.beginPath(); ctx.moveTo(0,20); ctx.lineTo(100,4); ctx.lineTo(200,20); ctx.lineTo(200,26); ctx.lineTo(0,26); ctx.fill();
+  for (let x=6;x<194;x+=10) _r(ctx, x, 6, 1, 16, 'rgba(90,60,30,0.4)');
+  for (const bx of [40,140]) { _r(ctx, bx, 24, 2, 14, '#4a5a2a'); _r(ctx, bx-4, 30, 10, 8, '#3a5a24'); }
+  const fa=(0.5+Math.sin(t*4)*0.16).toFixed(2); const fg=ctx.createRadialGradient(56,80,0,56,80,20); fg.addColorStop(0,'rgba(255,120,40,'+fa+')'); fg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=fg; ctx.fillRect(36,64,40,36); _r(ctx, 44, 80, 24, 8, '#1a1410'); _r(ctx, 48, 78, 16, 3, 'rgba(255,140,50,'+fa+')');
+  _r(ctx, 96, 82, 88, 4, '#5a3e1e'); _r(ctx, 104, 76, 12, 5, '#e8dcc0'); _r(ctx, 120, 76, 12, 5, '#d8a860'); _r(ctx, 136, 77, 10, 4, '#b8683a');
+  const sa=(0.10+Math.sin(t*1.5)*0.05).toFixed(2); _r(ctx, 55, 50, 3, 14, 'rgba(200,200,200,'+sa+')');
+  _lbl(ctx, "Tirta's Warung");
+}
+/* CH6-BG-01 — Kolonodale port approach: dusk, stilt houses over water, coconut palms,
+   warm windows, drifting evening smoke. */
+function drawCh6KolonodaleCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#2a1e24', sky2:'#443028', sky3:'#5a3a2a', floor:'#181418'});
+  for (const px of [24,176] ) { _r(ctx, px, FY-52, 2, 20, '#241808'); for (const a of [-1,-0.4,0.4,1]) { ctx.fillStyle='#2a4a1a'; ctx.beginPath(); ctx.moveTo(px+1,FY-52); ctx.lineTo(px+1+a*16,FY-60); ctx.lineTo(px+1+a*14,FY-56); ctx.fill(); } }
+  for (const h of [[54,30],[100,26],[140,32]]) { const hx=h[0], hh=h[1]; _r(ctx, hx, FY-hh-14, 30, hh, '#2a2012'); _r(ctx, hx+4, FY-14, 2, 14, '#1a1408'); _r(ctx, hx+22, FY-14, 2, 14, '#1a1408'); const wa=(0.3+Math.sin(t*0.9+hx)*0.08).toFixed(2); _r(ctx, hx+8, FY-hh-6, 8, 6, 'rgba(255,175,60,'+wa+')'); ctx.fillStyle='#3a2c16'; ctx.beginPath(); ctx.moveTo(hx-3,FY-hh-14); ctx.lineTo(hx+15,FY-hh-22); ctx.lineTo(hx+33,FY-hh-14); ctx.fill(); }
+  _r(ctx, 0, FY, 200, 13, '#141018');
+  const sa=(0.08+Math.sin(t*0.6)*0.04).toFixed(2); _r(ctx, 70, FY-30, 4, 20, 'rgba(200,200,200,'+sa+')');
+  _lbl(ctx, 'Kolonodale');
+}
+/* CH6-BG-02 — Banana grove clearing with graves: dusk, broad banana leaves, a couple of
+   old leaning gravestones, misty ground — the Pocong clearing, quiet and ominous. */
+function drawCh6BananaGroveCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1e1a24', sky2:'#2a2430', sky3:'#33303a', floor:'#161810'});
+  for (const bx of [10,44,160,190]) { _r(ctx, bx, FY-44, 3, 44, '#243414'); for (const a of [-1,-0.3,0.4,1]) { ctx.fillStyle='#2a4a1a'; ctx.beginPath(); ctx.moveTo(bx+1,FY-44); ctx.lineTo(bx+1+a*24,FY-54); ctx.lineTo(bx+1+a*20,FY-48); ctx.fill(); } }
+  for (const g of [[80,-2],[110,2]]) { _r(ctx, g[0]+g[1], FY-16, 10, 16, '#3a3a34'); _r(ctx, g[0]+g[1], FY-18, 10, 3, '#4a4a44'); }
+  const fog=ctx.createLinearGradient(0,FY-16,0,FY); fog.addColorStop(0,'rgba(90,100,110,0)'); fog.addColorStop(1,'rgba(90,100,110,0.28)'); ctx.fillStyle=fog; ctx.fillRect(0,FY-16,200,16);
+  _lbl(ctx, 'Banana Grove');
+}
+
+/* =============================================================
+   CH7 — ALTER DO CHÃO, BRAZIL  (R04)  — tropical river night / warm hearth
+   ============================================================= */
+/* CH7-ROOM-01 — lower decks: tropical humid, amber mosquito clouds, warm-wood panelling. */
+function drawCh7LowerDeckCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1e1810', sky2:'#2a2014', sky3:'#221a10', floor:'#241a10'});
+  for (let x=0;x<200;x+=18) _r(ctx, x, 0, 1, FY, 'rgba(120,80,40,0.16)');
+  for (const m of [[50,40],[110,30],[150,56]]) { const cx7=m[0], cy7=m[1]; const a=(0.16+Math.sin(t*1.2+cx7)*0.06).toFixed(2); for (let i=0;i<8;i++){ const dx=Math.sin(t*2+i)*8, dy=Math.cos(t*1.6+i*1.3)*6; _r(ctx, Math.round(cx7+dx), Math.round(cy7+dy), 1, 1, 'rgba(255,180,90,'+a+')'); } }
+  _lbl(ctx, 'Lower Decks (Ch7)');
+}
+/* CH7-ROOM-02 — Joana & Beatriz's stilt house: hearth with a clay moqueca pot (dendê-orange),
+   ingredient counter, open window (night + a small Pätu), a table candle. */
+function drawCh7JoanaHouseCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#2a1e12', sky2:'#332614', sky3:'#2a1c10', floor:'#3a2814'});
+  for (let x=0;x<200;x+=20) _r(ctx, x, 0, 1, FY, 'rgba(130,90,45,0.16)');
+  const ha=(0.5+Math.sin(t*3.5)*0.15).toFixed(2); const hg=ctx.createRadialGradient(38,78,0,38,78,26); hg.addColorStop(0,'rgba(255,130,45,'+ha+')'); hg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=hg; ctx.fillRect(14,58,50,42);
+  _r(ctx, 26, 76, 24, 12, '#3a2418'); _r(ctx, 28, 74, 20, 4, '#d86a28'); _r(ctx, 24, 88, 28, 3, '#2a1810');
+  _r(ctx, 150, 24, 34, 30, '#241a0e'); _r(ctx, 152, 26, 30, 26, '#101a2a'); _r(ctx, 166, 26, 1, 26, '#241a0e');
+  const pa=(0.4+Math.sin(t*1.5)*0.1).toFixed(2); _r(ctx, 168, 40, 6, 10, 'rgba(200,200,210,'+pa+')'); _r(ctx, 170, 36, 4, 5, 'rgba(200,200,210,'+pa+')');
+  _r(ctx, 88, 80, 44, 4, '#5a3e1e'); const ca=(0.5+Math.sin(t*5)*0.16).toFixed(2); _r(ctx, 108, 72, 2, 8, '#d8c090'); _r(ctx, 107, 67, 4, 5, 'rgba(255,190,90,'+ca+')');
+  _lbl(ctx, "Joana's House");
+}
+/* CH7-BG-01 — Alter do Chão river dock at night: three small fires along a plank dock, a
+   bucket, dark river with a faint fire-serpent glow rising. */
+function drawCh7RiverDockCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0e1220', sky2:'#141a2c', sky3:'#101626', floor:'#0c1420'});
+  _r(ctx, 0, FY-4, 200, 4, '#2a1c10'); for (let x=0;x<200;x+=14) _r(ctx, x, FY-4, 1, 4, 'rgba(80,50,20,0.5)');
+  for (const fx of [40,100,160]) { const fa=(0.5+Math.sin(t*4+fx)*0.16).toFixed(2); const fg=ctx.createRadialGradient(fx,FY-6,0,fx,FY-6,16); fg.addColorStop(0,'rgba(255,140,50,'+fa+')'); fg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=fg; ctx.fillRect(fx-16,FY-22,32,20); _r(ctx, fx-2, FY-10, 4, 6, 'rgba(255,170,70,'+fa+')'); }
+  _r(ctx, 20, FY-8, 6, 8, '#3a2c18');
+  _r(ctx, 0, FY, 200, 13, '#0a1018'); const sa=(0.22+Math.sin(t*1.3)*0.1).toFixed(2); _r(ctx, 120, FY+4, 30, 2, 'rgba(255,120,40,'+sa+')');
+  _lbl(ctx, 'River Dock');
+}
+/* CH7-BG-02 — forest path: dense dark canopy, tree trunks, phosphorescent fungi glowing,
+   a warm house light at the far end. */
+function drawCh7ForestCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0c140e', sky2:'#101a12', sky3:'#0c160e', floor:'#0e1410'});
+  ctx.fillStyle='#0a120c'; for (let x=0;x<200;x+=18) { ctx.beginPath(); ctx.ellipse(x,20,16,20,0,0,Math.PI*2); ctx.fill(); }
+  for (const tx of [30,80,170]) _r(ctx, tx, 30, 6, FY-30, '#141c14');
+  const ha=(0.4+Math.sin(t*1.5)*0.1).toFixed(2); const hg=ctx.createRadialGradient(120,60,0,120,64,20); hg.addColorStop(0,'rgba(255,180,80,'+ha+')'); hg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=hg; ctx.fillRect(102,46,36,36); _r(ctx, 116, 58, 8, 8, 'rgba(255,190,90,'+ha+')');
+  for (const f of [[46,88,0],[92,94,1.4],[150,86,2.6],[70,80,0.7]]) { const a=(0.4+Math.sin(t*1.8+f[2])*0.25).toFixed(2); _r(ctx, f[0], f[1], 2, 2, 'rgba(120,230,180,'+a+')'); }
+  _lbl(ctx, 'Forest Path');
+}
+
+/* =============================================================
+   CH8 — GREENPOINT, BROOKLYN  (R04)  — urban night, threat + warm domestic
+   ============================================================= */
+/* CH8-ROOM-01 — Greenpoint streets: night brick walk-ups, fire escapes, a warm Polish shop
+   sign, vermin, faint purple infection flicker. */
+function drawCh8StreetCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#120e18', sky2:'#1a1622', sky3:'#161320', floor:'#141018'});
+  for (const b of [[8,58],[70,66],[132,54]]) { _r(ctx, b[0], FY-b[1], 54, b[1], '#241c22'); for (let y=FY-b[1]+8;y<FY;y+=12) for (let x=b[0]+6;x<b[0]+50;x+=14){ const wa=(0.18+Math.sin(t*0.6+x)*0.06).toFixed(2); _r(ctx, x, y, 5, 6, 'rgba(255,175,70,'+wa+')'); } }
+  for (const fx of [30,92]) { _r(ctx, fx, FY-50, 20, 1, '#3a3a42'); _r(ctx, fx, FY-34, 20, 1, '#3a3a42'); _r(ctx, fx, FY-50, 1, 20, '#3a3a42'); }
+  _r(ctx, 140, FY-34, 34, 8, '#7a1830'); const ga=(0.4+Math.sin(t*2)*0.1).toFixed(2); _r(ctx, 143, FY-32, 28, 4, 'rgba(255,150,90,'+ga+')');
+  const ia=(0.10+Math.sin(t*3)*0.06).toFixed(2); _r(ctx, 100, FY-6, 40, 6, 'rgba(150,60,170,'+ia+')');
+  _r(ctx, 60, FY-2, 3, 1, '#3a2a1a'); _r(ctx, 170, FY-3, 3, 1, '#3a2a1a');
+  _lbl(ctx, 'Greenpoint Street');
+}
+/* CH8-ROOM-02 — Pip's apartment kitchen: yellow-white linoleum, a table with 4 chairs, a
+   pantry curtain, a window over the sink — warm and domestic. */
+function drawCh8KitchenCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#2e2a18', sky2:'#38341c', sky3:'#2e2814', floor:'#c8c4a8'});
+  for (let x=0;x<200;x+=12) _r(ctx, x, FY, 1, 13, 'rgba(150,150,120,0.3)');
+  _r(ctx, 14, 40, 30, 40, '#8a5030'); _r(ctx, 18, 44, 22, 32, '#a86a44');
+  _r(ctx, 150, 34, 40, 30, '#3a2c1a'); _r(ctx, 152, 36, 36, 26, '#12203a'); _r(ctx, 170, 36, 1, 26, '#3a2c1a'); _r(ctx, 148, 62, 44, 4, '#5a4028');
+  _r(ctx, 78, 74, 44, 4, '#c8b088'); _r(ctx, 82, 78, 3, 22, '#a89068'); _r(ctx, 115, 78, 3, 22, '#a89068');
+  for (const cx8 of [72,124]) { _r(ctx, cx8, 82, 6, 18, '#8a6844'); _r(ctx, cx8, 66, 6, 16, '#8a6844'); }
+  const pa=(0.4+Math.sin(t*1.5)*0.1).toFixed(2); const pg=ctx.createRadialGradient(100,20,0,100,50,54); pg.addColorStop(0,'rgba(255,220,140,'+pa+')'); pg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=pg; ctx.fillRect(40,0,120,70);
+  _lbl(ctx, "Pip's Kitchen");
+}
+/* CH8-ROOM-03 — Babcia & Dziadek's Greenpoint apartment: oil-cloth table, windowsill plants,
+   a small TV glow, a framed photo of Pip on the wall — warm and lived-in. */
+function drawCh8BabciaAptCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#2a2214', sky2:'#332816', sky3:'#2a2012', floor:'#4a3a1e'});
+  for (let x=0;x<200;x+=14) _r(ctx, x, 0, 7, FY, 'rgba(150,120,60,0.10)');
+  _r(ctx, 16, 24, 30, 26, '#3a2c16'); _r(ctx, 18, 26, 26, 22, '#12203a'); _r(ctx, 16, 50, 4, 6, '#2a3a1a'); _r(ctx, 40, 50, 4, 6, '#2a3a1a');
+  _r(ctx, 150, 54, 34, 30, '#1a1a1e'); const tv=(0.45+Math.sin(t*5)*0.16).toFixed(2); _r(ctx, 154, 58, 26, 20, 'rgba(150,180,220,'+tv+')');
+  _r(ctx, 94, 20, 16, 20, '#8a6420'); _r(ctx, 97, 23, 10, 14, '#c8b090'); _r(ctx, 99, 25, 6, 8, '#a8c0e0');
+  _r(ctx, 70, 80, 60, 4, '#8a3020'); _r(ctx, 74, 84, 3, 16, '#5a3418'); _r(ctx, 123, 84, 3, 16, '#5a3418'); _r(ctx, 84, 76, 32, 4, '#c8b088');
+  _lbl(ctx, "Babcia's Apartment");
+}
+/* CH8-BG-01 — Brooklyn / Greenpoint night: brick skyline, water-tower silhouettes, scattered
+   warm windows, a faint moon. */
+function drawCh8BrooklynCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0e0e1a', sky2:'#161624', sky3:'#1a1826', floor:'#100e18'});
+  const ma=(0.5).toFixed(2); ctx.fillStyle='rgba(220,220,200,0.5)'; ctx.beginPath(); ctx.ellipse(160,26,8,8,0,0,Math.PI*2); ctx.fill();
+  for (const b of [[6,44,40],[54,36,56],[100,50,46],[154,40,60]]) { _r(ctx, b[0], FY-b[2], b[1], b[2], '#1a1a26'); for (let y=FY-b[2]+8;y<FY;y+=10) for (let x=b[0]+5;x<b[0]+b[1]-4;x+=12){ const wa=(0.16+Math.sin(t*0.5+x+y)*0.06).toFixed(2); _r(ctx, x, y, 4, 5, 'rgba(255,180,80,'+wa+')'); } }
+  _r(ctx, 60, FY-64, 12, 8, '#141420'); _r(ctx, 62, FY-70, 8, 6, '#141420');
+  _lbl(ctx, 'Brooklyn Night');
+}
+
 /* =============================================================
    DRAW FUNCTION REGISTRY — maps asset.id to drawFn(ctx, t)
    Only Ch1 cells are drawn; all others remain placeholders.
@@ -1509,6 +1693,22 @@ const DRAW_FNS = {
   'CH4-BG-01':   drawCh4HarborCell,
   'CH4-BG-02':   drawCh4FrozenSquareCell,
   'CH4-BG-03':   drawCh4OrchardCell,
+  'CH5-ROOM-01': drawCh5StorageCell,
+  'CH5-ROOM-02': drawCh5CourtyardCell,
+  'CH5-BG-01':   drawCh5HarborCell,
+  'CH5-BG-02':   drawCh5DiningCell,
+  'CH6-ROOM-01': drawCh6LowerDeckCell,
+  'CH6-ROOM-02': drawCh6WarungCell,
+  'CH6-BG-01':   drawCh6KolonodaleCell,
+  'CH6-BG-02':   drawCh6BananaGroveCell,
+  'CH7-ROOM-01': drawCh7LowerDeckCell,
+  'CH7-ROOM-02': drawCh7JoanaHouseCell,
+  'CH7-BG-01':   drawCh7RiverDockCell,
+  'CH7-BG-02':   drawCh7ForestCell,
+  'CH8-ROOM-01': drawCh8StreetCell,
+  'CH8-ROOM-02': drawCh8KitchenCell,
+  'CH8-ROOM-03': drawCh8BabciaAptCell,
+  'CH8-BG-01':   drawCh8BrooklynCell,
   'CH1-BG-01':   drawBergenBgCell,
   'CH1-PROP-01': drawBedBodyLumpCell,
   'CH1-PROP-02': drawCrayonDrawingCell,
@@ -1951,14 +2151,14 @@ const ASSETS = [
   // ── CHAPTER 5: ROOMS ─────────────────────────────────────
   {
     id: 'CH5-ROOM-01', name: 'Lower-deck storage room (Ch5 — "the Drowned Room")', type: 'ROOM',
-    chapter: 5, section: 'ch5-room', designed: false,
+    chapter: 5, section: 'ch5-room', designed: true,
     desc: "Old floorboards, wood crates, single porthole; Iris's squeeze-and-pop entrance; Mamlambo's eye at porthole; ship at-sea, no port yet.",
     alsoAppears: null,
     source: 'ch05-south-africa-outline.md',
   },
   {
     id: 'CH5-ROOM-02', name: "Johannes's courtyard + kitchen", type: 'ROOM',
-    chapter: 5, section: 'ch5-room', designed: false,
+    chapter: 5, section: 'ch5-room', designed: true,
     desc: 'Saldanha Bay; open-air potjie fire, cast-iron pot on three legs, courtyard table set for friends; warm dusk light.',
     alsoAppears: null,
     source: 'ch05-south-africa-outline.md',
@@ -1967,14 +2167,14 @@ const ASSETS = [
   // ── CHAPTER 5: BACKGROUNDS ────────────────────────────────
   {
     id: 'CH5-BG-01', name: 'Saldanha Bay harbor at dusk', type: 'BG',
-    chapter: 5, section: 'ch5-bg', designed: false,
+    chapter: 5, section: 'ch5-bg', designed: true,
     desc: "Atlantic sky; deep red-ochre light; Johannes's courtyard fire visible in middle distance; dramatic color contrast.",
     alsoAppears: null,
     source: 'ch05-south-africa-outline.md',
   },
   {
     id: 'CH5-BG-02', name: "Iris's Lethe dining room (taste-memory)", type: 'BG',
-    chapter: 5, section: 'ch5-bg', designed: false,
+    chapter: 5, section: 'ch5-bg', designed: true,
     desc: 'Edwardian formal dining; long white-tablecloth table, candelabra, family in formal dress; warm-amber light slightly warped by time/water.',
     alsoAppears: null,
     source: 'ch05-south-africa-outline.md',
@@ -2006,14 +2206,14 @@ const ASSETS = [
   // ── CHAPTER 6: ROOMS ─────────────────────────────────────
   {
     id: 'CH6-ROOM-01', name: 'The Mnemosyne lower decks (Ch6 traversal)', type: 'ROOM',
-    chapter: 6, section: 'ch6-room', designed: false,
+    chapter: 6, section: 'ch6-room', designed: true,
     desc: 'Humid, warm; echo-tarsiers on overhead structures; clove-and-salt smell implied.',
     alsoAppears: null,
     source: 'ch06-indonesia-outline.md',
   },
   {
     id: 'CH6-ROOM-02', name: "Tirta's warung", type: 'ROOM',
-    chapter: 6, section: 'ch6-room', designed: false,
+    chapter: 6, section: 'ch6-room', designed: true,
     desc: 'Open-front Indonesian food stall; charcoal grill, iron pan, thatched roof overhang; warm evening light.',
     alsoAppears: null,
     source: 'ch06-indonesia-outline.md',
@@ -2022,14 +2222,14 @@ const ASSETS = [
   // ── CHAPTER 6: BACKGROUNDS ────────────────────────────────
   {
     id: 'CH6-BG-01', name: 'Kolonodale port approach', type: 'BG',
-    chapter: 6, section: 'ch6-bg', designed: false,
+    chapter: 6, section: 'ch6-bg', designed: true,
     desc: 'Wooden stilt-houses over water, coconut palms, blue-green bay; clove-smoke haze; late afternoon orange light.',
     alsoAppears: null,
     source: 'ch06-indonesia-outline.md',
   },
   {
     id: 'CH6-BG-02', name: 'Banana grove clearing with graves', type: 'BG',
-    chapter: 6, section: 'ch6-bg', designed: false,
+    chapter: 6, section: 'ch6-bg', designed: true,
     desc: 'Forest path from dock to town; large-leaved banana trees, grave markers, blue-dusk light; Pocong encounter space.',
     alsoAppears: null,
     source: 'ch06-indonesia-outline.md',
@@ -2049,14 +2249,14 @@ const ASSETS = [
   // ── CHAPTER 7: ROOMS ─────────────────────────────────────
   {
     id: 'CH7-ROOM-01', name: 'The Mnemosyne lower decks (Ch7 traversal)', type: 'ROOM',
-    chapter: 7, section: 'ch7-room', designed: false,
+    chapter: 7, section: 'ch7-room', designed: true,
     desc: 'Warm, humid; echo-mosquitoes; Amazon heat begins here.',
     alsoAppears: null,
     source: 'ch07-brazil-outline.md',
   },
   {
     id: 'CH7-ROOM-02', name: "Joana and Beatriz's stilt house", type: 'ROOM',
-    chapter: 7, section: 'ch7-room', designed: false,
+    chapter: 7, section: 'ch7-room', designed: true,
     desc: 'Raised on wooden piles; clay tile roof; single open-plan kitchen + living space; dock-side extension over the Tapajós river.',
     alsoAppears: null,
     source: 'ch07-brazil-outline.md',
@@ -2065,14 +2265,14 @@ const ASSETS = [
   // ── CHAPTER 7: BACKGROUNDS ────────────────────────────────
   {
     id: 'CH7-BG-01', name: 'Alter do Chão dock at night', type: 'BG',
-    chapter: 7, section: 'ch7-bg', designed: false,
+    chapter: 7, section: 'ch7-bg', designed: true,
     desc: 'Small wooden dock; Tapajós river black and wide; forest wall beginning at the edge of the light; phosphorescent underglow.',
     alsoAppears: null,
     source: 'ch07-brazil-outline.md',
   },
   {
     id: 'CH7-BG-02', name: 'Ch7 forest path', type: 'BG',
-    chapter: 7, section: 'ch7-bg', designed: false,
+    chapter: 7, section: 'ch7-bg', designed: true,
     desc: 'Dense Amazon canopy; phosphorescent fungi on roots and bark; deep humid dark; Capuchin scampers ahead; Boitatá encounter space.',
     alsoAppears: null,
     source: 'ch07-brazil-outline.md',
@@ -2094,21 +2294,21 @@ const ASSETS = [
   // ── CHAPTER 8: ROOMS ─────────────────────────────────────
   {
     id: 'CH8-ROOM-01', name: 'Greenpoint streets (Ch8 traversal)', type: 'ROOM',
-    chapter: 8, section: 'ch8-room', designed: false,
+    chapter: 8, section: 'ch8-room', designed: true,
     desc: 'Brooklyn at night; narrow residential streets, brownstones, corner bodegas; urban vermin; Ch8 opening.',
     alsoAppears: null,
     source: 'ch08-greenpoint-outline.md',
   },
   {
     id: 'CH8-ROOM-02', name: 'Pip\'s apartment kitchen ("the bottom of the well")', type: 'ROOM',
-    chapter: 8, section: 'ch8-room', designed: false,
+    chapter: 8, section: 'ch8-room', designed: true,
     desc: 'Childhood kitchen; long table with all six chairs; site of Phase 3 (Completing the Infection) and the final pierogi-table memory; emotional climax space.',
     alsoAppears: null,
     source: 'ch08-greenpoint-outline.md',
   },
   {
     id: 'CH8-ROOM-03', name: "Babcia and Dziadek's Greenpoint apartment", type: 'ROOM',
-    chapter: 8, section: 'ch8-room', designed: false,
+    chapter: 8, section: 'ch8-room', designed: true,
     desc: 'The grandparents\' home; familiar domestic space; final gift of memory-gifting to both grandparents; pierogi kitchen.',
     alsoAppears: null,
     source: 'ch08-greenpoint-outline.md',
@@ -2117,7 +2317,7 @@ const ASSETS = [
   // ── CHAPTER 8: BACKGROUNDS ────────────────────────────────
   {
     id: 'CH8-BG-01', name: 'Brooklyn / Greenpoint night', type: 'BG',
-    chapter: 8, section: 'ch8-bg', designed: false,
+    chapter: 8, section: 'ch8-bg', designed: true,
     desc: "Brownstone neighborhood; warm window-light against cold street; autumn or late night; Pip's real home, now seen as a ghost.",
     alsoAppears: null,
     source: 'ch08-greenpoint-outline.md',

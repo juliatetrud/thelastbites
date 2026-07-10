@@ -19,8 +19,30 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
-> **R12 IN PROGRESS — echo-rat drain built (`6665c8c`), Brussels-bag decided (`7901eb4`);
-> 4 large mechanics remain.** (R05–R11 all built: art reconciliation complete; derived-pending
+> **R12 IN PROGRESS — 3 items done (echo-rat `6665c8c`, journal-UI `9165630`, Brussels-bag
+> `7901eb4`); 3 real-time/traversal builds remain.** (R05–R11 all built.) **Done:** Ch5
+> echo-rat drain; **Ch5 memory-gifting → reusable `giftMemoryFromJournal` selection** (journal-
+> framed, choice-UI based, reusable for Ch8 finale; outcome verbatim in `sendIrisMemory`);
+> Brussels-bag → permanently-narrative. Ch2 sincerity + Ch3 Shuck verified real.
+>
+> **R12 REMAINING (build carefully, playtest-gated, one commit + #110 log each):**
+> 1. **Ch4 candle puzzle → real-time 2D movement** (`runCandlePuzzleRound` `:17054`, resolves
+> at round 3 → `resolveKarakoncolos`). ⚠️ Genuine DESIGN complexity: its 3 cleverness-
+> responses (position-behind-cover / wait-for-drift / cup-and-stand) don't all map to
+> position — the one R12 mechanic where a quick Julia design-word is genuinely worth it
+> (default in #123: position vs breath-telegraph; relight+retry; dt-cap, pause-safe, gentle).
+> 2. **Ch7 three-fires → real douse** (dialogue-only `:20748` → bucket→fill→douse 3 fires vs
+> match timer; existing systems).
+> 3. **Ch4 cat-alley float obstacle** (`drawCh4CatAlley` `:17784`, elevated cats but no
+> obstacle → float-gated barrier) + **Ch4 matches inventory** (find Ch4 acquisition point;
+> candle already an item).
+> Guardrails: preserve narrative verb; gentle never cruel; D-pad+space; `ch4/ch5State` GAIN-
+> only (R15); dt-cap real-time. After all: doc-06 rows, checkpoint `r-checkpoint-R12`,
+> backlog each. Then R13 (Ch8 finale mechanics), R14 audio, R15 save, R16 recipe+credits,
+> R17 mobile, R18 release → go-live gate.
+>
+> --- prior (R05–R11 art complete; R12 echo-rat+Brussels) ---
+> **R12 — echo-rat drain + Brussels-bag done.** (R05–R11 all built: art reconciliation complete; derived-pending
 > pinned #109.) **R12 done so far:** Ch5 echo-rat strength drain (existing systems; float-to-
 > avoid; runtime-only, no schema change); Brussels-bag → permanently-narrative (locked, #110).
 > Ch2 sincerity + Ch3 Shuck verified real (no upgrade).

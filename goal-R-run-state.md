@@ -19,13 +19,26 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
-> **R04 STARTED — audit done + issue #115 opened; NEXT = port batches (characters first).**
-> Audit (in #115): all Ch5–Ch8 character draw fns exist in-game (GOAL-1); only **Pocong** +
-> **Erik** already in the gallery. Fns to port: Ch5 `drawIris`, `drawMamlamboPorthole`,
-> `drawJohannes`, `drawEchoRat`; Ch6 `drawTirta`, `drawEchoTarsier` (Pocong verify/skip);
-> Ch7 `drawBoitata`, `drawJoana`, `drawBeatriz`, `drawCapuchin` (Erik done); Ch8
-> `drawBabciaStanding`+`drawCh8BabciaApartment`, `drawDziadekStanding`, `drawPipsParents`,
-> `drawPipShadow`. 19 char + 16 env placeholders exist.
+> **R04 in-progress — ALL Ch5–Ch8 characters ported (`135cd3f`); environments (16 cells)
+> remain.** Char batches: Ch5 (`16dd565`: Iris, Mamlambo-in-porthole, Johannes, echo-rat);
+> Ch6/7/8 (`135cd3f`: Tirta, echo-tarsier; Boitatá, Joana, Beatriz, capuchin; Pip's parents,
+> Pip-shadow, + namespaced babcia-ch8/dziadek-ch8). Pocong + Erik were already in the gallery.
+> node --check PARSE OK, 49 designed:true, no dups. **Flagged for Julia (#115):** Pip-shadow
+> register (emotional climax); Boitatá's coil extends above the cell (camX-centred).
+>
+> **REMAINING for R04:**
+> 1. **Ch5–Ch8 environments** → `environment-gallery.html` (16 ROOM/BG cells; same method as
+>    R03's env cells — purpose-built 200×113 illustrations + `DRAW_FNS` registry + designed:true).
+>    Ch5 lower deck/storage/Saldanha port/Johannes courtyard; Ch6 lower deck/banana grove/
+>    Kolonodale/warung; Ch7 lower deck/river dock/forest path/Joana's house; Ch8 Greenpoint
+>    street/apartment hall/Pip's kitchen/Babcia's apartment. In-game refs exist
+>    (`drawCh5JohannesPlace`, `drawCh7JoanaHouse`, `drawCh8BabciaApartment`, etc.).
+> 2. **Master-list per-ID marking** (Ch5–Ch8 char IDs) + `08-char-ref` note + doc 06 Sprint
+>    History row — at R04 close, after Julia's review.
+>
+> **Method reminder:** char wrapper superset alias (adds `camX`/`W`/`phase`; extract + confirm
+> self-contained first); env cells authored on-doctrine (no black outlines). Do NOT tag
+> `r-checkpoint-R04` until R04 `built`.
 >
 > **Method (same as R03):** character wrapper `function drawX(ctx,_CX,_FLOOR,_T,_SP){ const
 > sx=_CX, sy=_FLOOR, groundY=_FLOOR, now=_T*1000, speaking=_SP, looking=_SP, idx=0; <body

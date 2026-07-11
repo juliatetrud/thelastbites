@@ -593,6 +593,25 @@
     text-align: center;
   }
 
+  /* R16: recipe-site link inside a Recipes-page card. */
+  .notebook-recipe-link {
+    display: block;
+    margin-top: 5px;
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(8px, 1vw, 10px);
+    letter-spacing: 0.06em;
+    text-align: center;
+    color: #8a5a1c;
+    text-decoration: none;
+    border-top: 1px dashed rgba(120, 80, 30, 0.35);
+    padding-top: 4px;
+  }
+  .notebook-recipe-link:hover,
+  .notebook-recipe-link:focus {
+    color: #b8801c;
+    text-decoration: underline;
+  }
+
   .notebook-empty-note {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
@@ -11632,6 +11651,27 @@ function drawPostMemoryScene(elapsed) {
   ctx.fillRect(panX + 12, FLOOR_Y - 2, 12, 3);
 }
 
+/* @@RECIPE-URLS@@ — R16 recipe-site link map. THE ONE PLACE TO EDIT (mirror of recipes.md).
+   Set RECIPE_SITE_HOME to the recipe site's homepage; replace each per-recipe value with its
+   real page URL. Until filled, links fall back to the homepage — the unlock still works, it
+   just lands on home instead of the exact recipe. MUST be filled before the R18 go-live gate.
+   No real URL was on record at R16, so every value below is a placeholder (never invent URLs). */
+const RECIPE_SITE_HOME = 'https://REPLACE-WITH-RECIPE-SITE-HOME/';   // <-- Julia fills
+const RECIPE_URLS = {
+  'recipe-lefse-gravlaks': RECIPE_SITE_HOME + '#lefse-gravlaks',
+  'recipe-kotletid':       RECIPE_SITE_HOME + '#kotletid',
+  'recipe-red-curry':      RECIPE_SITE_HOME + '#red-curry',
+  'recipe-muhammara':      RECIPE_SITE_HOME + '#muhammara',
+  'recipe-potjie':         RECIPE_SITE_HOME + '#potjiekos',
+  'recipe-lemper':         RECIPE_SITE_HOME + '#lemper',
+  'recipe-moqueca':        RECIPE_SITE_HOME + '#moqueca',
+  'recipe-pierogi':        RECIPE_SITE_HOME + '#pierogi',
+};
+/* recipeUrlFor — the link for a recipe id, falling back to the homepage for any unmapped id. */
+function recipeUrlFor(id) {
+  return (RECIPE_URLS && RECIPE_URLS[id]) ? RECIPE_URLS[id] : RECIPE_SITE_HOME;
+}
+
 /* addKitchenRecipe — adds lefse-and-gravlaks to notebook, fires brief dialogue. */
 function addKitchenRecipe() {
   if (notebook.items.some(function(i) { return i.id === 'recipe-lefse-gravlaks'; })) return;
@@ -13239,6 +13279,17 @@ function renderNotebookPage() {
         ann.className   = 'notebook-item-annotation';
         ann.textContent = item.annotation;
         card.appendChild(ann);
+        // R16: link out to the recipe on Julia's site (new tab — never navigate the game away).
+        const url = recipeUrlFor(item.id);
+        if (url) {
+          const link = document.createElement('a');
+          link.className   = 'notebook-recipe-link';
+          link.href        = url;
+          link.target      = '_blank';
+          link.rel         = 'noopener noreferrer';
+          link.textContent = 'View recipe ↗';
+          card.appendChild(link);
+        }
         leftCont.appendChild(card);
       }
     }

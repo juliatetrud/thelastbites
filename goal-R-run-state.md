@@ -19,12 +19,18 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
-> **R14 `built` — audio pass done (2 reserved sounds + per-chapter ambient; UI SFX global).
-> NEXT = R15 (save + persistence hardening).** Composer/real-music kept post-release. **R15:**
-> read `sprint-R15-save-and-persistence-hardening.md` — harden the tlb-save-v2 schema now that
-> R12/R13 added fields (alleyBarrierPassed etc. are additive; mechanic state is transient/
-> module-level, not saved — verify no mid-mechanic-save corruption); confirm the #24 v1→v2
-> drop-notice still works. Audit first (child issue).
+> **R15 `built` + closed (`a63a0b9` code / `b5a42b7` docs / `r-checkpoint-R15`, #126 closed).
+> NEXT = R16 (recipe-site integration + credits).** applySave hardened (guards + try/catch
+> backstop) against well-formed-but-wrong-shape saves; scripted 7-payload corrupt battery →
+> no throw; save-coverage matrix in #126; round-trip confirmed field-by-field; R12/R13 puzzle
+> state transient (no schema drift); #24 drop-notice intact. In-browser reload-per-chapter →
+> backlog #109. **R16:** recipe URLs = homepage placeholders in a ONE-table edit, logged
+> prominently; add credits. Audit first (child issue). Then R17 mobile, R18 release → GO-LIVE
+> GATE (STOP for Julia).
+>
+> --- prior (R14) ---
+> **R14 `built` — audio pass done (2 reserved sounds + per-chapter ambient; UI SFX global).**
+> Composer/real-music kept post-release.
 >
 > --- prior (R13) ---
 > **R13 `built` — Ch8 finale mechanics done (Phase 1 Pong + Phase 3 trace built, Phase 2
@@ -330,7 +336,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R12 | Kinetic mechanics — port chapters | built | #123 | `557fb85` | `r-checkpoint-R12` |
 | R13 | Kinetic mechanics — Ch8 finale | built | #124 | `455b834` | `r-checkpoint-R13` |
 | R14 | Audio + music pass | built | #125 | `cf3505e` | `r-checkpoint-R14` |
-| R15 | Save + persistence hardening | pending | — | — | — |
+| R15 | Save + persistence hardening | built | #126 | `a63a0b9`/`b5a42b7` | `r-checkpoint-R15` |
 | R16 | Recipe-site integration + credits | pending | — | — | — |
 | R17 | Mobile playtest + polish | pending | — | — | — |
 | R18 | Release: verification + go-live | pending | — | — | — |

@@ -340,9 +340,19 @@ migrated, because the 2026-05-18 cabin/grandparents spatial reordering would lea
 `pip.x` in an inconsistent position. As of R02 this is no longer silent: `loadSave()` sets
 `saveWasDropped = true`, and the title screen shows a one-line notice ("*Your voyage was from
 an earlier version — starting anew.*") so a returning player understands why their progress
-reset. The `tlb-save-v2` key itself is stable; R15 (save + persistence hardening) will make
-future schema changes additive-safe so this hard-drop path is only hit across genuinely
-incompatible bumps.
+reset. The `tlb-save-v2` key itself is stable.
+
+As of **R15 (save + persistence hardening)**, `applySave()` is defensive against
+*well-formed-JSON-but-wrong-shape* saves — the class `loadSave()`'s parse/version guards do
+not catch. Guard variables at the top (`data||{}`, `data.pip||{}`, `data.passenger||{}`,
+`Array.isArray(data.notebookItems)?…:[]`) let any missing key fall back to a live schema
+default instead of throwing mid-restore, and the whole body is wrapped in a try/catch backstop:
+any unforeseen malformed save logs a warning, calls `clearSave()`, sets `saveWasDropped`, and
+starts fresh rather than crashing on load. This makes future additive schema changes safe —
+new `chNState` fields absent from an old save simply take their defaults; only genuinely
+incompatible bumps (a `SAVE_VERSION` change) hit the hard-drop path. Real-time puzzle state
+(R12 candle/douse, R13 trace) is intentionally **transient** — not in `buildSaveObject()`, so a
+reload restarts an in-progress puzzle from its chapter entry rather than persisting a partial.
 
 ### Save-at-exit principle
 

@@ -1569,19 +1569,26 @@ function clearSave() {
 }
 
 function applySave(data) {
+ try {
+  // R15: harden against partial/corrupt saves — missing keys fall back to schema defaults.
+  data = data || {};
+  const p    = data.pip || {};
+  const pass = data.passenger || {};
+  const items = Array.isArray(data.notebookItems) ? data.notebookItems : [];
+
   // Restore currentRoom first — setRoomStrip and music read it.
-  currentRoom = data.currentRoom;
+  currentRoom = data.currentRoom || 'hallway';
 
   // Restore Pip position and orientation
-  pip.x              = data.pip.x;
-  pip.body.facing    = data.pip.facing;
+  pip.x              = (p.x != null) ? p.x : pip.x;
+  pip.body.facing    = p.facing || pip.body.facing;
   pip.float.altitude = 0;
   pip.float.vy       = 0;
-  pip.stomach.value  = data.pip.stomachValue;
-  pip.float.unlocked                 = data.pip.floatUnlocked;
-  pip.abilities.electricity          = data.pip.abilityElectricity   || false;
-  pip.abilities.talkThroughSpeakers  = data.pip.abilityTalkSpeakers  || false;
-  pip.abilities.objectMemory         = data.pip.abilityObjectMemory  || false;
+  pip.stomach.value  = (p.stomachValue != null) ? p.stomachValue : pip.stomach.value;
+  pip.float.unlocked                 = !!p.floatUnlocked;
+  pip.abilities.electricity          = p.abilityElectricity   || false;
+  pip.abilities.talkThroughSpeakers  = p.abilityTalkSpeakers  || false;
+  pip.abilities.objectMemory         = p.abilityObjectMemory  || false;
 
   // Restore story flags
   Object.assign(cabinState,   data.cabinState);
@@ -1608,8 +1615,8 @@ function applySave(data) {
   cinematic.played = new Set(data.cinematicPlayed);
 
   // Restore passenger state; re-arm spawn timer if still pending
-  passenger.thoughtBeatFired = data.passenger.thoughtBeatFired;
-  passenger.passBeatComplete = data.passenger.passBeatComplete || false;
+  passenger.thoughtBeatFired = !!pass.thoughtBeatFired;
+  passenger.passBeatComplete = pass.passBeatComplete || false;
   if (currentRoom === 'hallway') {
     passenger.hallwayEntered = true;
     if (!passenger.thoughtBeatFired) {
@@ -1620,14 +1627,14 @@ function applySave(data) {
   }
 
   // Sprint 24 Stage 3: restore collection-room items (additive — old saves without this field get [])
-  if (data.cabinCollection) {
+  if (data.cabinCollection && Array.isArray(data.cabinCollection.items)) {
     cabinCollection.items = data.cabinCollection.items.map(i => ({ ...i }));
   }
 
   // Restore notebook items and mark collectibles as already collected
-  notebook.items = data.notebookItems.map(i => ({ ...i }));
+  notebook.items = items.map(i => ({ ...i }));
   renderNotebookItems();
-  const collectedIds = new Set(data.notebookItems.map(i => i.id));
+  const collectedIds = new Set(items.map(i => i.id));
   for (const room of Object.values(rooms)) {
     if (room.collectibles) {
       for (const c of room.collectibles) {
@@ -1641,6 +1648,12 @@ function applySave(data) {
 
   // Sync HUD DOM
   renderStomachIndicator();
+ } catch (e) {
+  // R15 backstop: any unforeseen malformed save -> start fresh rather than crash on load.
+  console.warn('[TLB] save restore failed; starting fresh.', e);
+  try { clearSave(); } catch (e2) {}
+  saveWasDropped = true;
+ }
 }
 
 function pulseNotebookIcon() {

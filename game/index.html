@@ -612,6 +612,27 @@
     text-decoration: underline;
   }
 
+  /* R16: recipe-site link on the final credits card (real DOM anchor over the canvas). */
+  #credits-recipe-link {
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: 52%;
+    transform: translate(-50%, -50%);
+    z-index: 40;
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(11px, 1.6vw, 15px);
+    letter-spacing: 0.06em;
+    color: #ffd37a;
+    text-decoration: none;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  }
+  #credits-recipe-link:hover,
+  #credits-recipe-link:focus {
+    color: #fff0c0;
+    text-decoration: underline;
+  }
+
   .notebook-empty-note {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
@@ -3322,6 +3343,15 @@ function handleKeyAction(code) {
     return;
   }
 
+  // R16: credits mode — SPACE/ESC skip to the end card, then return to title.
+  if (gameMode === 'credits') {
+    if (code === 'Space' || code === 'Enter' || code === 'Escape') {
+      if (creditsState.finished) returnToTitleFromCredits();
+      else skipCreditsToEnd();
+    }
+    return;
+  }
+
   // Suppress all key actions during room transitions
   if (transition.active) return;
 
@@ -4560,6 +4590,9 @@ const STRIP_STRINGS = {
   'pause':                '↑↓  CHOOSE | SPACE  SELECT | P  RESUME',
   // Sprint 20: held-button puzzle
   'held-puzzle':          'Hold ↑',
+  // R16: credits roll + end card
+  'credits':              'SPACE  SKIP',
+  'end-of-game':          'SPACE  RETURN TO TITLE',
 };
 
 function updateActionButtonIcon() {
@@ -5052,6 +5085,12 @@ function render(now) {
   if (gameMode === 'title') {
     updateTitleScene(dt);
     drawTitleScene(now);
+    return;
+  }
+
+  // R16: credits roll owns the screen at end of game.
+  if (gameMode === 'credits') {
+    drawCreditsRoll(dt);
     return;
   }
 
@@ -23067,24 +23106,119 @@ function triggerEpilogue() {
   });
 }
 
+/* ================================================================
+   R16 — Credits roll (replaces the bare two-line end card).
+   A slow, skippable canvas scroll in the game's register, ending on a
+   held recipe-site card with a real DOM link. Runs from render()'s
+   'credits' gameMode branch (self-contained; no update() coupling).
+   No flashing; SPACE/ESC skips to the end card; SPACE there returns to
+   title. Copy is PROVISIONAL — pending Julia's word-by-word approval (#127). */
+const CREDITS_LINES = [
+  { t: 'THE  LAST  BITES',                                    s: 'title',   gap: 42 },
+  { t: '',                                                    s: 'sub',     gap: 22 },
+  { t: 'Created by Julia Tetrud',                             s: 'name',    gap: 18 },
+  { t: 'Written, designed & built with Claude Code',          s: 'sub',     gap: 42 },
+  { t: '— folklore, with gratitude —',              s: 'section', gap: 22 },
+  { t: 'Bergen · the Nøkken',                       s: 'pair',    gap: 15 },
+  { t: 'Käsmu · the Haldjas',                       s: 'pair',    gap: 15 },
+  { t: 'Southampton · the Black Shuck',                  s: 'pair',    gap: 15 },
+  { t: 'Istanbul · the Karakoncolos',                    s: 'pair',    gap: 15 },
+  { t: 'Saldanha Bay · the Mamlambo',                    s: 'pair',    gap: 15 },
+  { t: 'Kolonodale · the Pocong',                        s: 'pair',    gap: 15 },
+  { t: 'Alter do Chão · the Boitatá',          s: 'pair',    gap: 15 },
+  { t: 'Greenpoint · the memory at the bottom of the well', s: 'pair', gap: 42 },
+  { t: 'For everyone who was fed,',                           s: 'flavor',  gap: 16 },
+  { t: 'and everyone who feeds.',                             s: 'flavor',  gap: 46 },
+  { t: 'Cook what Pip tasted ↓',                         s: 'final',   gap: 24 },
+];
+const CREDITS_STYLE = {
+  title:   { font: 'italic 18px "Special Elite", monospace', fill: 'rgba(242,232,202,0.94)' },
+  name:    { font: '12px "Special Elite", monospace',        fill: 'rgba(232,217,182,0.92)' },
+  sub:     { font: 'italic 10px "Special Elite", monospace', fill: 'rgba(192,177,142,0.78)' },
+  section: { font: '10px "Special Elite", monospace',        fill: 'rgba(200,170,110,0.82)' },
+  pair:    { font: '11px "Special Elite", monospace',        fill: 'rgba(216,201,171,0.88)' },
+  flavor:  { font: 'italic 12px "Special Elite", monospace', fill: 'rgba(220,205,175,0.88)' },
+  final:   { font: 'italic 13px "Special Elite", monospace', fill: 'rgba(255,226,150,0.94)' },
+};
+const CREDITS_SPEED = 20;   // px/s — slow, per spec
+let creditsState = { off: 0, restOff: 0, finished: false, finalY: 0, linkShown: false };
+
 function showGameEnd() {
   const fade = document.getElementById('room-transition');
   fade.style.transition = 'opacity 3.0s ease';
   fade.style.opacity = '1';
   setTimeout(() => {
-    // Show credits / title card
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(240,230,200,0.90)';
-    ctx.font = 'italic 18px "Special Elite", monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('The Last Bites', W / 2, H / 2 - 16);
-    ctx.font = '12px "Special Elite", monospace';
-    ctx.fillStyle = 'rgba(200,180,140,0.70)';
-    ctx.fillText('A story about being fed, and feeding others.', W / 2, H / 2 + 8);
-    ctx.textAlign = 'left';
-    setControlsStrip('end-of-game');
+    // Lay the lines out in content space (cumulative baselines).
+    let y = 0;
+    for (const line of CREDITS_LINES) { line._y = y; y += line.gap; }
+    const finalLine = CREDITS_LINES[CREDITS_LINES.length - 1];
+    creditsState.finalY  = finalLine._y;
+    creditsState.off     = H + 10;                       // first line starts just below screen
+    creditsState.restOff = Math.round(H * 0.40) - finalLine._y;   // final card rests high-center
+    creditsState.finished = false;
+    creditsState.linkShown = false;
+    // Hand the canvas back the frame: drop the black DOM overlay instantly (credits paint their own black).
+    fade.style.transition = 'none';
+    fade.style.opacity = '0';
+    hideHUD();                  // clear stomach/notebook icons off the roll
+    gameMode = 'credits';
+    setControlsStrip('credits');
   }, 3000);
+}
+
+function drawCreditsRoll(dt) {
+  // own black background
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, W, H);
+  if (!creditsState.finished) {
+    creditsState.off -= CREDITS_SPEED * dt;
+    if (creditsState.off <= creditsState.restOff) {
+      creditsState.off = creditsState.restOff;
+      creditsState.finished = true;
+      onCreditsFinished();
+    }
+  }
+  ctx.textAlign = 'center';
+  for (const line of CREDITS_LINES) {
+    if (!line.t) continue;
+    const sy = line._y + creditsState.off;
+    if (sy < -20 || sy > H + 20) continue;
+    const st = CREDITS_STYLE[line.s] || CREDITS_STYLE.name;
+    ctx.font = st.font;
+    ctx.fillStyle = st.fill;
+    ctx.fillText(line.t, W / 2, sy);
+  }
+  ctx.textAlign = 'left';
+}
+
+/* onCreditsFinished — reveal the real recipe-site link (canvas can't be clickable)
+   as a DOM anchor centered below the final card, and switch the strip. */
+function onCreditsFinished() {
+  if (creditsState.linkShown) return;
+  creditsState.linkShown = true;
+  let link = document.getElementById('credits-recipe-link');
+  if (!link) {
+    link = document.createElement('a');
+    link.id = 'credits-recipe-link';
+    const gameEl = document.getElementById('game');
+    if (gameEl) gameEl.appendChild(link);
+  }
+  link.href = (typeof RECIPE_SITE_HOME !== 'undefined') ? RECIPE_SITE_HOME : '#';
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = 'the recipe site ↗';
+  link.style.display = 'block';
+  setControlsStrip('end-of-game');
+}
+
+function skipCreditsToEnd() {
+  creditsState.off = creditsState.restOff;
+  if (!creditsState.finished) { creditsState.finished = true; onCreditsFinished(); }
+}
+
+function returnToTitleFromCredits() {
+  // Save persists (game complete) -> the gate auto-dismisses to the title with Continue.
+  location.reload();
 }
 
 function addPierogiRecipe() {

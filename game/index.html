@@ -633,6 +633,60 @@
     text-decoration: underline;
   }
 
+  /* R16: chapter card (03b §9) — brief setting card at the start of Ch2–Ch8. */
+  #chapter-card {
+    display: none;
+    position: absolute;
+    inset: 0;
+    z-index: 60;
+    background: #000;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+  }
+  #chapter-card.visible { opacity: 1; }
+  #chapter-card .cc-inner {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 90%;
+  }
+  #cc-num {
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(14px, 1.8vw, 18px);
+    letter-spacing: 0.3em;
+    color: rgba(180, 165, 135, 0.7);
+    margin-bottom: 0.6em;
+  }
+  #cc-place {
+    font-family: 'Special Elite', monospace;
+    font-size: clamp(28px, 4.2vw, 44px);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(235, 222, 192, 0.95);
+  }
+  #cc-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(14px, 2vw, 20px);
+    color: rgba(210, 190, 150, 0.85);
+    margin-top: 0.7em;
+  }
+  .cc-spark {
+    position: absolute;
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: rgba(255, 225, 150, 0.7);
+    opacity: 0;
+  }
+  .cc-spark-a { left: 30%; top: 38%; animation: ccDrift 5.5s ease-in-out infinite; }
+  .cc-spark-b { left: 66%; top: 60%; animation: ccDrift 6.8s ease-in-out infinite 1.2s; }
+  .cc-spark-c { left: 52%; top: 30%; animation: ccDrift 6.0s ease-in-out infinite 2.4s; }
+  @keyframes ccDrift {
+    0%, 100% { opacity: 0;   transform: translateY(6px); }
+    50%      { opacity: 0.8; transform: translateY(-6px); }
+  }
+
   .notebook-empty-note {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
@@ -3352,6 +3406,12 @@ function handleKeyAction(code) {
     return;
   }
 
+  // R16: chapter card up — SPACE/ENTER advances; swallow everything else.
+  if (chapterCard.active) {
+    if (code === 'Space' || code === 'Enter') dismissChapterCard();
+    return;
+  }
+
   // Suppress all key actions during room transitions
   if (transition.active) return;
 
@@ -4593,6 +4653,8 @@ const STRIP_STRINGS = {
   // R16: credits roll + end card
   'credits':              'SPACE  SKIP',
   'end-of-game':          'SPACE  RETURN TO TITLE',
+  // R16: chapter card (03b §9)
+  'chapter-card':         'SPACE  CONTINUE',
 };
 
 function updateActionButtonIcon() {
@@ -14580,6 +14642,8 @@ ch2LowerDeckObjects.push(ch2PanObject);
    ---------------------------------------------------------------- */
 
 function startChapter2() {
+  if (_chapterCardPending) { _chapterCardPending = false; const _cc = CHAPTER_CARDS[2]; showChapterCard(_cc.num, _cc.place, _cc.sub, startChapter2); return; }
+  _chapterCardPending = true;
   ch2State.chapter2Active = true;
   setChapterAmbient('ch2');   // R14 per-chapter ambient
   currentChapter = 2;
@@ -15588,6 +15652,8 @@ ch3BevoisObjects.push(ch3MatchesObject);
    ---------------------------------------------------------------- */
 
 function startChapter3() {
+  if (_chapterCardPending) { _chapterCardPending = false; const _cc = CHAPTER_CARDS[3]; showChapterCard(_cc.num, _cc.place, _cc.sub, startChapter3); return; }
+  _chapterCardPending = true;
   ch3State.chapter3Active = true;
   setChapterAmbient('ch3');   // R14 per-chapter ambient
   currentChapter = 3;
@@ -17218,6 +17284,8 @@ let ch4WalnutsHeld = false;
    ---------------------------------------------------------------- */
 
 function startChapter4() {
+  if (_chapterCardPending) { _chapterCardPending = false; const _cc = CHAPTER_CARDS[4]; showChapterCard(_cc.num, _cc.place, _cc.sub, startChapter4); return; }
+  _chapterCardPending = true;
   ch4State.chapter4Active = true;
   setChapterAmbient('ch4');   // R14 per-chapter ambient
   currentChapter = 4;
@@ -18395,6 +18463,8 @@ const ch5JohannesObjects   = [];
    ---------------------------------------------------------------- */
 
 function startChapter5() {
+  if (_chapterCardPending) { _chapterCardPending = false; const _cc = CHAPTER_CARDS[5]; showChapterCard(_cc.num, _cc.place, _cc.sub, startChapter5); return; }
+  _chapterCardPending = true;
   ch5State.chapter5Active = true;
   setChapterAmbient('ch5');   // R14 per-chapter ambient
   currentChapter = 5;
@@ -19817,6 +19887,8 @@ const ch6WarungObjects    = [];
    ---------------------------------------------------------------- */
 
 function startChapter6() {
+  if (_chapterCardPending) { _chapterCardPending = false; const _cc = CHAPTER_CARDS[6]; showChapterCard(_cc.num, _cc.place, _cc.sub, startChapter6); return; }
+  _chapterCardPending = true;
   ch6State.chapter6Active = true;
   setChapterAmbient('ch6');   // R14 per-chapter ambient
   currentChapter = 6;
@@ -20958,6 +21030,8 @@ const ch7HouseObjects     = [];
    ---------------------------------------------------------------- */
 
 function startChapter7() {
+  if (_chapterCardPending) { _chapterCardPending = false; const _cc = CHAPTER_CARDS[7]; showChapterCard(_cc.num, _cc.place, _cc.sub, startChapter7); return; }
+  _chapterCardPending = true;
   ch7State.chapter7Active = true;
   setChapterAmbient('ch7');   // R14 per-chapter ambient
   currentChapter = 7;
@@ -22221,6 +22295,8 @@ const ch8BabciaObjects      = [];
    ---------------------------------------------------------------- */
 
 function startChapter8() {
+  if (_chapterCardPending) { _chapterCardPending = false; const _cc = CHAPTER_CARDS[8]; showChapterCard(_cc.num, _cc.place, _cc.sub, startChapter8); return; }
+  _chapterCardPending = true;
   ch8State.chapter8Active = true;
   setChapterAmbient('ch8');   // R14 per-chapter ambient
   currentChapter = 8;
@@ -23086,6 +23162,8 @@ function triggerEpilogue() {
       { speaker: null,    text: "The kitchen is quiet. Henrik is alone at the table — well, not alone. Pätu is on the table beside him. The pot is on the stove. The colander is in the sink. Erik is gone, but the photograph in Henrik's hand is warm to the touch in a way photographs are not usually warm.", italic: true },
       { speaker: null,    text: "Henrik picks up another pierogi. He bites into it. His eyes are wet. He smiles anyway.", italic: true },
       { speaker: null,    text: "He has a job now. He knows what to do. There will be another ghost-child on the Mnemosyne, eventually. He will know the fold. He will teach them.", italic: true },
+      // R16: Pätu's fate made explicit (default-yes per ch8 audit #7). PROVISIONAL copy — pending Julia's approval (#127).
+      { speaker: null,    text: "Pätu is not going anywhere. She has a ship to run and a man to keep. She has work too.", italic: true },
     ],
     choices: null,
     onEnd() {
@@ -23113,6 +23191,68 @@ function triggerEpilogue() {
    'credits' gameMode branch (self-contained; no update() coupling).
    No flashing; SPACE/ESC skips to the end card; SPACE there returns to
    title. Copy is PROVISIONAL — pending Julia's word-by-word approval (#127). */
+/* ================================================================
+   R16 — Chapter cards (03b §9). Brief setting card at the start of Ch2–Ch8:
+   roman numeral / port / italic subtitle, fade in ~1.5s, SPACE or 6s to advance,
+   fade out. DOM overlay above the room-transition black so the fade-out is
+   black-on-black (no old-room flash). Titles are PROVISIONAL — pending Julia's
+   approval (#127); pacing (a card + SPACE between every chapter) is her playtest
+   call. Wired via a re-arm guard at the top of each startChapterN. */
+const CHAPTER_CARDS = {
+  2: { num: 'II',   place: 'KÄSMU',         sub: 'the captain’s village' },
+  3: { num: 'III',  place: 'SOUTHAMPTON',   sub: 'the omen at the threshold' },
+  4: { num: 'IV',   place: 'ISTANBUL',      sub: 'the longest night of winter' },
+  5: { num: 'V',    place: 'SALDANHA BAY',  sub: 'the river remembers' },
+  6: { num: 'VI',   place: 'KOLONODALE',    sub: 'what mercy costs' },
+  7: { num: 'VII',  place: 'ALTER DO CHÃO', sub: 'the fire that guards the forest' },
+  8: { num: 'VIII', place: 'GREENPOINT',    sub: 'home' },
+};
+let chapterCard = { active: false, onDone: null, _timer: null };
+let _chapterCardPending = true;   // re-arm guard for startChapterN
+
+function _ensureChapterCardEl() {
+  let el = document.getElementById('chapter-card');
+  if (el) return el;
+  el = document.createElement('div');
+  el.id = 'chapter-card';
+  el.innerHTML =
+    '<div class="cc-spark cc-spark-a"></div><div class="cc-spark cc-spark-b"></div>' +
+    '<div class="cc-spark cc-spark-c"></div>' +
+    '<div class="cc-inner"><div id="cc-num"></div><div id="cc-place"></div><div id="cc-sub"></div></div>';
+  const gameEl = document.getElementById('game');
+  if (gameEl) gameEl.appendChild(el);
+  return el;
+}
+
+function showChapterCard(num, place, sub, onDone) {
+  const el = _ensureChapterCardEl();
+  document.getElementById('cc-num').textContent   = num;
+  document.getElementById('cc-place').textContent = place;
+  const subEl = document.getElementById('cc-sub');
+  subEl.textContent   = sub || '';
+  subEl.style.display = sub ? 'block' : 'none';
+  chapterCard.active = true;
+  chapterCard.onDone = onDone || null;
+  hideHUD();                         // keep stomach/notebook icons off the card
+  el.style.display = 'block';
+  void el.offsetWidth;               // reflow so the fade-in runs from opacity 0
+  el.classList.add('visible');
+  setControlsStrip('chapter-card');
+  clearTimeout(chapterCard._timer);
+  chapterCard._timer = setTimeout(dismissChapterCard, 6000);   // auto-advance
+}
+
+function dismissChapterCard() {
+  if (!chapterCard.active) return;
+  chapterCard.active = false;
+  clearTimeout(chapterCard._timer);
+  const el = document.getElementById('chapter-card');
+  if (el) el.classList.remove('visible');    // fade out (black-on-black, no artifact)
+  const cb = chapterCard.onDone; chapterCard.onDone = null;
+  if (cb) cb();                              // run the chapter body now (sets its own black synchronously)
+  setTimeout(() => { if (el) el.style.display = 'none'; }, 1000);
+}
+
 const CREDITS_LINES = [
   { t: 'THE  LAST  BITES',                                    s: 'title',   gap: 42 },
   { t: '',                                                    s: 'sub',     gap: 22 },

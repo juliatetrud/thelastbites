@@ -421,7 +421,7 @@ Double-border panel (matching dialogue-box chrome) beneath the subtitle. Navigat
 2. **About** — opens About overlay
 3. **Start over** *(rendered in `var(--text-faint)` as a secondary action)* — clears the save and starts a fresh game immediately, no confirmation prompt.
 
-Chapter-select and credits are deferred to post-Chapter-1 sprints. Sound toggle is the existing music icon — no separate menu item.
+Chapter-select is deferred to post-Chapter-1 sprints. **Credits are implemented as of R16** (see §11 below). Sound toggle is the existing music icon — no separate menu item.
 
 ### About overlay
 
@@ -520,6 +520,8 @@ Three stacked lines, centered:
 ### Controls strip
 
 `SPACE  CONTINUE`
+
+**Implemented R16.** `showChapterCard(num, place, sub, onDone)` renders this as a DOM overlay (`#chapter-card`) above the room-transition black, wired into `startChapter2`–`startChapter8` via a re-arm guard (`_chapterCardPending`) so it fires only on real forward transitions, never on save-load or debug warp. Fade-in ~1.5s, SPACE/6s auto-advance, three drifting sparkles. Ch1 keeps its cold open (no card). Card titles/subtitles are provisional pending Julia's approval (R16 #127); whether a card between every chapter helps pacing is a playtest call.
 
 ---
 
@@ -634,3 +636,21 @@ To add to the Decisions Log / Open Questions in `06-roadmap-and-open-questions.m
 - **Dialogue *content*.** Per-chapter outlines and chapter specs cover what's said.
 - **Sound design.** Flagged throughout but covered by `03-art-and-aesthetic.md` and a future audio spec.
 - **Settings beyond sound** (contrast, motion-reduce, font size). Accessibility flagged in `06-roadmap-and-open-questions.md`; not yet specced.
+
+---
+
+## 11. Credits Roll + Recipe-Site Unlock (R16)
+
+### Recipe-site link-out
+
+Each chapter's completion already adds a recipe to the notebook's **Recipes** page (`add*Recipe()` → a `kind:'recipe'` notebook item; the unlock persists in the save as a notebook item). R16 adds the **link out**: every recipe card renders a "View recipe ↗" anchor opening the recipe's page in a **new browser tab** (`rel=noopener`), so the game and its save are never navigated away.
+
+URLs live in **one place**: the `RECIPE_URLS` map in `game/index.html` (marked `@@RECIPE-URLS@@`), mirrored by `recipes.md`. `RECIPE_SITE_HOME` is the site homepage; `recipeUrlFor(id)` falls back to it for any unmapped id. At R16 no real URL was on record, so every value is a placeholder — **must be filled before the R18 go-live gate.** The game never gates content on the recipe site (client-side link only; no backend/accounts — site-side gating, if wanted, is the site's separate work).
+
+### Credits roll
+
+Replaces the old bare two-line end card. After Babcia's "Filipek." and the 3s fade, a new `gameMode === 'credits'` takes the screen: `drawCreditsRoll(dt)` (driven from `render()`, no `update()` coupling) paints its own black and scrolls credit lines upward at 20px/s — title, creator credit, per-port folklore acknowledgments, warm closer — ending held on a "Cook what Pip tasted ↓" card with a real DOM anchor (`#credits-recipe-link`) to the recipe site. SPACE/ESC skip to the end card; SPACE there returns to title (`location.reload()` → the save-present gate auto-dismisses to title/Continue). No flashing; slow throughout. Credits copy + the Pätu epilogue line are provisional pending Julia's word-by-word approval (R16 #127). The locked final line and the epilogues above the roll are untouched.
+
+### Embed readiness
+
+Root `/index.html` meta-refreshes to `game/index.html` (unchanged, correct). Whether the recipe site embeds the game via iframe or links to it directly is **Julia's call at handoff** — confirm before launch; if iframed, verify audio-unlock-on-first-keypress and fullscreen still behave in that context.

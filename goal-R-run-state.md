@@ -19,6 +19,27 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **GOAL Ch1-VERBATIM `built` — the playscript is the script (#132; 7 scene commits,
+> `ff9a570`..`78e9ce2`). NEXT = R17 (mobile playtest + polish) — BLOCKED on Julia's Ch1
+> in-browser pass.** Supersedes the partial-apply posture of #111/#129/#130/#131.
+> **Stage 0 reframed it:** push and Pages were both clean (live page hashed byte-identical
+> to committed HEAD), and Julia saw no change because R01b changed almost no *words* — 14 of
+> its 16 edits only flipped which box a line renders in. **Real root cause: R01 only ever did
+> text SWAPS, and the playscript's dominant edit is DELETION.** Lines Julia had cut were still
+> in the build, and every prior audit missed them because they asked "is this line present?"
+> rather than "does this node hold exactly these lines, in this order, with these speakers".
+> **Applied:** all 7 scenes regenerated node-by-node from the committed docx; held items 1-2
+> applied verbatim per Julia's ruling; **item 3 (coat-pocket radio) carved out and kept as
+> shipped** — `janitorPaged` lives inside the choice block a verbatim apply would delete, so
+> it could strand the player at the stairwell gate. Dead legacy comment block removed.
+> **Regression caught mid-flight and fixed:** the regenerator dropped a `pauseAfter: 1.5`
+> timing property; found by property-count diff vs `e77fb78`, restored in `78e9ce2`.
+> **Result: 108 structural comparisons, ZERO divergence outside the carve-out.** Traversal
+> statically re-traced — all flags and choice blocks intact. `node --check` PARSE OK.
+> **Julia's in-browser Ch1 walk is the sign-off; several deletions are real content losses
+> she should judge** (see #132 line-items). Do NOT start R17 until she confirms.
+>
+> --- prior (R01b) ---
 > **R01b `built` — Ch1 playscript edits R01 never saw (`bea4d87` + `d757fcb` source-of-truth /
 > `8acfef2` Stage 1 / `b717f39` Stage 2, #130 open). NEXT = R17 (mobile playtest + polish),
 > with #131 (cinematic timing) awaiting Julia's ruling.** Inserted after R13b on Julia's call,
@@ -400,6 +421,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R16 | Recipe-site integration + credits | built | #127 | `92e2c34`…`b3ac9b9` | `r-checkpoint-R16` |
 | R13b | Phase 1 paired-memory inventory ((b)→(a)) | built | #128 | `91bcf9e`/`91e8b9d` | `r-checkpoint-R13b` |
 | R01b | Ch1 playscript edits R01 never saw (audit #129) | built | #130 | `bea4d87`…`b717f39` | `r-checkpoint-R01b` |
+| GOAL | Ch1 verbatim conformance (playscript is the script) | built | #132 | `ff9a570`…`78e9ce2` | `r-checkpoint-ch1-verbatim` |
 | R17 | Mobile playtest + polish | pending | — | — | — |
 | R18 | Release: verification + go-live | pending | — | — | — |
 

@@ -19,6 +19,31 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **R01b `built` — Ch1 playscript edits R01 never saw (`bea4d87` + `d757fcb` source-of-truth /
+> `8acfef2` Stage 1 / `b717f39` Stage 2, #130 open). NEXT = R17 (mobile playtest + polish),
+> with #131 (cinematic timing) awaiting Julia's ruling.** Inserted after R13b on Julia's call,
+> from audit #129. **Root cause: R01 was given the wrong file and made no errors against it.**
+> `design-docs/ch01-playscript.docx` was an **uncommitted working-tree file**; a newer cleaned
+> version sat in `~/Downloads` (2026-07-05 14:18, vs the repo copy's 10:02) and was never
+> committed, so R01's 2026-07-10 apply was 4h16m stale and missed 16 authored edits. The
+> newer doc's CLEANUP CHANGELOG ends with three OPEN FLAGS matching the R01 spec's three
+> pre-answered questions exactly — the spec was written from the clean doc, the sprint read
+> the stale one.
+> **Structural fix first (the part that stops recurrence):** `bea4d87` commits the stale copy
+> as-is for provenance; `d757fcb` supersedes it with the canonical version. Ch1's source of
+> truth is finally version-controlled. **New standing rule in doc-06: a document declared a
+> sprint's source of truth MUST be committed before that sprint starts.**
+> **Applied:** 14 speaker relabels (thought-bubble → narration `italic` flips) + the
+> first-taste reorder, which also required shifting `drawFirstTasteCinematic()`'s hardcoded
+> 6b crossfade boundary 4 → 3 (present boundary nets out at 10). No line text altered anywhere.
+> **NOT applied by instruction:** the kitchen bite-beat cinematic timing change → #131, scoped
+> only, because the changelog reordered it from a transcript missing three shipped Henrik lines.
+> **Held lines 1–3 unchanged**; `gp-radio-page-choice` / "You cart" still carries a ratified
+> "keep" with no shipped line. `node --check` PARSE OK, static verification only.
+> **Julia's in-browser Ch1 pass is the sign-off** (#109) — relabels change which box a line
+> renders in, and the reorder changes what shows over which visual.
+>
+> --- prior (R13b) ---
 > **R13b `built` — Phase 1 paired-memory inventory, (b) → (a) (`91bcf9e` A / `91e8b9d` B+C /
 > docs, #128 open). NEXT = R17 (mobile playtest + polish).** Inserted before R17 on Julia's
 > call; reverses #124 decision 1 (logged in #110 with rationale: the paired-memory payoff is
@@ -374,6 +399,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R15 | Save + persistence hardening | built | #126 | `a63a0b9`/`b5a42b7` | `r-checkpoint-R15` |
 | R16 | Recipe-site integration + credits | built | #127 | `92e2c34`…`b3ac9b9` | `r-checkpoint-R16` |
 | R13b | Phase 1 paired-memory inventory ((b)→(a)) | built | #128 | `91bcf9e`/`91e8b9d` | `r-checkpoint-R13b` |
+| R01b | Ch1 playscript edits R01 never saw (audit #129) | built | #130 | `bea4d87`…`b717f39` | `r-checkpoint-R01b` |
 | R17 | Mobile playtest + polish | pending | — | — | — |
 | R18 | Release: verification + go-live | pending | — | — | — |
 

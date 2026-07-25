@@ -7128,13 +7128,17 @@ function floorGlow(ctx, cx, floor, r, hexColor, a) {
 
    t: time in seconds.  speaking: boolean.
    ============================================================= */
-function drawPip(ctx, t, speaking) {
+function drawPip(ctx, t, speaking, opts) {
+  // opts (all optional, defaults preserve every existing call site):
+  //   opts.blink     — true/false to force the eye state; omit for the built-in 4s cycle.
+  //   opts.floorGlow — false to suppress the floor glow (e.g. a mirror, where there is no floor).
+  opts = opts || {};
   const bob   = Math.round(Math.sin(t * 1.8) * (speaking ? 1.5 : 1.0));
   const inA   = ctx.globalAlpha;        // respect caller fades; multiply through
   const PIP_H = 40;                     // sprite height; (0,0)=foot, top at -40
 
   // Floor glow at (0, 0) in local space — caller has already translated here
-  floorGlow(ctx, 0, 0, 18, C.pipGlow, 0.5);
+  if (opts.floorGlow !== false) floorGlow(ctx, 0, 0, 18, C.pipGlow, 0.5);
 
   ctx.save();
   ctx.translate(0, -bob);               // gentle bob lifts the whole sprite
@@ -7168,7 +7172,8 @@ function drawPip(ctx, t, speaking) {
   ctx.fill();
 
   // ---- Eyes — open by default; one brief blink (~0.12s) every ~4s ----
-  const blinking = (t % 4.0) < 0.12;
+  // A caller may drive the blink itself (the mirror reflection blinks on cue).
+  const blinking = (opts.blink !== undefined) ? !!opts.blink : ((t % 4.0) < 0.12);
   ctx.globalAlpha = inA * 0.92;
   ctx.fillStyle   = C.pipEye;
   if (blinking) {
@@ -8650,7 +8655,10 @@ function drawMirrorCinematic(now) {
   mirrorCinState.lastNow = now;
 
   const HOLD_T  = 1.8;   // seconds showing face before melt (longer hold — let it land)
-  const MELT_T  = 2.2;   // melt duration
+  const MELT_T  = 3.2;   // melt duration (#137: was 2.2 — the ghost resolved too fast)
+  // #137: the ghost blinks twice, on cue, once it has fully resolved.
+  const BLINK_1 = [0.80, 0.94];   // seconds after the melt completes
+  const BLINK_2 = [1.55, 1.69];
   const elapsed = mirrorCinState.elapsed;
 
   // Dark base
@@ -8747,15 +8755,14 @@ function drawMirrorCinematic(now) {
   // gameplay use, scaled to the old pixel-ghost footprint and eye-aligned to
   // the human face row. (Faithful reproduction of the canonical drawPip body;
   // floor glow is omitted — there is no floor inside the mirror.)
-  const ghostAlpha = meltT > 0.15 ? Math.min(1, (meltT - 0.15) / 0.45) : 0;
+  const ghostAlpha = meltT > 0.35 ? Math.min(1, (meltT - 0.35) / 0.50) : 0;
   if (ghostAlpha > 0) {
-    const gFootY  = GOY + 23 * GS;     // ghost foot baseline within the glass
-    const gCX     = GOX + 8 * GS;      // ghost centre x
-    const gS      = (23 * GS) / 40;    // 40px-tall ghost → old footprint height
-    const gHeadCY = -28, gBodyBot = -10;
-    const haloCY  = gFootY + gHeadCY * gS;
+    const gFootY = GOY + 23 * GS;      // ghost foot baseline within the glass
+    const gCX    = GOX + 8 * GS;       // ghost centre x
+    const gS     = (23 * GS) / 40;     // canonical 40px-tall Pip -> the glass footprint
 
-    // Soft halo around the dome
+    // Soft halo behind the dome — mirror atmosphere, not part of Pip's own look.
+    const haloCY = gFootY + (-28) * gS;
     ctx.save();
     ctx.globalAlpha = ghostAlpha;
     const halo = ctx.createRadialGradient(gCX, haloCY, 0, gCX, haloCY, 14 * gS);
@@ -8763,55 +8770,22 @@ function drawMirrorCinematic(now) {
     halo.addColorStop(1, 'rgba(240,248,255,0)');
     ctx.fillStyle = halo;
     ctx.fillRect(gCX - 16 * gS, haloCY - 16 * gS, 32 * gS, 36 * gS);
-
-    // Smooth body: round dome + three downward waves, soft glow
-    ctx.translate(gCX, gFootY);
-    ctx.scale(gS, gS);
-    ctx.shadowColor = 'rgba(240,248,255,0.85)';
-    ctx.shadowBlur  = 4;
-    ctx.globalAlpha = ghostAlpha * 0.85;
-    ctx.fillStyle   = '#dce8ff';
-    ctx.beginPath();
-    ctx.arc(0, gHeadCY, 12, Math.PI, 0);
-    ctx.lineTo(12, gBodyBot);
-    ctx.quadraticCurveTo( 8, 0,  4, gBodyBot);
-    ctx.quadraticCurveTo( 0, 0, -4, gBodyBot);
-    ctx.quadraticCurveTo(-8, 0, -12, gBodyBot);
-    ctx.closePath();
-    ctx.fill();
     ctx.restore();
 
-    // Ghost eyes / blush / neutral mouth appear once the melt completes (the
-    // human const cells have faded by then). Drawn in screen space, smooth.
-    if (meltT >= 1) {
-      const postMelt = elapsed - (HOLD_T + MELT_T);
-      const blinking = postMelt > 0.5 && postMelt < 0.75;
-      const exL = Math.round(gCX - 5 * gS), exR = Math.round(gCX + 3 * gS);
-      const ew  = Math.round(3 * gS);
-      ctx.save();
-      ctx.globalAlpha = ghostAlpha * 0.92;
-      ctx.fillStyle = '#1a1428';
-      if (blinking) {
-        const ey = Math.round(gFootY + (gHeadCY + 2) * gS);
-        ctx.fillRect(exL, ey, ew, Math.max(1, Math.round(gS)));
-        ctx.fillRect(exR, ey, ew, Math.max(1, Math.round(gS)));
-      } else {
-        const ey = Math.round(gFootY + (gHeadCY - 2) * gS);
-        ctx.fillRect(exL, ey, ew, Math.round(5 * gS));
-        ctx.fillRect(exR, ey, ew, Math.round(5 * gS));
-      }
-      // Faint blush
-      ctx.globalAlpha = ghostAlpha * 0.18;
-      ctx.fillStyle = '#e8a0a0';
-      const blY = Math.round(gFootY + (gHeadCY + 3) * gS), blW = Math.round(5 * gS), blH = Math.round(3 * gS);
-      ctx.fillRect(Math.round(gCX - 8 * gS), blY, blW, blH);
-      ctx.fillRect(Math.round(gCX + 4 * gS), blY, blW, blH);
-      // Neutral mouth
-      ctx.globalAlpha = ghostAlpha * 0.65;
-      ctx.fillStyle = '#1a1428';
-      ctx.fillRect(Math.round(gCX), Math.round(gFootY + (gHeadCY + 8) * gS), Math.round(2 * gS), Math.round(2 * gS));
-      ctx.restore();
-    }
+    // #137: the reflection IS Pip — drawn with the shared art-source drawPip(), the same
+    // function the gallery and gameplay use, so the ghost in the glass matches him exactly
+    // instead of being a hand-rolled lookalike. Floor glow suppressed: no floor in a mirror.
+    const postMelt = elapsed - (HOLD_T + MELT_T);
+    const blink = meltT >= 1 && (
+      (postMelt >= BLINK_1[0] && postMelt < BLINK_1[1]) ||
+      (postMelt >= BLINK_2[0] && postMelt < BLINK_2[1])
+    );
+    ctx.save();
+    ctx.globalAlpha = ghostAlpha;
+    ctx.translate(gCX, gFootY);
+    ctx.scale(gS, gS);
+    drawPip(ctx, elapsed, false, { blink: blink, floorGlow: false });
+    ctx.restore();
   }
 
   // ── Step 2: Human face rows dissolving (non-const cells sag + fade) ──

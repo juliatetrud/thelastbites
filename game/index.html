@@ -1629,6 +1629,9 @@ function buildSaveObject() {
     cinematicPlayed: Array.from(cinematic.played),
     passenger:       { thoughtBeatFired: passenger.thoughtBeatFired, passBeatComplete: passenger.passBeatComplete },
     notebookItems:      notebook.items.map(i => ({ ...i })),
+    // R13b (#128): paired-memory inventory. Additive — no SAVE_VERSION bump. Stores the
+    // chapter key only; label/entry resolve from MEAL_MEMORIES at read time.
+    notebookMemories:   notebook.memories.map(m => ({ chapter: m.chapter, backfilled: !!m.backfilled })),
     cabinCollection:    { items: cabinCollection.items.map(i => ({ ...i })) },
   };
 }
@@ -1728,6 +1731,22 @@ function applySave(data) {
   // Restore notebook items and mark collectibles as already collected
   notebook.items = items.map(i => ({ ...i }));
   renderNotebookItems();
+
+  // R13b (#128): restore the paired-memory inventory. Absent on pre-R13b saves — an empty
+  // inventory is valid; ensureMinimumMemories() makes the finale completable at Phase 1.
+  // Guarded per R15: reject non-arrays, non-objects, and unknown/duplicate chapter keys.
+  const mems = Array.isArray(data.notebookMemories) ? data.notebookMemories : [];
+  const seenChapters = new Set();
+  notebook.memories = mems
+    .filter(function (m) {
+      if (!m || typeof m !== 'object') return false;
+      if (!mealMemoryFor(m.chapter)) return false;
+      if (seenChapters.has(m.chapter)) return false;
+      seenChapters.add(m.chapter);
+      return true;
+    })
+    .map(function (m) { return { chapter: m.chapter, backfilled: !!m.backfilled }; })
+    .sort(function (a, b) { return a.chapter - b.chapter; });
   const collectedIds = new Set(items.map(i => i.id));
   for (const room of Object.values(rooms)) {
     if (room.collectibles) {
@@ -1810,7 +1829,95 @@ const notebook = {
   open:     false,
   page:     0,          // 0=Recipes, 1=Memories, 2=Items (set by openNotebook each time)
   items:    [],         // collected treats/items: {id, name, annotation, kind, sprite}
+  memories: [],         // R13b paired-memory inventory (warm half): {chapter, backfilled}
 };
+
+/* ================================================================
+   R13b — PAIRED-MEMORY INVENTORY (the warm / "meal moment" half)
+   Issue #128. Upgrades Ch8 Phase 1 from #124 default (b) — inline
+   answer+distractor sets written into runPhase1 — to (a): each
+   chapter's taste beat deposits a real journal entry, and the
+   finale's picker spends what the player actually collected.
+
+   Canon: 01-story-bible.md:246 (the pair pattern is locked),
+   02-game-design.md:366/389 ("the inventory of what he has to
+   spend"), 03b-ui-spec.md:290 (journal inventory spread).
+
+   Copy is derived, not invented: Ch1/2/3/4/7 labels are the warm
+   lines R13 already shipped in shadowThrows; Ch5/Ch6 are drawn from
+   their own scene text (Johannes at the fire, Tirta's courtyard).
+
+   Storage: notebook.memories holds {chapter, backfilled} only —
+   label/entry resolve from this table at render time, so copy edits
+   propagate to existing saves instead of going stale in localStorage.
+   ================================================================ */
+
+const MEAL_MEMORIES = [
+  {
+    chapter: 1,
+    label:   '"Food carries the story of the person who made it." — Henrik, the first taste.',
+    entry:   "The ship's kitchen. Lefse and gravlaks, with pickles — the way Henrik makes them.",
+  },
+  {
+    chapter: 2,
+    label:   '"Kodused kotletid — homemade. A kitchen that remembers you." — Leida, Käsmu.',
+    entry:   "Leida's cottage in Käsmu. Home-style meatballs, pan-fried in butter.",
+  },
+  {
+    chapter: 3,
+    label:   '"The Dundee table. Nine chairs. A family that stayed loud and warm." — Sandy.',
+    entry:   "Sandy's red curry — don't overcook the vegetables. The Dundee table, and the nine chairs around it.",
+  },
+  {
+    chapter: 4,
+    label:   '"A grandmother\'s hands teaching two boys in the orchard." — Muhittin, the walnuts.',
+    entry:   "Muhittin's grandmother's muhammara. Roasted red peppers, almost burnt. Coarse walnuts from the orchard.",
+  },
+  {
+    chapter: 5,
+    label:   '"Eat well, friend." — Johannes at the fire, Saldanha Bay. The slow pot.',
+    entry:   "Johannes Delport's parents' potjiekos, slow over the fire. He talked to himself, forgot half the ingredients, found them again, and kept stirring. \"Always feed the crew.\"",
+  },
+  {
+    chapter: 6,
+    label:   '"In case you meet another chef. Pass it on." — Tirta, the lemper, the long table.',
+    entry:   "Tirta's lemper ayam, a hundred of them, wrapped in banana leaf. The lamp-lit courtyard — the long table, the many hands.",
+  },
+  {
+    chapter: 7,
+    label:   '"Give. Don\'t escape. Don\'t fight. Give." — Beatriz, the moqueca kitchen, the orange of the dendê.',
+    entry:   "Joana and Beatriz's Bahian moqueca. Dendê oil, generous — it should be orange. The broth is slow; the fish is not.",
+  },
+];
+
+/* The canonical record for a chapter's meal moment (null if the chapter has none). */
+function mealMemoryFor(chapter) {
+  return MEAL_MEMORIES.find(function (m) { return m.chapter === chapter; }) || null;
+}
+
+function hasMealMemory(chapter) {
+  return notebook.memories.some(function (m) { return m.chapter === chapter; });
+}
+
+/* Deposit a chapter's meal moment. Idempotent — safe to call on every replay of a beat. */
+function depositMealMemory(chapter, backfilled) {
+  if (!mealMemoryFor(chapter)) return false;
+  if (hasMealMemory(chapter)) return false;
+  notebook.memories.push({ chapter: chapter, backfilled: !!backfilled });
+  notebook.memories.sort(function (a, b) { return a.chapter - b.chapter; });
+  if (notebook.open) renderNotebookPage();
+  return true;
+}
+
+/* Collected meal moments, resolved against the canonical table, chapter order. */
+function collectedMealMemories() {
+  return notebook.memories
+    .map(function (m) {
+      const rec = mealMemoryFor(m.chapter);
+      return rec ? { chapter: m.chapter, label: rec.label, entry: rec.entry, backfilled: !!m.backfilled } : null;
+    })
+    .filter(Boolean);
+}
 
 /* ================================================================
    SPRINT 13: COLLECTIBLES
@@ -11776,6 +11883,7 @@ function recipeUrlFor(id) {
 /* addKitchenRecipe — adds lefse-and-gravlaks to notebook, fires brief dialogue. */
 function addKitchenRecipe() {
   if (notebook.items.some(function(i) { return i.id === 'recipe-lefse-gravlaks'; })) return;
+  depositMealMemory(1);   // R13b (#128) — the chapter's meal moment enters the journal
   notebook.items.push({
     id:         'recipe-lefse-gravlaks',
     name:       'Norwegian lefse and gravlaks',   // load-bearing display name (R16 recipe map) — do not rename
@@ -14933,6 +15041,7 @@ function showChapter2End() {
 
 function addKotletidRecipe() {
   if (notebook.items.some(i => i.id === 'recipe-kotletid')) return;
+  depositMealMemory(2);   // R13b (#128) — the chapter's meal moment enters the journal
   notebook.items.push({
     id:         'recipe-kotletid',
     name:       'Kodused kotletid',
@@ -16144,6 +16253,7 @@ function triggerMatchesPickup() {
 
 function addCurryRecipe() {
   if (notebook.items.some(i => i.id === 'recipe-red-curry')) return;
+  depositMealMemory(3);   // R13b (#128) — the chapter's meal moment enters the journal
   notebook.items.push({
     id:         'recipe-red-curry',
     name:       "Sandy's red curry",
@@ -17755,6 +17865,7 @@ function showChapter4End() {
 
 function addMuhamamaraRecipe() {
   if (notebook.items.some(i => i.id === 'recipe-muhammara')) return;
+  depositMealMemory(4);   // R13b (#128) — the chapter's meal moment enters the journal
   notebook.items.push({
     id:         'recipe-muhammara',
     name:       "Muhittin's grandmother's muhammara",
@@ -18970,6 +19081,7 @@ function showChapter5End() {
 
 function addPotjieRecipe() {
   if (notebook.items.some(i => i.id === 'recipe-potjie')) return;
+  depositMealMemory(5);   // R13b (#128) — the chapter's meal moment enters the journal
   notebook.items.push({
     id:         'recipe-potjie',
     name:       "Johannes Delport's parents' potjiekos",
@@ -20350,6 +20462,7 @@ function showChapter6End() {
 
 function addLemperRecipe() {
   if (notebook.items.some(i => i.id === 'recipe-lemper')) return;
+  depositMealMemory(6);   // R13b (#128) — the chapter's meal moment enters the journal
   notebook.items.push({
     id:         'recipe-lemper',
     name:       "Tirta's lemper ayam",
@@ -21467,6 +21580,7 @@ function showChapter7End() {
 
 function addMoquecaRecipe() {
   if (notebook.items.some(i => i.id === 'recipe-moqueca')) return;
+  depositMealMemory(7);   // R13b (#128) — the chapter's meal moment enters the journal
   notebook.items.push({
     id:         'recipe-moqueca',
     name:       "Joana and Beatriz's Bahian moqueca",

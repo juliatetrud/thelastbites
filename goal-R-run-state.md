@@ -19,6 +19,25 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **Ch1-RADIO `built` — hand-held radio in the coat; LAST CARVE-OUT CLOSED (#133;
+> `fe53d88` S1 / `610bbea` S2 / `3ee9abc` S3 / docs). NEXT = R17 (mobile playtest + polish) —
+> still BLOCKED on Julia's Ch1 in-browser pass.** Julia reversed the item-3 ruling that had
+> been held open through #111 → #129 → #130 → #132: rather than keep the shipped windowsill
+> radio as a documented exception, the feature was rewritten to her playscript.
+> `gp-armchair` (x 280) now hosts all three radio states — `cartFound` tested FIRST so the
+> page stays reachable on the first post-cart inspect (CP-2b), with the ability backstop so
+> paging works even if the discovery beat was skipped. Windowsill `gp-radio` object removed;
+> `gp-dziadek-inspect` loses the now-false windowsill line; `drawDziadekRadio()` redrawn as a
+> hand-held set in the coat's lapel with the proximity shimmer re-keyed 200 → 280.
+> **Ch1 conformance is now 108 comparisons, ZERO divergence with NO exemptions.**
+> Traversal proved by **simulation** — the real object lifted from the built file and its
+> getter executed: both orderings complete, and all 8 combinations of
+> `cartFound`×`radioDiscovered`×`janitorPaged` return a node with paging reachable from every
+> post-cart state. Downstream chain untouched. `node --check` PARSE OK.
+> **Julia's in-browser Ch1 walk is the sign-off; the paging beat is now a single line with no
+> Listen/Not-now choices, per her script.** Do NOT start R17 until she confirms.
+>
+> --- prior (GOAL Ch1-verbatim) ---
 > **GOAL Ch1-VERBATIM `built` — the playscript is the script (#132; 7 scene commits,
 > `ff9a570`..`78e9ce2`). NEXT = R17 (mobile playtest + polish) — BLOCKED on Julia's Ch1
 > in-browser pass.** Supersedes the partial-apply posture of #111/#129/#130/#131.
@@ -422,6 +441,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R13b | Phase 1 paired-memory inventory ((b)→(a)) | built | #128 | `91bcf9e`/`91e8b9d` | `r-checkpoint-R13b` |
 | R01b | Ch1 playscript edits R01 never saw (audit #129) | built | #130 | `bea4d87`…`b717f39` | `r-checkpoint-R01b` |
 | GOAL | Ch1 verbatim conformance (playscript is the script) | built | #132 | `ff9a570`…`78e9ce2` | `r-checkpoint-ch1-verbatim` |
+| Ch1-RADIO | Hand-held radio in the coat (carve-out closed) | built | #133 | `fe53d88`…`3ee9abc` | `r-checkpoint-ch1-radio` |
 | R17 | Mobile playtest + polish | pending | — | — | — |
 | R18 | Release: verification + go-live | pending | — | — | — |
 

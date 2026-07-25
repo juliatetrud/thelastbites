@@ -432,6 +432,40 @@ Between chapters, Pip returns to the ship (*The Mnemosyne*). The ship is the per
 
 ---
 
+## THE CONTINUOUS MAP RULE  *(locked canon)*
+
+**The ship is one continuous traversable space. There are never hard dead ends.**
+
+Progress blocks are **diegetic and guided**. When the player reaches a block — a locked door,
+an unfinished area, a gate not yet satisfied — dialogue pops up telling them, in Pip's voice
+and the game's tone, what is stopping them and nudging toward what to do next.
+
+**Every gate in the game must have both:**
+
+- **(a) a satisfiable condition reachable from that point** — the player can always get from
+  where they are to the thing that opens the gate; and
+- **(b) a guidance line for the unsatisfied state** — pressing ↑ on a blocked object, or
+  walking into a closed edge, must never be a silent no-op.
+
+A `return null` node and an edge trigger with no `else` are both violations of (b). Silence
+reads as "nothing here", which sends the player away from the very thing they need.
+
+**Two claims that are not the same, and the second is the one that matters:**
+
+1. *Every flag is reachable* — provable by tracing the state machine.
+2. *A player can find the path* — requires that every blocked state says something.
+
+A gate can satisfy (a) perfectly and still dead-end the chapter, because the player is never
+told the affordance moved. This is exactly how Chapter 1's dark corridor broke: the clue text
+survived a redesign that relocated the action, and pointed players back at a room that no
+longer had anything to offer.
+
+**When a beat's mechanics change, its guidance text is part of the change.** Clue lines are
+coupled to the design they describe; moving an interaction without moving its signposting is
+an incomplete change.
+
+---
+
 ## Saving and Continuity
 
 The game saves to localStorage in the browser. When a player returns, they pick up where they left off. The notebook persists. Their abilities persist. Their port history persists. Their **paired memory inventory** persists from Chapter 5 onward. Their two stats (strength, empathy) persist.

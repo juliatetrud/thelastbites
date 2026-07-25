@@ -19,6 +19,24 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **Ch1-CORRIDOR `built` — dark-corridor dead end FIXED; CONTINUOUS MAP RULE locked canon
+> (#138, `43dd0e8`). NEXT = R17 — BLOCKED on Julia's Ch1 in-browser pass. #139 queued.**
+> **Root cause was mine:** `5d1c841` (#135) moved paging from the armchair to the cart and
+> made the armchair a silent null once the radio is taken, but left the cart's backtrack-era
+> clue pointing at the cabin — which by then had nothing to offer. The #135 traversal trace
+> proved every FLAG reachable and I read that as "chapter walkable". **Not the same claim.**
+> **Fix uses only Julia's words:** the cart's first inspect chains straight into her paging
+> line when Pip already carries the radio. Six silent gates now guide (NEW WORDS, awaiting her
+> approval in #138): gp-armchair-empty, kitchen-henrik-blocked, deck-henrik-blocked,
+> cabin-door-blocked, hallway-stairs-blocked, gp-wall-blocked.
+> **CONTINUOUS MAP RULE now in `02-game-design.md` as locked canon:** no hard dead ends; every
+> gate needs (a) a satisfiable condition reachable from that point and (b) a guidance line for
+> the unsatisfied state. `return null` and edge-triggers-without-else are (b) violations.
+> Corollary: when a beat's mechanics change, its guidance text is part of the change.
+> Full-chapter static trace passes (intended path, no-radio recovery, no silent blocked state).
+> Conformance still 110 / 0. **Ch2–Ch8 gate audit queued as #139 — not started.**
+>
+> --- prior (Ch1-CANON) ---
 > **Ch1-CANON `built` — playscript is canon in full, ALL exceptions revoked (#134, `7468a28`).
 > NEXT = R17 (mobile playtest + polish) — BLOCKED on Julia's Ch1 in-browser pass.**
 > Standing ruling supersedes every prior Ch1 decision: missing lines are Julia's deletions.
@@ -458,6 +476,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | GOAL | Ch1 verbatim conformance (playscript is the script) | built | #132 | `ff9a570`…`78e9ce2` | `r-checkpoint-ch1-verbatim` |
 | Ch1-RADIO | Hand-held radio in the coat (carve-out closed) | built | #133 | `fe53d88`…`3ee9abc` | `r-checkpoint-ch1-radio` |
 | Ch1-CANON | Playscript canon in full; all exceptions revoked | built | #134 | `7468a28` | `r-checkpoint-ch1-canon` |
+| Ch1-CORRIDOR | Dead end fixed; CONTINUOUS MAP RULE locked | built | #138 | `43dd0e8` | `r-checkpoint-ch1-corridor` |
 | R17 | Mobile playtest + polish | pending | — | — | — |
 | R18 | Release: verification + go-live | pending | — | — | — |
 

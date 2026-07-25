@@ -2625,14 +2625,14 @@ const NOKKEN_STORY_LINES = [
   { speaker: 'HENRIK', text: '“It plays the violin. Beautiful. So beautiful you walk toward the water without knowing you are walking.”',                                                                                   italic: false },
   { speaker: 'HENRIK', text: '“It is called the Nøkken.”',                                                                                                                                                             italic: false },
   { speaker: 'HENRIK', text: '“My grandmother said: if you hear violins where there should be no violins, you cover your ears. You walk the other way. You do not look.”',                                                  italic: false },
-  { speaker: null,     text: 'Henrik pauses. He looks at the empty plate.',                                                                                                                                                           italic: true  },
+  { speaker: null,     text: 'Henrik pauses. He looks at the empty plate.',                                                                                                                                                           italic: false  },
   { speaker: 'HENRIK', text: '“I did not always listen to her.”',                                                                                                                                                           italic: false, pauseAfter: 1.5 },
-  { speaker: null,     text: 'He says nothing else about that.',                                                                                                                                                                      italic: true  },
+  { speaker: null,     text: 'He says nothing else about that.',                                                                                                                                                                      italic: false  },
   { speaker: 'HENRIK', text: '“You will see strange things, Pip. Some of them are stories. Some of them are real. The dead see what the living cannot, and not all of it is gentle.”',                                     italic: false },
   { speaker: 'HENRIK', text: '“Listen carefully. And if you hear violins where there should be no violins — walk the other way.”',                                                                                     italic: false },
-  { speaker: null,     text: 'Henrik pauses.',                                                                                                                                                                                        italic: true  },
+  { speaker: null,     text: 'Henrik pauses.',                                                                                                                                                                                        italic: false  },
   { speaker: 'HENRIK', text: '“I think I saw it once.”',                                                                                                                                                                    italic: false },
-  { speaker: null,     text: 'He does not say more.',                                                                                                                                                                                 italic: true  },
+  { speaker: null,     text: 'He does not say more.',                                                                                                                                                                                 italic: false  },
   { speaker: 'HENRIK', text: '“The ship docks in Tallinn next. Estonia. There’s a chef I want you to meet — her name is Leida. She bakes meatballs. Kodused kotletid — homemade cutlets.”',                  italic: false },
   { speaker: 'HENRIK', text: '“She does not know about the Nøkken. But she knows about other things.”',                                                                                                                italic: false },
   { speaker: 'HENRIK', text: '“Find her. Tell her Henrik sent you.”',                                                                                                                                                       italic: false },
@@ -2670,7 +2670,7 @@ const kitchenObjects = [
       if (chapterState.nokkenStoryHeard) {
         return {
           id:    'kitchen-henrik-repeat',
-          lines: [{ speaker: null, text: 'Henrik sits quietly on the stool. The kitchen has gone still.', italic: true }],
+          lines: [{ speaker: null, text: 'Henrik sits quietly on the stool. The kitchen has gone still.', italic: false }],
           choices: null, onEnd: null,
         };
       }
@@ -2749,7 +2749,7 @@ const observationDeckObjects = [
       if (chapterState.chapter1Complete) {
         return {
           id: 'deck-henrik-post',
-          lines: [{ speaker: null, text: 'Henrik stands quietly on the deck. He looks out at the water.', italic: true }],
+          lines: [{ speaker: null, text: 'Henrik stands quietly on the deck. He looks out at the water.', italic: false }],
           choices: null, onEnd: null,
         };
       }
@@ -3902,7 +3902,7 @@ function update(dt) {
         id: 'kitchen-gate-hint',
         lines: [
           { speaker: null, text: 'The way out is here — but I can’t just leave. Henrik was about to tell me something.', italic: true },
-          { speaker: null, text: 'The treat on the counter first, then back to him on the stool.', italic: false },
+          { speaker: null, text: 'The treat on the counter first, then back to him on the stool.', italic: true },
         ],
         choices: null, onEnd: null,
       });
@@ -7995,12 +7995,12 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null,     text: 'Pip finishes the dish in record time.',                                                                                                                                              italic: false },
     { speaker: null,     text: 'The kitchen shimmers.',                                                                                                                                                           italic: false },
     { speaker: null,     text: 'A young Norwegian boy in a cottage kitchen, watching an old man’s hands cure salmon. Sun through a window. The smell of dill. The man is his grandfather.',                 italic: false },
-    { speaker: null,     text: 'And Pip understands, for the first time, that food carries the story of the person who made it.',                                                                                 italic: true  },
+    { speaker: null,     text: 'And Pip understands, for the first time, that food carries the story of the person who made it.',                                                                                 italic: false  },
     { speaker: null,     text: 'Pip takes a bite of the lefse.',                                                                                                                                                  italic: false },
     { speaker: null,     text: 'A different kitchen now. Different time.',                                                                                                                                        italic: false },
     { speaker: null,     text: 'An older Henrik — recognizably grown — teaching a young boy to make the same lefse. The child’s face is turned away, in profile, in half-shadow. The child laughs at something off-screen.', italic: false },
-    { speaker: null,     text: 'That every meal is a love letter from someone, to someone.',                                                                                                                      italic: true  },
-    { speaker: null,     text: 'That if he can taste enough of them — really taste — he might learn the world.',                                                                                       italic: true  },
+    { speaker: null,     text: 'That every meal is a love letter from someone, to someone.',                                                                                                                      italic: false  },
+    { speaker: null,     text: 'That if he can taste enough of them — really taste — he might learn the world.',                                                                                       italic: false  },
     { speaker: null,     text: 'The memory fades. Pip is back in the kitchen.',                                                                                                                                   italic: false },
     { speaker: 'PIP',    text: '“…I saw two things. Someone teaching you. And then you — teaching a boy. Was that you, both times?”',                                                        italic: false },
     { speaker: null,     text: 'A pause. Henrik looks at the empty plate.',                                                                                                                                       italic: false },
@@ -8018,9 +8018,9 @@ const CINEMATIC_SCRIPTS = {
      Wide deck-down shot. Grandparents walk away with coffin. Babcia stops and looks up.
      Present-tense, NOT isMemory. Cold blue-gray morning. Visual: drawDockFarewellCinematic(). */
   'dock-farewell': [
-    { speaker: null, text: 'Babcia stops. She turns. She looks up toward the ship.',         italic: true  },
-    { speaker: null, text: 'Babcia is going to leave him. Pip knows this.',                   italic: true  },
-    { speaker: null, text: 'He waves. He does not know if it is for her or for himself.',     italic: true  },
+    { speaker: null, text: 'Babcia stops. She turns. She looks up toward the ship.',         italic: false  },
+    { speaker: null, text: 'Babcia is going to leave him. Pip knows this.',                   italic: false  },
+    { speaker: null, text: 'He waves. He does not know if it is for her or for himself.',     italic: false  },
   ],
 
   /* Sprint 29: henriks-offer (Cinematic 8 — Beat 13).
@@ -8030,7 +8030,7 @@ const CINEMATIC_SCRIPTS = {
     { speaker: 'HENRIK', text: '"This was meant for you. Or someone like you."',           italic: false },
     { speaker: 'HENRIK', text: '"Fill it. Eat what you can. Listen to what you taste."',   italic: false },
     { speaker: 'HENRIK', text: '"And come back, if you can. I’ll be in the kitchen."', italic: false },
-    { speaker: null,     text: 'And so the mission begins.',                                italic: true  },
+    { speaker: null,     text: 'And so the mission begins.',                                italic: false  },
   ],
 
   /* Sprint 26 Stage 1: kitchen-meeting (Cinematic 4 — Beat 9).

@@ -19,6 +19,19 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **R16 `built` + PUSH VERIFIED (`92e2c34` A / `bddf4df` B / `2d71dce` C / `b3ac9b9` docs /
+> `r-checkpoint-R16`, #127 open pending Julia's in-browser check). NEXT = R17 (mobile playtest
+> + polish).** Stage A: recipe-site link-out — `RECIPE_URLS` one-table edit, homepage
+> placeholders ×8, logged prominently in `recipes.md` + notebook links. Stage B: credits roll
+> replaces the bare end card. Stage C: chapter cards (03b §9) + Pätu epilogue line. Docs:
+> 03b §11 + §9 note, doc-06 Sprint History + Decisions Log.
+> **Push interruption 2026-07-25:** the R16 push had NOT landed — 4 commits sat unpushed and
+> `r-checkpoint-R16` was local-only. Re-pushed and verified: `origin/main` = `b3ac9b9`,
+> `git log origin/main..HEAD` empty, tag on remote. **Lesson: protocol step 3's post-push
+> `git log origin/main..HEAD` check is the gate — R16 was marked done without it.**
+> Then R17 mobile, R18 release → GO-LIVE GATE (STOP for Julia).
+>
+> --- prior (R15) ---
 > **R15 `built` + closed (`a63a0b9` code / `b5a42b7` docs / `r-checkpoint-R15`, #126 closed).
 > NEXT = R16 (recipe-site integration + credits).** applySave hardened (guards + try/catch
 > backstop) against well-formed-but-wrong-shape saves; scripted 7-payload corrupt battery →
@@ -337,7 +350,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R13 | Kinetic mechanics — Ch8 finale | built | #124 | `455b834` | `r-checkpoint-R13` |
 | R14 | Audio + music pass | built | #125 | `cf3505e` | `r-checkpoint-R14` |
 | R15 | Save + persistence hardening | built | #126 | `a63a0b9`/`b5a42b7` | `r-checkpoint-R15` |
-| R16 | Recipe-site integration + credits | pending | — | — | — |
+| R16 | Recipe-site integration + credits | built | #127 | `92e2c34`…`b3ac9b9` | `r-checkpoint-R16` |
 | R17 | Mobile playtest + polish | pending | — | — | — |
 | R18 | Release: verification + go-live | pending | — | — | — |
 

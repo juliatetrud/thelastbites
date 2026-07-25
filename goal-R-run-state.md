@@ -19,6 +19,28 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **R13b `built` — Phase 1 paired-memory inventory, (b) → (a) (`91bcf9e` A / `91e8b9d` B+C /
+> docs, #128 open). NEXT = R17 (mobile playtest + polish).** Inserted before R17 on Julia's
+> call; reverses #124 decision 1 (logged in #110 with rationale: the paired-memory payoff is
+> the climax's design intent). The collected-memory inventory did not exist — the seven
+> `add*Recipe()` taste beats recorded a recipe but never a memory, the journal's Memories page
+> was a hardcoded `'No memory yet.'` stub with no data path, and `runPhase1` carried its own
+> answers and distractors inline. Now: `notebook.memories` + `MEAL_MEMORIES` (Ch1–Ch7),
+> deposits in all seven taste beats, additive `notebookMemories` save field (**no
+> `SAVE_VERSION` bump**, chapter keys only so copy edits propagate), R15-style restore guards,
+> Phase 1 reading the real inventory, and `ensureMinimumMemories()` back-filling **only**
+> Ch5/6/7 so sparse and pre-R13b saves stay completable.
+> **Preserved:** shadow lines byte-identical; Ch7 → Ch6 → Ch5 reverse-chronological order;
+> gentle miss + retry; "It's not fair." a single choice; post-override + final line untouched.
+> **FLAGGED FOR JULIA — the Ch5 and Ch6 correct answers changed** from R13's Iris-gifting and
+> Pocong-knots lines to those chapters' true *meal* moments (Johannes's potjiekos, Tirta's
+> lemper), because `02-game-design.md:366` defines the meal moment as the chef encounter.
+> Ch7 already matched. **Monster Moment column left a stub** (dark half deposited nowhere; not
+> canon-derivable for Ch1–Ch4). Verified headlessly only — `node --check` PARSE OK, Phase 1
+> option logic across full/legacy/sparse/minimal inventories, 14-payload corrupt-save battery.
+> **Julia's in-browser finale playtest is the sign-off** (#109), feel included.
+>
+> --- prior (R16) ---
 > **R16 `built` + PUSH VERIFIED (`92e2c34` A / `bddf4df` B / `2d71dce` C / `b3ac9b9` docs /
 > `r-checkpoint-R16`, #127 open pending Julia's in-browser check). NEXT = R17 (mobile playtest
 > + polish).** Stage A: recipe-site link-out — `RECIPE_URLS` one-table edit, homepage
@@ -351,6 +373,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R14 | Audio + music pass | built | #125 | `cf3505e` | `r-checkpoint-R14` |
 | R15 | Save + persistence hardening | built | #126 | `a63a0b9`/`b5a42b7` | `r-checkpoint-R15` |
 | R16 | Recipe-site integration + credits | built | #127 | `92e2c34`…`b3ac9b9` | `r-checkpoint-R16` |
+| R13b | Phase 1 paired-memory inventory ((b)→(a)) | built | #128 | `91bcf9e`/`91e8b9d` | `r-checkpoint-R13b` |
 | R17 | Mobile playtest + polish | pending | — | — | — |
 | R18 | Release: verification + go-live | pending | — | — | — |
 

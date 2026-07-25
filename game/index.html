@@ -1747,6 +1747,7 @@ function applySave(data) {
     })
     .map(function (m) { return { chapter: m.chapter, backfilled: !!m.backfilled }; })
     .sort(function (a, b) { return a.chapter - b.chapter; });
+
   const collectedIds = new Set(items.map(i => i.id));
   for (const room of Object.values(rooms)) {
     if (room.collectibles) {
@@ -13503,12 +13504,35 @@ function renderNotebookPage() {
       }
     }
   } else if (notebook.page === 1) {
+    // R13b (#128): the Meal Moment column is now a real read of the collected paired-memory
+    // inventory (03b-ui-spec.md §5). The Monster Moment column stays a stub — the dark half
+    // of each pair is not deposited anywhere yet, and inventing it is out of R13b's scope.
     leftTitle.textContent  = 'Monster Moment';
     rightTitle.textContent = 'Meal Moment';
     leftCont.className     = 'notebook-empty-note';
     leftCont.textContent   = 'No memory yet.';
-    rightCont.className    = 'notebook-empty-note';
-    rightCont.textContent  = 'No memory yet.';
+
+    const mems = collectedMealMemories();
+    if (mems.length === 0) {
+      rightCont.className   = 'notebook-empty-note';
+      rightCont.textContent = 'No memory yet.';
+    } else {
+      rightCont.className = 'notebook-items-grid';
+      rightCont.innerHTML = '';
+      for (const mem of mems) {
+        const card = document.createElement('div');
+        card.className = 'notebook-item-card';
+        const name = document.createElement('div');
+        name.className   = 'notebook-item-name';
+        name.textContent = 'Chapter ' + mem.chapter;
+        card.appendChild(name);
+        const ann = document.createElement('div');
+        ann.className   = 'notebook-item-annotation';
+        ann.textContent = mem.entry;
+        card.appendChild(ann);
+        rightCont.appendChild(card);
+      }
+    }
   } else {
     // Items page
     leftTitle.textContent  = 'Items';
@@ -22524,40 +22548,69 @@ function triggerShadowRises() {
   });
 }
 
-/* Phase 1 — Pong (shadow throws, Pip returns with warmth) */
+/* Phase 1 — Pong (shadow throws, Pip returns with warmth)
+
+   R13b (#128): upgraded from #124 default (b) to (a). The shadow's throws are unchanged —
+   each is the MONSTER moment of one chapter, played back in reverse chronological order
+   (Ch7 -> Ch6 -> Ch5) per 01-story-bible.md:285. What changed is the answer: Pip spends the
+   MEAL moment his player actually collected in that chapter, read from notebook.memories,
+   rather than an option set written into this function.
+
+   Difficulty is still choosing the right warmth, never reaction time; a wrong pick lands
+   gently (static + retry, no game-over). Shadow lines and all resolve/pong narration are
+   byte-identical to R13. */
+const PHASE1_THROWS = [
+  { chapter: 7, shadow: '"The fire-serpent was right. Something dark rides with you. I am that dark. You have always known."' },
+  { chapter: 6, shadow: '"You infected someone else with my grief. You spread the dark into the Pocong. You carry sickness."' },
+  { chapter: 5, shadow: '"The Mamlambo saw what I am. She tried to take it from you. You had to give something away to stop her."' },
+];
+
+/* The three chapters Phase 1 requires an answer for. */
+const PHASE1_REQUIRED_CHAPTERS = PHASE1_THROWS.map(function (t) { return t.chapter; });
+
+/* Minimum-memory completion path (#128 design call 3).
+   Sparse saves — a player who missed taste beats, or any pre-R13b save, which arrives with
+   an empty inventory because notebookMemories is additive — must still be able to finish.
+   Back-fills ONLY the three chapters Phase 1 needs, from the same canonical table the
+   deposits use, so a partial collection stays visibly partial instead of being handed a
+   full journal. Idempotent; safe on every round including retries. */
+function ensureMinimumMemories() {
+  let filled = 0;
+  for (const chapter of PHASE1_REQUIRED_CHAPTERS) {
+    if (depositMealMemory(chapter, true)) filled++;
+  }
+  if (filled) console.log('[TLB] R13b: back-filled', filled, 'meal memories for the finale.');
+  return filled;
+}
+
+/* The option set for a round: the correct meal memory plus up to 3 real collected others.
+   Deterministic (rotation by round, never Math.random) so a gentle retry re-shows the same
+   options in the same order rather than reshuffling under the player mid-mistake. */
+function phase1OptionsFor(round, chapter) {
+  // Belt-and-braces: ensureMinimumMemories() has already run, but never let the climax
+  // reach the picker without a correct answer to pick.
+  if (!hasMealMemory(chapter)) depositMealMemory(chapter, true);
+  const all     = collectedMealMemories();
+  const correct = all.find(function (m) { return m.chapter === chapter; });
+  if (!correct) return [];
+  const others  = all.filter(function (m) { return m.chapter !== chapter; });
+
+  let distractors = [];
+  if (others.length) {
+    const offset = round % others.length;
+    distractors  = others.slice(offset).concat(others.slice(0, offset)).slice(0, 3);
+  }
+  const opts = distractors.map(function (m) { return { label: m.label, correct: false }; });
+  // +2 offset so the correct answer can land in the first slot too — a plain `round %`
+  // never yields 0 for rounds 1-3, which would make "never the top option" a tell.
+  opts.splice((round + 2) % (opts.length + 1), 0, { label: correct.label, correct: true });
+  return opts;
+}
+
 function runPhase1(round) {
-  // R13 — memory Pong via the R12 journal-traversal picker (giftMemoryFromJournal).
-  // The shadow throws a dark memory; Pip answers by choosing the RIGHT warm memory from
-  // the journal (the correct one + cross-chapter distractors). The difficulty is choosing
-  // the right warmth, not reaction time; a wrong pick lands gently (static + retry, never
-  // a game-over). Shadow lines + the resolve/pong narration are unchanged.
-  const shadowThrows = [
-    {
-      shadow: '"The fire-serpent was right. Something dark rides with you. I am that dark. You have always known."',
-      memories: [
-        { label: '"Food carries the story of the person who made it." — Henrik, the first taste.', correct: false },
-        { label: '"Give. Don\'t escape. Don\'t fight. Give." — Beatriz, the moqueca kitchen, the orange of the dendê.', correct: true },
-        { label: '"Kodused kotletid — homemade. A kitchen that remembers you." — Leida, Käsmu.', correct: false },
-      ],
-    },
-    {
-      shadow: '"You infected someone else with my grief. You spread the dark into the Pocong. You carry sickness."',
-      memories: [
-        { label: '"We answered those memories with warmth. Knot by knot. And the Pocong walked free. Dark answered with warmth is not dark anymore."', correct: true },
-        { label: '"The Dundee table. Nine chairs. A family that stayed loud and warm." — Sandy.', correct: false },
-        { label: '"A grandmother\'s hands teaching two boys in the orchard." — Muhittin, the walnuts.', correct: false },
-      ],
-    },
-    {
-      shadow: '"The Mamlambo saw what I am. She tried to take it from you. You had to give something away to stop her."',
-      memories: [
-        { label: '"The Dundee table. Nine chairs, a family that stayed." — Sandy.', correct: false },
-        { label: '"Food carries the story of the person who made it." — Henrik.', correct: false },
-        { label: '"What she took, I gave back to someone who needed it. I didn\'t lose it. I sent it where it could do something." — Iris.', correct: true },
-      ],
-    },
-  ];
-  const item = shadowThrows[round - 1];
+  ensureMinimumMemories();
+  const item = PHASE1_THROWS[round - 1];
+  const opts = phase1OptionsFor(round, item.chapter);
   showDialogue({
     id: `ch8-phase1-throw-${round}`,
     lines: [
@@ -22568,7 +22621,7 @@ function runPhase1(round) {
     onEnd: function () {
       giftMemoryFromJournal(
         [{ speaker: null, text: "Which warmth answers this one?", italic: true }],
-        item.memories,
+        opts,
         function (mem) { resolvePhase1Round(round, mem.correct); }
       );
     },

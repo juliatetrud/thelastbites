@@ -9777,8 +9777,9 @@ function drawGrandparents(camX, now) {
     strokeColor: 'rgba(65,46,16,0.4)',
   });
 
-  // --- Dziadek's radio (Sprint 20) — on windowsill near world-x 200 ---
-  const radioSX = Math.round(200 - camX);
+  // --- Dziadek's hand-held radio (Ch1-RADIO #133) — in the coat pocket at world-x 280 ---
+  // Drawn AFTER the armchair/coat block above so it reads as sitting in the pocket.
+  const radioSX = Math.round(280 - camX);
   if (radioSX > -20 && radioSX < W + 20) {
     drawDziadekRadio(radioSX, now);
   }
@@ -10426,54 +10427,55 @@ function drawEchoSpiders(camX, now) {
    ================================================================ */
 
 function drawDziadekRadio(screenX, now) {
+  // Ch1-RADIO (#133): this is now a HAND-HELD set tucked in the pocket of Dziadek's coat on
+  // the armchair (world-x 280) — not the windowsill cabinet it used to be. Geometry is
+  // anchored to FLOOR_Y and to the coat's right-lapel drape drawn just above.
   const cx = Math.round(screenX);
-  // windowsill y: window bottom at winRY+winRH = 24+90 = 114; radio sits on sill
-  const sillY = 114;
-  const rW = 14, rH = 18;
-  const rx  = cx - Math.floor(rW / 2);
-  const ry  = sillY - rH;
+  const rW = 7, rH = 10;
+  const rx = cx + 2;                 // tucked into the coat's right lapel
+  const ry = FLOOR_Y - 42;
 
-  // Wooden cabinet body
+  // Stub antenna
+  ctx.strokeStyle = 'rgba(190,160,90,0.8)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(rx + rW - 2, ry);
+  ctx.lineTo(rx + rW - 1, ry - 5);
+  ctx.stroke();
+
+  // Casing
   ctx.fillStyle = '#5c3a14';
   ctx.fillRect(rx, ry, rW, rH);
   ctx.strokeStyle = 'rgba(120,70,20,0.6)';
   ctx.lineWidth   = 1;
   ctx.strokeRect(rx, ry, rW, rH);
 
-  // Fabric grill (upper 60%)
+  // Speaker grill (upper half)
   ctx.fillStyle = 'rgba(80,50,20,0.55)';
-  ctx.fillRect(rx + 2, ry + 2, rW - 4, Math.round(rH * 0.6));
-
-  // Grill lines
+  ctx.fillRect(rx + 1, ry + 1, rW - 2, Math.round(rH * 0.5));
   ctx.strokeStyle = 'rgba(40,22,6,0.4)';
-  ctx.lineWidth   = 1;
-  for (let i = 0; i < 3; i++) {
-    const ly = ry + 3 + i * 3;
-    ctx.beginPath(); ctx.moveTo(rx + 2, ly); ctx.lineTo(rx + rW - 2, ly); ctx.stroke();
+  for (let i = 0; i < 2; i++) {
+    const ly = ry + 2 + i * 2;
+    ctx.beginPath(); ctx.moveTo(rx + 1, ly); ctx.lineTo(rx + rW - 1, ly); ctx.stroke();
   }
 
-  // Tuning dial (brass circle)
+  // Dial
   ctx.fillStyle   = '#c87828';
   ctx.globalAlpha = 0.9;
   ctx.beginPath();
-  ctx.arc(cx - 2, ry + rH - 4, 3, 0, Math.PI * 2);
+  ctx.arc(rx + Math.floor(rW / 2), ry + rH - 3, 1.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 1;
 
-  // Volume knob (smaller)
-  ctx.fillStyle = '#8a5820';
-  ctx.beginPath();
-  ctx.arc(cx + 4, ry + rH - 4, 2, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Proximity-crackle shimmer when undiscovered + Pip nearby
-  if (!chapterState.radioDiscovered && Math.abs(pip.x - 200) < 35) {
+  // Proximity-crackle shimmer when undiscovered + Pip nearby (re-keyed 200 -> 280 with the
+  // object, so the discoverability affordance moves rather than being lost).
+  if (!chapterState.radioDiscovered && Math.abs(pip.x - 280) < 35) {
     const flicker = Math.sin(now * 0.031) * 0.5 + 0.5;
     if (Math.random() < 0.4) {
       ctx.globalAlpha = flicker * 0.7;
       ctx.fillStyle   = '#fff8c0';
       const sx = rx + 1 + Math.floor(Math.random() * (rW - 2));
-      const sy = ry + 1 + Math.floor(Math.random() * Math.round(rH * 0.6));
+      const sy = ry + 1 + Math.floor(Math.random() * Math.round(rH * 0.5));
       ctx.fillRect(sx, sy, 1, 1);
       ctx.globalAlpha = 1;
     }

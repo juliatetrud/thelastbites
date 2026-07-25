@@ -2605,24 +2605,24 @@ const darkCorridorObjects = [
 /* Sprint 26 Stage 3: Nøkken story dialogue lines (13 story lines + 3 Tallinn handoff).
    Used by the kitchen-henrik inspectable node. */
 const NOKKEN_STORY_LINES = [
-  { speaker: 'HENRIK', text: '“You’ll be going on, soon. The ship docks again tonight.”',                                                                                                                             italic: false },
-  { speaker: 'HENRIK', text: '“Before you go. Let me tell you a story.”',                                                                                                                                                   italic: false },
-  { speaker: 'HENRIK', text: '“There is a thing that lives in dark water.”',                                                                                                                                                italic: false },
-  { speaker: 'HENRIK', text: '“My grandmother told me about it. Her grandmother told her.”',                                                                                                                                italic: false },
-  { speaker: 'HENRIK', text: '“It plays the violin. Beautiful. So beautiful you walk toward the water without knowing you are walking.”',                                                                                   italic: false },
-  { speaker: 'HENRIK', text: '“It is called the Nøkken.”',                                                                                                                                                             italic: false },
-  { speaker: 'HENRIK', text: '“My grandmother said: if you hear violins where there should be no violins, you cover your ears. You walk the other way. You do not look.”',                                                  italic: false },
-  { speaker: null,     text: 'Henrik pauses. He looks at the empty plate.',                                                                                                                                                           italic: false  },
-  { speaker: 'HENRIK', text: '“I did not always listen to her.”',                                                                                                                                                           italic: false, pauseAfter: 1.5 },
-  { speaker: null,     text: 'He says nothing else about that.',                                                                                                                                                                      italic: false  },
-  { speaker: 'HENRIK', text: '“You will see strange things, Pip. Some of them are stories. Some of them are real. The dead see what the living cannot, and not all of it is gentle.”',                                     italic: false },
-  { speaker: 'HENRIK', text: '“Listen carefully. And if you hear violins where there should be no violins — walk the other way.”',                                                                                     italic: false },
-  { speaker: null,     text: 'Henrik pauses.',                                                                                                                                                                                        italic: false  },
-  { speaker: 'HENRIK', text: '“I think I saw it once.”',                                                                                                                                                                    italic: false },
-  { speaker: null,     text: 'He does not say more.',                                                                                                                                                                                 italic: false  },
-  { speaker: 'HENRIK', text: '“The ship docks in Tallinn next. Estonia. There’s a chef I want you to meet — her name is Leida. She bakes meatballs. Kodused kotletid — homemade cutlets.”',                  italic: false },
-  { speaker: 'HENRIK', text: '“She does not know about the Nøkken. But she knows about other things.”',                                                                                                                italic: false },
-  { speaker: 'HENRIK', text: '“Find her. Tell her Henrik sent you.”',                                                                                                                                                       italic: false },
+  { speaker: 'HENRIK', text: '“You’ll be going on, soon. The ship docks again tonight.”', italic: false },
+  { speaker: 'HENRIK', text: '“Before you go. Let me tell you a story.”', italic: false },
+  { speaker: 'HENRIK', text: '“There is a thing that lives in dark water.”', italic: false },
+  { speaker: 'HENRIK', text: '“My grandmother told me about it. Her grandmother told her.”', italic: false },
+  { speaker: 'HENRIK', text: '“It plays the violin. Beautiful. So beautiful you walk toward the water without knowing you are walking.”', italic: false },
+  { speaker: 'HENRIK', text: '“It is called the Nøkken.”', italic: false },
+  { speaker: 'HENRIK', text: '“My grandmother said: if you hear violins where there should be no violins, you cover your ears. You walk the other way. You do not look.”', italic: false },
+  { speaker: null, text: 'Henrik pauses. He looks at the empty plate.', italic: false },
+  { speaker: 'HENRIK', text: '“I did not always listen to her.”', italic: false },
+  { speaker: null, text: 'He says nothing else about that.', italic: false },
+  { speaker: 'HENRIK', text: '“You will see strange things, Pip. Some of them are stories. Some of them are real. The dead see what the living cannot, and not all of it is gentle.”', italic: false },
+  { speaker: 'HENRIK', text: '“Listen carefully. And if you hear violins where there should be no violins — walk the other way.”', italic: false },
+  { speaker: null, text: 'Henrik pauses.', italic: false },
+  { speaker: 'HENRIK', text: '“I think I saw it once.”', italic: false },
+  { speaker: null, text: 'He does not say more.', italic: false },
+  { speaker: 'HENRIK', text: '“The ship docks in Tallinn next. Estonia. There’s a chef I want you to meet — her name is Leida. She bakes meatballs. Kodused kotletid — homemade cutlets.”', italic: false },
+  { speaker: 'HENRIK', text: '“She does not know about the Nøkken. But she knows about other things.”', italic: false },
+  { speaker: 'HENRIK', text: '“Find her. Tell her Henrik sent you.”', italic: false },
 ];
 
 const kitchenObjects = [
@@ -2717,7 +2717,7 @@ const observationDeckObjects = [
     node: {
       id:    'aurora-inspect',
       lines: [
-        { speaker: null, text: 'Pip has never seen the northern lights before. He wonders if he would have, had things gone differently.', italic: true },
+        { speaker: null, text: 'Pip has never seen the northern lights before. He wonders if he would have, had things gone differently.', italic: false },
       ],
       choices: null,
       onEnd:   null,
@@ -7958,16 +7958,13 @@ const CINEMATIC_SCRIPTS = {
      Visual: drawHenrikSitsDownCinematic(). */
   'henrik-sits-down': [
     { speaker: 'HENRIK', text: '“…Så. Du er gutten fra hytte 646 — so. You are the boy from cabin 646.”', italic: false },
-    { speaker: 'PIP',    text: '“…you can see me?”',                                                         italic: false },
-    { speaker: 'HENRIK', text: '“Yes. Don’t ask why. Not today.”',                                           italic: false },
-    { speaker: null,     text: 'Henrik looks at the food, still hovering.',                                                  italic: false },
-    { speaker: 'HENRIK', text: '“Your grandmother. She told me, last night, in the dining room. She said you would have loved this. That you collected meals like other boys collect stamps.”', italic: false },
-    { speaker: 'HENRIK', text: '“Lefse. Gravlaks. The pickles too.”',          italic: false },
-    { speaker: 'HENRIK', text: '“Eat. Tell me if it’s as good as she promised.”',                            italic: false },
-    { speaker: null,     text: 'He slides the plate toward Pip.',                                                            italic: false },
-    { speaker: 'PIP',    text: '“…how can you see me, when no one else can?”',                               italic: false },
-    { speaker: null,     text: 'Henrik does not answer immediately. He looks at the food. He looks at Pip.',                italic: false },
-    { speaker: 'HENRIK', text: '“Some questions wait. Eat first.”',                                               italic: false },
+    { speaker: 'PIP', text: '“…you can see me?”', italic: false },
+    { speaker: 'HENRIK', text: '“Yes. Don’t ask why. Not today.”', italic: false },
+    { speaker: null, text: 'Henrik looks at the food, still hovering.', italic: false },
+    { speaker: 'HENRIK', text: '“Lefse. Gravlaks. The pickles too.”', italic: false },
+    { speaker: null, text: 'He slides the plate toward Pip.', italic: false },
+    { speaker: 'PIP', text: '“…how can you see me, when no one else can?”', italic: false },
+    { speaker: 'HENRIK', text: '“Some questions wait. Eat first.”', italic: false },
   ],
 
   /* Sprint 26 Stage 2: first-taste (Cinematic 6 — Beat 11, doubled).
@@ -8024,11 +8021,11 @@ const CINEMATIC_SCRIPTS = {
      Pip approaches the plate; takes a bite; food hovers; Henrik freezes mid-scream.
      Visual driven by drawKitchenMeetingCinematic() + kitchenCin elapsed timer. */
   'kitchen-meeting': [
-    { speaker: null,     text: 'Pip cannot remember the last time he ate. Maybe he never has, now. Maybe this is the first time.', italic: false },
-    { speaker: null,     text: 'He takes a bite.',                                          italic: false },
-    { speaker: null,     text: 'The food hovers in the air.',                               italic: false },
-    { speaker: null,     text: "Behind him, a sound. A pan drops. A man yelps.",  italic: false },
-    { speaker: 'HENRIK', text: '”AAAAAAAAA—“',                            italic: false },
+    { speaker: null, text: 'Pip cannot remember the last time he ate.', italic: false },
+    { speaker: null, text: 'He takes a bite.', italic: false },
+    { speaker: null, text: 'The food hovers in the air.', italic: false },
+    { speaker: null, text: 'Behind him, a sound. A pan drops. A man yelps.', italic: false },
+    { speaker: 'HENRIK', text: '“”AAAAAAAA—“”', italic: false },
   ],
 
   /* Ch2: object-memory-pan — Pip touches Leida’s lost pan, sees its history. */

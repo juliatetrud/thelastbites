@@ -2087,16 +2087,10 @@ const cabinObjects = [
         };
       }
       // If mirror cinematic already played
-      if (cabinState.mirrorRevealed) {
-        return {
-          id: 'mirror-post',
-          lines: [
-            { speaker: null, text: 'The mirror shows Pip his ghost-face. He already knows.', italic: false },
-          ],
-          choices: null,
-          onEnd: null,
-        };
-      }
+      // Standing ruling (#134): the script's ▸ mirror-post carries the staging note
+      // "No dialogue: The mirror shows Pip his ghostly reflection" — the reflection is
+      // shown, not narrated. node:null, so the mirror stops being inspectable once revealed.
+      if (cabinState.mirrorRevealed) return null;
       // Trigger the mirror cinematic
       return {
         id: 'mirror-trigger',
@@ -2290,14 +2284,10 @@ const grandparentsObjects = [
     id: 'gp-dziadek',
     x: 160,
     sparkleY: 90,
-    node: {
-      id: 'gp-dziadek-inspect',
-      lines: [
-        { speaker: null, text: 'Dziadek\u2019s back is to Pip. He has not turned. His shoulders are very still.', italic: false },
-        { speaker: null, text: 'Pip waits, in case he turns. He does not turn.', italic: false },
-      ],
-      choices: null, onEnd: null,
-    },
+    // Standing ruling (#134): the playscript lists ▸ gp-dziadek-inspect with no dialogue,
+    // and missing lines are deletions. node:null removes the prompt and the aura entirely
+    // (drawObjectAura skips null-node objects) rather than opening an empty dialogue box.
+    node: null,
   },
 
   /* ---- Photograph ---- atmospheric, 2 lines */
@@ -2376,10 +2366,15 @@ const grandparentsObjects = [
           },
         };
       }
+      // No third state: the script gives this beat two nodes, not three. Re-inspecting
+      // before the cart simply replays the discovery beat, as every other inspectable does.
       return {
-        id: 'gp-armchair-passive',
+        id: 'gp-armchair-inspect',
         lines: [
-          { speaker: null, text: 'The radio hums quietly in the coat pocket.', italic: false },
+          { speaker: null, text: 'Dziadek’s wool coat is folded over the armchair with a hand held radio in the pocket.', italic: false },
+          { speaker: null, text: 'I wonder if I could reach them through this radio.', italic: true },
+          { speaker: 'PIP', text: '“Hello? Hello?”', italic: false },
+          { speaker: null, text: 'Static crackles in the room, muffling Pip’s small voice. The radio hums.', italic: false },
         ],
         choices: null, onEnd: null,
       };

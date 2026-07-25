@@ -2517,19 +2517,12 @@ const darkCorridorObjects = [
     sparkleY: 150,
     get breadcrumb() { return chapterState.janitorWalked; },   // Sprint G1: pulse after janitor clears cart
     get node() {
-      if (!chapterState.janitorWalked) {
-        // Sprint G-S5: pre-puzzle hint instead of a silent no-op. The descent is
-        // gated on the janitor clearing the cart (paged via Dziadek's radio in the
-        // grandparents' cabin — by design, see dark-corridor.md); nudge, don't dead-end.
-        return {
-          id: 'dc-stairwell-blocked',
-          lines: [
-            { speaker: null, text: 'The cart blocks the stairs down.', italic: false },
-            { speaker: null, text: 'I need to move whoever left it.', italic: true },
-          ],
-          choices: null, onEnd: null,
-        };
-      }
+      // #140: while the cart is in the way this was a SECOND interaction point 40px from
+      // the cart saying the same thing. Julia: keep only the one on the physical cart. The
+      // blocked state is now silent here — guidance lives on the cart itself and on the
+      // corridor's right edge (dc-end-blocked), so the CONTINUOUS MAP RULE is still met.
+      // (dc-stairwell-blocked was a Sprint G-S5 addition, never in the playscript.)
+      if (!chapterState.janitorWalked) return null;
       return {
         id: 'dc-stairwell-descend',
         lines: [
@@ -2860,7 +2853,8 @@ let _kitchenGateHinted = false;
 // no-ops. Transient by design — never in buildSaveObject(), so no schema change.
 let _cabinDoorHinted = false;
 let _hallwayStairsHinted = false;
-let _gpWallHinted = false;   // G-S6: one-shot nudge at the kitchen's far edge (see edge-trigger chain)
+let _gpWallHinted = false;
+let _corridorEndHinted = false;   // G-S6: one-shot nudge at the kitchen's far edge (see edge-trigger chain)
 
 /* Sprint 15: top-level game mode. 'gate' on cold load; 'title' after first keypress; 'gameplay' after Play. */
 let gameMode = 'gate';
@@ -3891,6 +3885,24 @@ function update(dt) {
     } else if (currentRoom === 'hallway' && pip.x >= 1312 && cabinState.beatStage === 'post-bed') {
       // Sprint 20: hallway far-right staircase to dark corridor (available post-Beat-5)
       startTransition('darkCorridor', 'fromLeft');
+    } else if (currentRoom === 'darkCorridor' && pip.x >= rooms.darkCorridor.pipMaxX - 1
+               && chapterState.janitorWalked) {
+      // #140 CONTINUOUS MAP RULE: the corridor's right edge was a hard wall — the only way
+      // down was the stairwell's dialogue choice, making this the one Ch1 link you could not
+      // walk. Now it mirrors the kitchen's left edge, so the map is traversable both ways.
+      startTransition('kitchen', 'fromLeft');
+    } else if (currentRoom === 'darkCorridor' && pip.x >= rooms.darkCorridor.pipMaxX - 1
+               && !chapterState.janitorWalked && !_corridorEndHinted
+               && !dialogue.active && !cinematic.active) {
+      // Requirement (b): the blocked edge must speak. NEW WORDS.
+      _corridorEndHinted = true;
+      showDialogue({
+        id: 'dc-end-blocked',
+        lines: [
+          { speaker: null, text: 'The stairs down are just there, behind the cart. He cannot get past it.', italic: false },
+        ],
+        choices: null, onEnd: null,
+      });
     } else if (currentRoom === 'darkCorridor' && pip.x <= rooms.darkCorridor.pipMinX + 1) {
       // Exit dark corridor back to hallway at the staircase position
       startTransition('hallway', 'fromRight', 1300);
@@ -7406,6 +7418,31 @@ function renderPip(screenX, groundY, now) {
   }
 
   drawPip(ctx, now / 1000, false);
+
+  // #140: while Pip is calling the janitor, show the hand radio actually in his hand, so
+  // the player can see what the line refers to. Drawn inside Pip's transform, so it flips
+  // with his facing. Local space: (0,0) is his foot, body top around y=-40.
+  if (dialogue.active && dialogue.node && dialogue.node.id === 'gp-radio-page-choice') {
+    const rx = 9, ry = -22, rw = 5, rh = 7;
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = 'rgba(190,160,90,0.9)';   // stub antenna
+    ctx.lineWidth   = 1;
+    ctx.beginPath();
+    ctx.moveTo(rx + rw - 1, ry);
+    ctx.lineTo(rx + rw, ry - 4);
+    ctx.stroke();
+    ctx.fillStyle = '#5c3a14';                   // casing
+    ctx.fillRect(rx, ry, rw, rh);
+    ctx.strokeStyle = 'rgba(120,70,20,0.75)';
+    ctx.strokeRect(rx, ry, rw, rh);
+    ctx.fillStyle = 'rgba(80,50,20,0.6)';        // speaker grill
+    ctx.fillRect(rx + 1, ry + 1, rw - 2, 3);
+    ctx.fillStyle = '#ffd98a';                   // live indicator, pulsing while he speaks
+    const pulse = 0.5 + 0.5 * Math.sin(now / 90);
+    ctx.globalAlpha = 0.45 + pulse * 0.55;
+    ctx.fillRect(rx + rw - 2, ry + rh - 2, 1, 1);
+    ctx.globalAlpha = 1;
+  }
   ctx.restore();
 }
 
@@ -8196,8 +8233,15 @@ function showCinematic(name, onEnd) {
     lines:   CINEMATIC_SCRIPTS[name],
     choices: null,
     onEnd() {
-      // Final line dismissed — begin 1.2s silence before fade-out
-      cinematic.holdTimer = 1.2;
+      // Final line dismissed — begin 1.2s silence before fade-out.
+      // #140: the mirror is special — it must not fade before the ghost has resolved and
+      // blinked twice, however fast the player tapped through the two lines. Hold for
+      // whatever is left of the reflection beat.
+      if (name === 'mirror-realization') {
+        cinematic.holdTimer = Math.max(1.2, MIRROR_GHOST_END - mirrorCinState.elapsed);
+      } else {
+        cinematic.holdTimer = 1.2;
+      }
     },
   });
   // Override the 'atmospheric-dialogue' strip that showDialogue just set
@@ -8714,6 +8758,18 @@ const mirrorCinState = {
   lastNow: null, // previous timestamp (ms) for delta calc
 };
 
+/* #140 — mirror-realization timings live at module scope because TWO systems need them:
+   drawMirrorCinematic() animates against them, and showCinematic()'s hold must not let the
+   scene fade before the ghost has resolved and blinked twice. Previously the ghost ran on
+   its own clock while the fade-out was driven purely by the player dismissing the last
+   dialogue line, so a quick reader never saw the ghost at all. */
+const MIRROR_HOLD_T  = 1.8;    // human face holds before the melt
+const MIRROR_MELT_T  = 2.4;    // melt duration
+const MIRROR_BLINK_1 = [0.50, 0.64];   // seconds after the melt completes
+const MIRROR_BLINK_2 = [1.15, 1.29];
+// the whole reflection beat is done once the second blink has landed and settled
+const MIRROR_GHOST_END = MIRROR_HOLD_T + MIRROR_MELT_T + MIRROR_BLINK_2[1] + 0.60;
+
 /* Sprint 26 Stage 1: per-session timer for kitchen-meeting cinematic. */
 const kitchenCin = {
   elapsed: 0,
@@ -8742,11 +8798,10 @@ function drawMirrorCinematic(now) {
   }
   mirrorCinState.lastNow = now;
 
-  const HOLD_T  = 1.8;   // seconds showing face before melt (longer hold — let it land)
-  const MELT_T  = 3.2;   // melt duration (#137: was 2.2 — the ghost resolved too fast)
-  // #137: the ghost blinks twice, on cue, once it has fully resolved.
-  const BLINK_1 = [0.80, 0.94];   // seconds after the melt completes
-  const BLINK_2 = [1.55, 1.69];
+  const HOLD_T  = MIRROR_HOLD_T;
+  const MELT_T  = MIRROR_MELT_T;
+  const BLINK_1 = MIRROR_BLINK_1;
+  const BLINK_2 = MIRROR_BLINK_2;
   const elapsed = mirrorCinState.elapsed;
 
   // Dark base
@@ -10253,17 +10308,9 @@ function updateJanitorWalk(dt) {
       janitorWalk.active       = false;
       darkCorridor.cartRemoved = true;
       chapterState.janitorWalked = true;
-      setTimeout(() => {
-        if (currentRoom === 'darkCorridor') {
-          showDialogue({
-            id: 'dc-post-janitor',
-            lines: [
-              { speaker: null, text: 'No one can see me.', italic: true },
-            ],
-            choices: null, onEnd: null,
-          });
-        }
-      }, 500);
+      // #140: the 'No one can see me.' beat is removed on Julia's call. NOTE: this line IS
+      // in the playscript (▸ dc-post-janitor), so the build is deliberately one line out of
+      // step with the docx until she cuts it there too.
     }
   }
 }

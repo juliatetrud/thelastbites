@@ -1466,19 +1466,6 @@ const janitorWalk = {
   timer:   0,
 };
 
-/* Echo-mouse AI state. */
-const echoMouse = {
-  x:          600,     // world-x
-  facing:     'right',
-  phase:      'pausing',  // 'walking' | 'pausing'
-  timer:      2.0,        // seconds remaining in current phase
-  walkTarget: 660,        // world-x destination for current walk burst
-  ANCHOR:     600,        // centre of range
-  RANGE:      70,         // stays within ANCHOR±RANGE
-  BURST:      80,         // walk burst length
-  touched:    false,      // cooldown flag: briefly true after draining Pip
-  touchTimer: 0,
-};
 
 /* Sprint 20: audio stubs — no-op until a sound-design sprint ships. */
 function playSound(name) { /* stub — name logged only in dev */ }
@@ -2377,8 +2364,8 @@ const grandparentsObjects = [
 
 /* ================================================================
    SPRINT 20: DARK CORRIDOR OBJECTS
-   Broken sconce, janitor's cart, stairwell. Echo-mouse handled via
-   the echoMouse state object (not an inspectable object).
+   Broken sconce, janitor's cart, stairwell. (The echo-mouse that used to
+   roam this corridor was removed on Julia's call — see #136.)
    ================================================================ */
 
 /* Sprint 36: Skillingsboller — half a Bergen cinnamon bun on the janitor's cart.
@@ -3929,7 +3916,6 @@ function update(dt) {
   updateLightsOnSequence(dt);
   updateFloatDiscovery(dt);
   updateJanitorWalk(dt);
-  updateEchoMouse(dt);
   updateEchoSpiders(dt);   // Sprint 46: dark corridor spiders
   updateCh5EchoRats(dt);   // R12: Ch5 lower-deck echo-rat strength drain
   updateCandlePuzzle(dt);  // R12: Ch4 real-time candle puzzle
@@ -10220,51 +10206,6 @@ function updateJanitorWalk(dt) {
   }
 }
 
-/* ================================================================
-   SPRINT 20: ECHO-MOUSE AI
-   ================================================================ */
-
-function updateEchoMouse(dt) {
-  if (currentRoom !== 'darkCorridor' || !darkCorridor.lit) return;
-
-  // Cooldown for strength-drain contact
-  if (echoMouse.touched) {
-    echoMouse.touchTimer -= dt;
-    if (echoMouse.touchTimer <= 0) echoMouse.touched = false;
-  }
-
-  echoMouse.timer -= dt;
-  if (echoMouse.phase === 'pausing') {
-    if (echoMouse.timer <= 0) {
-      // Pick a new walk target within ANCHOR±RANGE
-      const dir = echoMouse.facing === 'right' ? -1 : 1;   // alternate direction
-      echoMouse.facing     = dir === 1 ? 'right' : 'left';
-      const newTarget      = echoMouse.ANCHOR + dir * echoMouse.RANGE * (0.4 + Math.random() * 0.6);
-      echoMouse.walkTarget = Math.max(echoMouse.ANCHOR - echoMouse.RANGE,
-                               Math.min(echoMouse.ANCHOR + echoMouse.RANGE, newTarget));
-      echoMouse.phase      = 'walking';
-      echoMouse.timer      = echoMouse.BURST / JANITOR_SPEED;   // time to walk the burst
-    }
-  } else {
-    // Walking phase — move toward target
-    const dir   = echoMouse.walkTarget > echoMouse.x ? 1 : -1;
-    echoMouse.x += dir * 60 * dt;   // ~60 px/s mouse speed
-    if (Math.abs(echoMouse.x - echoMouse.walkTarget) < 3) {
-      echoMouse.x     = echoMouse.walkTarget;
-      echoMouse.phase = 'pausing';
-      echoMouse.timer = 2 + Math.random();   // 2–3s pause
-    }
-    echoMouse.facing = dir > 0 ? 'right' : 'left';
-  }
-
-  // Collision with Pip — drain 1 strength point (with cooldown)
-  if (!echoMouse.touched && Math.abs(pip.x - echoMouse.x) < 10) {
-    echoMouse.touched    = true;
-    echoMouse.touchTimer = 1.5;   // 1.5s cooldown between touches
-    loseStrength(1);
-  }
-}
-
 /* R12 — Ch5 lower-deck echo-rat drain. Mirrors the echo-mouse/echo-spider precedent:
    a grounded Pip who walks into a darting rat loses 1 strength, then a 1.5s cooldown
    (gentle pressure, never fail-state spam). Floating over the rats avoids them entirely
@@ -10739,10 +10680,6 @@ function drawDarkCorridor(camX, now) {
       strokeColor: 'rgba(40,48,68,0.38)',
     });
 
-    // Echo-mouse (lit state only, in its range)
-    if (darkCorridor.lit) {
-      drawEchoMouse(echoMouse.x - camX, FLOOR_Y, now);
-    }
 
     // Echo-spiders (both states — always visible as warm-amber hazards)
     drawEchoSpiders(camX, now);
@@ -11065,52 +11002,6 @@ function drawJanitor(screenX, groundY, facing, now) {
   ctx.fillStyle = '#2a2030';
   ctx.fillRect(-11,  -1, 10,  3);
   ctx.fillRect(  2,  -1, 10,  3);
-
-  ctx.globalAlpha = 1;
-  ctx.restore();
-}
-
-/* ---- Echo-mouse sprite ---- */
-function drawEchoMouse(screenX, groundY, now) {
-  const cx  = Math.round(screenX);
-  const walk = Math.abs(Math.sin(now / 150)) * 1.5;
-  const cy  = Math.round(groundY - 6 + walk);
-
-  ctx.save();
-  ctx.globalAlpha = 0.55;
-  ctx.fillStyle   = '#d4a040';   // drained-amber translucent
-
-  if (echoMouse.facing === 'left') ctx.scale(-1, 1), ctx.translate(-cx * 2, 0);
-
-  // Body
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, 6, 3, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Head
-  ctx.beginPath();
-  ctx.ellipse(cx + 7, cy - 1, 3, 2.5, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Ear
-  ctx.beginPath();
-  ctx.arc(cx + 8, cy - 4, 1.5, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Tail
-  ctx.strokeStyle = '#d4a040';
-  ctx.lineWidth   = 1;
-  ctx.beginPath();
-  ctx.moveTo(cx - 5, cy);
-  ctx.quadraticCurveTo(cx - 10, cy - 3, cx - 12, cy);
-  ctx.stroke();
-
-  // Legs (tiny)
-  for (let i = 0; i < 4; i++) {
-    const lx = cx - 4 + i * 3;
-    const ly = cy + 3 + (i % 2 === 0 ? walk : -walk * 0.5);
-    ctx.fillRect(Math.round(lx), Math.round(ly), 1, 2);
-  }
 
   ctx.globalAlpha = 1;
   ctx.restore();

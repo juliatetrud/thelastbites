@@ -2496,7 +2496,6 @@ const darkCorridorObjects = [
         lines: [
           { speaker: null, text: 'Sparks crawl along the fallen sconce’s loose wires.', italic: false },
           { speaker: null, text: 'Uh oh. Is that a live wire?', italic: true },
-          { speaker: null, text: 'He reaches out.', italic: false },
         ],
         choices: null,
         onEnd() {
@@ -2528,7 +2527,7 @@ const darkCorridorObjects = [
           id: 'dc-cart-push-fail',
           lines: [
             { speaker: null, text: 'The cart is too heavy, and Pip’s hands pass through it.', italic: false },
-            { speaker: null, text: 'Dziadek’s radio could page whoever left it — back in the cabin.', italic: true },
+            { speaker: null, text: 'Dziadek’s radio could call whoever left it.', italic: true },
           ],
           choices: null, onEnd: null,
         };
@@ -2536,9 +2535,9 @@ const darkCorridorObjects = [
       return {
         id: 'dc-cart-inspect',
         lines: [
-          { speaker: null, text: 'A janitor’s cart, abandoned mid-shift.', italic: false },
-          { speaker: null, text: 'The clipboard reads: "J. Henriksen, Maintenance."', italic: false },
-          { speaker: null, text: 'J. Henriksen… Dziadek’s radio could page him. It’s back in the cabin.', italic: true },
+          { speaker: null, text: 'A janitor’s cart, abandoned mid-shift. The clipboard reads: "J. Henriksen, Maintenance."', italic: false },
+          { speaker: null, text: 'The cart is too heavy, and Pip’s hands pass through it.', italic: false },
+          { speaker: null, text: 'J. Henriksen… Dziadek’s radio could call him.', italic: true },
         ],
         choices: null,
         onEnd() {
@@ -4009,7 +4008,6 @@ function update(dt) {
         showDialogue({
           id: 'dc-entry-nudge',
           lines: [
-            { speaker: null, text: 'So dark down here. But something’s sparking further in — a fallen sconce, wires loose.', italic: false },
             { speaker: null, text: 'It’s so dark down here. Maybe I can fix the lights.', italic: true },
           ],
           choices: null, onEnd: null,
@@ -7951,8 +7949,7 @@ const CINEMATIC_SCRIPTS = {
   /* G-S6 (B1): wire-shock — Ch1 dark corridor, stage-2 float boost. A startled,
      gentle-comic jolt (tone: not cruel), then the lift. Visual: drawWireShockCinematic(). */
   'wire-shock': [
-    { speaker: null,  text: 'The wire bites. White light punches through Pip — a bright, humming jolt.', italic: false },
-    { speaker: null,  text: 'Oh woah, I can float even higher now.', italic: true },
+    { speaker: null, text: 'Oh woah, I can float even higher now.', italic: true },
   ],
 
 
@@ -10108,7 +10105,6 @@ function updateLightsOnSequence(dt) {
       id: 'dc-sconce-post',
       lines: [
         { speaker: null, text: 'The wires spark. The sconce buzzes. Then another. Then another.', italic: false },
-        { speaker: null, text: 'The corridor breathes back into light.', italic: true },
       ],
       choices: null,
       onEnd() {
@@ -10256,7 +10252,7 @@ function updateJanitorWalk(dt) {
       showDialogue({
         id: 'janitor-mutter',
         lines: [
-          { speaker: 'JANITOR', text: '“Hvor i alle dager…”', italic: false },
+          { speaker: 'JANITOR', text: '“Hvor i alle dager …”', italic: false },
         ],
         choices: null, onEnd: null,
       });
@@ -10283,7 +10279,6 @@ function updateJanitorWalk(dt) {
             id: 'dc-post-janitor',
             lines: [
               { speaker: null, text: 'No one can see me.', italic: true },
-              { speaker: null, text: '(can they?)', italic: true },
             ],
             choices: null, onEnd: null,
           });

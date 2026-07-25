@@ -2264,6 +2264,26 @@ const hallwayObjects = [
    cabin/hallway. Text verbatim from sprint-04-grandparents-cabin.md.
    ================================================================ */
 
+/* Ch1 hand radio (#135) — Pip COLLECTS it from the coat, then uses it at the cart.
+   hasHandRadio() also honours the legacy chapterState.radioDiscovered flag so saves made
+   before the radio was an item still count as holding it. */
+function hasHandRadio() {
+  return notebook.items.some(function (i) { return i.id === 'hand-radio'; })
+      || chapterState.radioDiscovered;
+}
+
+function collectHandRadio() {
+  if (notebook.items.some(function (i) { return i.id === 'hand-radio'; })) return;
+  notebook.items.push({
+    id:         'hand-radio',
+    name:       'Hand-held radio',
+    annotation: "From the pocket of Dziadek's wool coat.",
+    kind:       'item',
+    sprite:     null,
+  });
+  renderNotebookItems();
+}
+
 const grandparentsObjects = [
   /* ---- Babcia ---- atmospheric, 3 lines */
   {
@@ -2330,44 +2350,11 @@ const grandparentsObjects = [
     id: 'gp-armchair',
     x: 280,
     sparkleY: 140,
-    get breadcrumb() { return chapterState.cartFound; },   // elevated aura post-cart-found
     get node() {
-      // CP-2b (preserved): once the cart is found, the page is reachable on the FIRST
-      // inspect — the discovery state must not take priority post-cart.
-      if (chapterState.cartFound) {
-        return {
-          id: 'gp-radio-page-choice',
-          lines: [
-            { speaker: 'PIP', text: '“Calling J Henriksen. You cart is blocking the stairs.”', italic: false },
-          ],
-          choices: null,
-          onEnd() {
-            chapterState.janitorPaged = true;
-            // CP-2b backstop: grant the radio ability here too, so paging works even if the
-            // player reached the cart before ever discovering the radio in the coat.
-            chapterState.radioDiscovered = true;
-            pip.abilities.talkThroughSpeakers = true;
-          },
-        };
-      }
-      if (!chapterState.radioDiscovered) {
-        return {
-          id: 'gp-armchair-inspect',
-          lines: [
-            { speaker: null, text: 'Dziadek’s wool coat is folded over the armchair with a hand held radio in the pocket.', italic: false },
-            { speaker: null, text: 'I wonder if I could reach them through this radio.', italic: true },
-            { speaker: 'PIP', text: '“Hello? Hello?”', italic: false },
-            { speaker: null, text: 'Static crackles in the room, muffling Pip’s small voice. The radio hums.', italic: false },
-          ],
-          choices: null,
-          onEnd() {
-            chapterState.radioDiscovered = true;
-            pip.abilities.talkThroughSpeakers = true;
-          },
-        };
-      }
-      // No third state: the script gives this beat two nodes, not three. Re-inspecting
-      // before the cart simply replays the discovery beat, as every other inspectable does.
+      // Once Pip has taken the radio the coat has nothing left to offer. The script gives
+      // this beat one node, so rather than invent an "empty coat" line the object simply
+      // stops being inspectable (drawObjectAura skips null-node objects).
+      if (hasHandRadio()) return null;
       return {
         id: 'gp-armchair-inspect',
         lines: [
@@ -2376,7 +2363,13 @@ const grandparentsObjects = [
           { speaker: 'PIP', text: '“Hello? Hello?”', italic: false },
           { speaker: null, text: 'Static crackles in the room, muffling Pip’s small voice. The radio hums.', italic: false },
         ],
-        choices: null, onEnd: null,
+        choices: null,
+        onEnd() {
+          // "Pip picks up the radio and speaks into it" — he takes it with him.
+          collectHandRadio();
+          chapterState.radioDiscovered = true;
+          pip.abilities.talkThroughSpeakers = true;
+        },
       };
     },
   },
@@ -2460,6 +2453,21 @@ const darkCorridorObjects = [
     sparkleY: 148,
     get breadcrumb() { return darkCorridor.lit && !chapterState.cartFound; },   // Sprint G1: pulse when lit, clear once found
     get node() {
+      if (chapterState.cartFound && hasHandRadio()) {
+        // Pip has the radio on him — "Pip pulls the hand radio from his pocket…"
+        return {
+          id: 'gp-radio-page-choice',
+          lines: [
+            { speaker: 'PIP', text: '“Calling J Henriksen. You cart is blocking the stairs.”', italic: false },
+          ],
+          choices: null,
+          onEnd() {
+            chapterState.janitorPaged = true;
+            chapterState.radioDiscovered = true;
+            pip.abilities.talkThroughSpeakers = true;
+          },
+        };
+      }
       if (chapterState.cartFound) {
         return {
           id: 'dc-cart-push-fail',
@@ -9772,10 +9780,11 @@ function drawGrandparents(camX, now) {
     strokeColor: 'rgba(65,46,16,0.4)',
   });
 
-  // --- Dziadek's hand-held radio (Ch1-RADIO #133) — in the coat pocket at world-x 280 ---
+  // --- Dziadek's hand-held radio (#133/#135) — in the coat pocket at world-x 280 ---
   // Drawn AFTER the armchair/coat block above so it reads as sitting in the pocket.
+  // Once Pip collects it, it is on him, not in the coat — so stop drawing it here.
   const radioSX = Math.round(280 - camX);
-  if (radioSX > -20 && radioSX < W + 20) {
+  if (!hasHandRadio() && radioSX > -20 && radioSX < W + 20) {
     drawDziadekRadio(radioSX, now);
   }
 

@@ -19,6 +19,25 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **Ch1-MAP `built` — corridor map CONNECTED; mirror ghost restored (#140, `6b23408`).
+> NEXT = R17 — BLOCKED on Julia's Ch1 in-browser pass.**
+> **Map (structural):** the dark corridor's right edge was a hard wall — the only
+> corridor→kitchen link was the stairwell's dialogue choice, the one Ch1 connection you could
+> not walk. Walking right hit `pipMaxX=948` silently; returning from the kitchen landed at
+> x=940 facing that wall. Right edge now transitions to the kitchen on `janitorWalked`, with
+> `dc-end-blocked` speaking when blocked. All four corridor/hallway/kitchen links verified
+> traversable both ways.
+> **Mirror:** the ghost was never coupled to the cinematic's lifetime — it ran on
+> `mirrorCinState.elapsed` while fade-out was driven by the player dismissing the last line
+> (`holdTimer` 1.2s), so a quick reader faded the scene before the ghost existed; #137 made
+> that certain. Timings hoisted to module scope; the mirror's hold now runs to
+> `MIRROR_GHOST_END`. Melt retuned 3.2→2.4s (beat ≈6.1s). ESC still skips.
+> **Cart:** `dc-stairwell-blocked` removed (a second point 40px from the cart saying the same
+> thing; a G-S5 addition, never in the script). **Radio:** now visibly in Pip's hand while he
+> calls. **`dc-post-janitor` removed on Julia's call — that line IS in her script, so
+> conformance is deliberately 109 comparisons / 1 divergence until she cuts it from the docx.**
+>
+> --- prior (Ch1-CORRIDOR) ---
 > **Ch1-CORRIDOR `built` — dark-corridor dead end FIXED; CONTINUOUS MAP RULE locked canon
 > (#138, `43dd0e8`). NEXT = R17 — BLOCKED on Julia's Ch1 in-browser pass. #139 queued.**
 > **Root cause was mine:** `5d1c841` (#135) moved paging from the armchair to the cart and
@@ -477,6 +496,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | Ch1-RADIO | Hand-held radio in the coat (carve-out closed) | built | #133 | `fe53d88`…`3ee9abc` | `r-checkpoint-ch1-radio` |
 | Ch1-CANON | Playscript canon in full; all exceptions revoked | built | #134 | `7468a28` | `r-checkpoint-ch1-canon` |
 | Ch1-CORRIDOR | Dead end fixed; CONTINUOUS MAP RULE locked | built | #138 | `43dd0e8` | `r-checkpoint-ch1-corridor` |
+| Ch1-MAP | Corridor map connected; mirror ghost restored | built | #140 | `6b23408` | `r-checkpoint-ch1-map` |
 | R17 | Mobile playtest + polish | pending | — | — | — |
 | R18 | Release: verification + go-live | pending | — | — | — |
 

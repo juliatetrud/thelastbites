@@ -2139,8 +2139,7 @@ const hallwayObjects = [
       return {
         id: 'hallway-bulletin-inspect',
         lines: [
-          { speaker: null, text: 'A bulletin board sits near the stairwell to let the passengers know the ship\u2019s itinerary.', italic: false },
-          { speaker: null, text: 'A bulletin board says, \u201cThe Mnemosyne (Nem-OSS-uh-nee) welcomes you aboard. Today\u2019s port: Bergen.\u201d', italic: false },
+          { speaker: null, text: 'A bulletin board says, “The Mnemosyne (Nem-OSS-uh-nee) welcomes you aboard. Today’s port: Bergen.”', italic: false },
         ],
         choices: null, onEnd: null,
       };
@@ -2155,10 +2154,7 @@ const hallwayObjects = [
     node: {
       id: 'hallway-luggage-inspect',
       lines: [
-        { speaker: null, text: 'Hmm. Looks like someone packed in a hurry\u2026', italic: true },
-        // Sprint 48: removed "A stuffed bear sticks out of the top of the suitcase." \u2014 the
-        // grandparents'-cabin suitcase now shows the bear visually; the text is redundant.
-        { speaker: null, text: 'That looks just like the bear Babcia gave me\u2026', italic: true },
+        { speaker: null, text: 'That looks just like the bear Babcia gave me…', italic: true },
       ],
       choices: null, onEnd: null,
     },
@@ -2175,8 +2171,6 @@ const hallwayObjects = [
       id: 'hallway-sconce-inspect',
       lines: [
         { speaker: null, text: 'An oil lamp flickers, not quite in time with itself.', italic: false },
-        { speaker: null, text: 'When Pip steps close, it falters. When he steps back, it steadies. It almost feels like it\u2019s reacting to him.', italic: false },
-        { speaker: null, text: 'How could that be? Pip wonders.', italic: true },
       ],
       choices: null, onEnd: null,
     },
@@ -2205,7 +2199,7 @@ const hallwayObjects = [
         return {
           id: 'gp-door-return',
           lines: [
-            { speaker: null, text: 'Babcia and Dziadek are still inside. Pip can go in, but they cannot hear him.', italic: false },
+            { speaker: null, text: 'Babcia and Dziadek are gone.', italic: false },
           ],
           choices: [
             {
@@ -2239,8 +2233,8 @@ const hallwayObjects = [
               showDialogue({
                 id: 'gp-door-phase',
                 lines: [
-                  { speaker: null, text: 'Pip\u2019s hand goes through the door, then he goes through the door.', italic: false },
-                  { speaker: null, text: '\u2026that was weird.', italic: true },
+                  { speaker: null, text: 'Pip’s hand goes through the door, then he goes through the door', italic: false },
+                  { speaker: null, text: '…that was weird.', italic: true },
                 ],
                 choices: null,
                 onEnd() {

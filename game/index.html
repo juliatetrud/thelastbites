@@ -7987,12 +7987,14 @@ const CINEMATIC_SCRIPTS = {
   ],
 
   /* Sprint 26 Stage 2: first-taste (Cinematic 6 — Beat 11, doubled).
-     Part 1 (6a, lines 0-3): gravlaks bite, grandfather memory.
-     Crossfade at line 4. Part 2 (6b, lines 4-9): lefse bite, Erik memory (face hidden).
+     Part 1 (6a, lines 0-2): gravlaks bite, grandfather memory.
+     Crossfade at line 3. Part 2 (6b, lines 3-9): lefse bite, Erik memory (face hidden).
      Post-memory exchange (lines 10-19): returns to present kitchen.
+     R01b: 'Pip finishes the dish in record time.' moved from index 0 to index 8 (just
+     before 'The memory fades'), per the playscript CLEANUP CHANGELOG — it previously
+     fired before the lefse bite. Indices above are post-move.
      Visual: drawFirstTasteCinematic() — phase-based scene crossfades. */
   'first-taste': [
-    { speaker: null,     text: 'Pip finishes the dish in record time.',                                                                                                                                              italic: false },
     { speaker: null,     text: 'The kitchen shimmers.',                                                                                                                                                           italic: false },
     { speaker: null,     text: 'A young Norwegian boy in a cottage kitchen, watching an old man’s hands cure salmon. Sun through a window. The smell of dill. The man is his grandfather.',                 italic: false },
     { speaker: null,     text: 'And Pip understands, for the first time, that food carries the story of the person who made it.',                                                                                 italic: false  },
@@ -8001,6 +8003,7 @@ const CINEMATIC_SCRIPTS = {
     { speaker: null,     text: 'An older Henrik — recognizably grown — teaching a young boy to make the same lefse. The child’s face is turned away, in profile, in half-shadow. The child laughs at something off-screen.', italic: false },
     { speaker: null,     text: 'That every meal is a love letter from someone, to someone.',                                                                                                                      italic: false  },
     { speaker: null,     text: 'That if he can taste enough of them — really taste — he might learn the world.',                                                                                       italic: false  },
+    { speaker: null,     text: 'Pip finishes the dish in record time.',                                                                                                                                              italic: false },
     { speaker: null,     text: 'The memory fades. Pip is back in the kitchen.',                                                                                                                                   italic: false },
     { speaker: 'PIP',    text: '“…I saw two things. Someone teaching you. And then you — teaching a boy. Was that you, both times?”',                                                        italic: false },
     { speaker: null,     text: 'A pause. Henrik looks at the empty plate.',                                                                                                                                       italic: false },
@@ -11534,7 +11537,11 @@ function drawFirstTasteCinematic(now) {
 
   // Detect line-index transitions to advance phase
   if (firstTasteCin.prevLineIndex !== lineIdx) {
-    if (firstTasteCin.prevLineIndex < 4 && lineIdx >= 4 && firstTasteCin.phase === '6a') {
+    // R01b: 6b boundary moved 4 -> 3. 'Pip finishes the dish in record time.' left the
+    // opening for the tail of the memory, so 'Pip takes a bite of the lefse.' — which is
+    // what actually starts 6b — shifted from index 4 to 3. The present boundary below is
+    // unchanged at 10: one line was removed before it and one re-inserted before it.
+    if (firstTasteCin.prevLineIndex < 3 && lineIdx >= 3 && firstTasteCin.phase === '6a') {
       firstTasteCin.phase        = 'fading-to-6b';
       firstTasteCin.crossfadeStart = elapsed;
     }

@@ -19,6 +19,21 @@ isn't in this file or in the tracking issues, it didn't happen.
 > Decisions Log + 08-char-ref gallery-canonical note landed. R05–R07 will derive R03's
 > gallery cells into the game.
 >
+> **Ch1-CANON `built` — playscript is canon in full, ALL exceptions revoked (#134, `7468a28`).
+> NEXT = R17 (mobile playtest + polish) — BLOCKED on Julia's Ch1 in-browser pass.**
+> Standing ruling supersedes every prior Ch1 decision: missing lines are Julia's deletions.
+> The radio rewrite it also asked for had already shipped (#133). Three exceptions survived
+> that sprint, all mine, now revoked: an **invented** passive armchair line removed;
+> `gp-dziadek-inspect` and `mirror-post` emptied to `node: null` (prompt + aura gone, not an
+> empty dialogue box). **Root cause they were missed: the conformance differ SKIPPED nodes the
+> script listed with zero lines** — so every earlier zero-divergence report was blind to
+> deletion, the same class of gap as the earlier presence-vs-structure miss. Differ now checks
+> the empty case. **110 comparisons, 0 divergences, no exceptions column.** Traversal
+> re-simulated (both orderings, all 8 flag combinations). `node --check` PARSE OK.
+> **Standing communication rule: if verbatim would genuinely break something, stop and ask in
+> ONE plain sentence about player experience — no menus, no defaults, no holds.**
+>
+> --- prior (Ch1-RADIO) ---
 > **Ch1-RADIO `built` — hand-held radio in the coat; LAST CARVE-OUT CLOSED (#133;
 > `fe53d88` S1 / `610bbea` S2 / `3ee9abc` S3 / docs). NEXT = R17 (mobile playtest + polish) —
 > still BLOCKED on Julia's Ch1 in-browser pass.** Julia reversed the item-3 ruling that had
@@ -442,6 +457,7 @@ isn't in this file or in the tracking issues, it didn't happen.
 | R01b | Ch1 playscript edits R01 never saw (audit #129) | built | #130 | `bea4d87`…`b717f39` | `r-checkpoint-R01b` |
 | GOAL | Ch1 verbatim conformance (playscript is the script) | built | #132 | `ff9a570`…`78e9ce2` | `r-checkpoint-ch1-verbatim` |
 | Ch1-RADIO | Hand-held radio in the coat (carve-out closed) | built | #133 | `fe53d88`…`3ee9abc` | `r-checkpoint-ch1-radio` |
+| Ch1-CANON | Playscript canon in full; all exceptions revoked | built | #134 | `7468a28` | `r-checkpoint-ch1-canon` |
 | R17 | Mobile playtest + polish | pending | — | — | — |
 | R18 | Release: verification + go-live | pending | — | — | — |
 

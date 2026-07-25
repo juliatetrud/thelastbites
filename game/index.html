@@ -2338,10 +2338,18 @@ const grandparentsObjects = [
     x: 280,
     sparkleY: 140,
     get node() {
-      // Once Pip has taken the radio the coat has nothing left to offer. The script gives
-      // this beat one node, so rather than invent an "empty coat" line the object simply
-      // stops being inspectable (drawObjectAura skips null-node objects).
-      if (hasHandRadio()) return null;
+      // #138 (CONTINUOUS MAP RULE): the coat must not go silent once the radio is taken —
+      // a player sent back here by the cart's clue needs to be told the radio is already
+      // on them. NEW WORDS, drafted for Julia's review.
+      if (hasHandRadio()) {
+        return {
+          id: 'gp-armchair-empty',
+          lines: [
+            { speaker: null, text: 'The coat pocket is empty. The radio is in his own.', italic: false },
+          ],
+          choices: null, onEnd: null,
+        };
+      }
       return {
         id: 'gp-armchair-inspect',
         lines: [
@@ -2475,6 +2483,28 @@ const darkCorridorObjects = [
         choices: null,
         onEnd() {
           chapterState.cartFound = true;
+          // #138: if Pip is already carrying the radio, he uses it here and now. The
+          // script's line above — "J. Henriksen… Dziadek's radio could call him." — was
+          // written for the old backtrack, so leaving it as the last word sent players
+          // back to a cabin that no longer has anything to offer. Chaining straight into
+          // the paging beat keeps BOTH of Julia's lines and removes the dead end without
+          // inventing a word.
+          if (hasHandRadio()) {
+            setTimeout(function () {
+              showDialogue({
+                id: 'gp-radio-page-choice',
+                lines: [
+                  { speaker: 'PIP', text: '“Calling J Henriksen. You cart is blocking the stairs.”', italic: false },
+                ],
+                choices: null,
+                onEnd() {
+                  chapterState.janitorPaged = true;
+                  chapterState.radioDiscovered = true;
+                  pip.abilities.talkThroughSpeakers = true;
+                },
+              });
+            }, 340);
+          }
         },
       };
     },
@@ -2586,7 +2616,16 @@ const kitchenObjects = [
     x:        400,
     sparkleY: FLOOR_Y - 50,
     get node() {
-      if (!chapterState.bamsemumsCollected) return null;
+      // #138 (CONTINUOUS MAP RULE): guidance instead of a silent no-op. NEW WORDS.
+      if (!chapterState.bamsemumsCollected) {
+        return {
+          id: 'kitchen-henrik-blocked',
+          lines: [
+            { speaker: null, text: 'He slides the plate a little closer. The treat on the counter first.', italic: false },
+          ],
+          choices: null, onEnd: null,
+        };
+      }
       if (chapterState.nokkenStoryHeard) {
         return {
           id:    'kitchen-henrik-repeat',
@@ -2665,7 +2704,16 @@ const observationDeckObjects = [
     x:        490,
     sparkleY: FLOOR_Y - 60,
     get node() {
-      if (!chapterState.nokkenGlimpsed) return null;
+      // #138 (CONTINUOUS MAP RULE): guidance instead of a silent no-op. NEW WORDS.
+      if (!chapterState.nokkenGlimpsed) {
+        return {
+          id: 'deck-henrik-blocked',
+          lines: [
+            { speaker: null, text: 'Henrik is watching the water. Whatever he is waiting for has not happened yet.', italic: false },
+          ],
+          choices: null, onEnd: null,
+        };
+      }
       if (chapterState.chapter1Complete) {
         return {
           id: 'deck-henrik-post',
@@ -2807,7 +2855,12 @@ const rooms = {
 /* Sprint 10.7: game starts in the hallway (neutral plane), not the cabin.
    Pip spawns at the leftmost playable x. */
 let currentRoom = 'hallway';
-let _kitchenGateHinted = false;   // G-S6: one-shot nudge at the kitchen's far edge (see edge-trigger chain)
+let _kitchenGateHinted = false;
+// #138 (CONTINUOUS MAP RULE): one-shot guidance flags for edge gates that were silent
+// no-ops. Transient by design — never in buildSaveObject(), so no schema change.
+let _cabinDoorHinted = false;
+let _hallwayStairsHinted = false;
+let _gpWallHinted = false;   // G-S6: one-shot nudge at the kitchen's far edge (see edge-trigger chain)
 
 /* Sprint 15: top-level game mode. 'gate' on cold load; 'title' after first keypress; 'gameplay' after Play. */
 let gameMode = 'gate';
@@ -3777,7 +3830,18 @@ function update(dt) {
 
     // Room edge triggers — walk into the edge to change rooms
     // Sprint 10.7: cabin exits via left wall (door at x=120) back to hallway at cabin door position (1180)
-    if (currentRoom === 'cabin' && pip.x <= rooms.cabin.pipMinX + 1 && cabinState.bedRevealed) {
+    if (currentRoom === 'cabin' && pip.x <= rooms.cabin.pipMinX + 1
+        && !cabinState.bedRevealed && !_cabinDoorHinted && !dialogue.active && !cinematic.active) {
+      // #138 (CONTINUOUS MAP RULE): the door was a silent no-op before the bed reveal.
+      _cabinDoorHinted = true;
+      showDialogue({
+        id: 'cabin-door-blocked',
+        lines: [
+          { speaker: null, text: 'The door is right there. But he cannot go yet — not with the bed behind him.', italic: false },
+        ],
+        choices: null, onEnd: null,
+      });
+    } else if (currentRoom === 'cabin' && pip.x <= rooms.cabin.pipMinX + 1 && cabinState.bedRevealed) {
       // Exit cabin through the door — return to hallway at the cabin door position.
       // G-S4: gated on cabinState.bedRevealed so the player cannot leave Cabin 646
       // before the bed-reveal beat completes. Without this gate, Pip phases in at x=20
@@ -3794,12 +3858,36 @@ function update(dt) {
       // Return to hallway at the grandparents' door position (now x=920)
       startTransition('hallway', 'fromRight', 904);
     } else if (currentRoom === 'grandparents' && pip.x >= rooms.grandparents.pipMaxX - 1
+               && cabinState.beatStage !== 'pre-mirror'
+               && !_gpWallHinted && !dialogue.active && !cinematic.active) {
+      // #138 (CONTINUOUS MAP RULE): the shared wall was a silent no-op after the
+      // phase-through discovery; the hallway door is the way round.
+      _gpWallHinted = true;
+      showDialogue({
+        id: 'gp-wall-blocked',
+        lines: [
+          { speaker: null, text: 'The wall is only a wall now. He will have to go round, through the hall.', italic: false },
+        ],
+        choices: null, onEnd: null,
+      });
+    } else if (currentRoom === 'grandparents' && pip.x >= rooms.grandparents.pipMaxX - 1
                && cabinState.beatStage === 'pre-mirror') {
       // Step 5 (canonical beat order): wall-phase DISCOVERY — shared wall into Cabin 646.
       // Gate: beatStage === 'pre-mirror' is set by the grandparents' cinematic onEnd (line ~1904).
       // Return visits use the hallway door (available once beatStage === 'post-bed').
       playPhaseSfx(); // Sprint 30: descending whoosh on phase-through discovery
       startTransition('cabin', 'fromLeft');
+    } else if (currentRoom === 'hallway' && pip.x >= 1312 && cabinState.beatStage !== 'post-bed'
+               && !_hallwayStairsHinted && !dialogue.active && !cinematic.active) {
+      // #138 (CONTINUOUS MAP RULE): the staircase was a silent no-op before the bed reveal.
+      _hallwayStairsHinted = true;
+      showDialogue({
+        id: 'hallway-stairs-blocked',
+        lines: [
+          { speaker: null, text: 'Stairs going down into the dark. Something in the cabin is not finished with him yet.', italic: false },
+        ],
+        choices: null, onEnd: null,
+      });
     } else if (currentRoom === 'hallway' && pip.x >= 1312 && cabinState.beatStage === 'post-bed') {
       // Sprint 20: hallway far-right staircase to dark corridor (available post-Beat-5)
       startTransition('darkCorridor', 'fromLeft');

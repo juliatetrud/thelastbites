@@ -2329,46 +2329,46 @@ const grandparentsObjects = [
     },
   },
 
-  /* ---- Armchair with Dziadek's coat (Sprint 37) ---- world-x ~280
-     Dziadek's wool coat is folded over the armchair. Between Dziadek (~160) and suitcase (~380).
-     Locked narration from beats.md: he must have meant to wear it. */
+  /* ---- Armchair with Dziadek's coat + the hand-held radio (Sprint Ch1-RADIO, #133) ----
+     world-x ~280. Dziadek's wool coat is folded over the armchair; the hand-held radio is
+     IN THE COAT POCKET, per Julia's playscript. This object hosts the whole radio chain that
+     used to live on the windowsill `gp-radio` object (now removed):
+       State 1 (pre-discovery, pre-cart): the discovery beat -> radioDiscovered + talkThroughSpeakers
+       State 2 (post-discovery, pre-cart): passive re-inspect
+       State 3 (cartFound): the paging beat -> janitorPaged (+ CP-2b ability backstop)
+     Dialogue is verbatim from the playscript; "(not dialogue)" staging notes are not lines. */
   {
     id: 'gp-armchair',
     x: 280,
     sparkleY: 140,
-    node: {
-      id: 'gp-armchair-inspect',
-      lines: [
-        { speaker: null, text: "Dziadek’s wool coat is folded over the armchair. He must have meant to wear it.", italic: false },
-        { speaker: null, text: 'He hasn’t moved since they were told.', italic: true },
-      ],
-      choices: null, onEnd: null,
-    },
-  },
-
-  /* ---- Dziadek's radio (Sprint 20) ---- windowsill, world-x ~200
-     Three dialogue states gated on chapterState flags.
-     State 1 (pre-discovery): radio discovery + talk-through-speakers unlock.
-     State 2 (post-discovery, pre-cart): brief passive re-inspect line.
-     State 3 (post-cart-found): three choices: Listen / Page / Not now. */
-  {
-    id: 'gp-radio',
-    x: 200,
-    sparkleY: 100,
     get breadcrumb() { return chapterState.cartFound; },   // elevated aura post-cart-found
     get node() {
-      // CP-2b: once the cart is found, offer the page on the FIRST inspect. The old
-      // order let the discovery node take priority even post-cart, forcing a second
-      // inspect to reach the page \u2014 the same two-inspect friction as the wire.
-      if (!chapterState.radioDiscovered && !chapterState.cartFound) {
-        // State 1: first inspection \u2014 discovery
+      // CP-2b (preserved): once the cart is found, the page is reachable on the FIRST
+      // inspect — the discovery state must not take priority post-cart.
+      if (chapterState.cartFound) {
         return {
-          id: 'gp-radio-discovery',
+          id: 'gp-radio-page-choice',
           lines: [
-            { speaker: null,  text: 'Pip\u2019s voice would come out of this radio.', italic: false },
-            { speaker: 'PIP', text: '\u201c\u2026hello?\u201d', italic: false },
-            { speaker: null,  text: 'His voice answers from the speaker. Tinny. Small. But real.', italic: false },
-            { speaker: 'PIP', text: '\u201cOh. Oh, this is good.\u201d', italic: false },
+            { speaker: 'PIP', text: '“Calling J Henriksen. You cart is blocking the stairs.”', italic: false },
+          ],
+          choices: null,
+          onEnd() {
+            chapterState.janitorPaged = true;
+            // CP-2b backstop: grant the radio ability here too, so paging works even if the
+            // player reached the cart before ever discovering the radio in the coat.
+            chapterState.radioDiscovered = true;
+            pip.abilities.talkThroughSpeakers = true;
+          },
+        };
+      }
+      if (!chapterState.radioDiscovered) {
+        return {
+          id: 'gp-armchair-inspect',
+          lines: [
+            { speaker: null, text: 'Dziadek’s wool coat is folded over the armchair with a hand held radio in the pocket.', italic: false },
+            { speaker: null, text: 'I wonder if I could reach them through this radio.', italic: true },
+            { speaker: 'PIP', text: '“Hello? Hello?”', italic: false },
+            { speaker: null, text: 'Static crackles in the room, muffling Pip’s small voice. The radio hums.', italic: false },
           ],
           choices: null,
           onEnd() {
@@ -2377,68 +2377,12 @@ const grandparentsObjects = [
           },
         };
       }
-      if (!chapterState.cartFound) {
-        // State 2: post-discovery, pre-cart \u2014 passive re-inspect
-        return {
-          id: 'gp-radio-passive',
-          lines: [
-            { speaker: null, text: 'The radio hums quietly.', italic: false },
-          ],
-          choices: null, onEnd: null,
-        };
-      }
-      // State 3: post-cart-found \u2014 page-choice node
       return {
-        id: 'gp-radio-page-choice',
+        id: 'gp-armchair-passive',
         lines: [
-          { speaker: null, text: 'Pip\u2019s voice would come out of this radio.', italic: false },
+          { speaker: null, text: 'The radio hums quietly in the coat pocket.', italic: false },
         ],
-        choices: [
-          {
-            id: 'radio-listen',
-            text: 'Listen.',
-            onSelect() {
-              showDialogue({
-                id: 'gp-radio-discovery-replay',
-                lines: [
-                  { speaker: null,  text: 'Pip\u2019s voice would come out of this radio.', italic: false },
-                  { speaker: 'PIP', text: '\u201c\u2026hello?\u201d', italic: false },
-                  { speaker: null,  text: 'His voice answers from the speaker. Tinny. Small. But real.', italic: false },
-                  { speaker: 'PIP', text: '\u201cOh. Oh, this is good.\u201d', italic: false },
-                ],
-                choices: null, onEnd: null,
-              });
-            },
-          },
-          {
-            id: 'radio-page',
-            text: 'Page someone over the intercom.',
-            onSelect() {
-              showDialogue({
-                id: 'gp-radio-paging',
-                lines: [
-                  { speaker: null,  text: 'Pip thinks of the name on the cart. He clears his throat.', italic: false },
-                  { speaker: 'PIP', text: '\u201cAttention. J. Henriksen to the dark corridor. Please.\u201d', italic: false },
-                  { speaker: null,  text: 'His voice carries through the ship.', italic: false },
-                ],
-                choices: null,
-                onEnd() {
-                  chapterState.janitorPaged = true;
-                  // CP-2b: grant the radio ability here too, so paging works even if
-                  // the player reached the cart before ever discovering the radio.
-                  chapterState.radioDiscovered = true;
-                  pip.abilities.talkThroughSpeakers = true;
-                },
-              });
-            },
-          },
-          {
-            id: 'radio-not-now',
-            text: 'Not now.',
-            onSelect() { closeDialogue(); },
-          },
-        ],
-        onEnd: null,
+        choices: null, onEnd: null,
       };
     },
   },

@@ -2613,7 +2613,7 @@ const NOKKEN_STORY_LINES = [
   { speaker: 'HENRIK', text: '“It is called the Nøkken.”', italic: false },
   { speaker: 'HENRIK', text: '“My grandmother said: if you hear violins where there should be no violins, you cover your ears. You walk the other way. You do not look.”', italic: false },
   { speaker: null, text: 'Henrik pauses. He looks at the empty plate.', italic: false },
-  { speaker: 'HENRIK', text: '“I did not always listen to her.”', italic: false },
+  { speaker: 'HENRIK', text: '“I did not always listen to her.”', italic: false, pauseAfter: 1.5 },
   { speaker: null, text: 'He says nothing else about that.', italic: false },
   { speaker: 'HENRIK', text: '“You will see strange things, Pip. Some of them are stories. Some of them are real. The dead see what the living cannot, and not all of it is gentle.”', italic: false },
   { speaker: 'HENRIK', text: '“Listen carefully. And if you hear violins where there should be no violins — walk the other way.”', italic: false },
@@ -7910,19 +7910,6 @@ const doctorExit = {
    drawCinematicScene(name)   — dispatches to per-scene draw function.
    ================================================================ */
 
-// Grandparents cinematic \u2014 trimmed 2026-05-16 for demo density. Full 12-line script:
-// { speaker: null,  text: 'Babcia is on the bed with her head in her hands. She is making a sound Pip has never heard her make. She is sobbing.', italic: false },
-// { speaker: 'PIP', text: '\u201cBabcia, what\u2019s wrong?\u201d', italic: false },
-// { speaker: null,  text: 'Dziadek stands at the window. His shoulders are shaking. He says nothing. Tears stream down his face.', italic: false },
-// { speaker: null,  text: 'On the nightstand sits a photograph. It shows Pip on his sixth birthday, holding a pierogi as big as his face.', italic: false },
-// { speaker: 'PIP', text: '\u201cBabcia? \u2026 Dziadek?\u201d', italic: false },
-// { speaker: null,  text: 'They do not look up.', italic: false },
-// { speaker: 'PIP', text: '\u201cHello! I\u2019m here. I\u2019m right here. What\u2019s wrong?\u201d', italic: false },
-// { speaker: null,  text: 'Pip\u2019s stomach turns.', italic: false },
-// { speaker: null,  text: 'They continue to cry.', italic: false },
-// { speaker: null,  text: 'Dziadek turns. For a moment, just a moment, he looks toward the doorway. He frowns. He shakes his head and turns back to the window.', italic: false },
-// { speaker: 'PIP', text: '\u201cDziadek\u2026\u201d', italic: false },
-// { speaker: null,  text: 'Pip tries. But Dziadek does not hear him.', italic: false },
 const CINEMATIC_SCRIPTS = {
   grandparents: [
     { speaker: null,  text: 'Dziadek wipes a tear from his cheek as he gazes at the moon from the big windows.', italic: false },

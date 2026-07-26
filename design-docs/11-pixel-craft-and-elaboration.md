@@ -4,6 +4,10 @@
 
 ---
 
+> **See also `13-pixel-art-rules.md`** — the mechanical craft floor (pixel density, grid
+> snapping, palette discipline, one-character-one-construction). This doc makes art *rich*;
+> 13 keeps it *coherent*.
+
 ## What this doc is for
 
 The other art docs answer *what* (`03-art-and-aesthetic.md` — look, palette, registers) and *how to rig a sprite* (`07-sprite-and-animation-guide.md`). This doc answers a narrower question that came up when the scenery, ship, and objects started reading as flatter and sparser than the project deserves:

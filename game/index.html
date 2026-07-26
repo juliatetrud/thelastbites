@@ -7174,6 +7174,31 @@ const C = {
   jMouth:       '#3a2818',
   jTagPlate:    '#a08664',
   jTagShine:    '#c8aa80',
+  /* #144 — room set-dressing. Warm props live in the kitchen (the chapter's warm room);
+     the corridor/hallway props stay cool per the bible's cool-world rule. */
+  kRail:        '#4a3a20', kCopper:    '#a07840', kCopperHi: '#c89858', kCopperRim: '#7a5a30',
+  herb:         '#5a7040', herbDark:   '#42542e', twine:     '#b49a68',
+  shelfWood:    '#4a3418', shelfHi:    '#6a4c28', shelfDark: '#38260f',
+  jarAmber:     '#8a6428', jarGreen:   '#3e5a3a', jarClear:  '#5a6a70',
+  jarLid:       '#6a5230', jarShine:   'rgba(255,220,160,0.30)',
+  tin:          '#6a5a48', tinHi:      '#8a7860',
+  spiceA:       '#7a4a24', spiceB:     '#5a4a30',
+  chalkboard:   '#22281f', chalk:      'rgba(220,225,205,0.55)', chalkHi: 'rgba(230,235,215,0.8)',
+  crate:        '#5a4022', crateHi:    '#7a5a32', sack: '#8a7a58', sackHi: '#a89878',
+  cloth:        '#8a94a0', clothHi:    'rgba(220,230,240,0.45)',
+  potBase:      '#8a4a2c', potRim:     '#a05a34', potHi: 'rgba(255,200,150,0.25)', soil: '#3a2a1c',
+  leaf:         '#4e7a48', leafDark:   '#3a5c38', leafStem: '#42623c',
+  frameOuter:   '#241a10', frameGild:  '#8a6a30', frameMat: '#cdbfa0',
+  framePlate:   '#2c3a4e', frameCorner:'#b08840', glassHi: 'rgba(220,235,255,0.10)',
+  printSky:     '#4a6a8e', printSea:   '#24405e', printSail: '#dce4ee',
+  ringRed:      '#a8384c', ringWhite:  '#e8e4d8', wallDeep: '#16203a',
+  vase:         '#4a6a78', vaseHi:     '#6a8a98', brassBell: '#a08040',
+  runner:       '#5a2430', runnerEdge: '#7a3440', runnerMotif: '#8a6a40',
+  pipe:         '#3a4458', pipeHi:     '#4e5a70', pipeJoint: '#2c3648', valve: '#7a6a48',
+  drip:         'rgba(170,210,255,0.55)', dripPool: 'rgba(140,180,230,0.30)',
+  crateCool:    '#33405a', crateCoolHi:'#46566f', rope: '#6a5a3c',
+  cork:         '#6a5230', paper:      '#d8d0bc', paperInk: 'rgba(60,50,40,0.55)',
+  cobweb:       'rgba(200,215,235,0.18)',
   hBeard:       '#aaaaa0',
   hSkin:        '#d0b898',
   hPipe:        '#3a2018',
@@ -9498,6 +9523,8 @@ function drawHallway(camX, now) {
   if (trolleySX > -30 && trolleySX < W + 30) {
     drawLuggageTrolley(trolleySX, FLOOR_Y);
   }
+
+  drawHallwayDressing(camX, now);   // #144 set dressing
 }
 
 /* ================================================================
@@ -10671,7 +10698,9 @@ function drawDarkCorridor(camX, now) {
     // Spark particles (during sconce puzzle)
     drawSconceSparks(camX);
 
-    // ---- Atmospheric lights + hazards drawn ON TOP of overlay — always visible ----
+    drawCorridorDressing(camX, now, false);   // #144 set dressing (dim in the dark state)
+
+  // ---- Atmospheric lights + hazards drawn ON TOP of overlay — always visible ----
     // Sprint 46: small service portholes + candles so the player can always orient.
 
     // Service portholes (small, reveal Bergen scenery — always visible as ambient glow)
@@ -10737,6 +10766,7 @@ function drawDarkCorridor(camX, now) {
 
   } else {
     // ---- LIT STATE (or lights-on transition) ----
+  drawCorridorDressing(camX, now, true);   // #144 set dressing (full in the lit state)
 
     // Transition progress 0→1 while lightsOnSequence runs
     let litFrac = darkCorridor.lit ? 1 : (lightsOnSequence.elapsed / 1.0);
@@ -11861,6 +11891,295 @@ function addKitchenRecipe() {
    Contrast with the cool dark corridor above.
    ================================================================ */
 
+
+/* ================================================================
+   ROOM SET-DRESSING  (#144)
+   Knick-knacks, plants, hanging things, wall art. Drawn from the
+   environment gallery's design language: hard rects for solid objects
+   (rule 9), integer coords (rule 2), palette tokens (rule 4), warmth
+   used sparingly and only where a light already justifies it.
+   Each helper takes (camX, now) and culls off-screen by world-x.
+   ================================================================ */
+
+/* Small helper: world-x -> screen-x, rounded, with a cull test. */
+function _wx(worldX, camX) { return Math.round(worldX - camX); }
+function _onScreen(sx, pad) { return sx > -(pad || 40) && sx < W + (pad || 40); }
+
+/* A hanging copper pot — the kitchen gallery cell's signature detail. */
+function _copperPot(sx, y, r, now, phase) {
+  const sway = Math.round(Math.sin(now / 1400 + phase) * 1);
+  const x = sx + sway;
+  rect(ctx, x - 1, y - 9, 2, 9, C.kRail);              // hook
+  ctx.fillStyle = C.kCopper;
+  ctx.beginPath(); ctx.ellipse(x, y + r * 0.6, r, r * 0.85, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = C.kCopperHi;
+  ctx.beginPath(); ctx.ellipse(x - r * 0.3, y + r * 0.35, r * 0.42, r * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+  rect(ctx, x - r, y, r * 2, 2, C.kCopperRim);         // rim
+  rect(ctx, x + r - 1, y + 2, 5, 2, C.kCopperRim);     // handle
+}
+
+/* A potted plant. Warm terracotta pot, cool-leaning foliage so it sits in the world. */
+function _plant(sx, floorY, scale, now, phase) {
+  const s = scale, sway = Math.sin(now / 1800 + phase) * 0.6;
+  rect(ctx, sx - 7 * s, floorY - 9 * s, 14 * s, 9 * s, C.potBase);
+  rect(ctx, sx - 8 * s, floorY - 11 * s, 16 * s, 3 * s, C.potRim);
+  rect(ctx, sx - 7 * s, floorY - 9 * s, 14 * s, 1, C.potHi);
+  rect(ctx, sx - 5 * s, floorY - 12 * s, 10 * s, 2 * s, C.soil);
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + (i - 2) * 0.45 + sway * 0.06;
+    const len = (11 + (i % 2) * 5) * s;
+    const tipX = Math.round(sx + Math.cos(a) * len);
+    const tipY = Math.round(floorY - 12 * s + Math.sin(a) * len);
+    ctx.strokeStyle = C.leafStem; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(sx, floorY - 12 * s); ctx.lineTo(tipX, tipY); ctx.stroke();
+    ctx.fillStyle = (i % 2) ? C.leaf : C.leafDark;
+    ctx.beginPath(); ctx.ellipse(tipX, tipY, 3.4 * s, 2.2 * s, a, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+/* A framed picture on a wall — mat, frame, corner detail, glass highlight (STYLE.md §8). */
+function _framedArt(sx, y, w, h, plateFn) {
+  rect(ctx, sx - w / 2 - 2, y - 2, w + 4, h + 4, C.frameOuter);
+  rect(ctx, sx - w / 2 - 1, y - 1, w + 2, h + 2, C.frameGild);
+  rect(ctx, sx - w / 2, y, w, h, C.frameMat);
+  rect(ctx, sx - w / 2 + 3, y + 3, w - 6, h - 6, C.framePlate);
+  if (plateFn) plateFn(sx, y + 3, w - 6, h - 6);
+  ctx.fillStyle = C.glassHi;                            // glass sheen
+  ctx.beginPath(); ctx.moveTo(sx - w / 2 + 3, y + h - 3);
+  ctx.lineTo(sx - w / 2 + 3 + (w - 6) * 0.5, y + 3); ctx.lineTo(sx - w / 2 + 3 + (w - 6) * 0.22, y + 3);
+  ctx.closePath(); ctx.fill();
+  [[-w / 2 - 1, -1], [w / 2 - 1, -1], [-w / 2 - 1, h - 1], [w / 2 - 1, h - 1]]
+    .forEach(([ox, oy]) => rect(ctx, sx + ox, y + oy, 2, 2, C.frameCorner));
+}
+
+/* KITCHEN dressing — hung pots, shelf of jars, herbs, spice rack, crates, chalkboard. */
+function drawKitchenDressing(camX, now) {
+  const railY = 44;
+
+  // Pot rail over the counter, with the gallery's copper pots
+  const railSX = _wx(300, camX);
+  if (_onScreen(railSX, 220)) {
+    rect(ctx, railSX, railY, 260, 2, C.kRail);
+    rect(ctx, railSX, railY - 4, 3, 6, C.kRail);
+    rect(ctx, railSX + 257, railY - 4, 3, 6, C.kRail);
+    [[36, 7], [78, 5], [120, 8], [166, 6], [214, 5]].forEach(([ox, r], i) =>
+      _copperPot(railSX + ox, railY + 4, r, now, i * 1.3));
+  }
+
+  // Hanging herb bundles beside the pots
+  [[268, 0], [612, 1.7]].forEach(([wx, ph]) => {
+    const sx = _wx(wx, camX);
+    if (!_onScreen(sx)) return;
+    const sway = Math.round(Math.sin(now / 1600 + ph) * 1);
+    rect(ctx, sx + sway, railY, 1, 6, C.kRail);
+    for (let i = 0; i < 7; i++) {
+      const lx = sx + sway - 4 + i, ly = railY + 6 + (i % 3);
+      rect(ctx, lx, ly, 1, 9 + (i % 4) * 2, i % 2 ? C.herb : C.herbDark);
+    }
+    rect(ctx, sx + sway - 4, railY + 6, 9, 2, C.twine);
+  });
+
+  // Open shelf of jars and knick-knacks, high on the wall
+  const shSX = _wx(150, camX);
+  if (_onScreen(shSX, 140)) {
+    rect(ctx, shSX, 62, 120, 3, C.shelfWood);
+    rect(ctx, shSX, 62, 120, 1, C.shelfHi);
+    rect(ctx, shSX + 4, 65, 3, 5, C.shelfDark);
+    rect(ctx, shSX + 113, 65, 3, 5, C.shelfDark);
+    const jars = [[10, 10, 14, C.jarAmber], [26, 8, 11, C.jarGreen], [40, 11, 15, C.jarAmber],
+                  [58, 7, 10, C.jarClear], [72, 9, 13, C.jarGreen], [90, 12, 16, C.jarAmber]];
+    jars.forEach(([ox, w, h, col]) => {
+      rect(ctx, shSX + ox, 62 - h, w, h, col);
+      rect(ctx, shSX + ox, 62 - h, w, 1, C.jarLid);
+      rect(ctx, shSX + ox + 1, 62 - h + 2, 2, h - 4, C.jarShine);
+    });
+    // a small tin and a stack of bowls
+    rect(ctx, shSX + 104, 52, 9, 10, C.tin);
+    rect(ctx, shSX + 104, 52, 9, 2, C.tinHi);
+  }
+
+  // Spice rack — small bottles, low warm glints
+  const spSX = _wx(660, camX);
+  if (_onScreen(spSX, 80)) {
+    rect(ctx, spSX, 74, 58, 2, C.shelfWood);
+    for (let i = 0; i < 7; i++) {
+      const bx = spSX + 4 + i * 8, bh = 9 + (i % 3) * 2;
+      rect(ctx, bx, 74 - bh, 5, bh, i % 2 ? C.spiceA : C.spiceB);
+      rect(ctx, bx + 1, 74 - bh, 3, 1, C.jarLid);
+    }
+  }
+
+  // Chalkboard with the day's list
+  const cbSX = _wx(212, camX);
+  if (_onScreen(cbSX, 60)) {
+    rect(ctx, cbSX - 2, 88, 52, 38, C.frameOuter);
+    rect(ctx, cbSX, 90, 48, 34, C.chalkboard);
+    [[4, 6, 28], [4, 12, 34], [4, 18, 22], [4, 24, 30]].forEach(([ox, oy, w]) =>
+      rect(ctx, cbSX + ox, 90 + oy, w, 1, C.chalk));
+    rect(ctx, cbSX + 4, 94, 18, 2, C.chalkHi);
+  }
+
+  // Crates and a sack stacked against the wall
+  const crSX = _wx(792, camX);
+  if (_onScreen(crSX, 70)) {
+    rect(ctx, crSX, FLOOR_Y - 26, 30, 26, C.crate);
+    rect(ctx, crSX, FLOOR_Y - 26, 30, 2, C.crateHi);
+    rect(ctx, crSX, FLOOR_Y - 14, 30, 2, C.crateHi);
+    rect(ctx, crSX + 4, FLOOR_Y - 44, 24, 18, C.crate);
+    rect(ctx, crSX + 4, FLOOR_Y - 44, 24, 2, C.crateHi);
+    ctx.fillStyle = C.sack;
+    ctx.beginPath(); ctx.ellipse(crSX + 44, FLOOR_Y - 8, 12, 9, 0, 0, Math.PI * 2); ctx.fill();
+    rect(ctx, crSX + 39, FLOOR_Y - 17, 10, 6, C.sack);
+    rect(ctx, crSX + 39, FLOOR_Y - 17, 10, 1, C.sackHi);
+  }
+
+  // A plant on the counter end, and one on the floor by the racks
+  const p1 = _wx(238, camX); if (_onScreen(p1)) _plant(p1, 148, 1, now, 0.4);
+  const p2 = _wx(884, camX); if (_onScreen(p2)) _plant(p2, FLOOR_Y, 1.3, now, 2.2);
+
+  // Dishcloth over the counter edge
+  const dcSX = _wx(596, camX);
+  if (_onScreen(dcSX)) {
+    rect(ctx, dcSX, 148, 14, 12, C.cloth);
+    rect(ctx, dcSX, 148, 14, 2, C.clothHi);
+    rect(ctx, dcSX + 3, 152, 8, 1, C.clothHi);
+  }
+}
+
+/* HALLWAY dressing — framed prints, a life-ring, a runner, a plant, brass fittings. */
+function drawHallwayDressing(camX, now) {
+  // Framed prints along the corridor wall
+  [[300, 34, 26], [520, 30, 22], [1000, 38, 28]].forEach(([wx, w, h], i) => {
+    const sx = _wx(wx, camX);
+    if (!_onScreen(sx, 60)) return;
+    _framedArt(sx, 46, w, h, (px2, py, pw, ph) => {
+      // a small seascape: horizon + a sail
+      ctx.fillStyle = C.printSky; ctx.fillRect(px2 - pw / 2, py, pw, ph * 0.55);
+      ctx.fillStyle = C.printSea; ctx.fillRect(px2 - pw / 2, py + ph * 0.55, pw, ph * 0.45);
+      ctx.fillStyle = C.printSail;
+      ctx.beginPath(); ctx.moveTo(px2 + (i - 1) * 3, py + ph * 0.28);
+      ctx.lineTo(px2 + (i - 1) * 3 + 4, py + ph * 0.58);
+      ctx.lineTo(px2 + (i - 1) * 3 - 4, py + ph * 0.58); ctx.closePath(); ctx.fill();
+    });
+  });
+
+  // Life-ring on the wall
+  const lrSX = _wx(720, camX);
+  if (_onScreen(lrSX)) {
+    ctx.fillStyle = C.ringRed;
+    ctx.beginPath(); ctx.arc(lrSX, 52, 13, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = C.ringWhite;
+    for (let a = 0; a < 4; a++) {
+      const ang = a * Math.PI / 2 + 0.4;
+      ctx.beginPath();
+      ctx.arc(lrSX, 52, 13, ang, ang + 0.55); ctx.arc(lrSX, 52, 8, ang + 0.55, ang, true);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle = C.wallDeep;
+    ctx.beginPath(); ctx.arc(lrSX, 52, 8, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Console table with a vase and a brass bell
+  const ctSX = _wx(1120, camX);
+  if (_onScreen(ctSX, 60)) {
+    rect(ctx, ctSX - 22, FLOOR_Y - 30, 44, 4, C.shelfWood);
+    rect(ctx, ctSX - 22, FLOOR_Y - 30, 44, 1, C.shelfHi);
+    rect(ctx, ctSX - 19, FLOOR_Y - 26, 3, 26, C.shelfDark);
+    rect(ctx, ctSX + 16, FLOOR_Y - 26, 3, 26, C.shelfDark);
+    rect(ctx, ctSX - 10, FLOOR_Y - 42, 9, 12, C.vase);
+    rect(ctx, ctSX - 10, FLOOR_Y - 42, 9, 2, C.vaseHi);
+    ctx.fillStyle = C.brassBell;
+    ctx.beginPath(); ctx.moveTo(ctSX + 8, FLOOR_Y - 30); ctx.lineTo(ctSX + 14, FLOOR_Y - 30);
+    ctx.lineTo(ctSX + 12, FLOOR_Y - 39); ctx.lineTo(ctSX + 10, FLOOR_Y - 39); ctx.closePath(); ctx.fill();
+  }
+
+  // A potted palm near the doors
+  const hpSX = _wx(860, camX); if (_onScreen(hpSX)) _plant(hpSX, FLOOR_Y, 1.5, now, 1.1);
+
+  // Runner rug down the middle of the corridor floor
+  const rSX = _wx(240, camX);
+  if (rSX < W + 40 && rSX + 900 > -40) {
+    rect(ctx, rSX, FLOOR_Y + 4, 900, 22, C.runner);
+    rect(ctx, rSX, FLOOR_Y + 4, 900, 2, C.runnerEdge);
+    rect(ctx, rSX, FLOOR_Y + 24, 900, 2, C.runnerEdge);
+    for (let x = 0; x < 900; x += 40) rect(ctx, rSX + x + 8, FLOOR_Y + 12, 16, 2, C.runnerMotif);
+  }
+}
+
+/* DARK CORRIDOR dressing — pipework, valves, crates, a notice board, cobweb. */
+function drawCorridorDressing(camX, now, lit) {
+  const a = lit ? 1 : 0.42;
+  ctx.save(); ctx.globalAlpha = a;
+
+  // Overhead pipe run with joints and a slow drip
+  const pSX = _wx(0, camX);
+  rect(ctx, pSX, 30, ROOM_W, 5, C.pipe);
+  rect(ctx, pSX, 30, ROOM_W, 1, C.pipeHi);
+  for (let x = 60; x < ROOM_W; x += 150) {
+    const jx = _wx(x, camX);
+    if (!_onScreen(jx)) continue;
+    rect(ctx, jx - 3, 28, 7, 9, C.pipeJoint);
+    rect(ctx, jx - 3, 28, 7, 1, C.pipeHi);
+  }
+  // valve wheel
+  const vSX = _wx(300, camX);
+  if (_onScreen(vSX)) {
+    rect(ctx, vSX - 1, 35, 3, 8, C.pipeJoint);
+    ctx.strokeStyle = C.valve; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(vSX, 46, 6, 0, Math.PI * 2); ctx.stroke();
+    rect(ctx, vSX - 7, 45, 14, 2, C.valve);
+  }
+  // drip
+  const dSX = _wx(470, camX);
+  if (_onScreen(dSX)) {
+    const dt2 = (now / 1000) % 2.4;
+    if (dt2 < 1.6) rect(ctx, dSX, Math.round(36 + dt2 * 88), 1, 3, C.drip);
+    else rect(ctx, dSX - 3, FLOOR_Y - 1, 7, 1, C.dripPool);
+  }
+
+  // Stacked crates and a coil of rope
+  const cSX = _wx(620, camX);
+  if (_onScreen(cSX, 60)) {
+    rect(ctx, cSX, FLOOR_Y - 24, 28, 24, C.crateCool);
+    rect(ctx, cSX, FLOOR_Y - 24, 28, 2, C.crateCoolHi);
+    rect(ctx, cSX, FLOOR_Y - 13, 28, 2, C.crateCoolHi);
+    rect(ctx, cSX + 30, FLOOR_Y - 16, 20, 16, C.crateCool);
+    rect(ctx, cSX + 30, FLOOR_Y - 16, 20, 2, C.crateCoolHi);
+  }
+  const ropeSX = _wx(180, camX);
+  if (_onScreen(ropeSX)) {
+    ctx.strokeStyle = C.rope; ctx.lineWidth = 2;
+    for (let r = 0; r < 3; r++) {
+      ctx.beginPath(); ctx.ellipse(ropeSX, FLOOR_Y - 4 - r * 2, 11 - r * 2, 4 - r, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+
+  // Notice board with curled papers
+  const nSX = _wx(730, camX);
+  if (_onScreen(nSX, 50)) {
+    rect(ctx, nSX - 1, 70, 42, 30, C.frameOuter);
+    rect(ctx, nSX, 71, 40, 28, C.cork);
+    [[3, 3, 14, 10], [20, 5, 15, 12], [6, 16, 12, 9]].forEach(([ox, oy, w, h]) => {
+      rect(ctx, nSX + ox, 71 + oy, w, h, C.paper);
+      rect(ctx, nSX + ox + 2, 71 + oy + 2, w - 4, 1, C.paperInk);
+      rect(ctx, nSX + ox + 2, 71 + oy + 5, w - 6, 1, C.paperInk);
+    });
+  }
+
+  // Cobweb in the far corner
+  const wSX = _wx(900, camX);
+  if (_onScreen(wSX)) {
+    ctx.strokeStyle = C.cobweb; ctx.lineWidth = 1;
+    for (let i = 1; i <= 3; i++) {
+      ctx.beginPath(); ctx.moveTo(wSX + 30, 22); ctx.lineTo(wSX + 30 - i * 9, 22 + i * 8); ctx.stroke();
+    }
+    for (let i = 1; i <= 3; i++) {
+      ctx.beginPath(); ctx.arc(wSX + 30, 22, i * 9, Math.PI * 0.52, Math.PI * 0.98); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 function drawKitchen(camX, now) {
   // ---- UI zone base fill ----
   ctx.fillStyle = '#0c0804';
@@ -11914,6 +12233,8 @@ function drawKitchen(camX, now) {
       rivetColor:  'rgba(140,90,35,0.28)',
     });
   }
+
+  drawKitchenDressing(camX, now);   // #144 set dressing
 
   // ---- Stairwell opening (world-x 0–140) — dark gap to corridor above ----
   const stairLeft = Math.round(0 - camX);

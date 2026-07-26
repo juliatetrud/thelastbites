@@ -1673,7 +1673,516 @@ function drawCh8BrooklynCell(ctx, t) {
    DRAW FUNCTION REGISTRY — maps asset.id to drawFn(ctx, t)
    Only Ch1 cells are drawn; all others remain placeholders.
    ============================================================= */
+
+/* =============================================================
+   #142 — PROP CELLS designed for Ch2–Ch8 (previously placeholders).
+   Same conventions as the Ch1 props above: 200×113 cell, FY=100 floor,
+   _cellBg / _r / P / _lbl. Warm-amber for echo/memory objects, cool
+   blue-grey for ship interiors, per art/STYLE.md.
+   ============================================================= */
+
+function drawLeidaPanCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#241a10', sky2:'#3a2a18', sky3:'#2a1e12', floor:'#241808'});
+  const cx=96, cy=64;
+  ctx.fillStyle='rgba(255,190,90,0.10)';
+  ctx.beginPath(); ctx.ellipse(cx,cy+4,58,20,0,0,Math.PI*2); ctx.fill();
+  // pan body (cast iron, elliptical)
+  ctx.fillStyle='#1a1614'; ctx.beginPath(); ctx.ellipse(cx,cy,42,15,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#2a2422'; ctx.beginPath(); ctx.ellipse(cx,cy-2,38,12,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#3a3230'; ctx.beginPath(); ctx.ellipse(cx,cy-3,33,9,0,0,Math.PI*2); ctx.fill();
+  // seasoned sheen
+  ctx.fillStyle='rgba(220,170,90,0.16)'; ctx.beginPath(); ctx.ellipse(cx-9,cy-5,15,4,-0.2,0,Math.PI*2); ctx.fill();
+  // handle
+  _r(ctx,cx+40,cy-4,32,6,'#1a1614'); _r(ctx,cx+40,cy-4,32,2,'#332b28');
+  _r(ctx,cx+68,cy-6,7,10,'#1a1614');
+  // kotletid browning in the pan
+  [[-16,0],[0,2],[15,-1]].forEach(([ox,oy],i)=>{
+    ctx.fillStyle='#7a4420'; ctx.beginPath(); ctx.ellipse(cx+ox,cy-3+oy,9,4,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#a06a34'; ctx.beginPath(); ctx.ellipse(cx+ox,cy-4+oy,7,3,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,210,140,0.35)'; ctx.beginPath(); ctx.ellipse(cx+ox-2,cy-5+oy,3,1.2,0,0,Math.PI*2); ctx.fill();
+  });
+  // butter steam
+  const sp=(t*0.5)%1;
+  ctx.fillStyle=`rgba(240,220,180,${(0.34-sp*0.3).toFixed(2)})`;
+  _r(ctx,cx-2,cy-14-sp*13,2,2,`rgba(240,220,180,${(0.34-sp*0.3).toFixed(2)})`);
+  _r(ctx,cx+9,cy-11-sp*10,2,2,`rgba(240,220,180,${(0.24-sp*0.2).toFixed(2)})`);
+  _lbl(ctx,"Leida's Cast-Iron Pan");
+}
+
+function drawSincerityDoorsCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0c1a16', sky2:'#123028', sky3:'#0e2018', floor:'#0a1a14'});
+  // three doors, the middle one breathing amber (the sincere one)
+  const xs=[26,80,134];
+  xs.forEach((x,i)=>{
+    _r(ctx,x,32,40,68,'#0a1410');
+    _r(ctx,x,32,40,2,'#2a4a3a');
+    _r(ctx,x+2,34,36,64,'#14261e');
+    // panel lines
+    _r(ctx,x+6,40,28,22,'#0e1c16'); _r(ctx,x+6,68,28,24,'#0e1c16');
+    // handle
+    ctx.fillStyle='#8a7038'; ctx.beginPath(); ctx.arc(x+33,66,2,0,Math.PI*2); ctx.fill();
+    // amber breath — each door pulses out of phase; the honest one glows strongest
+    const pulse=0.5+0.5*Math.sin(t*1.1 + i*2.1);
+    const strength=(i===1?0.42:0.16)*pulse;
+    ctx.fillStyle=`rgba(255,200,104,${strength.toFixed(3)})`;
+    _r(ctx,x+2,34,36,64,`rgba(255,200,104,${strength.toFixed(3)})`);
+    // keyhole light
+    ctx.fillStyle=`rgba(255,220,150,${(strength*1.6).toFixed(3)})`;
+    ctx.beginPath(); ctx.arc(x+33,66,1.2,0,Math.PI*2); ctx.fill();
+  });
+  _lbl(ctx,"Haldjas's Three Doors");
+}
+
+function drawLeidaAltarCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a1408', sky2:'#2e2412', sky3:'#20180c', floor:'#1a1206'});
+  // low stone shelf
+  _r(ctx,40,74,120,10,'#3a3228'); _r(ctx,40,74,120,2,'#544838');
+  _r(ctx,50,84,12,16,'#2a241c'); _r(ctx,138,84,12,16,'#2a241c');
+  // linen cloth
+  _r(ctx,46,70,108,6,'#c8bca0'); _r(ctx,46,70,108,2,'#e0d6bc');
+  // bowl of milk
+  ctx.fillStyle='#2a2420'; ctx.beginPath(); ctx.ellipse(72,68,13,5,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e8e4d4'; ctx.beginPath(); ctx.ellipse(72,67,10,3.4,0,0,Math.PI*2); ctx.fill();
+  // bread
+  ctx.fillStyle='#9a6a34'; ctx.beginPath(); ctx.ellipse(100,66,12,6,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#c08a4a'; ctx.beginPath(); ctx.ellipse(100,64,10,4.4,0,0,Math.PI*2); ctx.fill();
+  _r(ctx,95,62,10,1,'rgba(255,220,160,0.4)');
+  // candle, flame flickering
+  _r(ctx,126,54,5,16,'#e0d8c0'); _r(ctx,126,54,5,2,'#f0ead8');
+  const fl=Math.sin(t*7)*0.8;
+  ctx.fillStyle='rgba(255,190,90,0.85)';
+  ctx.beginPath(); ctx.ellipse(128.5,50+fl,2.2,4,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,240,190,0.9)';
+  ctx.beginPath(); ctx.ellipse(128.5,51+fl,1,2,0,0,Math.PI*2); ctx.fill();
+  const glow=ctx.createRadialGradient(128,52,0,128,52,34);
+  glow.addColorStop(0,'rgba(255,190,90,0.24)'); glow.addColorStop(1,'rgba(255,190,90,0)');
+  ctx.fillStyle=glow; ctx.fillRect(94,18,68,68);
+  _lbl(ctx,"Leida's Offering Altar");
+}
+
+function drawSandyHoodieCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#141a24', sky2:'#20293a', sky3:'#161d28', floor:'#121824'});
+  // hoodie draped over a chair back
+  _r(ctx,58,44,84,52,'#2a3550');
+  _r(ctx,58,44,84,3,'#3d4c70');
+  // hood
+  ctx.fillStyle='#222c44'; ctx.beginPath(); ctx.ellipse(100,46,26,13,0,Math.PI,0); ctx.fill();
+  ctx.fillStyle='#1a2236'; ctx.beginPath(); ctx.ellipse(100,47,20,9,0,Math.PI,0); ctx.fill();
+  // sleeves
+  _r(ctx,44,52,16,36,'#2a3550'); _r(ctx,140,52,16,36,'#2a3550');
+  _r(ctx,44,84,16,4,'#1e2740'); _r(ctx,140,84,16,4,'#1e2740');
+  // pocket
+  _r(ctx,74,74,52,16,'#232d46'); _r(ctx,74,74,52,1,'#3d4c70');
+  // drawstrings
+  _r(ctx,90,54,2,14,'#c8bca0'); _r(ctx,110,54,2,12,'#c8bca0');
+  // YoYo Games chest print — abstract pixel logo, warm
+  _r(ctx,84,58,12,4,'#e05a3a'); _r(ctx,100,58,12,4,'#3aa0e0');
+  _r(ctx,88,64,24,2,'rgba(230,220,200,0.8)');
+  _lbl(ctx,"Sandy's YoYo Games Hoodie");
+}
+
+function drawRecipeCardCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#241c12', sky2:'#382c1c', sky3:'#281f14', floor:'#1e1610'});
+  // card, slightly tilted
+  ctx.save(); ctx.translate(100,64); ctx.rotate(-0.045);
+  _r(ctx,-58,-32,116,64,'#e8dcc0');
+  _r(ctx,-58,-32,116,2,'#f4ecd8');
+  _r(ctx,-58,30,116,2,'#c4b48c');
+  // ruled lines
+  for(let i=0;i<7;i++) _r(ctx,-50,-20+i*7,100,1,'rgba(120,100,70,0.28)');
+  // red margin
+  _r(ctx,-40,-32,1,64,'rgba(200,90,80,0.45)');
+  // handwriting — irregular ink strokes
+  const words=[[-46,-22,30],[-12,-22,26],[-46,-15,44],[-46,-8,22],[-20,-8,34],[-46,-1,38],[-46,6,28],[-14,6,30],[-46,13,20]];
+  words.forEach(([x,y,w])=>_r(ctx,x,y,w,1.6,'rgba(42,34,60,0.72)'));
+  // underlined title
+  _r(ctx,-46,-28,52,2.4,'rgba(42,34,60,0.85)');
+  _r(ctx,-46,-25,52,1,'rgba(42,34,60,0.5)');
+  // thumbed corner + a grease spot
+  ctx.fillStyle='rgba(160,130,80,0.35)';
+  ctx.beginPath(); ctx.moveTo(58,18); ctx.lineTo(58,32); ctx.lineTo(44,32); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='rgba(190,160,90,0.18)';
+  ctx.beginPath(); ctx.ellipse(26,14,9,6,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  _lbl(ctx,"Sandy's Recipe Card");
+}
+
+function drawWineBottleCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#160f1c', sky2:'#281a30', sky3:'#1b1222', floor:'#140d1a'});
+  const cx=100;
+  // bottle
+  _r(ctx,cx-13,44,26,52,'#123020');
+  _r(ctx,cx-5,20,10,26,'#123020');
+  ctx.fillStyle='#0c2416'; ctx.beginPath(); ctx.ellipse(cx,44,13,5,0,0,Math.PI*2); ctx.fill();
+  // shoulder curve
+  ctx.fillStyle='#123020'; ctx.beginPath(); ctx.moveTo(cx-13,48); ctx.quadraticCurveTo(cx-6,40,cx-5,32);
+  ctx.lineTo(cx+5,32); ctx.quadraticCurveTo(cx+6,40,cx+13,48); ctx.closePath(); ctx.fill();
+  // glass highlight
+  _r(ctx,cx-10,50,3,42,'rgba(150,220,180,0.22)');
+  _r(ctx,cx-2,24,2,20,'rgba(150,220,180,0.16)');
+  // foil + cork
+  _r(ctx,cx-6,18,12,9,'#7a1830'); _r(ctx,cx-6,18,12,2,'#a2384c');
+  // label
+  _r(ctx,cx-12,60,24,26,'#e4d8b8'); _r(ctx,cx-12,60,24,1,'#f2e8cc');
+  _r(ctx,cx-8,65,16,1.6,'rgba(60,40,30,0.75)');
+  _r(ctx,cx-8,69,16,1,'rgba(60,40,30,0.45)');
+  _r(ctx,cx-6,74,12,1,'rgba(60,40,30,0.45)');
+  ctx.fillStyle='rgba(150,30,50,0.55)'; ctx.beginPath(); ctx.arc(cx,80,3.4,0,Math.PI*2); ctx.fill();
+  // gift ribbon — Edie's gift
+  _r(ctx,cx-14,54,28,4,'#a8324c'); _r(ctx,cx-2,50,4,12,'#a8324c');
+  _lbl(ctx,"Wine Bottle (Edie's Gift)");
+}
+
+function drawMatchesCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1c1408', sky2:'#302214', sky3:'#22180c', floor:'#1a1206'});
+  // matchbox, half open
+  _r(ctx,52,58,72,30,'#8a4a24'); _r(ctx,52,58,72,2,'#b4703c');
+  _r(ctx,56,62,64,22,'#6a3418');
+  // striking strip
+  _r(ctx,52,74,72,6,'#2a1a14'); _r(ctx,52,74,72,1,'#40281e');
+  // inner tray pulled out to the right
+  _r(ctx,118,62,30,22,'#c8a870'); _r(ctx,118,62,30,2,'#e0c48c');
+  // matches in the tray
+  for(let i=0;i<5;i++){
+    const mx=122+i*5;
+    _r(ctx,mx,66,2,15,'#e4d4b0');
+    _r(ctx,mx,66,2,3,'#c43a24');
+  }
+  // one struck match, burning, in front
+  _r(ctx,60,86,26,2,'#e4d4b0');
+  _r(ctx,58,85,4,4,'#2a1a14');
+  const fl=Math.sin(t*9)*0.9, a=0.75+0.2*Math.sin(t*13);
+  ctx.fillStyle=`rgba(255,180,70,${a.toFixed(2)})`;
+  ctx.beginPath(); ctx.ellipse(58+fl*0.4,82+fl,3,5.5,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,244,200,0.95)';
+  ctx.beginPath(); ctx.ellipse(58+fl*0.4,84+fl,1.3,2.6,0,0,Math.PI*2); ctx.fill();
+  const g=ctx.createRadialGradient(58,84,0,58,84,30);
+  g.addColorStop(0,'rgba(255,180,70,0.26)'); g.addColorStop(1,'rgba(255,180,70,0)');
+  ctx.fillStyle=g; ctx.fillRect(28,54,60,60);
+  _lbl(ctx,'Matches (via Pätu)');
+}
+
+function drawWalnutPouchCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1e1810', sky2:'#342a1a', sky3:'#241c12', floor:'#1c1408'});
+  // leather pouch
+  ctx.fillStyle='#6a4424';
+  ctx.beginPath(); ctx.moveTo(66,58); ctx.quadraticCurveTo(58,92,100,94);
+  ctx.quadraticCurveTo(142,92,134,58); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#7d5230';
+  ctx.beginPath(); ctx.moveTo(70,60); ctx.quadraticCurveTo(64,88,100,90);
+  ctx.quadraticCurveTo(136,88,130,60); ctx.closePath(); ctx.fill();
+  // gathered neck + drawstring
+  _r(ctx,72,52,56,8,'#54341c');
+  for(let i=0;i<7;i++) _r(ctx,74+i*8,52,2,8,'#3e2614');
+  _r(ctx,68,55,64,2,'#c8a060');
+  _r(ctx,128,55,14,2,'#c8a060'); _r(ctx,140,55,2,7,'#c8a060');
+  // walnuts spilling out at the base
+  const nuts=[[80,92,7],[96,95,8],[112,92,7],[126,95,6]];
+  nuts.forEach(([nx,ny,nr])=>{
+    ctx.fillStyle='#8a6234'; ctx.beginPath(); ctx.ellipse(nx,ny,nr,nr*0.82,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#a5794a'; ctx.beginPath(); ctx.ellipse(nx-1,ny-1,nr*0.72,nr*0.58,0,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(60,40,20,0.55)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(nx,ny-nr*0.7); ctx.lineTo(nx,ny+nr*0.7); ctx.stroke();
+  });
+  _lbl(ctx,'Leather Pouch of Walnuts');
+}
+
+function drawErikPhotoCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#181420', sky2:'#282438', sky3:'#1c1828', floor:'#141020'});
+  ctx.save(); ctx.translate(100,60); ctx.rotate(0.03);
+  // photo paper
+  _r(ctx,-42,-34,84,68,'#e0d8c4');
+  _r(ctx,-38,-30,76,52,'#6a6a58');
+  // sepia interior — kitchen behind a boy
+  const g=ctx.createLinearGradient(0,-30,0,22);
+  g.addColorStop(0,'#8a7a54'); g.addColorStop(1,'#4a4032');
+  ctx.fillStyle=g; ctx.fillRect(-38,-30,76,52);
+  // boy: head, body, big wooden spoon
+  ctx.fillStyle='#d8c49c'; ctx.beginPath(); ctx.arc(-4,-14,8,0,Math.PI*2); ctx.fill();
+  _r(ctx,-6,-22,12,4,'#c8b070');            // blond hair
+  ctx.fillStyle='#3a3428'; ctx.beginPath(); ctx.arc(-7,-15,1.2,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(-1,-15,1.2,0,Math.PI*2); ctx.fill();
+  _r(ctx,-6,-11,5,1,'#4a3a30');             // caught laughing
+  _r(ctx,-11,-6,15,26,'#b8a884');           // apron/shirt
+  _r(ctx,-2,-4,3,20,'#8a6a40');             // spoon handle
+  ctx.fillStyle='#8a6a40'; ctx.beginPath(); ctx.ellipse(0,18,5,3.4,0,0,Math.PI*2); ctx.fill();
+  // photo gloss + a soft crease
+  _r(ctx,-38,-30,76,3,'rgba(255,255,255,0.14)');
+  ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(-38,6); ctx.lineTo(38,-2); ctx.stroke();
+  ctx.restore();
+  _lbl(ctx,'Photograph of Young Erik');
+}
+
+function drawMortarCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1c1810', sky2:'#30281a', sky3:'#221c12', floor:'#1a1408'});
+  const cx=94, by=88;
+  // stone mortar
+  ctx.fillStyle='#5a5048';
+  ctx.beginPath(); ctx.moveTo(cx-30,by-34); ctx.quadraticCurveTo(cx-26,by,cx,by);
+  ctx.quadraticCurveTo(cx+26,by,cx+30,by-34); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#6c6158';
+  ctx.beginPath(); ctx.moveTo(cx-26,by-32); ctx.quadraticCurveTo(cx-22,by-4,cx,by-4);
+  ctx.quadraticCurveTo(cx+22,by-4,cx+26,by-32); ctx.closePath(); ctx.fill();
+  // rim + inner bowl
+  ctx.fillStyle='#7d726a'; ctx.beginPath(); ctx.ellipse(cx,by-34,30,9,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#3a332e'; ctx.beginPath(); ctx.ellipse(cx,by-33,24,6.5,0,0,Math.PI*2); ctx.fill();
+  // crushed pepper/walnut paste inside
+  ctx.fillStyle='#8a3a22'; ctx.beginPath(); ctx.ellipse(cx-3,by-31,15,4,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#a8542c'; ctx.beginPath(); ctx.ellipse(cx-5,by-32,9,2.4,0,0,Math.PI*2); ctx.fill();
+  // pestle leaning in
+  ctx.save(); ctx.translate(cx+14,by-40); ctx.rotate(0.5);
+  _r(ctx,-4,-30,8,34,'#6c6158'); _r(ctx,-4,-30,8,2,'#877c72');
+  ctx.fillStyle='#7d726a'; ctx.beginPath(); ctx.ellipse(0,6,6,4,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  // worn stone speckle
+  ctx.fillStyle='rgba(255,255,255,0.06)';
+  for(let i=0;i<14;i++) ctx.fillRect(cx-24+((i*37)%48), by-28+((i*53)%30), 1,1);
+  _lbl(ctx,"Grandfather's Mortar");
+}
+
+function drawSwitchbladeCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#101828', sky2:'#1e2c40', sky3:'#141e2e', floor:'#0e1622'});
+  ctx.save(); ctx.translate(100,64); ctx.rotate(-0.12);
+  // mother-of-pearl handle
+  const g=ctx.createLinearGradient(-46,0,6,0);
+  g.addColorStop(0,'#dce4ec'); g.addColorStop(0.4,'#f0f4f8');
+  g.addColorStop(0.7,'#c8d4e0'); g.addColorStop(1,'#e4ecf2');
+  ctx.fillStyle=g; ctx.fillRect(-46,-7,52,14);
+  // iridescent bands
+  ctx.fillStyle='rgba(180,220,230,0.5)'; ctx.fillRect(-40,-6,7,12);
+  ctx.fillStyle='rgba(230,200,235,0.4)'; ctx.fillRect(-24,-6,6,12);
+  ctx.fillStyle='rgba(200,235,215,0.35)'; ctx.fillRect(-10,-6,5,12);
+  // bolsters
+  _r(ctx,-48,-8,4,16,'#8a8e96'); _r(ctx,2,-8,6,16,'#8a8e96');
+  _r(ctx,2,-8,6,2,'#b4b8c0');
+  // blade
+  ctx.fillStyle='#c8ccd4';
+  ctx.beginPath(); ctx.moveTo(8,-5); ctx.lineTo(50,-2); ctx.lineTo(50,1); ctx.lineTo(8,5); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#eef2f6';
+  ctx.beginPath(); ctx.moveTo(8,-4); ctx.lineTo(50,-1.6); ctx.lineTo(50,-0.4); ctx.lineTo(8,0); ctx.closePath(); ctx.fill();
+  // pivot
+  ctx.fillStyle='#6a6e76'; ctx.beginPath(); ctx.arc(-2,0,2.4,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  // cold spirit sheen — Iris's object
+  const sg=ctx.createRadialGradient(100,64,0,100,64,58);
+  sg.addColorStop(0,'rgba(170,210,255,0.14)'); sg.addColorStop(1,'rgba(170,210,255,0)');
+  ctx.fillStyle=sg; ctx.fillRect(42,6,116,116);
+  _lbl(ctx,"Father's Switchblade");
+}
+
+function drawSproutsPlateCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#141a14', sky2:'#22301f', sky3:'#182016', floor:'#121810'});
+  const cx=100, cy=70;
+  // plate
+  ctx.fillStyle='#c8ccc4'; ctx.beginPath(); ctx.ellipse(cx,cy,46,17,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e4e8e0'; ctx.beginPath(); ctx.ellipse(cx,cy-2,42,14,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#d0d4cc'; ctx.beginPath(); ctx.ellipse(cx,cy-2,32,10,0,0,Math.PI*2); ctx.fill();
+  // rim line
+  ctx.strokeStyle='rgba(120,130,120,0.5)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.ellipse(cx,cy-2,37,12,0,0,Math.PI*2); ctx.stroke();
+  // brussels sprouts — untouched, gone cold
+  const sprouts=[[-16,-4],[-4,-6],[8,-4],[-10,1],[3,2],[16,-1]];
+  sprouts.forEach(([ox,oy],i)=>{
+    ctx.fillStyle='#3f5c30'; ctx.beginPath(); ctx.arc(cx+ox,cy-3+oy,6.5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#4e7038'; ctx.beginPath(); ctx.arc(cx+ox-1,cy-4+oy,5.2,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(30,46,24,0.7)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx+ox-4,cy-4+oy); ctx.lineTo(cx+ox+4,cy-2+oy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+ox,cy-8+oy); ctx.lineTo(cx+ox+1,cy+1+oy); ctx.stroke();
+  });
+  // fork set down beside it
+  ctx.save(); ctx.translate(cx+52,cy+6); ctx.rotate(-0.35);
+  _r(ctx,-2,-20,3,26,'#b4b8c0');
+  for(let i=0;i<4;i++) _r(ctx,-4+i*2.2,-28,1.4,9,'#b4b8c0');
+  ctx.restore();
+  _lbl(ctx,"Iris's Unfinished Meal");
+}
+
+function drawPotjieCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#1a1008', sky2:'#341c0c', sky3:'#221208', floor:'#180e06'});
+  const cx=100, by=86;
+  // embers under the pot
+  for(let i=0;i<9;i++){
+    const ex=cx-32+i*8, a=0.28+0.34*Math.abs(Math.sin(t*2.2+i));
+    ctx.fillStyle=`rgba(255,120,40,${a.toFixed(2)})`;
+    ctx.fillRect(ex, by+6, 5, 3);
+  }
+  const eg=ctx.createRadialGradient(cx,by+6,0,cx,by+6,52);
+  eg.addColorStop(0,'rgba(255,130,50,0.30)'); eg.addColorStop(1,'rgba(255,130,50,0)');
+  ctx.fillStyle=eg; ctx.fillRect(cx-56,by-40,112,60);
+  // three legs
+  _r(ctx,cx-22,by-2,5,10,'#14100e'); _r(ctx,cx+17,by-2,5,10,'#14100e'); _r(ctx,cx-3,by+1,5,9,'#14100e');
+  // cast-iron belly
+  ctx.fillStyle='#1c1816'; ctx.beginPath(); ctx.ellipse(cx,by-16,34,22,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#2a2422'; ctx.beginPath(); ctx.ellipse(cx-2,by-18,30,19,0,0,Math.PI*2); ctx.fill();
+  // rim + lid
+  ctx.fillStyle='#332b28'; ctx.beginPath(); ctx.ellipse(cx,by-34,30,9,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#241e1c'; ctx.beginPath(); ctx.ellipse(cx,by-36,26,7,0,0,Math.PI*2); ctx.fill();
+  _r(ctx,cx-3,by-43,6,5,'#332b28');
+  // firelight on the belly
+  ctx.fillStyle='rgba(255,150,60,0.22)';
+  ctx.beginPath(); ctx.ellipse(cx-12,by-14,12,8,-0.3,0,Math.PI*2); ctx.fill();
+  // bail handle
+  ctx.strokeStyle='#332b28'; ctx.lineWidth=2.4;
+  ctx.beginPath(); ctx.arc(cx,by-36,30,Math.PI*1.08,Math.PI*1.92); ctx.stroke();
+  // steam
+  const sp=(t*0.4)%1;
+  ctx.fillStyle=`rgba(240,220,190,${(0.30-sp*0.26).toFixed(2)})`;
+  ctx.fillRect(cx-1,by-50-sp*16,2,2);
+  ctx.fillRect(cx+11,by-46-sp*12,2,2);
+  _lbl(ctx,'Cast-Iron Potjie');
+}
+
+function drawBananaLeavesCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#0e1a10', sky2:'#1a3020', sky3:'#122216', floor:'#0c1810'});
+  // a bundle of cut banana leaves, tied
+  const cx=100;
+  [[-30,0.42],[-14,0.16],[2,-0.08],[18,-0.34]].forEach(([ox,rot],i)=>{
+    ctx.save(); ctx.translate(cx+ox,64); ctx.rotate(rot);
+    const g=ctx.createLinearGradient(0,-40,0,40);
+    g.addColorStop(0,'#3e7a3a'); g.addColorStop(0.5,'#4f9247'); g.addColorStop(1,'#356a32');
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.ellipse(0,0,13,42,0,0,Math.PI*2); ctx.fill();
+    // midrib
+    _r(ctx,-1,-42,2,84,'#d8e0b0');
+    // veins
+    ctx.strokeStyle='rgba(216,224,176,0.34)'; ctx.lineWidth=1;
+    for(let v=-34;v<34;v+=7){
+      ctx.beginPath(); ctx.moveTo(0,v); ctx.lineTo(-11,v+7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,v); ctx.lineTo(11,v+7); ctx.stroke();
+    }
+    // flame-softened sheen
+    ctx.fillStyle='rgba(255,240,190,0.10)';
+    ctx.beginPath(); ctx.ellipse(-4,-12,5,18,0.2,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+  // twine tie
+  _r(ctx,64,60,72,5,'#b49a68'); _r(ctx,64,60,72,1,'#d0b884');
+  _r(ctx,96,52,4,20,'#b49a68');
+  _lbl(ctx,"Banana Leaves (Pocong's Gift)");
+}
+
+function drawMoquecaPotCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#20120a', sky2:'#3a2010', sky3:'#26140a', floor:'#1c0f06'});
+  const cx=100, by=86;
+  // clay pot — the dendê orange is the point
+  ctx.fillStyle='#54291a'; ctx.beginPath(); ctx.ellipse(cx,by-16,36,22,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#6b3720'; ctx.beginPath(); ctx.ellipse(cx-2,by-18,32,19,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#7e4526'; ctx.beginPath(); ctx.ellipse(cx-6,by-20,20,12,0,0,Math.PI*2); ctx.fill();
+  // rim
+  ctx.fillStyle='#8a5030'; ctx.beginPath(); ctx.ellipse(cx,by-34,32,10,0,0,Math.PI*2); ctx.fill();
+  // the broth — generous, orange
+  ctx.fillStyle='#e07818'; ctx.beginPath(); ctx.ellipse(cx,by-33,27,7.6,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#f09028'; ctx.beginPath(); ctx.ellipse(cx-3,by-34,20,5.4,0,0,Math.PI*2); ctx.fill();
+  // fish, peppers, cilantro
+  ctx.fillStyle='#f2e4cc'; ctx.beginPath(); ctx.ellipse(cx-10,by-34,8,3.2,0.1,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e8dcc0'; ctx.beginPath(); ctx.ellipse(cx+9,by-33,7,2.8,-0.15,0,Math.PI*2); ctx.fill();
+  _r(ctx,cx-2,by-36,7,2,'#c8202a'); _r(ctx,cx+6,by-31,6,2,'#d8b820');
+  ctx.fillStyle='#2e7a34';
+  [[-16,-31],[2,-30],[14,-35]].forEach(([ox,oy])=>{ ctx.beginPath(); ctx.arc(cx+ox,by+oy,1.8,0,Math.PI*2); ctx.fill(); });
+  // side handles
+  ctx.strokeStyle='#6b3720'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(cx-34,by-24,7,Math.PI*0.55,Math.PI*1.45); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx+34,by-24,7,Math.PI*1.55,Math.PI*0.45); ctx.stroke();
+  // dendê glow + steam
+  const g=ctx.createRadialGradient(cx,by-32,0,cx,by-32,46);
+  g.addColorStop(0,'rgba(255,150,40,0.26)'); g.addColorStop(1,'rgba(255,150,40,0)');
+  ctx.fillStyle=g; ctx.fillRect(cx-50,by-72,100,60);
+  const sp=(t*0.45)%1;
+  ctx.fillStyle=`rgba(255,225,190,${(0.32-sp*0.28).toFixed(2)})`;
+  ctx.fillRect(cx-4,by-46-sp*15,2,2); ctx.fillRect(cx+8,by-43-sp*12,2,2);
+  _lbl(ctx,'Clay Moqueca Pot');
+}
+
+function drawPongPaddlesCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#08060e', sky2:'#140e1e', sky3:'#0c0812', floor:'#080610'});
+  // the Ch8 override phase, abstracted: dark paddle vs warm paddle, memory in flight
+  // shadow paddle (left) — static-textured
+  _r(ctx,26,34,10,46,'#241c30');
+  _r(ctx,26,34,10,2,'#3a2c4c');
+  for(let i=0;i<16;i++){
+    const a=0.10+0.24*Math.abs(Math.sin(t*6+i*1.7));
+    ctx.fillStyle=`rgba(150,130,190,${a.toFixed(2)})`;
+    ctx.fillRect(27+((i*5)%8), 36+((i*13)%42), 2,1);
+  }
+  // Pip's paddle (right) — warm, glowing
+  _r(ctx,164,42,10,46,'#dce8ff');
+  ctx.fillStyle='rgba(220,232,255,0.35)'; ctx.fillRect(162,40,14,50);
+  // centre line
+  for(let y=26;y<96;y+=10) _r(ctx,100,y,2,5,'rgba(140,150,200,0.28)');
+  // the memory in flight — a warm mote with a trail
+  const px2=52+((t*70)%96), py=64+Math.sin(t*3.1)*20;
+  for(let i=6;i>0;i--){
+    const tx=px2-i*7, a=0.09*i/6+0.05;
+    ctx.fillStyle=`rgba(255,206,120,${a.toFixed(2)})`;
+    ctx.beginPath(); ctx.arc(tx,py-Math.sin((t-i*0.05)*3.1)*2,3.4-i*0.3,0,Math.PI*2); ctx.fill();
+  }
+  const gg=ctx.createRadialGradient(px2,py,0,px2,py,16);
+  gg.addColorStop(0,'rgba(255,214,140,0.85)'); gg.addColorStop(1,'rgba(255,214,140,0)');
+  ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(px2,py,16,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#fff0cc'; ctx.beginPath(); ctx.arc(px2,py,3.2,0,Math.PI*2); ctx.fill();
+  _lbl(ctx,'Pong Paddles + Memory');
+}
+
+function drawSixChairsCell(ctx, t) {
+  _cellBg(ctx, {sky1:'#241a10', sky2:'#3c2a18', sky3:'#2a1e12', floor:'#20160c'});
+  // Babcia's kitchen table with ALL SIX chairs filled — the bottom of the well
+  const cx=100, ty=64;
+  // warm room glow
+  const g=ctx.createRadialGradient(cx,ty,0,cx,ty,86);
+  g.addColorStop(0,'rgba(255,190,110,0.20)'); g.addColorStop(1,'rgba(255,190,110,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,200,113);
+  // far chairs (3)
+  [-38,0,38].forEach(ox=>{
+    _r(ctx,cx+ox-9,ty-30,18,20,'#4a3218');
+    _r(ctx,cx+ox-9,ty-30,18,2,'#6a4a26');
+  });
+  // table
+  ctx.fillStyle='#6a4622'; ctx.beginPath(); ctx.ellipse(cx,ty,66,17,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#8a5c2e'; ctx.beginPath(); ctx.ellipse(cx,ty-2,62,15,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,210,150,0.14)'; ctx.beginPath(); ctx.ellipse(cx-14,ty-6,28,7,0,0,Math.PI*2); ctx.fill();
+  // pierogi platter at the centre
+  ctx.fillStyle='#d8d0bc'; ctx.beginPath(); ctx.ellipse(cx,ty-4,20,7,0,0,Math.PI*2); ctx.fill();
+  [[-9,-1],[0,-3],[9,-1],[-4,2],[5,2]].forEach(([ox,oy])=>{
+    ctx.fillStyle='#e8d49c'; ctx.beginPath(); ctx.ellipse(cx+ox,ty-5+oy,5,2.8,0,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(160,120,60,0.6)'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.arc(cx+ox,ty-4+oy,4.4,Math.PI,0); ctx.stroke();
+  });
+  // near chairs (3)
+  [-38,0,38].forEach(ox=>{
+    _r(ctx,cx+ox-10,ty+14,20,8,'#3c2814');
+    _r(ctx,cx+ox-10,ty+14,20,2,'#5a3c1e');
+  });
+  // six warm presences — occupied, not drawn as people
+  const seats=[[-38,-34],[0,-34],[38,-34],[-38,20],[0,20],[38,20]];
+  seats.forEach(([ox,oy],i)=>{
+    const a=0.30+0.16*Math.sin(t*1.2+i*1.05);
+    const sg=ctx.createRadialGradient(cx+ox,ty+oy,0,cx+ox,ty+oy,15);
+    sg.addColorStop(0,`rgba(255,214,150,${a.toFixed(2)})`);
+    sg.addColorStop(1,'rgba(255,214,150,0)');
+    ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(cx+ox,ty+oy,15,0,Math.PI*2); ctx.fill();
+  });
+  _lbl(ctx,'Kitchen Table, Six Chairs');
+}
+
 const DRAW_FNS = {
+  'CH2-PROP-01': drawLeidaPanCell,
+  'CH2-PROP-02': drawSincerityDoorsCell,
+  'CH2-PROP-03': drawLeidaAltarCell,
+  'CH3-PROP-01': drawSandyHoodieCell,
+  'CH3-PROP-02': drawRecipeCardCell,
+  'CH3-PROP-03': drawWineBottleCell,
+  'CH3-PROP-04': drawMatchesCell,
+  'CH4-PROP-01': drawWalnutPouchCell,
+  'CH4-PROP-02': drawErikPhotoCell,
+  'CH4-PROP-03': drawMortarCell,
+  'CH5-PROP-01': drawSwitchbladeCell,
+  'CH5-PROP-02': drawSproutsPlateCell,
+  'CH5-PROP-03': drawPotjieCell,
+  'CH6-PROP-01': drawBananaLeavesCell,
+  'CH7-PROP-01': drawMoquecaPotCell,
+  'CH8-PROP-01': drawPongPaddlesCell,
+  'CH8-PROP-02': drawSixChairsCell,
   'CH1-ROOM-01': drawHallwayCell,
   'CH1-ROOM-02': drawGrandparentsCell,
   'CH1-ROOM-03': drawCabin646Cell,
@@ -1995,21 +2504,21 @@ const ASSETS = [
   // ── CHAPTER 2: PROPS ──────────────────────────────────────
   {
     id: 'CH2-PROP-01', name: "Leida's cast-iron pan", type: 'PROP',
-    chapter: 2, section: 'ch2-prop', designed: false,
+    chapter: 2, section: 'ch2-prop', designed: true,
     desc: 'Heavy, dark, worn handle; the lost-and-found central prop; puzzle object; Ch2 pan-search arc.',
     alsoAppears: null,
     source: 'ch02-tallinn-outline.md',
   },
   {
     id: 'CH2-PROP-02', name: "Haldjas's three sincerity doors", type: 'PROP',
-    chapter: 2, section: 'ch2-prop', designed: false,
+    chapter: 2, section: 'ch2-prop', designed: true,
     desc: 'Non-architectural puzzle space; three low wooden doors in an impossible arrangement; Haldjas encounter.',
     alsoAppears: null,
     source: 'ch02-tallinn-outline.md',
   },
   {
     id: 'CH2-PROP-03', name: "Leida's offering altar", type: 'PROP',
-    chapter: 2, section: 'ch2-prop', designed: false,
+    chapter: 2, section: 'ch2-prop', designed: true,
     desc: 'Flat stone, worn wooden bowl, faded ribbon; placed outside the cottage door; ambient world-building prop.',
     alsoAppears: null,
     source: 'ch02-tallinn-outline.md',
@@ -2057,28 +2566,28 @@ const ASSETS = [
   // ── CHAPTER 3: PROPS ──────────────────────────────────────
   {
     id: 'CH3-PROP-01', name: "Sandy's YoYo Games hoodie", type: 'PROP',
-    chapter: 3, section: 'ch3-prop', designed: false,
+    chapter: 3, section: 'ch3-prop', designed: true,
     desc: "Draped on his kitchen chair; primary identity cue for Sandy's presence even when he isn't drawn; Ch3 throughout.",
     alsoAppears: null,
     source: 'ch03-southampton-outline.md',
   },
   {
     id: 'CH3-PROP-02', name: "Sandy's handwritten recipe card", type: 'PROP',
-    chapter: 3, section: 'ch3-prop', designed: false,
+    chapter: 3, section: 'ch3-prop', designed: true,
     desc: 'On the Dundee kitchen counter; central prop for the chef encounter arc.',
     alsoAppears: null,
     source: 'ch03-southampton-outline.md',
   },
   {
     id: 'CH3-PROP-03', name: "Wine bottle (Edie's gift)", type: 'PROP',
-    chapter: 3, section: 'ch3-prop', designed: false,
+    chapter: 3, section: 'ch3-prop', designed: true,
     desc: 'Given to Pip by Edie; distraction/offering prop for the Black Shuck puzzle.',
     alsoAppears: null,
     source: 'ch03-southampton-outline.md',
   },
   {
     id: 'CH3-PROP-04', name: 'Matches (collected via Pätu)', type: 'PROP',
-    chapter: 3, section: 'ch3-prop', designed: false,
+    chapter: 3, section: 'ch3-prop', designed: true,
     desc: 'Pätu meows near a harbor newsstand; Pip collects a box of matches; load-bearing for Ch4 candle-lighting and Ch7 dock puzzle.',
     alsoAppears: 'Ch4 (Karakoncolos puzzle — used with CH1-PROP-17 Candle), Ch7 (Boitatá puzzle)',
     source: 'ch03-southampton-outline.md',
@@ -2128,21 +2637,21 @@ const ASSETS = [
   // entered under their first chapters above.
   {
     id: 'CH4-PROP-01', name: 'Leather pouch of walnuts', type: 'PROP',
-    chapter: 4, section: 'ch4-prop', designed: false,
+    chapter: 4, section: 'ch4-prop', designed: true,
     desc: 'Dropped by Karakoncolos on resolution; becomes the muhammara ingredient; puzzle-resolution object.',
     alsoAppears: null,
     source: 'ch04-turkiye-outline.md',
   },
   {
     id: 'CH4-PROP-02', name: 'Photograph of young Erik', type: 'PROP',
-    chapter: 4, section: 'ch4-prop', designed: false,
+    chapter: 4, section: 'ch4-prop', designed: true,
     desc: "Henrik's pocket photograph; glimpsed by Pip at Ch4 end; blond boy, age 11; Henrik quickly pockets it; revelation deferred to Ch6.",
     alsoAppears: 'Ch6 (Pip sees it longer — sliding off counter), Ch7 (reunion beat — warm under Pip\'s hand after memory-gifting)',
     source: 'ch04-turkiye-outline.md',
   },
   {
     id: 'CH4-PROP-03', name: "Muhittin's grandfather's mortar", type: 'PROP',
-    chapter: 4, section: 'ch4-prop', designed: false,
+    chapter: 4, section: 'ch4-prop', designed: true,
     desc: 'Old worn stone mortar and pestle; central to the muhammara taste-memory; heirloom object.',
     alsoAppears: null,
     source: 'ch04-turkiye-outline.md',
@@ -2183,21 +2692,21 @@ const ASSETS = [
   // ── CHAPTER 5: PROPS ──────────────────────────────────────
   {
     id: 'CH5-PROP-01', name: "Father's switchblade", type: 'PROP',
-    chapter: 5, section: 'ch5-prop', designed: false,
+    chapter: 5, section: 'ch5-prop', designed: true,
     desc: 'Mother-of-pearl handle, Edwardian; given to Pip by Iris; for cutting rope or cord; load-bearing for Ch6 puzzle.',
     alsoAppears: 'Ch6 (used in Pocong puzzle), Ch7 (carried — not used), Ch8 (carried through finale)',
     source: 'ch05-south-africa-outline.md',
   },
   {
     id: 'CH5-PROP-02', name: "Plate of brussels sprouts (Iris's unfinished meal)", type: 'PROP',
-    chapter: 5, section: 'ch5-prop', designed: false,
+    chapter: 5, section: 'ch5-prop', designed: true,
     desc: 'Half-eaten, held-in-time, slightly waterlogged; Pip eats them for Iris so she can move on.',
     alsoAppears: null,
     source: 'ch05-south-africa-outline.md',
   },
   {
     id: 'CH5-PROP-03', name: 'Cast-iron potjie (three-legged pot)', type: 'PROP',
-    chapter: 5, section: 'ch5-prop', designed: false,
+    chapter: 5, section: 'ch5-prop', designed: true,
     desc: "Johannes's outdoor kitchen; large blackened pot on three splayed legs over open fire; central cooking prop.",
     alsoAppears: null,
     source: 'ch05-south-africa-outline.md',
@@ -2240,7 +2749,7 @@ const ASSETS = [
   // entered under their first chapters above.
   {
     id: 'CH6-PROP-01', name: "Banana leaves (Pocong's gift)", type: 'PROP',
-    chapter: 6, section: 'ch6-prop', designed: false,
+    chapter: 6, section: 'ch6-prop', designed: true,
     desc: 'Stack of large fresh banana leaves; given to Pip after Pocong\'s cooperative resolution; used in lemper cooking; partially carried forward to Ch7 kitchen.',
     alsoAppears: 'Ch7 (kitchen beat — Henrik receives leaves from Pip)',
     source: 'ch06-indonesia-outline.md',
@@ -2283,7 +2792,7 @@ const ASSETS = [
   // under their first chapters above.
   {
     id: 'CH7-PROP-01', name: 'Clay moqueca pot', type: 'PROP',
-    chapter: 7, section: 'ch7-prop', designed: false,
+    chapter: 7, section: 'ch7-prop', designed: true,
     desc: 'Joana/Beatriz kitchen; wide, terracotta, with lid; central cooking prop for the moqueca recipe.',
     alsoAppears: null,
     source: 'ch07-brazil-outline.md',
@@ -2326,14 +2835,14 @@ const ASSETS = [
   // ── CHAPTER 8: PROPS ──────────────────────────────────────
   {
     id: 'CH8-PROP-01', name: 'Pong paddles + ball (Phase 1)', type: 'PROP',
-    chapter: 8, section: 'ch8-prop', designed: false,
+    chapter: 8, section: 'ch8-prop', designed: true,
     desc: "Shadow's first phase mechanic; minimal flat paddles, bouncing pixel; the game-within-the-game visual register.",
     alsoAppears: null,
     source: 'ch08-greenpoint-outline.md',
   },
   {
     id: 'CH8-PROP-02', name: 'Kitchen table with all six chairs', type: 'PROP',
-    chapter: 8, section: 'ch8-prop', designed: false,
+    chapter: 8, section: 'ch8-prop', designed: true,
     desc: 'The bottom-of-the-well memory; long table, pierogi plate at center; six chairs for Pip, parents, grandparents, and one empty for Erik; narrative climax prop.',
     alsoAppears: null,
     source: 'ch08-greenpoint-outline.md',

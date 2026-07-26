@@ -2293,7 +2293,12 @@ function drawIris(ctx, _CX, _FLOOR, _T, _SP) {
 }
 
 function drawMamlamboPorthole(ctx, _CX, _FLOOR, _T, _SP) {
-  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0;
+  // #142: this shim was missing W (every sibling cell declares it), so the Mamlambo
+  // cell threw 'W is not defined' on render — it never actually drew.
+  const sx = _CX, sy = _FLOOR, groundY = _FLOOR, now = _T * 1000, speaking = _SP, looking = _SP, translucent = _SP, idx = 0, W = CANVAS_W;
+  // #142: the cell also referenced the live game's ch5State. In the gallery the
+  // Mamlambo is always shown in her risen, undefeated state so the cell has content.
+  const ch5State = { mamlamboAppeared: true, mamlamboDefeated: false, portalOpenAttempted: true };
   const t = now / 1000;
 
   // Draw the porthole frame
@@ -2964,6 +2969,412 @@ function drawPlaceholder(ctx, name, tells, colorLabel, frac) {
    designed: false → placeholder
    frac: door-fraction string shown on placeholder (numeric for box height)
    ============================================================= */
+
+/* =============================================================
+   #142 — CHARACTER CELLS designed (previously placeholders).
+   Signature matches the rest of the gallery: (ctx, cx, floor, t, speaking).
+   Taste-memory figures are rendered as WARM-AMBER REMEMBERED PEOPLE —
+   present but not sharply individuated, per the tells ("no physical
+   descriptions in outline"). Echo-creatures are warm-amber translucent
+   with no black outline, matching drawEchoSpider.
+   ============================================================= */
+
+/* --- shared helper for the amber echo body --- */
+function _echoBlob(ctx, x, y, rx, ry, alpha, rot) {
+  ctx.save();
+  ctx.translate(x, y); if (rot) ctx.rotate(rot);
+  const g = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(rx, ry) * 1.6);
+  g.addColorStop(0, `rgba(255,206,120,${(alpha).toFixed(3)})`);
+  g.addColorStop(0.55, `rgba(255,180,80,${(alpha * 0.55).toFixed(3)})`);
+  g.addColorStop(1, 'rgba(255,170,70,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.ellipse(0, 0, rx * 1.6, ry * 1.6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = `rgba(255,222,150,${(alpha * 0.9).toFixed(3)})`;
+  ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+/* --- shared helper: a remembered person, warm and un-individuated --- */
+function _memoryFigure(ctx, x, floor, h, tone, t, phase) {
+  const sway = Math.sin(t * 0.9 + (phase || 0)) * 0.8;
+  const headR = h * 0.13;
+  const headY = floor - h + headR;
+  ctx.save();
+  ctx.translate(sway, 0);
+  // body
+  ctx.fillStyle = tone;
+  ctx.beginPath();
+  ctx.moveTo(x - h * 0.16, floor);
+  ctx.quadraticCurveTo(x - h * 0.20, floor - h * 0.55, x - h * 0.10, headY + headR);
+  ctx.lineTo(x + h * 0.10, headY + headR);
+  ctx.quadraticCurveTo(x + h * 0.20, floor - h * 0.55, x + h * 0.16, floor);
+  ctx.closePath(); ctx.fill();
+  // head
+  ctx.beginPath(); ctx.arc(x, headY, headR, 0, Math.PI * 2); ctx.fill();
+  // warm inner light — remembered, not lit
+  const g = ctx.createRadialGradient(x, floor - h * 0.5, 0, x, floor - h * 0.5, h * 0.55);
+  g.addColorStop(0, 'rgba(255,214,150,0.22)'); g.addColorStop(1, 'rgba(255,214,150,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.ellipse(x, floor - h * 0.5, h * 0.5, h * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+/* ① MUHITTIN'S GRANDMOTHER — walnut orchard, late autumn, two boys */
+function drawMuhittinsGrandmother(ctx, cx, floor, t, speaking) {
+  // orchard light — low autumn sun
+  const g = ctx.createLinearGradient(0, 20, 0, floor);
+  g.addColorStop(0, 'rgba(210,140,50,0.16)'); g.addColorStop(1, 'rgba(120,80,30,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 20, 150, floor - 20);
+  // walnut trees behind
+  [[24, 0.9], [128, 0.75]].forEach(([tx, s]) => {
+    ctx.fillStyle = 'rgba(70,50,30,0.55)';
+    ctx.fillRect(tx - 3, floor - 62 * s, 6, 62 * s);
+    ctx.fillStyle = 'rgba(150,100,40,0.30)';
+    ctx.beginPath(); ctx.ellipse(tx, floor - 66 * s, 22 * s, 15 * s, 0, 0, Math.PI * 2); ctx.fill();
+  });
+  // fallen leaves
+  ctx.fillStyle = 'rgba(190,120,50,0.35)';
+  for (let i = 0; i < 16; i++) ctx.fillRect(10 + ((i * 41) % 130), floor - 3 + ((i * 7) % 4), 3, 2);
+  // the grandmother — elderly, stooped, headscarf
+  const H = 64, x = cx;
+  ctx.fillStyle = '#6a5238';
+  ctx.beginPath();
+  ctx.moveTo(x - 12, floor); ctx.quadraticCurveTo(x - 15, floor - 34, x - 8, floor - H + 12);
+  ctx.lineTo(x + 8, floor - H + 12); ctx.quadraticCurveTo(x + 15, floor - 34, x + 12, floor);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#7d6444'; ctx.fillRect(x - 9, floor - 34, 18, 16);   // apron
+  ctx.fillStyle = '#c8a880'; ctx.beginPath(); ctx.arc(x, floor - H + 6, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#8a3a30';                                           // headscarf
+  ctx.beginPath(); ctx.arc(x, floor - H + 4, 8.6, Math.PI, 0); ctx.fill();
+  ctx.fillRect(x - 8.6, floor - H + 4, 17.2, 4);
+  ctx.fillStyle = '#5a4a3a';
+  ctx.fillRect(x - 4, floor - H + 6, 2, 1); ctx.fillRect(x + 2, floor - H + 6, 2, 1);
+  // hands cupped with a walnut
+  ctx.fillStyle = '#c8a880';
+  ctx.beginPath(); ctx.ellipse(x + 13, floor - 30, 5, 3.4, -0.3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#8a6234';
+  ctx.beginPath(); ctx.arc(x + 14, floor - 33, 3, 0, Math.PI * 2); ctx.fill();
+  // two boys, small, at the edge — testing walnuts
+  _memoryFigure(ctx, x - 34, floor, 34, 'rgba(180,140,90,0.55)', t, 0);
+  _memoryFigure(ctx, x - 46, floor, 30, 'rgba(180,140,90,0.45)', t, 1.4);
+  // taste-memory wash
+  const w = ctx.createRadialGradient(x, floor - 40, 0, x, floor - 40, 78);
+  w.addColorStop(0, 'rgba(255,190,110,0.10)'); w.addColorStop(1, 'rgba(255,190,110,0)');
+  ctx.fillStyle = w; ctx.fillRect(0, 0, 150, 170);
+}
+
+/* ② JOHANNES'S PARENTS — young couple, courtyard fire */
+function drawJohannesParents(ctx, cx, floor, t, speaking) {
+  // night courtyard
+  ctx.fillStyle = 'rgba(10,14,26,0.45)'; ctx.fillRect(0, 20, 150, floor - 20);
+  // fire between them
+  const fx = cx, fy = floor - 6;
+  for (let i = 0; i < 7; i++) {
+    const a = 0.30 + 0.40 * Math.abs(Math.sin(t * 3 + i));
+    ctx.fillStyle = `rgba(255,120,40,${a.toFixed(2)})`;
+    ctx.fillRect(fx - 14 + i * 4, fy, 3, 3);
+  }
+  const fl = Math.sin(t * 6) * 1.4;
+  ctx.fillStyle = 'rgba(255,160,60,0.75)';
+  ctx.beginPath(); ctx.ellipse(fx, fy - 8 + fl, 6, 11, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(255,230,170,0.85)';
+  ctx.beginPath(); ctx.ellipse(fx, fy - 6 + fl, 2.6, 5.5, 0, 0, Math.PI * 2); ctx.fill();
+  const g = ctx.createRadialGradient(fx, fy - 6, 0, fx, fy - 6, 66);
+  g.addColorStop(0, 'rgba(255,140,50,0.34)'); g.addColorStop(1, 'rgba(255,140,50,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 20, 150, floor - 12);
+  // the potjie on the fire
+  ctx.fillStyle = '#1c1816';
+  ctx.beginPath(); ctx.ellipse(fx, fy - 14, 11, 7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#2a2422';
+  ctx.beginPath(); ctx.ellipse(fx, fy - 18, 10, 3.4, 0, 0, Math.PI * 2); ctx.fill();
+  // young couple, either side, leaning in — firelit, un-individuated
+  _memoryFigure(ctx, cx - 30, floor, 62, 'rgba(200,140,80,0.58)', t, 0.4);
+  _memoryFigure(ctx, cx + 30, floor, 58, 'rgba(200,140,80,0.58)', t, 2.2);
+  // firelight rim on the near sides
+  ctx.fillStyle = 'rgba(255,180,90,0.20)';
+  ctx.fillRect(cx - 22, floor - 56, 4, 50);
+  ctx.fillRect(cx + 19, floor - 52, 4, 46);
+}
+
+/* ③ TIRTA'S GRANDMOTHER — wrapping lemper by lamplight */
+function drawTirtasGrandmother(ctx, cx, floor, t, speaking) {
+  ctx.fillStyle = 'rgba(12,16,14,0.42)'; ctx.fillRect(0, 20, 150, floor - 20);
+  // hanging oil lamp
+  const lx = cx + 34, ly = 42;
+  ctx.strokeStyle = 'rgba(120,100,60,0.6)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(lx, 20); ctx.lineTo(lx, ly - 6); ctx.stroke();
+  ctx.fillStyle = '#6a5228'; ctx.fillRect(lx - 5, ly - 6, 10, 8);
+  const fl = Math.sin(t * 5) * 0.7;
+  ctx.fillStyle = 'rgba(255,200,110,0.9)';
+  ctx.beginPath(); ctx.ellipse(lx, ly + 3 + fl, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
+  const g = ctx.createRadialGradient(lx, ly + 3, 0, lx, ly + 3, 80);
+  g.addColorStop(0, 'rgba(255,190,100,0.32)'); g.addColorStop(1, 'rgba(255,190,100,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 10, 150, floor - 10);
+  // low table
+  ctx.fillStyle = '#4a3620'; ctx.fillRect(cx - 34, floor - 26, 68, 6);
+  ctx.fillStyle = '#3a2a18'; ctx.fillRect(cx - 30, floor - 20, 5, 20); ctx.fillRect(cx + 25, floor - 20, 5, 20);
+  // banana-leaf parcels on the table
+  [[-22, 0], [-8, 1], [6, 0], [20, 1]].forEach(([ox, oy]) => {
+    ctx.fillStyle = '#3e7a3a';
+    ctx.beginPath(); ctx.ellipse(cx + ox, floor - 29 + oy, 6.5, 3.4, 0.15, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4f9247';
+    ctx.beginPath(); ctx.ellipse(cx + ox - 1, floor - 30 + oy, 5, 2.4, 0.15, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(216,224,176,0.7)'; ctx.fillRect(cx + ox - 5, floor - 30 + oy, 10, 0.8);
+  });
+  // the grandmother, seated, hands working
+  const H = 52, x = cx - 6;
+  ctx.fillStyle = '#5a4a58';
+  ctx.beginPath();
+  ctx.moveTo(x - 14, floor - 4); ctx.quadraticCurveTo(x - 16, floor - 30, x - 8, floor - H + 10);
+  ctx.lineTo(x + 8, floor - H + 10); ctx.quadraticCurveTo(x + 16, floor - 30, x + 14, floor - 4);
+  ctx.closePath(); ctx.fill();
+  // batik sash
+  ctx.fillStyle = '#7a4a2c'; ctx.fillRect(x - 12, floor - 30, 24, 5);
+  ctx.fillStyle = 'rgba(230,200,140,0.5)';
+  for (let i = 0; i < 6; i++) ctx.fillRect(x - 11 + i * 4, floor - 29, 2, 3);
+  ctx.fillStyle = '#b08858'; ctx.beginPath(); ctx.arc(x, floor - H + 4, 7.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#2a2028';                                  // pulled-back grey hair
+  ctx.beginPath(); ctx.arc(x, floor - H + 2, 8, Math.PI, 0); ctx.fill();
+  ctx.fillStyle = 'rgba(200,200,210,0.5)';
+  ctx.beginPath(); ctx.arc(x, floor - H + 2, 8, Math.PI * 1.15, Math.PI * 1.85); ctx.fill();
+  ctx.fillStyle = '#4a3a34';
+  ctx.fillRect(x - 3.5, floor - H + 4, 2, 1); ctx.fillRect(x + 1.5, floor - H + 4, 2, 1);
+  // working hands over the parcels
+  ctx.fillStyle = '#b08858';
+  ctx.beginPath(); ctx.ellipse(x + 8, floor - 31 + Math.sin(t * 2.4) * 0.8, 4.4, 3, -0.3, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(x - 4, floor - 30, 4, 2.8, 0.2, 0, Math.PI * 2); ctx.fill();
+}
+
+/* ④ GENERATIONAL MOQUECA FIGURES — a chain of cooks across time */
+function drawGenerationalMoqueca(ctx, cx, floor, t, speaking) {
+  ctx.fillStyle = 'rgba(24,10,6,0.42)'; ctx.fillRect(0, 20, 150, floor - 20);
+  // receding chain of cooks — nearest most solid, each further back fainter/smaller
+  const chain = [
+    { x: cx + 26, h: 62, a: 0.62 }, { x: cx + 2, h: 56, a: 0.46 },
+    { x: cx - 20, h: 50, a: 0.33 }, { x: cx - 38, h: 44, a: 0.22 },
+    { x: cx - 52, h: 38, a: 0.13 },
+  ];
+  chain.forEach((c, i) => {
+    _memoryFigure(ctx, c.x, floor - i * 3, c.h, `rgba(220,150,70,${c.a})`, t, i * 0.8);
+    // each holds a pot; the orange broth is the through-line
+    const py = floor - i * 3 - c.h * 0.42;
+    ctx.fillStyle = `rgba(90,44,26,${(c.a + 0.1).toFixed(2)})`;
+    ctx.beginPath(); ctx.ellipse(c.x, py, c.h * 0.16, c.h * 0.09, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `rgba(240,140,30,${(c.a * 0.9).toFixed(2)})`;
+    ctx.beginPath(); ctx.ellipse(c.x, py - 1.5, c.h * 0.12, c.h * 0.05, 0, 0, Math.PI * 2); ctx.fill();
+  });
+  // the passing-on: a warm thread linking each pair of hands
+  ctx.strokeStyle = 'rgba(255,180,90,0.30)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  chain.forEach((c, i) => {
+    const py = floor - i * 3 - c.h * 0.42;
+    if (i === 0) ctx.moveTo(c.x, py); else ctx.lineTo(c.x, py);
+  });
+  ctx.stroke();
+  // motes drifting back along the chain
+  for (let i = 0; i < 7; i++) {
+    const p = ((t * 0.30) + i / 7) % 1;
+    const mx = cx + 26 - p * 78, my = floor - p * 15 - 28 + Math.sin(t * 2 + i) * 3;
+    ctx.fillStyle = `rgba(255,206,130,${(0.44 * (1 - p)).toFixed(2)})`;
+    ctx.beginPath(); ctx.arc(mx, my, 1.6, 0, Math.PI * 2); ctx.fill();
+  }
+  const g = ctx.createRadialGradient(cx + 20, floor - 34, 0, cx + 20, floor - 34, 80);
+  g.addColorStop(0, 'rgba(255,150,50,0.14)'); g.addColorStop(1, 'rgba(255,150,50,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 150, 170);
+}
+
+/* ⑤ IRIS'S FAMILY — Edwardian dining room, time-warped amber */
+function drawIrisFamily(ctx, cx, floor, t, speaking) {
+  ctx.fillStyle = 'rgba(20,14,10,0.45)'; ctx.fillRect(0, 20, 150, floor - 20);
+  // candlelit room glow
+  const g = ctx.createRadialGradient(cx, floor - 46, 0, cx, floor - 46, 88);
+  g.addColorStop(0, 'rgba(255,190,110,0.26)'); g.addColorStop(1, 'rgba(255,190,110,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 10, 150, floor - 10);
+  // long table, white cloth
+  ctx.fillStyle = '#e4dcc8'; ctx.fillRect(cx - 56, floor - 30, 112, 12);
+  ctx.fillStyle = '#cfc6ae'; ctx.fillRect(cx - 56, floor - 20, 112, 4);
+  ctx.fillStyle = 'rgba(255,225,180,0.20)'; ctx.fillRect(cx - 52, floor - 29, 104, 3);
+  // candles down the middle
+  [-30, 0, 30].forEach((ox, i) => {
+    ctx.fillStyle = '#f0ead8'; ctx.fillRect(cx + ox - 1.5, floor - 42, 3, 12);
+    const fl = Math.sin(t * 6 + i * 1.7) * 0.7;
+    ctx.fillStyle = 'rgba(255,200,110,0.9)';
+    ctx.beginPath(); ctx.ellipse(cx + ox, floor - 45 + fl, 1.8, 3.4, 0, 0, Math.PI * 2); ctx.fill();
+  });
+  // place settings
+  [-38, -14, 14, 38].forEach(ox => {
+    ctx.fillStyle = '#f2eee2';
+    ctx.beginPath(); ctx.ellipse(cx + ox, floor - 26, 7, 2.6, 0, 0, Math.PI * 2); ctx.fill();
+  });
+  // family — father, mother, siblings; formal silhouettes, amber-remembered
+  _memoryFigure(ctx, cx - 46, floor - 4, 60, 'rgba(80,64,90,0.62)', t, 0.2);   // father, dark suit
+  _memoryFigure(ctx, cx + 46, floor - 4, 56, 'rgba(120,80,90,0.60)', t, 1.1);  // mother
+  _memoryFigure(ctx, cx - 16, floor - 4, 44, 'rgba(150,120,110,0.52)', t, 2.0);// sibling
+  _memoryFigure(ctx, cx + 16, floor - 4, 42, 'rgba(150,120,110,0.52)', t, 2.9);// Iris's seat
+  // the time-warp: the whole scene very faintly doubles, offset
+  ctx.globalAlpha = 0.12;
+  ctx.drawImage(ctx.canvas, 2, -1);
+  ctx.globalAlpha = 1;
+}
+
+/* ⑥ ECHO-MICE — Ch2 lower decks, baseboard scurry */
+function drawEchoMice(ctx, cx, floor, t, speaking) {
+  // baseboard hint
+  ctx.fillStyle = 'rgba(255,190,110,0.06)'; ctx.fillRect(0, floor - 4, 150, 4);
+  const mice = [
+    { base: cx - 34, span: 30, spd: 1.30, ph: 0.0, s: 1.00 },
+    { base: cx + 6,  span: 24, spd: 1.75, ph: 2.1, s: 0.82 },
+    { base: cx + 34, span: 18, spd: 2.30, ph: 4.0, s: 0.68 },
+  ];
+  mice.forEach(m => {
+    // stop-start scurry: fast dash, brief freeze
+    const raw = (Math.sin(t * m.spd + m.ph) + 1) / 2;
+    const eased = raw < 0.5 ? raw * raw * 2 : 1 - (1 - raw) * (1 - raw) * 2;
+    const x = m.base + eased * m.span;
+    const dir = Math.cos(t * m.spd + m.ph) >= 0 ? 1 : -1;
+    const y = floor - 5 * m.s;
+    const bob = Math.abs(Math.sin(t * 9 + m.ph)) * 0.7 * m.s;
+    _echoBlob(ctx, x, y - bob, 5.5 * m.s, 3.2 * m.s, 0.50);          // body
+    _echoBlob(ctx, x + dir * 5 * m.s, y - 1 * m.s - bob, 2.6 * m.s, 2.3 * m.s, 0.55); // head
+    _echoBlob(ctx, x + dir * 4 * m.s, y - 3.6 * m.s - bob, 1.5 * m.s, 1.5 * m.s, 0.40); // ear
+    // tail
+    ctx.strokeStyle = 'rgba(255,196,110,0.42)'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - dir * 5 * m.s, y - bob);
+    ctx.quadraticCurveTo(x - dir * 11 * m.s, y - 3 * m.s - bob, x - dir * 13 * m.s, y + 1 * m.s - bob);
+    ctx.stroke();
+  });
+}
+
+/* ⑦ URBAN VERMIN — Ch8 Greenpoint street: roaches, a rat, one comedy turkey */
+function drawUrbanVermin(ctx, cx, floor, t, speaking) {
+  ctx.fillStyle = 'rgba(255,190,110,0.05)'; ctx.fillRect(0, floor - 3, 150, 3);
+  // cockroaches — quick, low, erratic
+  for (let i = 0; i < 4; i++) {
+    const p = ((t * 0.55) + i * 0.27) % 1;
+    const x = 14 + p * 124, y = floor - 4 - (i % 2) * 3;
+    const jit = Math.sin(t * 16 + i * 3) * 0.8;
+    _echoBlob(ctx, x, y + jit, 3.6, 1.9, 0.44);
+    ctx.strokeStyle = 'rgba(255,196,110,0.34)'; ctx.lineWidth = 0.8;
+    for (let l = -1; l <= 1; l += 2) {
+      ctx.beginPath(); ctx.moveTo(x, y + jit); ctx.lineTo(x + l * 4, y + jit + 2.4); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.moveTo(x + 3, y + jit); ctx.lineTo(x + 6, y + jit - 2); ctx.stroke();
+  }
+  // bedbugs — tiny, nearly still
+  for (let i = 0; i < 5; i++) {
+    _echoBlob(ctx, 24 + i * 24 + Math.sin(t * 1.2 + i) * 1.5, floor - 9, 1.5, 1.2, 0.30);
+  }
+  // rat — larger, purposeful, crosses the cell
+  const rp = (t * 0.22) % 1, rx = 150 - rp * 170, ry = floor - 7;
+  _echoBlob(ctx, rx, ry, 9, 4.6, 0.48);
+  _echoBlob(ctx, rx - 8, ry - 1, 4, 3.4, 0.52);
+  _echoBlob(ctx, rx - 6, ry - 4.6, 2, 2, 0.38);
+  ctx.strokeStyle = 'rgba(255,196,110,0.40)'; ctx.lineWidth = 1.1;
+  ctx.beginPath(); ctx.moveTo(rx + 8, ry);
+  ctx.quadraticCurveTo(rx + 18, ry - 5, rx + 22, ry + 2); ctx.stroke();
+  // the comedy turkey — absurd, dignified, slightly too big
+  const tx = cx + 28, ty = floor - 2, bob = Math.sin(t * 1.6) * 1.2;
+  _echoBlob(ctx, tx, ty - 13 + bob, 13, 10, 0.42);                 // body
+  ctx.strokeStyle = 'rgba(255,196,110,0.30)'; ctx.lineWidth = 1;
+  for (let f = -3; f <= 3; f++) {                                   // fanned tail
+    ctx.beginPath(); ctx.moveTo(tx + 6, ty - 13 + bob);
+    ctx.lineTo(tx + 6 + Math.cos(f * 0.30 - 0.15) * 17, ty - 14 + bob + Math.sin(f * 0.30 - 0.15) * 17);
+    ctx.stroke();
+  }
+  _echoBlob(ctx, tx - 10, ty - 22 + bob, 3.6, 4.4, 0.50);           // head
+  _echoBlob(ctx, tx - 12, ty - 18 + bob, 1.6, 3.0, 0.44);           // wattle
+  ctx.fillStyle = 'rgba(255,220,150,0.55)';
+  ctx.fillRect(tx - 15, ty - 23 + bob, 3, 1.4);                     // beak
+  ctx.strokeStyle = 'rgba(255,196,110,0.38)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(tx - 2, ty - 4 + bob); ctx.lineTo(tx - 2, ty); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx + 4, ty - 4 + bob); ctx.lineTo(tx + 4, ty); ctx.stroke();
+}
+
+/* ⑧ ECHO-MOSQUITOES — Ch7/8, tiny dots, slow clouds, barely there */
+function drawEchoMosquitoes(ctx, cx, floor, t, speaking) {
+  // two loose clouds drifting at different rates
+  const clouds = [
+    { x: cx - 24, y: floor - 62, r: 22, n: 16, spd: 0.16, ph: 0 },
+    { x: cx + 26, y: floor - 38, r: 17, n: 11, spd: 0.11, ph: 2.4 },
+  ];
+  clouds.forEach(c => {
+    const drift = Math.sin(t * c.spd + c.ph) * 7;
+    for (let i = 0; i < c.n; i++) {
+      const a0 = (i / c.n) * Math.PI * 2 + t * (0.22 + (i % 3) * 0.06);
+      const rr = c.r * (0.35 + ((i * 37) % 65) / 100);
+      const x = c.x + drift + Math.cos(a0) * rr;
+      const y = c.y + Math.sin(a0 * 1.3 + i) * rr * 0.55;
+      const a = 0.10 + 0.13 * Math.abs(Math.sin(t * 2.4 + i * 1.9));
+      ctx.fillStyle = `rgba(255,200,120,${a.toFixed(3)})`;
+      ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+    }
+    // the faintest suggestion of mass
+    const g = ctx.createRadialGradient(c.x + drift, c.y, 0, c.x + drift, c.y, c.r * 1.5);
+    g.addColorStop(0, 'rgba(255,190,100,0.045)'); g.addColorStop(1, 'rgba(255,190,100,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(c.x + drift, c.y, c.r * 1.5, 0, Math.PI * 2); ctx.fill();
+  });
+}
+
+/* ⑨ ECHO-FISH (HADDOCK) — elongated, drifts mid-air */
+function drawEchoFishHaddock(ctx, cx, floor, t, speaking) {
+  const y = floor - 66 + Math.sin(t * 0.7) * 7;
+  const x = cx + Math.sin(t * 0.42) * 16;
+  const wag = Math.sin(t * 3.1) * 0.30;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(Math.sin(t * 0.5) * 0.10);
+  _echoBlob(ctx, 0, 0, 26, 8, 0.42);                       // long body
+  _echoBlob(ctx, -20, -1, 8, 6.5, 0.46);                   // head
+  // tail
+  ctx.save(); ctx.translate(24, 0); ctx.rotate(wag);
+  ctx.fillStyle = 'rgba(255,200,120,0.40)';
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(13, -9); ctx.lineTo(10, 0); ctx.lineTo(13, 9); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  // dorsal + pectoral
+  ctx.fillStyle = 'rgba(255,200,120,0.30)';
+  ctx.beginPath(); ctx.moveTo(-6, -7); ctx.lineTo(2, -16); ctx.lineTo(9, -7); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-8, 5); ctx.lineTo(-2, 13); ctx.lineTo(3, 5); ctx.closePath(); ctx.fill();
+  // haddock's dark thumbprint, rendered as a denser amber knot
+  _echoBlob(ctx, -8, -2, 3.2, 3.2, 0.34);
+  // lateral line
+  ctx.strokeStyle = 'rgba(255,220,150,0.30)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(-16, -1); ctx.lineTo(20, -1); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,240,200,0.55)';
+  ctx.beginPath(); ctx.arc(-21, -2, 1.5, 0, Math.PI * 2); ctx.fill();   // eye
+  ctx.restore();
+}
+
+/* ⑩ ECHO-FISH (PLAICE) — flat and broad, drifts mid-air */
+function drawEchoFishPlaice(ctx, cx, floor, t, speaking) {
+  const y = floor - 58 + Math.sin(t * 0.6 + 1.2) * 6;
+  const x = cx + Math.sin(t * 0.36 + 2) * 13;
+  ctx.save(); ctx.translate(x, y);
+  ctx.rotate(0.12 + Math.sin(t * 0.55) * 0.09);
+  _echoBlob(ctx, 0, 0, 21, 15, 0.40);                      // broad flat oval
+  // ruffled fin margin all round
+  ctx.strokeStyle = 'rgba(255,200,120,0.26)'; ctx.lineWidth = 1;
+  for (let a = 0; a < Math.PI * 2; a += 0.30) {
+    const rr = 1 + Math.sin(a * 5 + t * 2.2) * 0.9;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * 21, Math.sin(a) * 15);
+    ctx.lineTo(Math.cos(a) * (24 + rr), Math.sin(a) * (18 + rr));
+    ctx.stroke();
+  }
+  // plaice's orange spots, as denser amber motes
+  [[-9, -5], [1, -8], [8, -2], [-4, 4], [7, 6], [-12, 2]].forEach(([ox, oy], i) => {
+    const a = 0.26 + 0.14 * Math.abs(Math.sin(t * 1.8 + i));
+    _echoBlob(ctx, ox, oy, 2.4, 2.4, a);
+  });
+  // both eyes on the upper side — the plaice tell
+  ctx.fillStyle = 'rgba(255,240,200,0.60)';
+  ctx.beginPath(); ctx.arc(-14, -6, 1.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(-14, -1.5, 1.4, 0, Math.PI * 2); ctx.fill();
+  // tail
+  ctx.fillStyle = 'rgba(255,200,120,0.34)';
+  ctx.beginPath(); ctx.moveTo(20, 0); ctx.lineTo(30, -7); ctx.lineTo(27, 0); ctx.lineTo(30, 7); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
 const CHARACTERS = [
 
   // ── PIP ────────────────────────────────────────────────────
@@ -3301,11 +3712,16 @@ const CHARACTERS = [
   },
   // ── NEW Ch4: not-yet-present (Sprint B) ──────────────────
   {
-    id: 'muhittins-grandmother', name: "Muhittin's Grandmother", chapterTag: 'Ch 4', section: 'chefs', designed: false,
+    id: 'muhittins-grandmother', name: "Muhittin's Grandmother", chapterTag: 'Ch 4', section: 'chefs', designed: true,
     assetId: 'CH4-CHAR-05',
     frac: 0.55, fracLabel: '0.50–0.60',
     colorSig: 'elderly / walnut orchard / taste-memory',
     tells: 'Elderly woman in walnut orchard, late autumn; watching two boys test walnuts; taste-memory only — see OQ-A-04',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawMuhittinsGrandmother(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
   },
   {
     id: 'johannes', name: 'Johannes', chapterTag: 'Ch 5', section: 'chefs', designed: true,
@@ -3323,11 +3739,16 @@ const CHARACTERS = [
   },
   // ── NEW Ch5: not-yet-present (Sprint B) ──────────────────
   {
-    id: 'johannes-parents', name: "Johannes's Parents", chapterTag: 'Ch 5', section: 'chefs', designed: false,
+    id: 'johannes-parents', name: "Johannes's Parents", chapterTag: 'Ch 5', section: 'chefs', designed: true,
     assetId: 'CH5-CHAR-05',
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'young Afrikaner couple / courtyard fire / taste-memory',
     tells: 'Young couple tending a courtyard fire; taste-memory of potjie origins; no physical descriptions in outline — see OQ-A-04',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawJohannesParents(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
   },
   {
     id: 'tirta', name: 'Tirta', chapterTag: 'Ch 6', section: 'chefs', designed: true,
@@ -3345,11 +3766,16 @@ const CHARACTERS = [
   },
   // ── NEW Ch6: not-yet-present (Sprint B) ──────────────────
   {
-    id: 'tirtas-grandmother', name: "Tirta's Grandmother", chapterTag: 'Ch 6', section: 'chefs', designed: false,
+    id: 'tirtas-grandmother', name: "Tirta's Grandmother", chapterTag: 'Ch 6', section: 'chefs', designed: true,
     assetId: 'CH6-CHAR-03',
     frac: 0.55, fracLabel: '0.50–0.60',
     colorSig: 'elderly Indonesian woman / banana leaves / lamplight / taste-memory',
     tells: 'Elderly woman wrapping lemper in banana leaves by lamplight; warm and precise; taste-memory only — see OQ-A-04',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawTirtasGrandmother(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
   },
   {
     id: 'beatriz', name: 'Beatriz', chapterTag: 'Ch 7', section: 'chefs', designed: true,
@@ -3381,11 +3807,16 @@ const CHARACTERS = [
   },
   // ── NEW Ch7: not-yet-present (Sprint B) ──────────────────
   {
-    id: 'generational-moqueca', name: 'Generational Moqueca Figures', chapterTag: 'Ch 7', section: 'chefs', designed: false,
+    id: 'generational-moqueca', name: 'Generational Moqueca Figures', chapterTag: 'Ch 7', section: 'chefs', designed: true,
     assetId: 'CH7-CHAR-06',
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'multiple unnamed cooks / generations / taste-memory chain',
     tells: 'Multiple unnamed cooks across Brazilian communities, generations, and families; elaborate cinematic sequence; no individual descriptions — see OQ-A-06',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawGenerationalMoqueca(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
   },
 
   // ── GHOSTS ─────────────────────────────────────────────────
@@ -3444,11 +3875,16 @@ const CHARACTERS = [
   },
   // ── NEW Ch5: not-yet-present ghost (Sprint B) ─────────────
   {
-    id: 'iris-family', name: "Iris's Family (dining room)", chapterTag: 'Ch 5', section: 'ghosts', designed: false,
+    id: 'iris-family', name: "Iris's Family (dining room)", chapterTag: 'Ch 5', section: 'ghosts', designed: true,
     assetId: 'CH5-CHAR-02',
     frac: 0.60, fracLabel: '0.55–0.65',
     colorSig: 'Edwardian formal / warm-amber time-warped / multiple figures',
     tells: 'Edwardian father, mother, siblings at formal dining table; taste-memory; multiple unnamed figures — see OQ-A-05',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawIrisFamily(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
   },
 
   // ── MONSTERS ──────────────────────────────────────────────
@@ -3559,11 +3995,16 @@ const CHARACTERS = [
     canSpeak: false,
   },
   {
-    id: 'echo-mice', name: 'Echo-mice', chapterTag: 'Ch 2', section: 'echoes', designed: false,
+    id: 'echo-mice', name: 'Echo-mice', chapterTag: 'Ch 2', section: 'echoes', designed: true,
     assetId: 'CH2-CHAR-04',
     frac: 0.10, fracLabel: '0.06–0.14',
     colorSig: 'warm-amber translucent',
     tells: 'small mice, scurry along baseboards, ground-level; Ch2 lower decks',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawEchoMice(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
   },
   {
     id: 'echo-rats', name: 'Echo-rats', chapterTag: 'Ch 5', section: 'echoes', designed: true,
@@ -3580,18 +4021,28 @@ const CHARACTERS = [
     canSpeak: false,
   },
   {
-    id: 'urban-vermin', name: 'Urban vermin', chapterTag: 'Ch 8', section: 'echoes', designed: false,
+    id: 'urban-vermin', name: 'Urban vermin', chapterTag: 'Ch 8', section: 'echoes', designed: true,
     assetId: 'CH8-CHAR-04',
     frac: 0.10, fracLabel: '0.06–0.14',
     colorSig: 'warm-amber translucent',
     tells: 'cockroaches, bedbugs, rats, comedy turkey; Greenpoint streets Ch8',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawUrbanVermin(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
   },
   {
-    id: 'echo-mosquitoes', name: 'Echo-mosquitoes', chapterTag: 'Ch 7, 8', section: 'echoes', designed: false,
+    id: 'echo-mosquitoes', name: 'Echo-mosquitoes', chapterTag: 'Ch 7, 8', section: 'echoes', designed: true,
     assetId: 'CH7-CHAR-05',
     frac: 0.04, fracLabel: '~0.04',
     colorSig: 'warm-amber translucent very low alpha',
     tells: 'tiny dots, slow clouds, barely visible',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawEchoMosquitoes(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
   },
   {
     id: 'echo-deer', name: 'Echo-deer', chapterTag: 'Ch 3', section: 'echoes', designed: true,
@@ -3622,18 +4073,28 @@ const CHARACTERS = [
     canSpeak: false,
   },
   {
-    id: 'echo-fish-haddock', name: 'Echo-fish (haddock)', chapterTag: 'Ch 3', section: 'echoes', designed: false,
+    id: 'echo-fish-haddock', name: 'Echo-fish (haddock)', chapterTag: 'Ch 3', section: 'echoes', designed: true,
     assetId: 'CH3-CHAR-12',
     frac: 0.28, fracLabel: '0.25–0.30',
     colorSig: 'warm-amber translucent',
     tells: 'elongated fish, drifts mid-air',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawEchoFishHaddock(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
   },
   {
-    id: 'echo-fish-plaice', name: 'Echo-fish (plaice)', chapterTag: 'Ch 3', section: 'echoes', designed: false,
+    id: 'echo-fish-plaice', name: 'Echo-fish (plaice)', chapterTag: 'Ch 3', section: 'echoes', designed: true,
     assetId: 'CH3-CHAR-12',
     frac: 0.28, fracLabel: '0.25–0.30',
     colorSig: 'warm-amber translucent',
     tells: 'flat broad fish, drifts mid-air',
+    drawFn: (ctx, t, speaking) => {
+      drawCellBackground(ctx);
+      drawDoorOutline(ctx);
+      drawEchoFishPlaice(ctx, CHAR_CX, FLOOR_Y, t, speaking);
+    },
   },
   {
     id: 'echo-cats', name: 'Echo-cats', chapterTag: 'Ch 4', section: 'echoes', designed: true,

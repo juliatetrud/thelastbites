@@ -7163,6 +7163,17 @@ const C = {
   // Henrik
   hCoat:        '#f4eee0',
   hApron:       '#e8d8b0',
+  /* #143 — janitor (canonical, from the character gallery). Crew slate + brass name-tag. */
+  jSlate:       '#3a4458',
+  jSlateHi:     '#4a5468',
+  jPocket:      '#30394c',
+  jCapBrim:     '#2a3448',
+  jBoot:        '#2a1c10',
+  jSkin:        '#c8a888',
+  jBrow:        '#4a4438',
+  jMouth:       '#3a2818',
+  jTagPlate:    '#a08664',
+  jTagShine:    '#c8aa80',
   hBeard:       '#aaaaa0',
   hSkin:        '#d0b898',
   hPipe:        '#3a2018',
@@ -7200,6 +7211,13 @@ function rect(ctx, x, y, w, h, color) {
 function px(ctx, x, y, color) {
   ctx.fillStyle = color;
   ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+}
+
+/* #143 — shared art-source helpers, ported verbatim from the character gallery so canonical
+   character draws can be lifted across without rewriting them (rule 11). */
+function drawHumanEye(ctx, x, y, w, h, whiteColor, pupilColor) {
+  rect(ctx, x, y, w, h, whiteColor);
+  rect(ctx, x + Math.floor(w / 2), y + Math.floor(h / 2), 1, 1, pupilColor);
 }
 
 /* Floor glow — radial gradient centred at (cx, floor). */
@@ -11081,43 +11099,57 @@ function drawStairwellDown(screenX) {
 
 /* ---- Janitor NPC sprite ---- */
 function drawJanitor(screenX, groundY, facing, now) {
-  const bob = Math.abs(Math.sin(now / 400)) * 2;
+  // #143 — CANONICAL JANITOR, ported from the character gallery's drawJanitor (rule 11:
+  // one character, one construction). What was here before was a faceless silhouette in
+  // three flat purples — no skin, no eyes, no hands, no name-tag. A grey non-character.
+  // The gallery design carries the story: crew slate uniform, weary lowered gaze and
+  // under-eye shadow, work cap, and the brass name-tag that reads J. HENRIKSEN — the name
+  // Pip finds on the cart's clipboard and pages over the radio.
+  const bob = Math.round(Math.abs(Math.sin(now / 400)) * 1.0);
   const cx  = Math.round(screenX);
-  const cy  = Math.round(groundY + bob);
+  const floor = Math.round(groundY);
 
   ctx.save();
-  ctx.translate(cx, cy);
-  if (facing === 'left') ctx.scale(-1, 1);
+  if (facing === 'left') { ctx.translate(cx * 2, 0); ctx.scale(-1, 1); }
 
-  ctx.fillStyle   = '#2a2438';
-  ctx.globalAlpha = 0.95;
-  ctx.shadowBlur  = 0;
+  floorGlow(ctx, cx, floor, 15, C.jSlate, 0.20);
 
-  // Work cap
-  ctx.fillRect(-8, -66, 18,  5);   // brim
-  ctx.fillRect(-6, -71, 14,  6);   // crown
-  // Head
-  ctx.fillRect(-7, -61, 14, 14);
-  // Neck
-  ctx.fillRect(-4, -47,  8,  4);
-  // Jumpsuit torso
-  ctx.fillStyle = '#34304a';
-  ctx.fillRect(-12, -43, 24, 20);
-  // Torso stripe
-  ctx.fillStyle = '#4a4860';
-  ctx.fillRect(-10, -38, 4, 12);
-  // Lower body
-  ctx.fillStyle = '#34304a';
-  ctx.fillRect(-11, -22, 22,  9);
-  // Legs
-  ctx.fillRect( -9, -12,  7, 12);
-  ctx.fillRect(  2, -12,  7, 12);
-  // Work boots
-  ctx.fillStyle = '#2a2030';
-  ctx.fillRect(-11,  -1, 10,  3);
-  ctx.fillRect(  2,  -1, 10,  3);
+  rect(ctx, cx-8, floor-3+bob, 7, 3, C.jBoot);      // work boots
+  rect(ctx, cx+1, floor-3+bob, 7, 3, C.jBoot);
+  rect(ctx, cx-6, floor-18+bob, 5, 15, C.jSlate);    // trousers
+  rect(ctx, cx+1, floor-18+bob, 5, 15, C.jSlate);
+  rect(ctx, cx-9, floor-32+bob, 18, 14, C.jSlate);   // jacket lower
+  rect(ctx, cx-10, floor-50+bob, 20, 18, C.jSlate);  // jacket upper
+  rect(ctx, cx-10, floor-50+bob, 20, 1, C.jSlateHi);   // shoulder seam
+  rect(ctx, cx-8,  floor-44+bob, 5, 6, C.jPocket);    // breast pocket
 
-  ctx.globalAlpha = 1;
+  rect(ctx, cx-7, floor-43+bob, 6, 4, C.jTagPlate);     // brass name-tag
+  px  (ctx, cx-6, floor-42+bob, C.jTagShine);
+  px  (ctx, cx-2, floor-43+bob, C.jTagShine);
+
+  rect(ctx, cx-14, floor-48+bob, 4, 18, C.jSlate);   // sleeves
+  rect(ctx, cx+10, floor-48+bob, 4, 18, C.jSlate);
+  rect(ctx, cx-14, floor-30+bob, 4, 5, C.jSkin);    // hands
+  rect(ctx, cx+10, floor-30+bob, 4, 5, C.jSkin);
+  rect(ctx, cx-2, floor-53+bob, 4, 3, C.jSkin);     // neck
+
+  const hx = cx, ht = floor - 63 + bob;
+  rect(ctx, hx-4, ht,   9, 3, C.jSkin);             // face
+  rect(ctx, hx-4, ht+3, 9, 5, C.jSkin);
+  rect(ctx, hx-3, ht+8, 7, 2, C.jSkin);
+  drawHumanEye(ctx, hx-3, ht+2, 2, 2, '#e8e0d0', '#2a2030');
+  drawHumanEye(ctx, hx+1, ht+2, 2, 2, '#e8e0d0', '#2a2030');
+  rect(ctx, hx-3, ht+1, 3, 1, C.jBrow);             // tired brow
+  rect(ctx, hx+1, ht+1, 3, 1, C.jBrow);
+  rect(ctx, hx-3, ht+4, 2, 1, 'rgba(80,60,40,0.28)'); // under-eye shadow
+  rect(ctx, hx+1, ht+4, 2, 1, 'rgba(80,60,40,0.28)');
+  rect(ctx, hx-1, ht+8, 3, 1, C.jMouth);             // weary closed mouth
+
+  rect(ctx, hx-5, ht-1, 11, 2, C.jCapBrim);            // cap brim
+  rect(ctx, hx-4, ht-6, 9,  5, C.jSlate);            // crown
+  rect(ctx, hx-3, ht-2, 7,  1, C.jSlateHi);
+  rect(ctx, hx-3, ht-6, 7,  1, C.jSlateHi);
+
   ctx.restore();
 }
 
@@ -11976,6 +12008,18 @@ function drawKitchen(camX, now) {
     }
   }
 
+  // ---- Henrik BEFORE the meeting (#143) — world-x 545, working at the counter ----
+  // He used to be drawn only once henrikMet was set, so Pip walked into an empty kitchen
+  // and Henrik materialised out of the cinematic. He is the cook; he is already here.
+  // The meeting beat is him NOTICING Pip ("Behind him, a sound. A pan drops.") — which
+  // reads correctly with him present and working, and not at all with him absent.
+  if (!chapterState.henrikMet) {
+    const hWorkSX = Math.round(545 - camX);
+    if (hWorkSX > -30 && hWorkSX < W + 30) {
+      drawHenrikStanding(hWorkSX, FLOOR_Y, 'left', now);
+    }
+  }
+
   // ---- Freezer doorway (world-x 700–762) ----
   const freezSX = Math.round(700 - camX);
   if (freezSX < W + 65 && freezSX > -65) {
@@ -12773,7 +12817,15 @@ function playMusic(trackId) {
 
   // Crossfade: ramp active out, incoming in, over ~1.2s
   const incomingEl = music.current === 'a' ? music.audioB : music.audioA;
-  incomingEl.src    = targetSrc;
+  // #143 — MUSIC IS CONTINUOUS. Assigning .src invokes the media load algorithm and
+  // restarts that element at 0:00 EVEN IF the URL is unchanged. The incoming element is
+  // usually already holding the track we want (main -> chefs -> main just alternates the
+  // two elements), so the old unconditional assignment restarted the theme from the top
+  // every single time the player left the kitchen. Only load when it is genuinely a
+  // different track; otherwise resume from wherever that element already is.
+  if (!incomingEl.src || !incomingEl.src.endsWith(targetSrc)) {
+    incomingEl.src = targetSrc;
+  }
   incomingEl.volume = 0;
 
   if (music.on && music.unlocked) {

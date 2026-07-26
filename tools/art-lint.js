@@ -24,7 +24,7 @@ const GAME = path.join(ROOT, 'game/index.html');
 
 /* Baselines recorded 2026-07-26. Lower these as debt is paid; never raise them. */
 const BASELINE = {
-  rawHexLiterals: 817,   // rule 4 — palette discipline
+  rawHexLiterals: 799,   // rule 4 — raw hex in DRAW CODE (palette blocks excluded)
   localCharacterDraws: 42, // rule 11 — characters not on the shared art source (#141)
 };
 
@@ -78,11 +78,27 @@ const ok = (rule, msg) => passes.push({ rule, msg });
 
 /* --- Rule 4: palette discipline (debt, must not grow) --------------------- */
 {
-  const n = new Set(src.match(/#[0-9a-fA-F]{6}\b/g) || []).size;
+  /* A palette definition is where hex belongs; rule 4 is about hex in DRAW CODE.
+     Strip `const C = {...}` / `const P = {...}` before counting. */
+  let stripped = src;
+  for (const name of ['C', 'P']) {
+    for (;;) {
+      const m = stripped.match(new RegExp('const ' + name + ' = \\{'));
+      if (!m) break;
+      const i = m.index, k = stripped.indexOf('{', i);
+      let d = 0, e = k;
+      for (; e < stripped.length; e++) {
+        if (stripped[e] === '{') d++;
+        else if (stripped[e] === '}') { d--; if (d === 0) break; }
+      }
+      stripped = stripped.slice(0, i) + stripped.slice(e + 1);
+    }
+  }
+  const n = new Set(stripped.match(/#[0-9a-fA-F]{6}\b/g) || []).size;
   if (n > BASELINE.rawHexLiterals) {
     v(4, `raw hex literals grew: ${n} (baseline ${BASELINE.rawHexLiterals}) — new art must use tokens`);
   } else {
-    debts.push(`rule 4 — ${n} distinct raw hex literals (baseline ${BASELINE.rawHexLiterals})`);
+    debts.push(`rule 4 — ${n} distinct raw hex literals in draw code (baseline ${BASELINE.rawHexLiterals}; palette definitions excluded)`);
   }
 }
 

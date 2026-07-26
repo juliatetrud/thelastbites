@@ -170,7 +170,7 @@ against a canvas stub catches this in seconds.
 *never once drawn*. It sat in a gallery marked `designed: true` for weeks. Nobody noticed
 because nobody had ever run all the cells.
 
-**Check:** the full-gallery render test — every draw function called at two different
+**Check:** `node tools/gallery-render-test.js` — every draw function called at two different
 timestamps, zero throws, no cell with a suspiciously low draw-call count.
 
 ### 13. Motion moves in whole pixels.
@@ -191,6 +191,24 @@ gallery's light/mid/dark background toggle exists for exactly this.
 
 ---
 
+## Checking these mechanically
+
+Two dependency-free node tools enforce the rules that can be enforced. Run both from the repo
+root before calling art work done:
+
+```
+node tools/art-lint.js              # rules 2, 3, 4, 8, 11
+node tools/gallery-render-test.js   # rule 12 — all 134 cells must render
+```
+
+`art-lint` distinguishes **violations** (a rule broken outright — exit 1) from **debt** (a
+recorded backlog that fails only if it *grows*). That is how rule 4's migrate-on-touch works
+in practice: the 817 raw hex literals don't block anything, but adding an 818th does.
+
+Rules 1, 5, 6, 7, 9, 10, 13 and 14 need eyes. They are in the self-check below.
+
+---
+
 ## Self-check before calling any sprite or scene done
 
 1. Same pixel density as everything it shares a frame with. *(rule 1)*
@@ -203,7 +221,7 @@ gallery's light/mid/dark background toggle exists for exactly this.
 8. Hard rects for solid things; curves only where softness is the point. *(rule 9)*
 9. Base sits on the floor line or on its support. *(rule 10)*
 10. Drawn by the character's one canonical function. *(rule 11)*
-11. Renders without throwing, in the gallery. *(rule 12)*
+11. Renders without throwing — `node tools/gallery-render-test.js`. *(rule 12)*
 12. Checked at 1× on a dark background. *(rule 14)*
 
 ---

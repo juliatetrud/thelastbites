@@ -5356,9 +5356,10 @@ function render(now) {
     fg.addColorStop(1, 'rgba(255,240,160,0)');
     ctx.fillStyle = fg;
     ctx.fillRect(fcx - 50, fcy - 50, 100, 100);
-    // Draw the treat sprite large (3× scale via transform)
+    // Draw the treat sprite large. Rule 3: integer scale only outside cinematic close-ups —
+    // this is a gameplay flash, and it was 3.5 (which also disagreed with its own comment).
     ctx.translate(fcx, fcy);
-    ctx.scale(3.5, 3.5);
+    ctx.scale(4, 4);
     drawTreatSprite(ctx, treatFlash.sprite, 0, 0);
     ctx.restore();
   }
@@ -6579,7 +6580,7 @@ function drawCabin(camX, now) {
 
   // Riveted wall panels at half camera speed
   const panelSpacing = 120;
-  const panelOffset  = (camX * 0.5) % panelSpacing;
+  const panelOffset  = Math.round((camX * 0.5) % panelSpacing);   // rule 2: layer moves rigidly
   for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
     drawShipPanel(Math.round(px), panelTop, panelSpacing, panelH, {
       strokeColor: 'rgba(55,75,130,0.22)',
@@ -9316,7 +9317,7 @@ function drawHallway(camX, now) {
 
   // Riveted wall panels at half camera speed
   const panelSpacing = 120;
-  const panelOffset  = (camX * 0.5) % panelSpacing;
+  const panelOffset  = Math.round((camX * 0.5) % panelSpacing);   // rule 2: layer moves rigidly
   for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
     drawShipPanel(Math.round(px), panelTop, panelSpacing, panelH, {
       strokeColor: 'rgba(50,70,120,0.22)',
@@ -9637,7 +9638,7 @@ function drawGrandparents(camX, now) {
 
   // Riveted wall panels at half camera speed
   const panelSpacing = 120;
-  const panelOffset  = (camX * 0.5) % panelSpacing;
+  const panelOffset  = Math.round((camX * 0.5) % panelSpacing);   // rule 2: layer moves rigidly
   for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
     drawShipPanel(Math.round(px), panelTop, panelSpacing, panelH, {
       strokeColor: 'rgba(80,58,22,0.20)',
@@ -10614,7 +10615,7 @@ function drawDarkCorridor(camX, now) {
     // ---- DARK STATE — Sprint 50: layout matches hallway proportions; visibility lifted further. ----
     // Decision D / Aesthetic Rule 11: always navigable, never frustrating-dark.
     const panelSpacing = 120;
-    const panelOffset  = (camX * 0.5) % panelSpacing;
+    const panelOffset  = Math.round((camX * 0.5) % panelSpacing);   // rule 2: layer moves rigidly
     const panelTop     = 20;
     const baseboardH   = 12;
     const panelH       = FLOOR_Y - baseboardH - panelTop;   // 148 — same as hallway
@@ -10740,7 +10741,7 @@ function drawDarkCorridor(camX, now) {
 
     // Riveted wall panels — industrial palette
     const panelSpacing = 120;
-    const panelOffset  = (camX * 0.5) % panelSpacing;
+    const panelOffset  = Math.round((camX * 0.5) % panelSpacing);   // rule 2: layer moves rigidly
     const panelTop  = 20;
     const baseboardH = 12;
     const panelH    = FLOOR_Y - baseboardH - panelTop;
@@ -10915,7 +10916,7 @@ function drawDarkCorridorPipes(camX, alpha) {
   ctx.strokeStyle = '#2a3040';
   ctx.lineWidth   = 4;
   // Horizontal pipe runs offset by parallax
-  const pipeOffset = (camX * 0.3) % 320;
+  const pipeOffset = Math.round((camX * 0.3) % 320);   // rule 2: layer moves rigidly
   for (let px = -pipeOffset; px < W + 320; px += 320) {
     ctx.beginPath();
     ctx.moveTo(Math.round(px), 14);
@@ -11874,7 +11875,7 @@ function drawKitchen(camX, now) {
 
   // ---- Wall panels (warm palette, half-speed parallax) ----
   const panelSpacing = 120;
-  const panelOffset  = (camX * 0.5) % panelSpacing;
+  const panelOffset  = Math.round((camX * 0.5) % panelSpacing);   // rule 2: layer moves rigidly
   for (let px = -panelOffset; px < W + panelSpacing; px += panelSpacing) {
     drawShipPanel(Math.round(px), panelTop, panelSpacing, panelH, {
       strokeColor: 'rgba(120,80,30,0.18)',
@@ -12049,8 +12050,8 @@ function drawKitchen(camX, now) {
   ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
 
   const plankSpacing = 60;
-  const plankOffset  = (camX * 0.3) % plankSpacing;
-  ctx.strokeStyle = 'rgba(0,0,0,0.32)';
+  const plankOffset  = Math.round((camX * 0.3) % plankSpacing);   // rule 2: layer moves rigidly
+  ctx.strokeStyle = 'rgba(10,14,32,0.36)';   // rule 5: cool-shifted seam, not pure black
   ctx.lineWidth   = 1;
   for (let px = -plankOffset; px < W + plankSpacing; px += plankSpacing) {
     ctx.beginPath();
@@ -12251,8 +12252,8 @@ function drawObservationDeck(camX, now) {
   ctx.fillRect(0, FLOOR_Y, W, H - FLOOR_Y);
   // Plank seams (half-speed parallax)
   const plankSpacing = 56;
-  const plankOff     = (camX * 0.4) % plankSpacing;
-  ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+  const plankOff     = Math.round((camX * 0.4) % plankSpacing);   // rule 2: layer moves rigidly
+  ctx.strokeStyle = 'rgba(10,14,32,0.32)';   // rule 5: cool-shifted seam, not pure black
   ctx.lineWidth   = 1;
   for (let px = -plankOff; px < W + plankSpacing; px += plankSpacing) {
     ctx.beginPath();
@@ -14152,7 +14153,9 @@ function drawDepartureCinematic(now) {
   // Mnemosyne — translate by shipOffX so it drifts right during 'move'/'push'
   ctx.save();
   if (d.zoomScale > 1.001) {
-    // Zoom toward lit porthole at approximately hull-center porthole (ship-relative x=220, y=178)
+    // Zoom toward lit porthole at approximately hull-center porthole (ship-relative x=220, y=178).
+    // Rule 3 DECLARED EXCEPTION: this is a continuous cinematic camera push on the title
+    // screen, so the scale factor is intentionally fractional and breaks the pixel grid.
     const portholeX = 220 + d.shipOffX;
     const portholeY = 178;
     ctx.translate(portholeX, portholeY);

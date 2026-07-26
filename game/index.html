@@ -1961,8 +1961,8 @@ const openingSeq = {
    ================================================================ */
 
 /* Sprint 36: Cabin Smørbukk — Norwegian caramel toffee on the nightstand.
-   Sits at world-x 332 (the Sprint 32 nightstand prop). Collectable only after ↓ is
-   taught in the kitchen (requiresVerbLearned gate in tryCollect). After collection it
+   Sits at world-x 332 (the Sprint 32 nightstand prop). Collectable on sight (#141 — the
+   old "only after ↓ is taught in the kitchen" gate was circular). After collection it
    appears at x=100 in the collection-room display via getCabinCollectionObjects. */
 const cabinSmorbukk = {
   id:               'smorbukk',
@@ -1975,7 +1975,7 @@ const cabinSmorbukk = {
   x:                332,
   collected:        false,
   tutorialNarrated: true,       // Beat 11b narration belongs to the kitchen Bamsemums only
-  requiresVerbLearned: true,    // ↓ collect not taught until kitchen; natural replay gate
+  // requiresVerbLearned removed (#141) — the gate it depended on came two rooms later.
 };
 
 /* Sprint 45: cabin rework. Door and porthole + their dialogue removed.
@@ -5140,11 +5140,11 @@ function tryCollect() {
   if (!room.collectibles) { pip.squatTimer = SQUAT_DURATION; return; }
   for (const c of room.collectibles) {
     if (!c.collected && Math.abs(pip.x - c.x) < 18) {
-      // Sprint 36: gate treats that require the collect verb to be taught first
-      if (c.requiresVerbLearned && !chapterState.bamsemumsCollected) {
-        pip.squatTimer = SQUAT_DURATION;
-        return;
-      }
+      // #141: the requiresVerbLearned gate was CIRCULAR for the cabin Smørbukk — it is
+      // found in Cabin 646 (Scene 4) but the gate needs the kitchen Bamsemums (Scene 6),
+      // two rooms later, so ↓ silently did nothing on the only visit that matters.
+      // Gate removed; the Bamsemums still teaches the verb narratively.
+      
       pickupCollectible(c);
       return;
     }
@@ -10284,6 +10284,10 @@ function updateJanitorWalk(dt) {
       janitorWalk.x     = janitorWalk.targetX;
       janitorWalk.phase = 'paused-at-cart';
       janitorWalk.timer = 1.5;
+      // #141: open the way ON ARRIVAL, not after the full push-out. The gate used to wait
+      // for the janitor to shove the cart all the way off the left edge — 18s from paging
+      // before the player could move on. The push still plays; it just no longer blocks.
+      chapterState.janitorWalked = true;
       showDialogue({
         id: 'janitor-mutter',
         lines: [
@@ -12079,59 +12083,56 @@ function drawKitchen(camX, now) {
    ================================================================ */
 
 function drawHenrikFrozen(screenX, groundY, facing, t) {
+  // #141: this was a SECOND Henrik — 98px tall, cream chef jacket (#dcd8c8), skin #b8805c —
+  // beside the room's 68px gallery-derived Henrik in near-black shirt and cream apron. Two
+  // styles in one kitchen. Rebuilt on the canonical gallery construction (character-gallery
+  // drawHenrik / art-source palette), scaled up for the cinematic close-up, with the frozen
+  // wide-eyes + opening scream as an overlay rather than a different figure.
   const cx = Math.round(screenX);
   const cy = Math.round(groundY);
+  const S  = 1.35;                       // close-up scale; proportions stay canonical
   ctx.save();
   ctx.translate(cx, cy);
-  if (facing === 'left') ctx.scale(-1, 1);
+  ctx.scale(facing === 'left' ? -S : S, S);
 
-  // Chef's toque
-  ctx.fillStyle = '#e8e0d0';
-  ctx.fillRect(-7, -86, 14, 4);
-  ctx.fillRect(-5, -98, 10, 14);
+  const R = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(x, y, w, h); };
 
-  // Head
-  ctx.fillStyle = '#b8805c';
-  ctx.fillRect(-8, -82, 16, 18);
+  R(-8, -2,  7, 2, '#1a1a24');           // shoes
+  R( 2, -2,  7, 2, '#1a1a24');
+  R(-7, -24, 5, 22, '#1a1a24');          // slacks
+  R( 2, -24, 5, 22, '#1a1a24');
+  R(-10, -62, 21, 38, '#1a1a24');        // shirt body
+  R(-4, -56, 10, 14, C.hApron);          // apron bib
+  R(-6, -42, 14, 18, C.hApron);          // apron skirt
+  R(-9, -42, 3, 1, C.hApron);            // waist ties
+  R( 7, -42, 3, 1, C.hApron);
+  R(-13, -56, 4, 18, '#1a1a24');         // left sleeve + forearm
+  R(-13, -38, 4, 12, C.hSkin);
+  R( 9, -52, 5, 16, '#1a1a24');          // right sleeve + forearm
+  R(10, -36, 4, 10, C.hSkin);
+  R(-2, -68, 5, 9, C.hSkin);             // neck
 
-  // Wide-open eyes
-  ctx.fillStyle = '#e8e0d0';
-  ctx.fillRect(-8, -77, 5, 4);
-  ctx.fillRect(3, -77, 5, 4);
-  ctx.fillStyle = '#1a1010';
-  ctx.fillRect(-7, -76, 3, 3);
-  ctx.fillRect(4, -76, 3, 3);
+  const ht = -72;
+  R(-4, ht,   9, 2, C.hSkin);            // head
+  R(-5, ht+2, 11, 4, C.hSkin);
+  R(-5, ht+6, 11, 3, C.hSkin);
+  R(-4, ht,   9, 1, '#8a8898');          // hairline + temples
+  R(-5, ht+1, 2, 3, '#8a8898');
+  R( 3, ht+1, 2, 3, '#8a8898');
+  R(-3, ht+7, 7, 2, '#8a8898');          // mustache
 
-  // Open mouth — animates wider as t increases, capped at 10px
-  const mh = Math.min(10, Math.round(t * 18));
-  ctx.fillStyle = '#1c0c0c';
-  ctx.fillRect(-5, -66, 10, Math.max(1, mh));
+  // Frozen mid-scream: eyes blown wide, mouth opening over ~0.5s
+  R(-3, ht+2, 3, 3, '#e8e0d0');          // left eye white (enlarged)
+  R( 1, ht+2, 3, 3, '#e8e0d0');
+  R(-2, ht+3, 2, 2, '#3a3040');          // pupils
+  R( 2, ht+3, 2, 2, '#3a3040');
+  const mh = Math.min(5, Math.max(1, Math.round(t * 9)));
+  R(-2, ht+9, 5, mh, '#1c0c0c');         // open mouth
 
-  // Neck
-  ctx.fillStyle = '#b8805c';
-  ctx.fillRect(-4, -64, 8, 6);
-
-  // Chef jacket (cream/white)
-  ctx.fillStyle = '#dcd8c8';
-  ctx.fillRect(-14, -58, 28, 26);
-  ctx.fillStyle = '#c4c0b0';
-  ctx.fillRect(-2, -55, 4, 22);
-
-  // Arms — slightly raised, alarm pose
-  ctx.fillStyle = '#dcd8c8';
-  ctx.fillRect(-22, -56, 8, 22);
-  ctx.fillRect(14, -58, 8, 22);
-
-  // Trousers
-  ctx.fillStyle = '#38342e';
-  ctx.fillRect(-13, -32, 26, 18);
-  ctx.fillRect(-11, -14, 9, 14);
-  ctx.fillRect(  2, -14, 9, 14);
-
-  // Shoes
-  ctx.fillStyle = '#28201c';
-  ctx.fillRect(-13, -1, 12, 3);
-  ctx.fillRect(  2, -1, 12, 3);
+  R(-6, ht-2,  13, 2, '#d8d4c0');        // toque band
+  R(-4, ht-1,  9,  1, '#8a8898');
+  R(-6, ht-12, 13, 10, '#f0f0e8');       // crown
+  R(-5, ht-14, 11, 2,  '#f0f0e8');       // dome tip
 
   ctx.restore();
 }
@@ -12431,6 +12432,19 @@ function drawKitchenMeetingCinematic(now) {
     ctx.fillStyle = '#9a8860';
     ctx.fillRect(panX - 12, panY - 4, 24, 7);    // pan body
     ctx.fillRect(panX + 12, panY - 2, 12, 3);    // handle
+    ctx.restore();
+  }
+
+  // ---- Pip — #141: he was simply absent from this cinematic, so the player watched a
+  // plate hover in an empty kitchen. He stands just left of the counter, turned toward the
+  // plate, looking at it. Canonical drawPip from the shared art source (same figure as
+  // everywhere else); a slow lean toward the food carries the longing.
+  {
+    const pipX  = Math.round(W * 0.30);
+    const lean  = Math.sin(elapsed * 0.9) * 1.2 + 1.4;   // drifts toward the plate
+    ctx.save();
+    ctx.translate(pipX + lean, FLOOR_Y);
+    drawPip(ctx, elapsed, false, { floorGlow: false });
     ctx.restore();
   }
 
